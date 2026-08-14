@@ -1,0 +1,12 @@
+# Dependencias / build
+node_modules/
+vendor/
+*.log
+
+# Artefactos temporales
+.DS_Store
+Thumbs.db
+*.tmp
+*.cache
+
+# No ignoramos dist/: los ZIP instalables son entregables del proyecto.

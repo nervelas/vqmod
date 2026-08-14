@@ -1,0 +1,10 @@
+.cgm-wrap .cgm-tabs { margin-bottom: 16px; }
+.cgm-media-preview img { max-width: 240px; height: auto; display: block; margin-bottom: 8px; border: 1px solid #dcdcde; border-radius: 6px; }
+.cgm-media-field .button { margin-right: 6px; }
+.cgm-card { background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 20px 24px; margin: 16px 0; max-width: 820px; }
+.cgm-card h2 { margin-top: 0; }
+.cgm-log { list-style: none; margin: 8px 0 0; padding: 0; }
+.cgm-log li { padding: 4px 0; border-bottom: 1px solid #f0f0f1; }
+.cgm-badge-ok { color: #1f6e34; font-weight: 600; }
+.cgm-badge-warn { color: #8a6d00; background: #fff8e5; padding: 8px 12px; border-radius: 6px; }
+.cgm-form .form-table th { width: 260px; }

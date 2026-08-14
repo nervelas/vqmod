@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" role="img" aria-label="Imagen próximamente">
+  <rect width="640" height="640" fill="#f2f1ea"/>
+  <g fill="none" stroke="#c9c7ba" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="250" y="150" width="140" height="300" rx="24"/>
+    <path d="M285 150v-26a20 20 0 0 1 20-20h30a20 20 0 0 1 20 20v26"/>
+    <line x1="250" y1="215" x2="390" y2="215"/>
+  </g>
+  <text x="320" y="510" text-anchor="middle" font-family="Poppins,Arial,sans-serif" font-size="30" font-weight="700" fill="#1f3d2b">CGM</text>
+  <text x="320" y="548" text-anchor="middle" font-family="Poppins,Arial,sans-serif" font-size="20" fill="#8b8b80">Imagen próximamente</text>
+</svg>

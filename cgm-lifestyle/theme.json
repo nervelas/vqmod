@@ -1,0 +1,54 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/theme.json",
+	"version": 2,
+	"settings": {
+		"appearanceTools": true,
+		"layout": {
+			"contentSize": "820px",
+			"wideSize": "1200px"
+		},
+		"color": {
+			"custom": true,
+			"palette": [
+				{ "slug": "cgm-green", "color": "#1f3d2b", "name": "Verde CGM" },
+				{ "slug": "cgm-green-dark", "color": "#173021", "name": "Verde oscuro" },
+				{ "slug": "cgm-gold", "color": "#c6a45c", "name": "Dorado" },
+				{ "slug": "cgm-cream", "color": "#f7f6f1", "name": "Crema" },
+				{ "slug": "cgm-ink", "color": "#20241f", "name": "Tinta" },
+				{ "slug": "cgm-white", "color": "#ffffff", "name": "Blanco" }
+			]
+		},
+		"typography": {
+			"fluid": true,
+			"fontFamilies": [
+				{ "fontFamily": "\"Poppins\", sans-serif", "slug": "cgm-head", "name": "Poppins" },
+				{ "fontFamily": "\"Inter\", sans-serif", "slug": "cgm-body", "name": "Inter" }
+			],
+			"fontSizes": [
+				{ "slug": "small", "size": "0.9rem", "name": "Pequeño" },
+				{ "slug": "medium", "size": "1.05rem", "name": "Mediano" },
+				{ "slug": "large", "size": "1.4rem", "name": "Grande" },
+				{ "slug": "x-large", "size": "2.2rem", "name": "Extra grande" }
+			]
+		},
+		"spacing": {
+			"units": [ "px", "em", "rem", "%", "vw" ]
+		}
+	},
+	"styles": {
+		"color": {
+			"background": "#f7f6f1",
+			"text": "#20241f"
+		},
+		"typography": {
+			"fontFamily": "\"Inter\", sans-serif",
+			"lineHeight": "1.6"
+		},
+		"elements": {
+			"link": { "color": { "text": "#2a5238" } },
+			"h1": { "typography": { "fontFamily": "\"Poppins\", sans-serif", "fontWeight": "800" } },
+			"h2": { "typography": { "fontFamily": "\"Poppins\", sans-serif", "fontWeight": "700" } },
+			"h3": { "typography": { "fontFamily": "\"Poppins\", sans-serif", "fontWeight": "600" } }
+		}
+	}
+}

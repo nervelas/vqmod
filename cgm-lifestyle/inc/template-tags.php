@@ -104,6 +104,42 @@ function cgm_section_header( $title, $subtitle = '', $tag = 'h2' ) {
 }
 
 /**
+ * URL de la tienda de forma segura (o inicio si no está configurada).
+ *
+ * @return string
+ */
+function cgm_shop_url() {
+	if ( class_exists( 'WooCommerce' ) && function_exists( 'wc_get_page_id' ) ) {
+		$id = wc_get_page_id( 'shop' );
+		if ( $id > 0 ) {
+			$url = get_permalink( $id );
+			if ( $url ) {
+				return $url;
+			}
+		}
+	}
+	return home_url( '/' );
+}
+
+/**
+ * URL de "Mi cuenta" de forma segura (vacío si no está configurada).
+ *
+ * @return string
+ */
+function cgm_account_url() {
+	if ( class_exists( 'WooCommerce' ) && function_exists( 'wc_get_page_id' ) ) {
+		$id = wc_get_page_id( 'myaccount' );
+		if ( $id > 0 ) {
+			$url = get_permalink( $id );
+			if ( $url ) {
+				return $url;
+			}
+		}
+	}
+	return '';
+}
+
+/**
  * Menú de reserva cuando no hay menú asignado a la ubicación "primary".
  *
  * @param string $class Clase de la lista.

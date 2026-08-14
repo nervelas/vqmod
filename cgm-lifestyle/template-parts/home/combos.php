@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $discount = (float) cgm_get_option( 'combo_discount', 0 );
 $enabled  = (int) cgm_get_option( 'combo_enabled', 0 );
-$shop     = class_exists( 'WooCommerce' ) ? get_permalink( wc_get_page_id( 'shop' ) ) : home_url( '/' );
+$shop     = cgm_shop_url();
 ?>
 <section id="combos" class="cgm-section cgm-combos">
 	<div class="cgm-container cgm-combos__inner reveal">

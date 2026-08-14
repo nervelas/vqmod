@@ -81,9 +81,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</button>
 
 			<?php if ( class_exists( 'WooCommerce' ) ) : ?>
-				<a class="cgm-icon-btn" href="<?php echo esc_url( get_permalink( get_option( 'woocommerce_myaccount_page_id' ) ) ); ?>" aria-label="<?php esc_attr_e( 'Mi cuenta', 'cgm-lifestyle' ); ?>">
-					<?php echo cgm_icon( 'user' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-				</a>
+				<?php $account_url = cgm_account_url(); ?>
+				<?php if ( $account_url ) : ?>
+					<a class="cgm-icon-btn" href="<?php echo esc_url( $account_url ); ?>" aria-label="<?php esc_attr_e( 'Mi cuenta', 'cgm-lifestyle' ); ?>">
+						<?php echo cgm_icon( 'user' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					</a>
+				<?php endif; ?>
 				<a class="cgm-icon-btn cgm-cart-link" href="<?php echo esc_url( wc_get_cart_url() ); ?>" aria-label="<?php esc_attr_e( 'Carrito', 'cgm-lifestyle' ); ?>">
 					<?php echo cgm_icon( 'cart' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 					<span class="cgm-cart-count" data-count="<?php echo esc_attr( cgm_cart_count() ); ?>"><?php echo esc_html( cgm_cart_count() ); ?></span>

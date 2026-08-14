@@ -269,24 +269,46 @@ function cgm_get_image_url( $key, $size = 'full', $fallback = '' ) {
  * @return string
  */
 function cgm_format_text( $text ) {
-	$text  = wp_strip_all_tags( (string) $text );
+	$text   = wp_strip_all_tags( (string) $text );
 	$blocks = preg_split( "/\n\s*\n/", trim( $text ) );
 	$out    = '';
+	$is_bullet = function ( $l ) {
+		return (bool) preg_match( '/^\s*[•\-\*✔]/u', $l );
+	};
+
 	foreach ( $blocks as $block ) {
-		$lines   = preg_split( "/\n/", trim( $block ) );
-		$bullets = array_filter( $lines, function ( $l ) {
-			return preg_match( '/^\s*[•\-\*✔]/u', $l );
-		} );
-		if ( count( $bullets ) === count( $lines ) && count( $lines ) > 0 ) {
-			$out .= '<ul class="cgm-list">';
-			foreach ( $lines as $line ) {
-				$line = preg_replace( '/^\s*[•\-\*✔]\s*/u', '', $line );
-				$out .= '<li>' . esc_html( trim( $line ) ) . '</li>';
+		$lines = preg_split( "/\n/", trim( $block ) );
+		$buf   = array(); // Líneas de texto acumuladas (no viñetas).
+		$list  = array(); // Viñetas acumuladas.
+
+		$flush_text = function () use ( &$buf, &$out ) {
+			if ( $buf ) {
+				$out .= '<p>' . nl2br( esc_html( implode( "\n", $buf ) ) ) . '</p>';
+				$buf  = array();
 			}
-			$out .= '</ul>';
-		} else {
-			$out .= '<p>' . nl2br( esc_html( trim( $block ) ) ) . '</p>';
+		};
+		$flush_list = function () use ( &$list, &$out ) {
+			if ( $list ) {
+				$out .= '<ul class="cgm-list">';
+				foreach ( $list as $li ) {
+					$out .= '<li>' . esc_html( $li ) . '</li>';
+				}
+				$out .= '</ul>';
+				$list = array();
+			}
+		};
+
+		foreach ( $lines as $line ) {
+			if ( $is_bullet( $line ) ) {
+				$flush_text();
+				$list[] = trim( preg_replace( '/^\s*[•\-\*✔]\s*/u', '', $line ) );
+			} else {
+				$flush_list();
+				$buf[] = trim( $line );
+			}
 		}
+		$flush_text();
+		$flush_list();
 	}
 	return $out;
 }

@@ -64,12 +64,16 @@ class CGM_Woo {
 		}
 
 		// Verifica que exista al menos un producto de cada categoría requerida.
-		$found            = array_fill_keys( $cats, false );
+		$found             = array_fill_keys( $cats, false );
 		$eligible_subtotal = 0.0;
+		$cat_cache         = array(); // Evita repetir wp_get_post_terms por producto.
 		foreach ( $cart->get_cart() as $item ) {
-			$pid           = $item['product_id'];
-			$product_cats  = wp_get_post_terms( $pid, 'product_cat', array( 'fields' => 'slugs' ) );
-			$is_eligible   = false;
+			$pid = $item['product_id'];
+			if ( ! isset( $cat_cache[ $pid ] ) ) {
+				$cat_cache[ $pid ] = wp_get_post_terms( $pid, 'product_cat', array( 'fields' => 'slugs' ) );
+			}
+			$product_cats = $cat_cache[ $pid ];
+			$is_eligible  = false;
 			foreach ( $cats as $slug ) {
 				if ( in_array( $slug, $product_cats, true ) ) {
 					$found[ $slug ] = true;
@@ -77,7 +81,12 @@ class CGM_Woo {
 				}
 			}
 			if ( $is_eligible ) {
-				$eligible_subtotal += (float) $item['line_subtotal'];
+				// Usa el precio base del producto (sin el cargo de personalización)
+				// para que el descuento del combo no incluya dicho cargo.
+				$ref   = ! empty( $item['variation_id'] ) ? $item['variation_id'] : $pid;
+				$prod  = wc_get_product( $ref );
+				$price = $prod ? (float) $prod->get_price( 'edit' ) : (float) $item['line_subtotal'];
+				$eligible_subtotal += $price * (int) $item['quantity'];
 			}
 		}
 

@@ -106,7 +106,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		?>
 
 		<div class="cgm-products__cta reveal">
-			<a class="cgm-btn cgm-btn--primary" href="<?php echo esc_url( get_permalink( wc_get_page_id( 'shop' ) ) ); ?>"><?php esc_html_e( 'Ver toda la tienda', 'cgm-lifestyle' ); ?></a>
+			<a class="cgm-btn cgm-btn--primary" href="<?php echo esc_url( cgm_shop_url() ); ?>"><?php esc_html_e( 'Ver toda la tienda', 'cgm-lifestyle' ); ?></a>
 		</div>
 	</div>
 </section>

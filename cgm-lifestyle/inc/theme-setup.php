@@ -97,8 +97,8 @@ add_action( 'widgets_init', 'cgm_widgets_init' );
  * Encola estilos y scripts del front.
  */
 function cgm_enqueue_assets() {
-	wp_enqueue_style( 'cgm-fonts', 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap', array(), null );
-	wp_enqueue_style( 'cgm-main', CGM_THEME_URI . '/assets/css/main.css', array(), CGM_THEME_VERSION );
+	wp_enqueue_style( 'cgm-fonts', CGM_THEME_URI . '/assets/css/fonts.css', array(), CGM_THEME_VERSION );
+	wp_enqueue_style( 'cgm-main', CGM_THEME_URI . '/assets/css/main.css', array( 'cgm-fonts' ), CGM_THEME_VERSION );
 
 	wp_enqueue_script( 'cgm-main', CGM_THEME_URI . '/assets/js/main.js', array(), CGM_THEME_VERSION, true );
 	wp_localize_script(
@@ -117,15 +117,15 @@ function cgm_enqueue_assets() {
 add_action( 'wp_enqueue_scripts', 'cgm_enqueue_assets' );
 
 /**
- * Preconnect a Google Fonts para mejorar LCP.
+ * Precarga las fuentes críticas (auto-hospedadas) para mejorar el LCP.
  */
-function cgm_resource_hints( $hints, $relation ) {
-	if ( 'preconnect' === $relation ) {
-		$hints[] = array( 'href' => 'https://fonts.gstatic.com', 'crossorigin' );
+function cgm_preload_fonts() {
+	$fonts = array( 'inter-400.woff2', 'poppins-800.woff2', 'poppins-700.woff2' );
+	foreach ( $fonts as $file ) {
+		echo '<link rel="preload" href="' . esc_url( CGM_THEME_URI . '/assets/fonts/' . $file ) . '" as="font" type="font/woff2" crossorigin>' . "\n";
 	}
-	return $hints;
 }
-add_filter( 'wp_resource_hints', 'cgm_resource_hints', 10, 2 );
+add_action( 'wp_head', 'cgm_preload_fonts', 1 );
 
 /**
  * Favicon administrable (si el usuario no ha definido el icono del sitio de WP).

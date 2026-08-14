@@ -19,7 +19,7 @@ get_header();
 		<div class="cgm-404__actions">
 			<a class="cgm-btn cgm-btn--primary" href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'Volver al inicio', 'cgm-lifestyle' ); ?></a>
 			<?php if ( class_exists( 'WooCommerce' ) ) : ?>
-				<a class="cgm-btn cgm-btn--outline" href="<?php echo esc_url( get_permalink( wc_get_page_id( 'shop' ) ) ); ?>"><?php esc_html_e( 'Ir a la tienda', 'cgm-lifestyle' ); ?></a>
+				<a class="cgm-btn cgm-btn--outline" href="<?php echo esc_url( cgm_shop_url() ); ?>"><?php esc_html_e( 'Ir a la tienda', 'cgm-lifestyle' ); ?></a>
 			<?php endif; ?>
 		</div>
 		<div class="cgm-404__search"><?php get_search_form(); ?></div>

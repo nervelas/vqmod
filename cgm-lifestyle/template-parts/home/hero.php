@@ -19,7 +19,7 @@ if ( empty( $slides ) ) {
 			<p class="cgm-hero__sub"><?php echo esc_html( cgm_get_option( 'brand_tagline', 'Crea Grandes Momentos' ) ); ?></p>
 			<h1 class="cgm-hero__title"><?php esc_html_e( 'Termos, pachones y accesorios para acompañarte', 'cgm-lifestyle' ); ?></h1>
 			<?php if ( class_exists( 'WooCommerce' ) ) : ?>
-				<a class="cgm-btn cgm-btn--primary" href="<?php echo esc_url( get_permalink( wc_get_page_id( 'shop' ) ) ); ?>"><?php esc_html_e( 'Comprar ahora', 'cgm-lifestyle' ); ?></a>
+				<a class="cgm-btn cgm-btn--primary" href="<?php echo esc_url( cgm_shop_url() ); ?>"><?php esc_html_e( 'Comprar ahora', 'cgm-lifestyle' ); ?></a>
 			<?php endif; ?>
 		</div>
 	</section>

@@ -1,0 +1,109 @@
+/* ==========================================================================
+   Admin panel layout — professional sports-administration software feel.
+   Depends on app.css design tokens.
+   ========================================================================== */
+
+.admin-shell { display: grid; grid-template-columns: 264px 1fr; min-height: 100vh; }
+
+/* ---- Sidebar (desktop) --------------------------------------------------- */
+.sidebar {
+    background: var(--c-surface); border-right: 1px solid var(--c-border);
+    display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+.sidebar-brand { display: flex; align-items: center; gap: .6rem; padding: 1.2rem 1.25rem; font-weight: 900; font-size: 1.05rem; border-bottom: 1px solid var(--c-border); color: var(--c-text); }
+.sidebar-brand .brand-mark { width: 34px; height: 34px; border-radius: 10px; background: var(--c-primary); color: var(--c-on-primary); display: grid; place-items: center; font-size: 1.1rem; }
+.sidebar-nav { padding: .75rem; flex: 1; }
+.nav-group-title { font-size: .68rem; text-transform: uppercase; letter-spacing: .1em; color: var(--c-text-subtle); font-weight: 800; padding: 1rem .8rem .35rem; }
+.nav-item {
+    display: flex; align-items: center; gap: .7rem; padding: .62rem .8rem; border-radius: 11px;
+    color: var(--c-text-muted); font-weight: 600; font-size: .92rem; margin-bottom: 2px; transition: background .14s ease, color .14s ease;
+}
+.nav-item .ni-icon { width: 20px; text-align: center; flex: 0 0 auto; opacity: .9; }
+.nav-item:hover { background: var(--c-surface-2); color: var(--c-text); }
+.nav-item.active { background: rgba(var(--c-primary-rgb), .16); color: var(--c-link); font-weight: 800; }
+.sidebar-foot { padding: 1rem 1.25rem; border-top: 1px solid var(--c-border); font-size: .82rem; color: var(--c-text-muted); }
+
+/* ---- Topbar -------------------------------------------------------------- */
+.admin-main { display: flex; flex-direction: column; min-width: 0; }
+.topbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: .85rem clamp(16px, 3vw, 32px); background: color-mix(in srgb, var(--c-bg) 88%, transparent);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--c-border); position: sticky; top: 0; z-index: 40;
+}
+.topbar h1 { font-size: 1.15rem; margin: 0; }
+.topbar-actions { display: flex; align-items: center; gap: .6rem; }
+.user-chip { display: flex; align-items: center; gap: .55rem; padding: .4rem .7rem; border-radius: 999px; background: var(--c-surface-2); border: 1px solid var(--c-border); font-weight: 700; font-size: .85rem; }
+.user-chip .avatar { width: 28px; height: 28px; }
+.drawer-toggle { display: none; background: var(--c-surface-2); border: 1px solid var(--c-border); color: var(--c-text); width: 42px; height: 42px; border-radius: 11px; cursor: pointer; font-size: 1.3rem; }
+
+.admin-content { padding: clamp(18px, 3vw, 34px); flex: 1; }
+.page-head { margin-bottom: 1.75rem; }
+.page-head h1 { font-size: clamp(1.5rem, 3vw, 2rem); margin: 0 0 .3rem; }
+.page-head p { color: var(--c-text-muted); margin: 0; }
+.page-actions { display: flex; gap: .6rem; flex-wrap: wrap; }
+
+.toolbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+
+/* ---- Dashboard empty state ---------------------------------------------- */
+.wizard-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin: 2rem auto 0; max-width: 900px; }
+.wizard-step { text-align: center; padding: 1.25rem 1rem; border-radius: 16px; background: var(--c-surface); border: 1px solid var(--c-border); position: relative; }
+.wizard-step .ws-num { width: 42px; height: 42px; border-radius: 50%; background: var(--c-primary); color: var(--c-on-primary); display: grid; place-items: center; font-weight: 900; margin: 0 auto .7rem; font-size: 1.1rem; }
+.wizard-step h4 { margin: 0 0 .2rem; font-size: .98rem; }
+.wizard-step p { font-size: .8rem; color: var(--c-text-muted); margin: 0; }
+
+/* ---- Theme cards (Appearance) ------------------------------------------- */
+.theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 1.25rem; }
+.theme-card { border-radius: 16px; border: 2px solid var(--c-border); overflow: hidden; background: var(--c-surface); transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+.theme-card:hover { transform: translateY(-4px); box-shadow: 0 14px 34px rgba(var(--c-shadow-rgb), .18); }
+.theme-card.active { border-color: var(--c-primary); box-shadow: 0 0 0 3px rgba(var(--c-primary-rgb), .3); }
+.theme-swatches { display: flex; height: 76px; }
+.theme-swatches span { flex: 1; }
+.theme-card-body { padding: 1rem 1.1rem 1.15rem; }
+.theme-card-body h4 { margin: 0 0 .2rem; }
+.theme-card-body .t-style { font-size: .78rem; color: var(--c-text-muted); min-height: 2.4em; margin-bottom: .8rem; }
+.theme-card-actions { display: flex; gap: .5rem; }
+.color-chips { display: flex; gap: .35rem; margin-top: .5rem; }
+.color-chip { width: 18px; height: 18px; border-radius: 5px; border: 1px solid rgba(128,128,128,.35); }
+
+/* ---- Preview mini components -------------------------------------------- */
+.theme-preview { border-radius: 14px; padding: 1.25rem; background: var(--c-bg); color: var(--c-text); border: 1px solid var(--c-border); }
+.tp-hero { border-radius: 10px; padding: 1rem; background: linear-gradient(135deg, var(--c-primary), var(--c-accent)); color: var(--c-on-primary); font-weight: 800; margin-bottom: .8rem; }
+.tp-row { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+
+/* ---- Definition list / detail rows -------------------------------------- */
+.detail-list { display: grid; gap: .1rem; }
+.detail-list .row { display: flex; justify-content: space-between; gap: 1rem; padding: .6rem 0; border-bottom: 1px solid var(--c-border); }
+.detail-list .row:last-child { border-bottom: none; }
+.detail-list .row .k { color: var(--c-text-muted); font-weight: 600; }
+.detail-list .row .v { font-weight: 700; text-align: right; }
+
+/* ---- Login page ---------------------------------------------------------- */
+.login-wrap { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; background:
+    radial-gradient(circle at 15% 20%, rgba(var(--c-primary-rgb), .16), transparent 45%),
+    radial-gradient(circle at 85% 80%, rgba(var(--c-accent-rgb), .16), transparent 45%),
+    var(--c-bg); }
+.login-card { width: 100%; max-width: 420px; }
+.login-logo { width: 60px; height: 60px; border-radius: 16px; background: var(--c-primary); color: var(--c-on-primary); display: grid; place-items: center; font-size: 1.8rem; margin: 0 auto 1.2rem; }
+
+/* ---- Chips (multi-select teams) ----------------------------------------- */
+.check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: .5rem; }
+.check-item { display: flex; align-items: center; gap: .55rem; padding: .55rem .7rem; border: 1px solid var(--c-border); border-radius: 10px; cursor: pointer; background: var(--c-surface); font-size: .9rem; transition: border-color .14s; }
+.check-item:hover { border-color: var(--c-border-strong); }
+.check-item input { accent-color: var(--c-primary); }
+
+/* ---- Responsive: drawer -------------------------------------------------- */
+.drawer-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 60; }
+@media (max-width: 980px) {
+    .admin-shell { grid-template-columns: 1fr; }
+    .sidebar {
+        position: fixed; top: 0; left: 0; width: 280px; max-width: 84vw; height: 100vh; z-index: 70;
+        transform: translateX(-100%); transition: transform .28s ease; box-shadow: 0 0 40px rgba(0,0,0,.4);
+    }
+    .sidebar.open { transform: translateX(0); }
+    .drawer-toggle { display: inline-flex; align-items: center; justify-content: center; }
+    .drawer-backdrop.open { display: block; }
+}
+@media (max-width: 620px) {
+    .user-chip .u-name { display: none; }
+    .toolbar { flex-direction: column; align-items: stretch; }
+}

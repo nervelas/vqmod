@@ -1,0 +1,29 @@
+# Uploads directory: serve static files only, NEVER execute code.
+
+# Disable all script execution
+<IfModule mod_php.c>
+    php_admin_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_admin_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_admin_flag engine off
+</IfModule>
+
+# Remove any handlers that could execute code
+RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .phar .pl .py .cgi .asp .aspx .sh
+RemoveType .php .phtml .php3 .php4 .php5 .php7 .php8 .phar
+
+# Force all files to be treated as plain downloads unless they are images
+<FilesMatch "\.(php|phtml|php3|php4|php5|php7|php8|phar|pl|py|cgi|asp|aspx|sh|exe|bat|cmd|htaccess|svg)$">
+    Require all denied
+</FilesMatch>
+
+# Only allow known-safe image types to be served
+<FilesMatch "\.(jpg|jpeg|png|webp|gif)$">
+    Require all granted
+</FilesMatch>
+
+Options -Indexes -ExecCGI
+AddType text/plain .php .phtml .phar .pl .py .cgi

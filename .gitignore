@@ -1,0 +1,12 @@
+# Local runtime — never commit real config or user uploads
+/app/config.php
+/backups/*
+!/backups/.htaccess
+/uploads/**/*
+!/uploads/.htaccess
+!/uploads/**/.gitkeep
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log

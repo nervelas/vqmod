@@ -1,0 +1,10 @@
+/config/config.php
+/config/install.lock
+/uploads/media/*
+!/uploads/media/.gitkeep
+!/uploads/media/.htaccess
+/router-dev.php
+/database/*.sqlite
+*.log
+.DS_Store
+/fuentedevida-web.zip

@@ -1,0 +1,64 @@
+# ============================================================
+#  Fuente de Vida — Apache configuration
+# ============================================================
+Options -Indexes +FollowSymLinks
+ServerSignature Off
+DirectoryIndex index.php index.html
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # RewriteBase /   ; uncomment & adjust if installed in a subfolder
+
+    # Force HTTPS when available (comment out if no SSL certificate yet)
+    # RewriteCond %{HTTPS} off
+    # RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Serve sitemap / robots through PHP if physical files are absent
+    RewriteRule ^sitemap\.xml$ sitemap.php [L]
+
+    # Do not rewrite existing files or directories
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Front controller: clean URLs -> index.php?p=slug
+    RewriteRule ^([^?]*)$ index.php?p=$1 [L,QSA]
+</IfModule>
+
+# ---- Security headers ----
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# ---- Protect sensitive files ----
+<FilesMatch "(^\.|composer\.(json|lock)|\.(sql|md|log|sample|ini|sh|bak)$)">
+    Require all denied
+</FilesMatch>
+
+<Files "config.php">
+    Require all denied
+</Files>
+
+# ---- Compression ----
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css application/javascript application/json image/svg+xml
+</IfModule>
+
+# ---- Cache static assets ----
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/svg+xml "access plus 30 days"
+    ExpiresByType image/jpeg "access plus 30 days"
+    ExpiresByType image/png "access plus 30 days"
+    ExpiresByType image/webp "access plus 30 days"
+    ExpiresByType text/css "access plus 7 days"
+    ExpiresByType application/javascript "access plus 7 days"
+</IfModule>
+
+# ---- Custom error page ----
+ErrorDocument 404 /index.php?p=404-not-found

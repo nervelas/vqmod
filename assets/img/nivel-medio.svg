@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520">
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#0f5a3c"/><stop offset="1" stop-color="#0b3d2a"/></linearGradient></defs>
+  <rect width="800" height="520" fill="url(#bg)"/>
+  <circle cx="640" cy="120" r="150" fill="#ffffff" opacity=".08"/>
+  <circle cx="120" cy="430" r="120" fill="#ffffff" opacity=".06"/>
+  <path d="M400 170l110 50-110 50-110-50z" fill="#f6a800"/><path d="M340 235v45c0 20 30 34 60 34s60-14 60-34v-45" fill="none" stroke="#fff" stroke-width="8"/>
+  <text x="400" y="480" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="26" fill="#ffffff" opacity=".95">Nivel Medio</text>
+</svg>

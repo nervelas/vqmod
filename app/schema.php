@@ -242,6 +242,7 @@ return [
     away_pens      SMALLINT UNSIGNED NULL,
     is_final_phase TINYINT(1) NOT NULL DEFAULT 0,
     phase_label    VARCHAR(60) NULL,
+    referee_report VARCHAR(255) NULL,
     notes          TEXT NULL,
     created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_match_tournament (tournament_id),

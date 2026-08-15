@@ -19,6 +19,21 @@ if (!function_exists('fl_ensure_match_slot_column')) {
 }
 fl_ensure_match_slot_column();
 
+/** Ensure matches.referee_report exists (photo of the referee's match report). */
+if (!function_exists('fl_ensure_match_report_column')) {
+    function fl_ensure_match_report_column(): void
+    {
+        $has = Database::scalar(
+            "SELECT COUNT(*) FROM information_schema.columns
+             WHERE table_schema = DATABASE() AND table_name = 'matches' AND column_name = 'referee_report'"
+        );
+        if (!$has) {
+            Database::q("ALTER TABLE matches ADD COLUMN referee_report VARCHAR(255) NULL");
+        }
+    }
+}
+fl_ensure_match_report_column();
+
 $tournaments = Database::all("SELECT tr.id, tr.name, l.name AS league_name FROM tournaments tr JOIN leagues l ON l.id=tr.league_id ORDER BY tr.created_at DESC");
 $action = str_input('action', 'list');
 $tournamentId = int_input('tournament');
@@ -129,6 +144,33 @@ if (is_post()) {
             flash('success', 'Evento eliminado.');
         }
         redirect(base_url('admin/matches.php?action=edit&id=' . $matchId));
+    }
+
+    /* ---- Upload / replace / remove the referee report photo (Acta Arbitral) */
+    if ($op === 'save_acta') {
+        $matchId = int_input('match_id');
+        $m = Database::one("SELECT * FROM matches WHERE id = ?", [$matchId]);
+        if ($m) {
+            try {
+                $img = Upload::image('referee_report', 'acta');
+            } catch (RuntimeException $ex) {
+                flash('danger', $ex->getMessage());
+                redirect(base_url('admin/matches.php?action=edit&id=' . $matchId . '#acta-arbitral'));
+            }
+            if (post('remove_report') && !empty($m['referee_report'])) {
+                Upload::delete($m['referee_report']);
+                Database::q("UPDATE matches SET referee_report = NULL WHERE id = ?", [$matchId]);
+                flash('success', 'Acta arbitral eliminada.');
+            } elseif ($img) {
+                if (!empty($m['referee_report'])) { Upload::delete($m['referee_report']); }
+                Database::q("UPDATE matches SET referee_report = ? WHERE id = ?", [$img, $matchId]);
+                flash('success', 'Acta arbitral subida correctamente.');
+            } else {
+                flash('warning', 'Selecciona una imagen (JPG, PNG o WEBP).');
+            }
+            Audit::log('update', 'matches', $matchId, null, ['referee_report' => 'changed']);
+        }
+        redirect(base_url('admin/matches.php?action=edit&id=' . $matchId . '#acta-arbitral'));
     }
 }
 
@@ -243,6 +285,57 @@ if ($action === 'edit' && $matchId) {
             <?php endif; ?>
         </div>
     </div>
+
+    <!-- ================= Acta Arbitral (foto) ================= -->
+    <div id="acta-arbitral" class="card card-pad-lg mt-3">
+        <h3 style="margin-top:0">Acta arbitral</h3>
+        <p class="muted" style="margin-top:-.4rem">Sube una foto del acta firmada por el árbitro. Se muestra en miniatura; haz clic para verla a tamaño real.</p>
+        <form method="post" enctype="multipart/form-data">
+            <?= Security::csrfField() ?>
+            <input type="hidden" name="op" value="save_acta">
+            <input type="hidden" name="match_id" value="<?= (int)$matchId ?>">
+            <?php if (!empty($m['referee_report'])): ?>
+                <div class="flex items-center gap-2 wrap mb-2">
+                    <img class="acta-thumb" src="<?= e(base_url($m['referee_report'])) ?>" alt="Acta arbitral"
+                         data-full="<?= e(base_url($m['referee_report'])) ?>"
+                         style="width:130px;height:130px;object-fit:cover;border-radius:12px;border:1px solid var(--c-border);cursor:zoom-in">
+                    <label class="help"><input type="checkbox" name="remove_report" value="1"> Eliminar acta actual</label>
+                </div>
+                <div class="field">
+                    <label for="referee_report">Reemplazar acta (JPG, PNG, WEBP)</label>
+                    <input class="input" type="file" id="referee_report" name="referee_report" accept=".jpg,.jpeg,.png,.webp">
+                </div>
+                <button class="btn" type="submit">Guardar cambios del acta</button>
+            <?php else: ?>
+                <div class="field">
+                    <label for="referee_report">Imagen del acta (JPG, PNG, WEBP)</label>
+                    <input class="input" type="file" id="referee_report" name="referee_report" accept=".jpg,.jpeg,.png,.webp" required>
+                </div>
+                <button class="btn" type="submit">📄 Subir Acta Arbitral</button>
+            <?php endif; ?>
+        </form>
+    </div>
+
+    <!-- Lightbox -->
+    <div id="acta-lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;align-items:center;justify-content:center;padding:1.5rem;cursor:zoom-out">
+        <img id="acta-lightbox-img" src="" alt="Acta arbitral" style="max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.6)">
+    </div>
+    <script>
+    (function () {
+        var lb = document.getElementById('acta-lightbox');
+        var lbImg = document.getElementById('acta-lightbox-img');
+        document.querySelectorAll('.acta-thumb').forEach(function (t) {
+            t.addEventListener('click', function () {
+                lbImg.src = t.getAttribute('data-full');
+                lb.style.display = 'flex';
+            });
+        });
+        if (lb) {
+            lb.addEventListener('click', function () { lb.style.display = 'none'; lbImg.src = ''; });
+            document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { lb.style.display = 'none'; lbImg.src = ''; } });
+        }
+    })();
+    </script>
     <?php require 'partials/foot.php'; exit;
 }
 

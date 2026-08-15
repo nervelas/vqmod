@@ -51,6 +51,13 @@ $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
     || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
 
 if (session_status() === PHP_SESSION_NONE) {
+    // On shared hosting the server's default session directory is sometimes not
+    // writable, which breaks the admin login. Fall back to an app-local folder.
+    $sessDir = BASE_PATH . '/storage/sessions';
+    if (!is_dir($sessDir)) { @mkdir($sessDir, 0700, true); }
+    if (is_dir($sessDir) && is_writable($sessDir)) {
+        session_save_path($sessDir);
+    }
     session_name($config['security']['session_name'] ?? 'fdv_sess');
     session_set_cookie_params([
         'lifetime' => 0,
@@ -60,7 +67,7 @@ if (session_status() === PHP_SESSION_NONE) {
         'httponly' => true,
         'samesite' => 'Lax',
     ]);
-    session_start();
+    @session_start();
 }
 
 // Boot the DB connection lazily; Settings uses it on demand.

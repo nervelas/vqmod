@@ -4,6 +4,21 @@ if (defined('FL_NOT_INSTALLED')) { redirect(base_url('install/')); }
 Auth::requireLogin();
 Auth::require('results.manage');
 
+/** Ensure matches.slot exists (kickoff order within a matchday). */
+if (!function_exists('fl_ensure_match_slot_column')) {
+    function fl_ensure_match_slot_column(): void
+    {
+        $has = Database::scalar(
+            "SELECT COUNT(*) FROM information_schema.columns
+             WHERE table_schema = DATABASE() AND table_name = 'matches' AND column_name = 'slot'"
+        );
+        if (!$has) {
+            Database::q("ALTER TABLE matches ADD COLUMN slot SMALLINT UNSIGNED NULL AFTER matchday_id");
+        }
+    }
+}
+fl_ensure_match_slot_column();
+
 $tournaments = Database::all("SELECT tr.id, tr.name, l.name AS league_name FROM tournaments tr JOIN leagues l ON l.id=tr.league_id ORDER BY tr.created_at DESC");
 $action = str_input('action', 'list');
 $tournamentId = int_input('tournament');
@@ -15,6 +30,31 @@ $STATUSES = ['pending'=>'Pendiente','in_progress'=>'En juego','finished'=>'Final
 if (is_post()) {
     Security::requireCsrf();
     $op = str_input('op');
+
+    /* ---- Drag & drop: reorder matches within a matchday (AJAX) ---------- */
+    if ($op === 'reorder') {
+        $mdId  = int_input('matchday_id');
+        $order = array_values(array_filter(array_map('intval', explode(',', (string)post('order', '')))));
+        $md = $mdId ? Database::one("SELECT * FROM matchdays WHERE id = ?", [$mdId]) : null;
+        if (!$md || !$order) { json_response(['ok' => false, 'error' => 'Datos inválidos.'], 400); }
+        // All current matches of this matchday.
+        $rows = Database::all("SELECT id, match_time FROM matches WHERE matchday_id = ?", [$mdId]);
+        $existing = array_map('intval', array_column($rows, 'id'));
+        sort($existing);
+        $sortedOrder = $order; sort($sortedOrder);
+        if ($existing !== $sortedOrder) { json_response(['ok' => false, 'error' => 'El orden no coincide con la jornada.'], 400); }
+        // Keep the same set of kickoff times; reassign them by the new order.
+        $times = array_column($rows, 'match_time');
+        usort($times, fn($a, $b) => (strtotime($a ?? '') ?: 0) <=> (strtotime($b ?? '') ?: 0));
+        $resp = [];
+        foreach ($order as $i => $mid) {
+            $mt = $times[$i] ?? null;
+            Database::q("UPDATE matches SET slot = ?, match_time = ? WHERE id = ? AND matchday_id = ?", [$i + 1, $mt, $mid, $mdId]);
+            $resp[$mid] = ['slot' => $i + 1, 'time' => $mt ? substr($mt, 0, 5) : null];
+        }
+        Audit::log('reorder', 'calendar', $mdId, null, ['order' => $order]);
+        json_response(['ok' => true, 'matches' => $resp]);
+    }
 
     if ($op === 'save_match') {
         $matchId = int_input('id');
@@ -230,29 +270,77 @@ require 'partials/head.php';
             echo '<div class="empty-state card"><div class="es-icon">📅</div><h2>Sin calendario</h2><p>Genera el calendario de este torneo.</p><a class="btn" href="' . e(base_url('admin/calendar.php?tournament=' . $tournamentId)) . '">Generar calendario</a></div>';
         else:
             foreach ($matchdays as $md):
-                $matches = Database::all("SELECT m.*, h.name AS home_name, h.short_name AS home_short, h.logo AS home_logo, a.name AS away_name, a.short_name AS away_short, a.logo AS away_logo FROM matches m LEFT JOIN teams h ON h.id=m.home_team_id LEFT JOIN teams a ON a.id=m.away_team_id WHERE m.matchday_id = ? ORDER BY m.match_date, m.match_time, m.id", [$md['id']]); ?>
+                $matches = Database::all("SELECT m.*, h.name AS home_name, h.short_name AS home_short, h.logo AS home_logo, a.name AS away_name, a.short_name AS away_short, a.logo AS away_logo FROM matches m LEFT JOIN teams h ON h.id=m.home_team_id LEFT JOIN teams a ON a.id=m.away_team_id WHERE m.matchday_id = ? ORDER BY COALESCE(m.slot, 999999), m.match_time, m.id", [$md['id']]); ?>
                 <div class="card mb-3">
-                    <div class="flex justify-between items-center wrap" style="margin-bottom:.75rem">
+                    <div class="flex justify-between items-center wrap" style="margin-bottom:.4rem">
                         <h3 style="margin:0">Jornada <?= (int)$md['number'] ?> <span class="muted" style="font-weight:400;font-size:.85rem">· Vuelta <?= (int)$md['round'] ?> · <?= e(fmt_date($md['match_date'])) ?></span></h3>
+                        <span class="muted" style="font-size:.8rem">↕ Arrastra los partidos para reordenarlos y cambiar su horario</span>
                     </div>
-                    <?php foreach ($matches as $mt): ?>
-                        <div class="match-card card" style="padding:.7rem 1rem;margin-bottom:.5rem">
-                            <div class="match-team"><?= media_thumb($mt['home_logo'], $mt['home_name'] ?? '') ?> <span class="name"><?= e($mt['home_name'] ?? '—') ?></span></div>
-                            <div style="text-align:center">
-                                <div class="match-score">
-                                    <?php if ($mt['status']==='finished' || $mt['home_goals']!==null): ?>
-                                        <?= (int)$mt['home_goals'] ?> - <?= (int)$mt['away_goals'] ?>
-                                    <?php else: ?><span class="vs">vs</span><?php endif; ?>
+                    <div class="md-matches" data-matchday="<?= (int)$md['id'] ?>" data-csrf="<?= e(Security::csrfToken()) ?>">
+                    <?php foreach ($matches as $i => $mt): $slotNum = $mt['slot'] !== null ? (int)$mt['slot'] : ($i + 1); ?>
+                        <div class="match-row card" draggable="true" data-id="<?= (int)$mt['id'] ?>">
+                            <span class="drag-handle" title="Arrastrar">⠿</span>
+                            <span class="badge badge-muted slot-badge">Partido <span class="slot-num"><?= $slotNum ?></span> · <span class="slot-time"><?= e($mt['match_time'] ? substr($mt['match_time'],0,5) : '—') ?></span></span>
+                            <div class="mr-body">
+                                <div class="match-team"><?= media_thumb($mt['home_logo'], $mt['home_name'] ?? '') ?> <span class="name"><?= e($mt['home_name'] ?? '—') ?></span></div>
+                                <div style="text-align:center">
+                                    <div class="match-score">
+                                        <?php if ($mt['status']==='finished' || $mt['home_goals']!==null): ?><?= (int)$mt['home_goals'] ?> - <?= (int)$mt['away_goals'] ?><?php else: ?><span class="vs">vs</span><?php endif; ?>
+                                    </div>
+                                    <div class="match-meta"><span class="badge badge-muted"><?= e($STATUSES[$mt['status']]) ?></span></div>
                                 </div>
-                                <div class="match-meta"><span class="badge badge-muted"><?= e($STATUSES[$mt['status']]) ?></span></div>
+                                <div class="match-team away"><span class="name"><?= e($mt['away_name'] ?? '—') ?></span> <?= media_thumb($mt['away_logo'], $mt['away_name'] ?? '') ?></div>
                             </div>
-                            <div class="match-team away"><span class="name"><?= e($mt['away_name'] ?? '—') ?></span> <?= media_thumb($mt['away_logo'], $mt['away_name'] ?? '') ?></div>
+                            <a class="btn btn-sm btn-ghost" href="<?= e(base_url('admin/matches.php?action=edit&id=' . $mt['id'])) ?>">Editar / Acta</a>
                         </div>
-                        <div style="text-align:right;margin-bottom:.75rem"><a class="btn btn-sm btn-ghost" href="<?= e(base_url('admin/matches.php?action=edit&id=' . $mt['id'])) ?>">Editar / Acta</a></div>
                     <?php endforeach; ?>
+                    </div>
                 </div>
             <?php endforeach;
         endif;
     endif; ?>
+
+    <style>
+    .md-matches .match-row{display:flex;align-items:center;gap:.7rem;padding:.6rem .8rem;margin-bottom:.5rem}
+    .md-matches .match-row .mr-body{flex:1;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.6rem;min-width:0}
+    .md-matches .drag-handle{cursor:grab;color:var(--c-text-subtle);font-size:1.2rem;user-select:none;line-height:1}
+    .md-matches .match-row.dragging{opacity:.45}
+    .md-matches .match-row.drop-target{outline:2px dashed var(--c-accent);outline-offset:2px}
+    .slot-badge{white-space:nowrap}
+    @media(max-width:620px){.md-matches .match-row{flex-wrap:wrap}.md-matches .match-row .mr-body{flex-basis:100%;order:3}}
+    </style>
+    <script>
+    (function(){
+        var dragEl=null;
+        function rowAfter(list,y){
+            var rows=[].slice.call(list.querySelectorAll('.match-row'));
+            for(var i=0;i<rows.length;i++){ if(rows[i]===dragEl) continue; var b=rows[i].getBoundingClientRect(); if(y < b.top + b.height/2) return rows[i]; }
+            return null;
+        }
+        function save(list){
+            var ids=[].slice.call(list.querySelectorAll('.match-row')).map(function(r){return r.getAttribute('data-id');});
+            var body='op=reorder&matchday_id='+encodeURIComponent(list.getAttribute('data-matchday'))+'&order='+encodeURIComponent(ids.join(','))+'&_csrf='+encodeURIComponent(list.getAttribute('data-csrf'));
+            fetch(location.pathname,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRF-Token':list.getAttribute('data-csrf')},body:body})
+            .then(function(r){return r.json();})
+            .then(function(d){
+                if(d&&d.ok){ Object.keys(d.matches).forEach(function(id){ var row=list.querySelector('.match-row[data-id="'+id+'"]'); if(!row)return; var sn=row.querySelector('.slot-num'),st=row.querySelector('.slot-time'); if(sn)sn.textContent=d.matches[id].slot; if(st)st.textContent=d.matches[id].time||'—'; }); toast('Orden y horarios actualizados'); }
+                else { toast((d&&d.error)||'No se pudo reordenar'); setTimeout(function(){location.reload();},600); }
+            }).catch(function(){ location.reload(); });
+        }
+        function toast(msg){
+            var t=document.createElement('div'); t.textContent=msg;
+            t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--c-elevated);color:var(--c-text);border:1px solid var(--c-border);padding:.6rem 1rem;border-radius:10px;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.3);font-weight:600';
+            document.body.appendChild(t); setTimeout(function(){t.remove();},1800);
+        }
+        document.querySelectorAll('.md-matches').forEach(function(list){
+            list.querySelectorAll('.match-row').forEach(function(row){
+                row.addEventListener('dragstart',function(e){ dragEl=row; row.classList.add('dragging'); if(e.dataTransfer){e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain','');}catch(_){}} });
+                row.addEventListener('dragend',function(){ row.classList.remove('dragging'); dragEl=null; });
+            });
+            list.addEventListener('dragover',function(e){ e.preventDefault(); if(!dragEl||!list.contains(dragEl))return; var after=rowAfter(list,e.clientY); if(after==null){ if(list.lastElementChild!==dragEl) list.appendChild(dragEl); } else if(after!==dragEl){ list.insertBefore(dragEl,after); } });
+            list.addEventListener('drop',function(e){ e.preventDefault(); if(dragEl){ save(list); } });
+        });
+    })();
+    </script>
 <?php endif; ?>
 <?php require 'partials/foot.php'; ?>

@@ -102,6 +102,71 @@ class CalendarGenerator
     }
 
     /**
+     * Rotate a matchday's matches so that a given pairing does not always sit
+     * in the same time slot across matchdays (equitable kickoff-hour spread).
+     */
+    public static function rotateForEquity(array $matches, int $mdIndex): array
+    {
+        $n = count($matches);
+        if ($n <= 1) {
+            return array_values($matches);
+        }
+        $matches = array_values($matches);
+        $r = $mdIndex % $n;
+        return array_merge(array_slice($matches, $r), array_slice($matches, 0, $r));
+    }
+
+    /**
+     * Kickoff time for a given slot within a matchday: base time staggered by
+     * $intervalMin minutes per slot. Returns "HH:MM" or null when no base time.
+     */
+    public static function slotTime(?string $base, int $intervalMin, int $slotIndex): ?string
+    {
+        if (empty($base)) {
+            return null;
+        }
+        $ts = strtotime($base);
+        if ($ts === false) {
+            return null;
+        }
+        $mins = ((int)date('H', $ts)) * 60 + (int)date('i', $ts) + $slotIndex * max(0, $intervalMin);
+        $mins %= 1440;
+        return sprintf('%02d:%02d', intdiv($mins, 60), $mins % 60);
+    }
+
+    /**
+     * Verify kickoff-hour equity across the whole tournament: no team should
+     * play more than $maxShare of its matches at a single hour (soft check).
+     * $schedule: array of matchdays, each an ordered list of ['home','away','time'].
+     * Returns a list of warnings (empty = balanced).
+     */
+    public static function validateTimeEquity(array $schedule, float $maxShare = 0.75): array
+    {
+        $byTeamHour = [];
+        $byTeamTotal = [];
+        foreach ($schedule as $day) {
+            foreach ($day as $m) {
+                $hour = $m['time'] !== null ? substr((string)$m['time'], 0, 2) : '--';
+                foreach ([$m['home'], $m['away']] as $t) {
+                    if (!$t) { continue; }
+                    $byTeamHour[$t][$hour] = ($byTeamHour[$t][$hour] ?? 0) + 1;
+                    $byTeamTotal[$t] = ($byTeamTotal[$t] ?? 0) + 1;
+                }
+            }
+        }
+        $warnings = [];
+        foreach ($byTeamHour as $team => $hours) {
+            $total = $byTeamTotal[$team] ?? 0;
+            if ($total < 4) { continue; } // too few games to judge
+            $max = max($hours);
+            if ($max / $total > $maxShare) {
+                $warnings[] = "Un equipo juega demasiados partidos a la misma hora ({$max} de {$total}).";
+            }
+        }
+        return $warnings;
+    }
+
+    /**
      * Validate a generated schedule. Returns a list of error strings (empty = OK).
      */
     public static function validate(array $teams, array $result): array

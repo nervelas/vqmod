@@ -4,6 +4,21 @@ if (defined('FL_NOT_INSTALLED')) { redirect(base_url('install/')); }
 Auth::requireLogin();
 Auth::require('calendar.manage');
 
+/** Ensure matches.slot exists (order/kickoff-slot within a matchday). */
+if (!function_exists('fl_ensure_match_slot_column')) {
+    function fl_ensure_match_slot_column(): void
+    {
+        $has = Database::scalar(
+            "SELECT COUNT(*) FROM information_schema.columns
+             WHERE table_schema = DATABASE() AND table_name = 'matches' AND column_name = 'slot'"
+        );
+        if (!$has) {
+            Database::q("ALTER TABLE matches ADD COLUMN slot SMALLINT UNSIGNED NULL AFTER matchday_id");
+        }
+    }
+}
+fl_ensure_match_slot_column();
+
 $tournaments = Database::all("SELECT tr.id, tr.name, tr.rounds, l.name AS league_name, l.id AS league_id
     FROM tournaments tr JOIN leagues l ON l.id = tr.league_id ORDER BY tr.created_at DESC");
 
@@ -51,9 +66,10 @@ if (is_post()) {
     $days     = (array)post('days', []);
     $time     = str_input('match_time', '15:00');
     $interval = max(1, (int)int_input('interval', 7));
+    $intervalMin = max(0, (int)int_input('interval_min', 120));
     $venue    = str_input('venue');
 
-    $formParams = compact('rounds','start','days','time','interval','venue');
+    $formParams = compact('rounds','start','days','time','interval','intervalMin','venue');
 
     // Validate teams belong to the tournament's league.
     if (count($teamIds) < 2) {
@@ -98,12 +114,15 @@ if (is_post()) {
                     "INSERT INTO matchdays (tournament_id, number, round, match_date, status) VALUES (?,?,?,?,'scheduled')",
                     [$tournamentId, $md['number'], $md['round'], $mdDate]
                 );
-                foreach ($md['matches'] as $m) {
-                    if ($m['bye'] !== null) { continue; }
+                // Non-bye matches, rotated per matchday for equitable kickoff hours.
+                $dayMatches = array_values(array_filter($md['matches'], fn($m) => $m['bye'] === null));
+                $dayMatches = CalendarGenerator::rotateForEquity($dayMatches, $idx);
+                foreach ($dayMatches as $slotIdx => $m) {
+                    $mt = CalendarGenerator::slotTime($time, $intervalMin, $slotIdx);
                     Database::q(
-                        "INSERT INTO matches (tournament_id, matchday_id, home_team_id, away_team_id, match_date, match_time, venue, status)
-                         VALUES (?,?,?,?,?,?,?, 'pending')",
-                        [$tournamentId, $mdId, $m['home'], $m['away'], $mdDate, $time ?: null, $venue ?: null]
+                        "INSERT INTO matches (tournament_id, matchday_id, slot, home_team_id, away_team_id, match_date, match_time, venue, status)
+                         VALUES (?,?,?,?,?,?,?,?, 'pending')",
+                        [$tournamentId, $mdId, $slotIdx + 1, $m['home'], $m['away'], $mdDate, $mt, $venue ?: null]
                     );
                 }
             }
@@ -172,24 +191,42 @@ if (!$teamIds && $assigned) { $teamIds = array_map('intval', $assigned); }
             $teamMap = [];
             foreach ($leagueTeams as $lt) { $teamMap[$lt['id']] = $lt; }
             $dates = schedule_dates(count($preview['matchdays']), $formParams['start'], $formParams['days'], $formParams['interval']);
-            foreach ($preview['matchdays'] as $idx => $md): ?>
+            $intervalMin = (int)($formParams['intervalMin'] ?? 120);
+            // Build the display/equity schedule (rotated per matchday, staggered times).
+            $equitySchedule = [];
+            foreach ($preview['matchdays'] as $idx => $md) {
+                $dm = CalendarGenerator::rotateForEquity(array_values(array_filter($md['matches'], fn($m) => $m['bye'] === null)), $idx);
+                $rows = [];
+                foreach ($dm as $s => $m) { $rows[] = ['home'=>$m['home'],'away'=>$m['away'],'time'=>CalendarGenerator::slotTime($formParams['time'], $intervalMin, $s)]; }
+                $equitySchedule[$idx] = $rows;
+            }
+            $equityWarnings = CalendarGenerator::validateTimeEquity($equitySchedule);
+            ?>
+            <?php if ($equityWarnings): ?>
+                <div class="alert alert-warning"><span>⚠️ Reparto de horarios mejorable: <?= e($equityWarnings[0]) ?> Aún así, puedes ajustar cada horario manualmente después.</span></div>
+            <?php else: ?>
+                <div class="alert alert-success"><span>✔ Horarios escalonados y repartidos equitativamente: ningún equipo juega siempre a la misma hora.</span></div>
+            <?php endif; ?>
+            <?php foreach ($preview['matchdays'] as $idx => $md): ?>
                 <div class="mb-2">
                     <div class="flex justify-between items-center" style="margin-bottom:.4rem">
                         <strong>Jornada <?= (int)$md['number'] ?></strong>
                         <span class="muted" style="font-size:.82rem">Vuelta <?= (int)$md['round'] ?> · <?= e(fmt_date($dates[$idx] ?? null)) ?></span>
                     </div>
-                    <?php foreach ($md['matches'] as $m): ?>
-                        <?php if ($m['bye'] !== null): ?>
-                            <div class="match-card card" style="grid-template-columns:1fr;padding:.6rem 1rem">
-                                <span class="muted">Descansa: <?= e(team_display($teamMap[$m['bye']] ?? null)) ?></span>
-                            </div>
-                        <?php else: ?>
-                            <div class="match-card card" style="padding:.6rem 1rem">
-                                <div class="match-team"><?= media_thumb($teamMap[$m['home']]['logo'] ?? null, team_display($teamMap[$m['home']] ?? null)) ?> <span class="name"><?= e(team_display($teamMap[$m['home']] ?? null)) ?></span></div>
+                    <?php foreach (array_filter($md['matches'], fn($m) => $m['bye'] !== null) as $m): ?>
+                        <div class="match-card card" style="grid-template-columns:1fr;padding:.6rem 1rem">
+                            <span class="muted">Descansa: <?= e(team_display($teamMap[$m['bye']] ?? null)) ?></span>
+                        </div>
+                    <?php endforeach; ?>
+                    <?php foreach ($equitySchedule[$idx] as $slotIdx => $m): ?>
+                        <div class="match-card card" style="padding:.6rem 1rem">
+                            <div class="match-team"><?= media_thumb($teamMap[$m['home']]['logo'] ?? null, team_display($teamMap[$m['home']] ?? null)) ?> <span class="name"><?= e(team_display($teamMap[$m['home']] ?? null)) ?></span></div>
+                            <div style="text-align:center">
                                 <div class="match-score"><span class="vs">vs</span></div>
-                                <div class="match-team away"><span class="name"><?= e(team_display($teamMap[$m['away']] ?? null)) ?></span> <?= media_thumb($teamMap[$m['away']]['logo'] ?? null, team_display($teamMap[$m['away']] ?? null)) ?></div>
+                                <div class="match-meta"><span class="badge badge-muted">Partido <?= $slotIdx + 1 ?> · <?= e($m['time'] ?? '—') ?></span></div>
                             </div>
-                        <?php endif; ?>
+                            <div class="match-team away"><span class="name"><?= e(team_display($teamMap[$m['away']] ?? null)) ?></span> <?= media_thumb($teamMap[$m['away']]['logo'] ?? null, team_display($teamMap[$m['away']] ?? null)) ?></div>
+                        </div>
                     <?php endforeach; ?>
                 </div>
             <?php endforeach; ?>
@@ -204,6 +241,7 @@ if (!$teamIds && $assigned) { $teamIds = array_map('intval', $assigned); }
                 <?php foreach ((array)$formParams['days'] as $d): ?><input type="hidden" name="days[]" value="<?= (int)$d ?>"><?php endforeach; ?>
                 <input type="hidden" name="match_time" value="<?= e($formParams['time']) ?>">
                 <input type="hidden" name="interval" value="<?= (int)$formParams['interval'] ?>">
+                <input type="hidden" name="interval_min" value="<?= (int)($formParams['intervalMin'] ?? 120) ?>">
                 <input type="hidden" name="venue" value="<?= e($formParams['venue']) ?>">
                 <button class="btn" type="submit">✔ Confirmar y guardar</button>
                 <a class="btn btn-ghost" href="<?= e(base_url('admin/calendar.php?tournament=' . $tournamentId)) ?>">Regenerar / Editar</a>
@@ -239,7 +277,8 @@ if (!$teamIds && $assigned) { $teamIds = array_map('intval', $assigned); }
                     <div class="field"><label for="interval">Intervalo entre jornadas (días)</label><input class="input" type="number" min="1" id="interval" name="interval" value="<?= e($formParams['interval'] ?? 7) ?>"></div>
                 </div>
                 <div class="form-row">
-                    <div class="field"><label for="match_time">Hora predeterminada</label><input class="input" type="time" id="match_time" name="match_time" value="<?= e($formParams['time'] ?? '15:00') ?>"></div>
+                    <div class="field"><label for="match_time">Hora del primer partido</label><input class="input" type="time" id="match_time" name="match_time" value="<?= e($formParams['time'] ?? '15:00') ?>"></div>
+                    <div class="field"><label for="interval_min">Intervalo entre partidos (minutos)</label><input class="input" type="number" min="0" step="15" id="interval_min" name="interval_min" value="<?= e($formParams['intervalMin'] ?? 120) ?>"><div class="help">Cada partido de la jornada empieza a distinta hora. 0 = todos a la misma hora.</div></div>
                     <div class="field"><label for="venue">Sede predeterminada (opcional)</label><input class="input" id="venue" name="venue" value="<?= e($formParams['venue'] ?? '') ?>"></div>
                 </div>
                 <div class="field">

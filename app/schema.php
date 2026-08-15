@@ -229,6 +229,7 @@ return [
     id             INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     tournament_id  INT UNSIGNED NOT NULL,
     matchday_id    INT UNSIGNED NULL,
+    slot           SMALLINT UNSIGNED NULL,
     home_team_id   INT UNSIGNED NULL,
     away_team_id   INT UNSIGNED NULL,
     match_date     DATE NULL,

@@ -1,7 +1,7 @@
 -- =====================================================================
 --  Centro Educativo Cristiano Fuente de Vida — Database schema
 --  Engine: InnoDB  |  Charset: utf8mb4
---  Safe to import on a fresh MySQL/MariaDB database (PHP 8.2+ / cPanel).
+--  Safe to import on a fresh MySQL/MariaDB database (PHP 8.0+ / cPanel).
 -- =====================================================================
 
 SET NAMES utf8mb4;

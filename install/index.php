@@ -20,7 +20,7 @@ function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 
 /* ---- Requirements ---- */
 $requirements = [
-    'PHP >= 8.1'          => version_compare(PHP_VERSION, '8.1.0', '>='),
+    'PHP >= 8.0'          => version_compare(PHP_VERSION, '8.0.0', '>='),
     'Extensión PDO'       => extension_loaded('pdo'),
     'PDO MySQL'           => extension_loaded('pdo_mysql'),
     'Extensión mbstring'  => extension_loaded('mbstring'),

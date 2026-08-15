@@ -1,6 +1,6 @@
 # Centro Educativo Cristiano Fuente de Vida — Sitio web + Panel de administración
 
-Sitio web institucional completo, **responsive** y **administrable**, construido en **PHP 8.2+ / MySQL**, listo para **hosting compartido con cPanel**. No requiere Node.js, Docker ni servicios externos en producción.
+Sitio web institucional completo, **responsive** y **administrable**, construido en **PHP 8.0+ / MySQL**, listo para **hosting compartido con cPanel**. No requiere Node.js, Docker ni servicios externos en producción.
 
 Incluye:
 
@@ -19,7 +19,7 @@ Incluye:
 
 ## Requisitos
 
-- PHP **8.1 o superior** (recomendado 8.2+), con extensiones: `pdo_mysql`, `mbstring`, `fileinfo`, `gd`.
+- PHP **8.0 o superior** (recomendado 8.2+), con extensiones: `pdo_mysql`, `mbstring`, `fileinfo`, `gd`.
 - MySQL / MariaDB.
 - Apache con `mod_rewrite` (para URLs limpias).
 

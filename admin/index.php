@@ -55,7 +55,7 @@ require 'partials/head.php';
             ['Ligas', $counts['leagues'], 'leagues.php'],
             ['Torneos', $counts['tournaments'], 'tournaments.php'],
             ['Equipos', $counts['teams'], 'teams.php'],
-            ['Jugadores', $counts['players'], 'players.php'],
+            ['Jugadores', $counts['players'], 'teams.php'],
             ['Partidos', $counts['matches'], 'matches.php'],
             ['Finalizados', $counts['finished'], 'matches.php'],
         ];

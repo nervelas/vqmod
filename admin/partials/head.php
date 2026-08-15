@@ -20,8 +20,7 @@ $nav = [
         ['final',       '🥇', 'Fase Final',   'final_phase.php', 'tournaments.manage'],
     ],
     'Participantes' => [
-        ['teams',   '🛡️', 'Equipos',   'teams.php',   'teams.manage'],
-        ['players', '👤', 'Jugadores', 'players.php', 'players.manage'],
+        ['teams',   '🛡️', 'Equipos', 'teams.php', 'teams.manage'],
     ],
     'Estadísticas' => [
         ['scorers',    '🎽', 'Goleadores',  'scorers.php',     'results.manage'],

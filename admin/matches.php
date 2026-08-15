@@ -170,7 +170,7 @@ if ($action === 'edit' && $matchId) {
             </form>
 
             <?php if (!$players): ?>
-                <div class="alert alert-warning"><span>No hay jugadores en la liga. <a href="<?= e(base_url('admin/players.php?action=new')) ?>">Crea jugadores</a>.</span></div>
+                <div class="alert alert-warning"><span>No hay jugadores en la liga. <a href="<?= e(base_url('admin/teams.php')) ?>">Agrégalos dentro de cada equipo</a>.</span></div>
             <?php endif; ?>
 
             <?php if ($events): ?>

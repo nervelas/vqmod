@@ -175,6 +175,7 @@ return [
 "CREATE TABLE IF NOT EXISTS players (
     id         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     league_id  INT UNSIGNED NOT NULL,
+    team_id    INT UNSIGNED NULL,
     first_name VARCHAR(120) NOT NULL,
     last_name  VARCHAR(120) NULL,
     nickname   VARCHAR(120) NULL,
@@ -185,7 +186,9 @@ return [
     notes      TEXT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_player_league (league_id),
-    CONSTRAINT fk_player_league FOREIGN KEY (league_id) REFERENCES leagues(id) ON DELETE CASCADE
+    INDEX idx_player_team (team_id),
+    CONSTRAINT fk_player_league FOREIGN KEY (league_id) REFERENCES leagues(id) ON DELETE CASCADE,
+    CONSTRAINT fk_player_team FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 
 "CREATE TABLE IF NOT EXISTS tournament_teams (

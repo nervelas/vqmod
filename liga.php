@@ -130,6 +130,12 @@ require __DIR__ . '/public/top.php';
                                     </div>
                                     <div class="match-team away"><span class="name"><?= e($mt['an'] ?? '—') ?></span> <?= media_thumb($mt['al'], $mt['an'] ?? '') ?></div>
                                 </div>
+                                <?php if (!empty($mt['referee_report']) && !empty($mt['referee_report_public'])): ?>
+                                    <div style="text-align:center;padding:.1rem 0 .55rem">
+                                        <img class="liga-acta-thumb" src="<?= e(base_url($mt['referee_report'])) ?>" data-full="<?= e(base_url($mt['referee_report'])) ?>" alt="Acta arbitral" title="Ver acta arbitral" style="width:52px;height:52px;object-fit:cover;border-radius:8px;border:1px solid var(--c-border);cursor:zoom-in;display:inline-block">
+                                        <div class="subtle" style="font-size:.7rem">📄 Acta arbitral</div>
+                                    </div>
+                                <?php endif; ?>
                             <?php endforeach; ?>
                         </div>
                     <?php endforeach; endif; ?>
@@ -213,4 +219,19 @@ require __DIR__ . '/public/top.php';
         <?php endif; ?>
     </div>
 </section>
+<div id="acta-lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;align-items:center;justify-content:center;padding:1.5rem;cursor:zoom-out">
+    <img id="acta-lightbox-img" src="" alt="Acta arbitral" style="max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.6)">
+</div>
+<script>
+(function () {
+    var lb = document.getElementById('acta-lightbox'), img = document.getElementById('acta-lightbox-img');
+    document.querySelectorAll('.liga-acta-thumb').forEach(function (t) {
+        t.addEventListener('click', function () { img.src = t.getAttribute('data-full'); lb.style.display = 'flex'; });
+    });
+    if (lb) {
+        lb.addEventListener('click', function () { lb.style.display = 'none'; img.src = ''; });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { lb.style.display = 'none'; img.src = ''; } });
+    }
+})();
+</script>
 <?php require __DIR__ . '/public/bottom.php'; ?>

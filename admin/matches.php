@@ -30,6 +30,13 @@ if (!function_exists('fl_ensure_match_report_column')) {
         if (!$has) {
             Database::q("ALTER TABLE matches ADD COLUMN referee_report VARCHAR(255) NULL");
         }
+        $hasPub = Database::scalar(
+            "SELECT COUNT(*) FROM information_schema.columns
+             WHERE table_schema = DATABASE() AND table_name = 'matches' AND column_name = 'referee_report_public'"
+        );
+        if (!$hasPub) {
+            Database::q("ALTER TABLE matches ADD COLUMN referee_report_public TINYINT(1) NOT NULL DEFAULT 0");
+        }
     }
 }
 fl_ensure_match_report_column();
@@ -157,18 +164,23 @@ if (is_post()) {
                 flash('danger', $ex->getMessage());
                 redirect(base_url('admin/matches.php?action=edit&id=' . $matchId . '#acta-arbitral'));
             }
+            $pub = post('report_public') ? 1 : 0;
             if (post('remove_report') && !empty($m['referee_report'])) {
                 Upload::delete($m['referee_report']);
-                Database::q("UPDATE matches SET referee_report = NULL WHERE id = ?", [$matchId]);
+                Database::q("UPDATE matches SET referee_report = NULL, referee_report_public = 0 WHERE id = ?", [$matchId]);
                 flash('success', 'Acta arbitral eliminada.');
             } elseif ($img) {
                 if (!empty($m['referee_report'])) { Upload::delete($m['referee_report']); }
-                Database::q("UPDATE matches SET referee_report = ? WHERE id = ?", [$img, $matchId]);
+                Database::q("UPDATE matches SET referee_report = ?, referee_report_public = ? WHERE id = ?", [$img, $pub, $matchId]);
                 flash('success', 'Acta arbitral subida correctamente.');
+            } elseif (!empty($m['referee_report'])) {
+                // No new file: just update the public/private visibility.
+                Database::q("UPDATE matches SET referee_report_public = ? WHERE id = ?", [$pub, $matchId]);
+                flash('success', 'Visibilidad del acta actualizada.');
             } else {
                 flash('warning', 'Selecciona una imagen (JPG, PNG o WEBP).');
             }
-            Audit::log('update', 'matches', $matchId, null, ['referee_report' => 'changed']);
+            Audit::log('update', 'matches', $matchId, null, ['referee_report' => 'changed', 'public' => $pub]);
         }
         redirect(base_url('admin/matches.php?action=edit&id=' . $matchId . '#acta-arbitral'));
     }
@@ -302,6 +314,11 @@ if ($action === 'edit' && $matchId) {
                     <label class="help"><input type="checkbox" name="remove_report" value="1"> Eliminar acta actual</label>
                 </div>
                 <div class="field">
+                    <label>Visibilidad del acta</label>
+                    <label class="check-item" style="max-width:360px"><input type="checkbox" name="report_public" value="1"<?= checked(!empty($m['referee_report_public'])) ?>> Mostrar el acta en la página pública de la liga</label>
+                    <div class="help">Sin marcar, el acta queda privada (solo visible en el panel).</div>
+                </div>
+                <div class="field">
                     <label for="referee_report">Reemplazar acta (JPG, PNG, WEBP)</label>
                     <input class="input" type="file" id="referee_report" name="referee_report" accept=".jpg,.jpeg,.png,.webp">
                 </div>
@@ -310,6 +327,10 @@ if ($action === 'edit' && $matchId) {
                 <div class="field">
                     <label for="referee_report">Imagen del acta (JPG, PNG, WEBP)</label>
                     <input class="input" type="file" id="referee_report" name="referee_report" accept=".jpg,.jpeg,.png,.webp" required>
+                </div>
+                <div class="field">
+                    <label class="check-item" style="max-width:360px"><input type="checkbox" name="report_public" value="1"> Mostrar el acta en la página pública de la liga</label>
+                    <div class="help">Sin marcar, el acta queda privada (solo visible en el panel).</div>
                 </div>
                 <button class="btn" type="submit">📄 Subir Acta Arbitral</button>
             <?php endif; ?>

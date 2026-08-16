@@ -488,7 +488,8 @@ if (!$teamIds && $assigned) { $teamIds = array_map('intval', $assigned); }
         <!-- Importar calendario desde PDF -->
         <div class="card card-pad-lg mt-3">
             <h3 style="margin-top:0">📄 Subir calendario (PDF)</h3>
-            <p class="muted" style="margin-top:-.4rem">Sube un PDF con las jornadas y partidos. El sistema los detecta y muestra una previsualización editable; solo se guarda cuando el calendario es válido (sin errores). Funciona con PDF de texto (no imágenes escaneadas) y con los nombres de equipos registrados en la liga.</p>
+            <p class="muted" style="margin-top:-.4rem">Sube un PDF con las jornadas y partidos. El sistema los detecta y muestra una previsualización editable; solo se guarda cuando el calendario es válido (sin errores). Funciona con PDF de texto (no imágenes escaneadas).</p>
+            <div class="alert alert-warning" style="align-items:flex-start"><span>⚠️ <strong>Importante:</strong> los nombres de los equipos en el PDF deben ser <strong>exactamente iguales</strong> a los nombres de los equipos creados en esta liga. Si no coinciden, no se reconocerán (podrás corregirlos en la previsualización antes de guardar).</span></div>
             <form method="post" enctype="multipart/form-data">
                 <?= Security::csrfField() ?>
                 <input type="hidden" name="op" value="import_pdf">

@@ -128,8 +128,45 @@ class PdfCalendar
         return $best;
     }
 
+    /** Parse a date found anywhere in a string into 'Y-m-d', or null. */
+    public static function parseDate(string $s): ?string
+    {
+        $mk = function ($y, $m, $d) {
+            $y = (int)$y; $m = (int)$m; $d = (int)$d;
+            return checkdate($m, $d, $y) ? sprintf('%04d-%02d-%02d', $y, $m, $d) : null;
+        };
+        if (preg_match('/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/', $s, $m)) { return $mk($m[1], $m[2], $m[3]); }
+        if (preg_match('~\b(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})\b~', $s, $m)) {
+            $y = $m[3]; if (strlen($y) === 2) { $y = '20' . $y; }
+            return $mk($y, $m[2], $m[1]);
+        }
+        $months = ['enero'=>1,'febrero'=>2,'marzo'=>3,'abril'=>4,'mayo'=>5,'junio'=>6,'julio'=>7,
+                   'agosto'=>8,'septiembre'=>9,'setiembre'=>9,'octubre'=>10,'noviembre'=>11,'diciembre'=>12];
+        if (preg_match('/\b(\d{1,2})\s+(?:de\s+)?([a-zA-Zá-úÁ-Ú]+)\s+(?:de\s+)?(\d{4})\b/u', $s, $m)) {
+            $mo = self::norm($m[2]);
+            foreach ($months as $name => $num) { if (self::norm($name) === $mo) { return $mk($m[3], $num, $m[1]); } }
+        }
+        return null;
+    }
+
+    /** Parse a time found in a string into 'HH:MM' (24h), or null. */
+    public static function parseTime(string $s): ?string
+    {
+        if (preg_match('/\b(\d{1,2})(?::(\d{2}))?\s*([ap])\.?\s*m\.?/i', $s, $m)) {
+            $h = (int)$m[1] % 12; if (strtolower($m[3]) === 'p') { $h += 12; }
+            $min = isset($m[2]) && $m[2] !== '' ? (int)$m[2] : 0;
+            return sprintf('%02d:%02d', $h, $min);
+        }
+        // 24h with ':' or 'h' separator (avoid matching dates that use / - .)
+        if (preg_match('/\b([01]?\d|2[0-3])[:h](\d{2})\b/', $s, $m)) {
+            return sprintf('%02d:%02d', (int)$m[1], (int)$m[2]);
+        }
+        return null;
+    }
+
     /**
      * Parse extracted text into jornadas + matches, mapping to team ids.
+     * Detects a date per jornada and a time per match when present in the PDF.
      * @param array $teams  id => name (the tournament's league teams)
      * @return array{jornadas: array, detected_matches: int, matched: int}
      */
@@ -141,24 +178,35 @@ class PdfCalendar
         $lines = preg_split('/[\r\n]+/', $text);
         $jornadas = [];
         $current = null;
+        $currentDate = null;
         $detected = 0; $matched = 0;
         $sepRe = '/\s+(?:vs\.?|versus|v\.?|x|@|-|–|—)\s+/iu';
 
         $ensure = function ($num) use (&$jornadas) {
-            foreach ($jornadas as &$j) { if ($j['number'] === $num) { return $j['number']; } }
+            foreach ($jornadas as $j) { if ($j['number'] === $num) { return; } }
+            $jornadas[] = ['number' => $num, 'date' => null, 'matches' => []];
+        };
+        $setJDate = function ($num, $date) use (&$jornadas) {
+            if (!$date) { return; }
+            foreach ($jornadas as &$j) { if ($j['number'] === $num && empty($j['date'])) { $j['date'] = $date; } }
             unset($j);
-            $jornadas[] = ['number' => $num, 'matches' => []];
-            return $num;
         };
 
         foreach ($lines as $line) {
             $line = trim(preg_replace('/\s+/', ' ', $line));
             if ($line === '') { continue; }
 
+            $isHeader = false;
             if (preg_match('/\b(?:jornada|fecha|matchday|round|semana)\b\D{0,4}(\d{1,3})/iu', $line, $mm)) {
                 $current = (int)$mm[1];
                 $ensure($current);
-                // A header line may also contain a match after it; fall through to try.
+                $isHeader = true;
+            }
+            // A date on a header or a standalone date line applies to the current jornada.
+            $lineDate = self::parseDate($line);
+            if ($lineDate) {
+                $currentDate = $lineDate;
+                if ($current !== null) { $setJDate($current, $currentDate); }
             }
 
             // Try to split into two team names.
@@ -171,11 +219,15 @@ class PdfCalendar
                     $matched++;
                     $num = $current ?? 1;
                     $ensure($num);
+                    $mTime = self::parseTime($line);
+                    $mDate = self::parseDate($line) ?: $currentDate;
+                    if ($mDate) { $setJDate($num, $mDate); }
                     foreach ($jornadas as &$j) {
                         if ($j['number'] === $num) {
                             $j['matches'][] = [
                                 'home_id' => $homeId, 'away_id' => $awayId,
                                 'home_raw' => trim($parts[0]), 'away_raw' => trim($parts[1]),
+                                'date' => $mDate, 'time' => $mTime,
                             ];
                             break;
                         }

@@ -103,7 +103,10 @@ if (is_post()) {
                 $parsed = PdfCalendar::parse(PdfCalendar::extractText($file['tmp_name']), $teamMap);
                 foreach ($parsed['jornadas'] as $j) {
                     foreach ($j['matches'] as $mm) {
-                        $importRows[] = ['jornada' => $j['number'], 'home' => $mm['home_id'], 'away' => $mm['away_id']];
+                        $importRows[] = [
+                            'jornada' => $j['number'], 'home' => $mm['home_id'], 'away' => $mm['away_id'],
+                            'date' => ($mm['date'] ?: $j['date']) ?: '', 'time' => $mm['time'] ?: '',
+                        ];
                     }
                 }
                 $importStats = ['detected' => $parsed['detected_matches'], 'matched' => $parsed['matched'], 'jornadas' => count($parsed['jornadas'])];
@@ -119,12 +122,15 @@ if (is_post()) {
     /* ---- Confirm & persist an imported / edited calendar ---------------- */
     if ($op === 'import_confirm') {
         $mj = (array)post('mj', []); $mh = (array)post('mh', []); $ma = (array)post('ma', []); $rm = (array)post('rm', []);
+        $md = (array)post('md', []); $mt = (array)post('mt', []);
         $rowsIn = [];
         foreach ($mj as $i => $jn) {
             if (isset($rm[$i])) { continue; }
             $h = (int)($mh[$i] ?? 0); $a = (int)($ma[$i] ?? 0); $jn = (int)$jn;
             if (!$h || !$a || $jn < 1) { continue; }
-            $rowsIn[] = ['jornada' => $jn, 'home' => $h, 'away' => $a];
+            $rowDate = (isset($md[$i]) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$md[$i])) ? $md[$i] : '';
+            $rowTime = (isset($mt[$i]) && preg_match('/^\d{1,2}:\d{2}$/', (string)$mt[$i])) ? substr('0' . $mt[$i], -5) : '';
+            $rowsIn[] = ['jornada' => $jn, 'home' => $h, 'away' => $a, 'date' => $rowDate, 'time' => $rowTime];
         }
         $byJ = [];
         foreach ($rowsIn as $r) { $byJ[$r['jornada']][] = $r; }
@@ -164,12 +170,16 @@ if (is_post()) {
                 $dates = schedule_dates(count($numbers), $start, $days, $interval);
                 $idx = 0;
                 foreach ($numbers as $jn) {
-                    $mdDate = $dates[$idx] ?? null;
+                    // Use a date detected/edited in the import if present, else the pattern date.
+                    $jdate = null;
+                    foreach ($byJ[$jn] as $r) { if (!empty($r['date'])) { $jdate = $r['date']; break; } }
+                    $mdDate = $jdate ?: ($dates[$idx] ?? null);
                     $mdId = Database::insert("INSERT INTO matchdays (tournament_id, number, round, match_date, status) VALUES (?,?,?,?, 'scheduled')", [$tournamentId, $jn, 1, $mdDate]);
                     $dayMatches = CalendarGenerator::rotateForEquity($byJ[$jn], $idx);
                     foreach ($dayMatches as $slotIdx => $r) {
-                        $mt = CalendarGenerator::slotTime($time, $intervalMin, $slotIdx);
-                        Database::q("INSERT INTO matches (tournament_id, matchday_id, slot, home_team_id, away_team_id, match_date, match_time, status) VALUES (?,?,?,?,?,?,?, 'pending')", [$tournamentId, $mdId, $slotIdx + 1, $r['home'], $r['away'], $mdDate, $mt]);
+                        // Use a time detected/edited for this match, else the staggered slot time.
+                        $mtime = !empty($r['time']) ? $r['time'] : CalendarGenerator::slotTime($time, $intervalMin, $slotIdx);
+                        Database::q("INSERT INTO matches (tournament_id, matchday_id, slot, home_team_id, away_team_id, match_date, match_time, status) VALUES (?,?,?,?,?,?,?, 'pending')", [$tournamentId, $mdId, $slotIdx + 1, $r['home'], $r['away'], $mdDate, $mtime]);
                     }
                     $idx++;
                 }
@@ -307,11 +317,13 @@ if (!$teamIds && $assigned) { $teamIds = array_map('intval', $assigned); }
                 <input type="hidden" name="tournament" value="<?= (int)$tournamentId ?>">
                 <div class="table-wrap mb-2">
                     <table class="data">
-                        <thead><tr><th style="width:90px">Jornada</th><th>Local</th><th>Visitante</th><th>Quitar</th></tr></thead>
+                        <thead><tr><th style="width:80px">Jornada</th><th style="width:150px">Fecha</th><th style="width:110px">Hora</th><th>Local</th><th>Visitante</th><th>Quitar</th></tr></thead>
                         <tbody>
                         <?php foreach ($importRows as $i => $r): ?>
                             <tr>
-                                <td><input class="input" type="number" min="1" style="width:80px" name="mj[<?= $i ?>]" value="<?= (int)$r['jornada'] ?>"></td>
+                                <td><input class="input" type="number" min="1" style="width:72px" name="mj[<?= $i ?>]" value="<?= (int)$r['jornada'] ?>"></td>
+                                <td><input class="input" type="date" name="md[<?= $i ?>]" value="<?= e($r['date'] ?? '') ?>"></td>
+                                <td><input class="input" type="time" name="mt[<?= $i ?>]" value="<?= e($r['time'] ?? '') ?>"></td>
                                 <td><select class="select" name="mh[<?= $i ?>]"><?= options($teamOptsAll, $r['home'], '—') ?></select></td>
                                 <td><select class="select" name="ma[<?= $i ?>]"><?= options($teamOptsAll, $r['away'], '—') ?></select></td>
                                 <td><label class="help"><input type="checkbox" name="rm[<?= $i ?>]" value="1"> Quitar</label></td>
@@ -320,7 +332,8 @@ if (!$teamIds && $assigned) { $teamIds = array_map('intval', $assigned); }
                         </tbody>
                     </table>
                 </div>
-                <h3>Fechas y horarios</h3>
+                <h3>Fechas y horarios (respaldo)</h3>
+                <p class="muted" style="margin-top:-.4rem;font-size:.85rem">Se usan las fechas y horas detectadas del PDF (columnas de arriba). Para las jornadas o partidos sin fecha/hora detectada se aplican estos valores.</p>
                 <div class="form-row">
                     <div class="field"><label>Fecha inicial</label><input class="input" type="date" name="start_date" value="<?= e($formParams['start'] ?? date('Y-m-d')) ?>"></div>
                     <div class="field"><label>Intervalo entre jornadas (días)</label><input class="input" type="number" min="1" name="interval" value="<?= e($formParams['interval'] ?? 7) ?>"></div>

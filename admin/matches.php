@@ -221,7 +221,7 @@ if ($action === 'edit' && $matchId) {
         <a class="btn btn-ghost" href="<?= e(base_url('admin/matches.php?tournament=' . $m['tournament_id'])) ?>">← Volver</a>
     </div>
 
-    <div class="grid" style="grid-template-columns:1fr 1fr;gap:1.5rem">
+    <div class="cols-2">
         <form method="post" class="card card-pad-lg">
             <?= Security::csrfField() ?>
             <input type="hidden" name="op" value="save_match">

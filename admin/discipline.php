@@ -80,7 +80,7 @@ require 'partials/head.php';
         </form>
     </div>
 
-    <div class="grid" style="grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start">
+    <div class="cols-2">
         <div class="card">
             <h3 style="margin-top:0">Tarjetas por jugador</h3>
             <?php if (!$tally): ?><p class="muted">Sin tarjetas registradas.</p><?php else: ?>

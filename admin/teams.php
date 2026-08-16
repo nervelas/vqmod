@@ -274,7 +274,7 @@ if ($action === 'new' || $action === 'edit') {
     <?php if ($action === 'edit' && $team): ?>
         <!-- ================= Jugadores del equipo ================= -->
         <div id="jugadores" class="mt-4"></div>
-        <div class="grid" style="grid-template-columns:1.15fr .85fr;gap:1.5rem;align-items:start">
+        <div class="cols-2 ratio">
             <div class="card">
                 <h3 style="margin-top:0">Jugadores de <?= e(team_display($team)) ?> <span class="badge badge-muted"><?= count($players) ?></span></h3>
                 <?php if (!$players): ?>

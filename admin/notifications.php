@@ -51,7 +51,7 @@ require 'partials/head.php';
     <p>App instalable (PWA) y avisos automáticos al teléfono con los resultados de cada jornada.</p>
 </div>
 
-<div class="grid" style="grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start">
+<div class="cols-2">
     <div class="card">
         <h3 style="margin-top:0">Estado</h3>
         <div class="detail-list">

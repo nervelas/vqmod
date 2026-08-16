@@ -194,13 +194,8 @@ class PdfCalendar
             $text = $conv !== false ? $conv : preg_replace('/[^\x09\x0A\x0D\x20-\x7E]/', ' ', $text);
         }
 
-        $lines = preg_split('/[\r\n]+/', (string)$text);
-        if (!is_array($lines)) { $lines = []; }
         $jornadas = [];
-        $current = null;
-        $currentDate = null;
         $detected = 0; $matched = 0;
-        $sepRe = '/\s+(?:vs\.?|versus|v\.?|x|@|-|–|—)\s+/iu';
 
         $ensure = function ($num) use (&$jornadas) {
             foreach ($jornadas as $j) { if ($j['number'] === $num) { return; } }
@@ -211,53 +206,86 @@ class PdfCalendar
             foreach ($jornadas as &$j) { if ($j['number'] === $num && empty($j['date'])) { $j['date'] = $date; } }
             unset($j);
         };
-
-        foreach ($lines as $line) {
-            $line = trim(preg_replace('/\s+/', ' ', $line));
-            if ($line === '') { continue; }
-
-            $isHeader = false;
-            if (preg_match('/\b(?:jornada|fecha|matchday|round|semana)\b\D{0,4}(\d{1,3})/iu', $line, $mm)) {
-                $current = (int)$mm[1];
-                $ensure($current);
-                $isHeader = true;
+        $add = function ($num, $hid, $aid, $hraw, $araw, $date, $time) use (&$jornadas, $ensure, $setJDate) {
+            $ensure($num);
+            if ($date) { $setJDate($num, $date); }
+            foreach ($jornadas as &$j) {
+                if ($j['number'] === $num) {
+                    $j['matches'][] = ['home_id' => $hid, 'away_id' => $aid, 'home_raw' => $hraw, 'away_raw' => $araw, 'date' => $date, 'time' => $time];
+                    break;
+                }
             }
-            // A date on a header or a standalone date line applies to the current jornada.
-            $lineDate = self::parseDate($line);
-            if ($lineDate) {
-                $currentDate = $lineDate;
-                if ($current !== null) { $setJDate($current, $currentDate); }
-            }
+            unset($j);
+        };
 
-            // Try to split into two team names.
-            $parts = preg_split($sepRe, $line, 2);
-            if (is_array($parts) && count($parts) === 2) {
+        // Locate "Jornada N" / "Fecha N" headers with their positions.
+        $headers = [];
+        if (@preg_match_all('/(?:jornada|fecha|matchday|round|semana)\D{0,4}(\d{1,3})/i', $text, $hm, PREG_OFFSET_CAPTURE | PREG_SET_ORDER)) {
+            foreach ($hm as $h) { $headers[] = ['off' => $h[0][1], 'num' => (int)$h[1][0]]; }
+        }
+        $jornadaAt = function ($off) use ($headers) {
+            $num = 1;
+            foreach ($headers as $hd) { if ($hd['off'] <= $off) { $num = $hd['num']; } else { break; } }
+            return $num;
+        };
+        // Date within each header's window (up to the next header).
+        $headerDate = [];
+        for ($i = 0; $i < count($headers); $i++) {
+            $from = $headers[$i]['off'];
+            $to = isset($headers[$i + 1]) ? $headers[$i + 1]['off'] : strlen($text);
+            $d = self::parseDate(substr($text, $from, $to - $from));
+            if ($d && !isset($headerDate[$headers[$i]['num']])) { $headerDate[$headers[$i]['num']] = $d; }
+        }
+
+        // ---- Pass 1: columnar format "[n n] LOCAL␣␣␣␣VISITANTE HH:MM" -------
+        $reCol = '/([A-Za-z][A-Za-z.\x80-\xff ]{1,40}?)\s{2,}([A-Za-z][A-Za-z.\x80-\xff ]{1,40}?)\s+(\d{1,2}:\d{2})/';
+        $cands = [];
+        if (@preg_match_all($reCol, $text, $cm, PREG_OFFSET_CAPTURE | PREG_SET_ORDER)) {
+            foreach ($cm as $m) {
+                $cands[] = ['off' => $m[0][1], 'home' => trim($m[1][0]), 'away' => trim($m[2][0]), 'time' => $m[3][0]];
+            }
+        }
+
+        if ($cands) {
+            foreach ($cands as $c) {
                 $detected++;
-                $homeId = self::matchTeam($parts[0], $teams, $normMap);
-                $awayId = self::matchTeam($parts[1], $teams, $normMap);
-                if ($homeId && $awayId && $homeId !== $awayId) {
+                $hid = self::matchTeam($c['home'], $teams, $normMap);
+                $aid = self::matchTeam($c['away'], $teams, $normMap);
+                if ($hid && $aid && $hid !== $aid) {
                     $matched++;
-                    $num = $current ?? 1;
-                    $ensure($num);
-                    $mTime = self::parseTime($line);
-                    $mDate = self::parseDate($line) ?: $currentDate;
-                    if ($mDate) { $setJDate($num, $mDate); }
-                    foreach ($jornadas as &$j) {
-                        if ($j['number'] === $num) {
-                            $j['matches'][] = [
-                                'home_id' => $homeId, 'away_id' => $awayId,
-                                'home_raw' => trim($parts[0]), 'away_raw' => trim($parts[1]),
-                                'date' => $mDate, 'time' => $mTime,
-                            ];
-                            break;
-                        }
+                    $num = $jornadaAt($c['off']);
+                    $add($num, $hid, $aid, $c['home'], $c['away'], $headerDate[$num] ?? null, $c['time']);
+                }
+            }
+        } else {
+            // ---- Pass 2: separator format "Equipo A vs Equipo B" ------------
+            $sepRe = '/\s+(?:vs\.?|versus|v\.?|x|@|-|–|—)\s+/iu';
+            $lines = preg_split('/[\r\n]+/', (string)$text);
+            if (!is_array($lines)) { $lines = []; }
+            $current = null; $currentDate = null;
+            foreach ($lines as $line) {
+                $line = trim(preg_replace('/\s+/', ' ', $line));
+                if ($line === '') { continue; }
+                if (preg_match('/\b(?:jornada|fecha|matchday|round|semana)\b\D{0,4}(\d{1,3})/iu', $line, $mm)) {
+                    $current = (int)$mm[1]; $ensure($current);
+                }
+                $lineDate = self::parseDate($line);
+                if ($lineDate) { $currentDate = $lineDate; if ($current !== null) { $setJDate($current, $currentDate); } }
+                $parts = preg_split($sepRe, $line, 2);
+                if (is_array($parts) && count($parts) === 2) {
+                    $detected++;
+                    $homeId = self::matchTeam($parts[0], $teams, $normMap);
+                    $awayId = self::matchTeam($parts[1], $teams, $normMap);
+                    if ($homeId && $awayId && $homeId !== $awayId) {
+                        $matched++;
+                        $num = $current ?? 1;
+                        $add($num, $homeId, $awayId, trim($parts[0]), trim($parts[1]), self::parseDate($line) ?: $currentDate, self::parseTime($line));
                     }
-                    unset($j);
                 }
             }
         }
 
-        // Drop empty jornadas, renumber sequentially by first appearance order of number.
+        // Drop empty jornadas, order by number.
         $jornadas = array_values(array_filter($jornadas, fn($j) => !empty($j['matches'])));
         usort($jornadas, fn($a, $b) => $a['number'] <=> $b['number']);
 

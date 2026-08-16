@@ -94,13 +94,12 @@ if (is_post()) {
 
         $before = $m;
         Database::q(
-            "UPDATE matches SET home_team_id=?, away_team_id=?, match_date=?, match_time=?, venue=?, status=?, home_goals=?, away_goals=?, home_pens=?, away_pens=?, notes=? WHERE id=?",
+            "UPDATE matches SET home_team_id=?, away_team_id=?, match_date=?, match_time=?, status=?, home_goals=?, away_goals=?, home_pens=?, away_pens=?, notes=? WHERE id=?",
             [
                 int_input('home_team_id') ?: null,
                 int_input('away_team_id') ?: null,
                 str_input('match_date') ?: null,
                 str_input('match_time') ?: null,
-                str_input('venue') ?: null,
                 $status, $hg, $ag, $hp, $ap,
                 str_input('notes') ?: null,
                 $matchId,
@@ -201,6 +200,19 @@ if ($action === 'edit' && $matchId) {
     $events = Database::all("SELECT me.*, p.first_name, p.last_name, p.nickname, t.short_name, t.name AS team_name FROM match_events me LEFT JOIN players p ON p.id=me.player_id LEFT JOIN teams t ON t.id=me.team_id WHERE me.match_id=? ORDER BY me.minute IS NULL, me.minute, me.id", [$matchId]);
     $home = $m['home_team_id'] ? Database::one("SELECT * FROM teams WHERE id=?", [$m['home_team_id']]) : null;
     $away = $m['away_team_id'] ? Database::one("SELECT * FROM teams WHERE id=?", [$m['away_team_id']]) : null;
+
+    // Players grouped by team (team_id) so the acta lists only that team's squad.
+    $teamPlayers = [];
+    foreach ([$home, $away] as $tm) {
+        if (!$tm) { continue; }
+        $tid = (int)$tm['id'];
+        $teamPlayers[$tid] = [];
+        foreach (Database::all("SELECT id, first_name, last_name, nickname FROM players WHERE team_id = ? AND status='active' ORDER BY first_name, last_name", [$tid]) as $p) {
+            $teamPlayers[$tid][] = ['id' => (int)$p['id'], 'name' => player_name($p)];
+        }
+    }
+    $firstTeamId = $home ? (int)$home['id'] : ($away ? (int)$away['id'] : 0);
+
     $evLabels = ['goal'=>'⚽ Gol','own_goal'=>'⚽ Autogol','yellow'=>'🟨 Amarilla','double_yellow'=>'🟨🟨 Doble amarilla','red'=>'🟥 Roja','sub_in'=>'↑ Entra','sub_out'=>'↓ Sale'];
     require 'partials/head.php';
     ?>
@@ -234,10 +246,7 @@ if ($action === 'edit' && $matchId) {
                 <div class="field"><label>Fecha</label><input class="input" type="date" name="match_date" value="<?= e($m['match_date']) ?>"></div>
                 <div class="field"><label>Hora</label><input class="input" type="time" name="match_time" value="<?= e($m['match_time']) ?>"></div>
             </div>
-            <div class="form-row">
-                <div class="field"><label>Sede</label><input class="input" name="venue" value="<?= e($m['venue']) ?>"></div>
-                <div class="field"><label>Estado</label><select class="select" name="status"><?= options($STATUSES, $m['status']) ?></select></div>
-            </div>
+            <div class="field"><label>Estado</label><select class="select" name="status"><?= options($STATUSES, $m['status']) ?></select></div>
             <div class="field"><label>Observaciones</label><textarea class="textarea" name="notes"><?= e($m['notes']) ?></textarea></div>
             <button class="btn" type="submit">Guardar partido</button>
         </form>
@@ -251,18 +260,38 @@ if ($action === 'edit' && $matchId) {
                 <div class="form-row">
                     <div class="field" style="margin-bottom:.6rem"><label>Tipo</label><select class="select" name="type"><?= options($evLabels) ?></select></div>
                     <div class="field" style="margin-bottom:.6rem"><label>Equipo</label>
-                        <select class="select" name="team_id">
+                        <select class="select" name="team_id" id="ev-team">
                             <?php if ($home): ?><option value="<?= (int)$home['id'] ?>"><?= e(team_display($home)) ?> (L)</option><?php endif; ?>
                             <?php if ($away): ?><option value="<?= (int)$away['id'] ?>"><?= e(team_display($away)) ?> (V)</option><?php endif; ?>
                         </select>
                     </div>
                 </div>
                 <div class="form-row">
-                    <div class="field" style="margin-bottom:.6rem"><label>Jugador</label><select class="select" name="player_id"><?= options($playerOpts, null, '—') ?></select></div>
+                    <div class="field" style="margin-bottom:.6rem"><label>Jugador</label>
+                        <select class="select" name="player_id" id="ev-player">
+                            <option value="">—</option>
+                            <?php foreach (($teamPlayers[$firstTeamId] ?? []) as $pp): ?><option value="<?= (int)$pp['id'] ?>"><?= e($pp['name']) ?></option><?php endforeach; ?>
+                        </select>
+                        <div class="help">Elige primero el equipo; se listan solo sus jugadores.</div>
+                    </div>
                     <div class="field" style="margin-bottom:.6rem"><label>Minuto</label><input class="input" type="number" min="0" max="130" name="minute"></div>
                 </div>
                 <button class="btn btn-sm" type="submit">+ Agregar evento</button>
             </form>
+            <script>
+            (function () {
+                var TP = <?= json_encode($teamPlayers, JSON_UNESCAPED_UNICODE) ?>;
+                var teamSel = document.getElementById('ev-team'), playerSel = document.getElementById('ev-player');
+                if (!teamSel || !playerSel) { return; }
+                function fill() {
+                    var list = TP[teamSel.value] || [];
+                    playerSel.innerHTML = '<option value="">—</option>';
+                    list.forEach(function (p) { var o = document.createElement('option'); o.value = p.id; o.textContent = p.name; playerSel.appendChild(o); });
+                }
+                teamSel.addEventListener('change', fill);
+                fill();
+            })();
+            </script>
 
             <?php if (!$players): ?>
                 <div class="alert alert-warning"><span>No hay jugadores en la liga. <a href="<?= e(base_url('admin/teams.php')) ?>">Agrégalos dentro de cada equipo</a>.</span></div>

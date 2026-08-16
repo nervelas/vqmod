@@ -52,9 +52,13 @@ $preview = null;
 $errors = [];
 $teamIds = [];
 $formParams = [];
+$showImport = false;   // render the PDF-import editable preview
+$importRows = [];      // flat rows: ['jornada'=>int,'home'=>id,'away'=>id]
+$importStats = null;   // detection stats
 
 if (is_post()) {
     Security::requireCsrf();
+    $op = str_input('op');
     $stage = str_input('stage');
     $tournamentId = int_input('tournament');
     $tournament = $tournamentId ? Database::one("SELECT * FROM tournaments WHERE id = ?", [$tournamentId]) : null;
@@ -71,6 +75,119 @@ if (is_post()) {
 
     $formParams = compact('rounds','start','days','time','interval','intervalMin','venue');
 
+    /* ---- Delete the whole calendar of the tournament -------------------- */
+    if ($op === 'delete_calendar') {
+        Database::q("DELETE FROM matches WHERE tournament_id = ? AND is_final_phase = 0", [$tournamentId]);
+        Database::q("DELETE FROM matchdays WHERE tournament_id = ?", [$tournamentId]);
+        Database::q("DELETE FROM tournament_teams WHERE tournament_id = ?", [$tournamentId]);
+        Audit::log('delete_calendar', 'calendar', $tournamentId);
+        flash('success', 'Calendario eliminado por completo.');
+        redirect(base_url('admin/calendar.php?tournament=' . $tournamentId));
+    }
+
+    /* ---- Import a PDF calendar into an editable preview ------------------ */
+    if ($op === 'import_pdf') {
+        $file = $_FILES['calendar_pdf'] ?? null;
+        if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            $errors[] = 'Selecciona un archivo PDF.';
+        } elseif ($file['size'] <= 0 || $file['size'] > 8 * 1024 * 1024) {
+            $errors[] = 'El PDF supera el tamaño permitido (8 MB).';
+        } else {
+            $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+            $ext  = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+            if ($mime !== 'application/pdf' && $ext !== 'pdf') {
+                $errors[] = 'El archivo debe ser un PDF.';
+            } else {
+                $lt = Database::all("SELECT id, name FROM teams WHERE league_id = ?", [$tournament['league_id']]);
+                $teamMap = []; foreach ($lt as $t) { $teamMap[(int)$t['id']] = $t['name']; }
+                $parsed = PdfCalendar::parse(PdfCalendar::extractText($file['tmp_name']), $teamMap);
+                foreach ($parsed['jornadas'] as $j) {
+                    foreach ($j['matches'] as $mm) {
+                        $importRows[] = ['jornada' => $j['number'], 'home' => $mm['home_id'], 'away' => $mm['away_id']];
+                    }
+                }
+                $importStats = ['detected' => $parsed['detected_matches'], 'matched' => $parsed['matched'], 'jornadas' => count($parsed['jornadas'])];
+                if (!$importRows) {
+                    $errors[] = 'No se detectaron partidos. Asegúrate de que el PDF sea de texto (no una imagen escaneada) y que los nombres de los equipos coincidan con los registrados en la liga.';
+                } else {
+                    $showImport = true;
+                }
+            }
+        }
+    }
+
+    /* ---- Confirm & persist an imported / edited calendar ---------------- */
+    if ($op === 'import_confirm') {
+        $mj = (array)post('mj', []); $mh = (array)post('mh', []); $ma = (array)post('ma', []); $rm = (array)post('rm', []);
+        $rowsIn = [];
+        foreach ($mj as $i => $jn) {
+            if (isset($rm[$i])) { continue; }
+            $h = (int)($mh[$i] ?? 0); $a = (int)($ma[$i] ?? 0); $jn = (int)$jn;
+            if (!$h || !$a || $jn < 1) { continue; }
+            $rowsIn[] = ['jornada' => $jn, 'home' => $h, 'away' => $a];
+        }
+        $byJ = [];
+        foreach ($rowsIn as $r) { $byJ[$r['jornada']][] = $r; }
+        $teamsUsed = [];
+        foreach ($byJ as $jn => $ms) {
+            $seen = [];
+            foreach ($ms as $r) {
+                if ($r['home'] === $r['away']) { $errors[] = "Jornada {$jn}: un equipo no puede jugar contra sí mismo."; }
+                foreach (['home', 'away'] as $side) {
+                    $tid = $r[$side];
+                    if (isset($seen[$tid])) { $errors[] = "Jornada {$jn}: un equipo aparece dos veces."; }
+                    $seen[$tid] = true; $teamsUsed[$tid] = true;
+                }
+            }
+        }
+        if ($teamsUsed) {
+            $ids = array_keys($teamsUsed);
+            $valid = Database::all("SELECT id FROM teams WHERE league_id = ? AND id IN (" . implode(',', array_fill(0, count($ids), '?')) . ")", array_merge([$tournament['league_id']], $ids));
+            if (count($valid) !== count($ids)) { $errors[] = 'Hay equipos que no pertenecen a la liga del torneo.'; }
+        }
+        if (!$rowsIn) { $errors[] = 'No hay partidos válidos para guardar.'; }
+
+        $errors = array_values(array_unique($errors));
+        if ($errors) {
+            $importRows = $rowsIn; $showImport = true;
+        } else {
+            $pdo = Database::pdo(); $pdo->beginTransaction();
+            try {
+                Database::q("DELETE FROM matches WHERE tournament_id = ? AND is_final_phase = 0", [$tournamentId]);
+                Database::q("DELETE FROM matchdays WHERE tournament_id = ?", [$tournamentId]);
+                Database::q("DELETE FROM tournament_teams WHERE tournament_id = ?", [$tournamentId]);
+                foreach (array_keys($teamsUsed) as $tid) {
+                    Database::q("INSERT INTO tournament_teams (tournament_id, team_id) VALUES (?,?)", [$tournamentId, $tid]);
+                }
+                ksort($byJ);
+                $numbers = array_keys($byJ);
+                $dates = schedule_dates(count($numbers), $start, $days, $interval);
+                $idx = 0;
+                foreach ($numbers as $jn) {
+                    $mdDate = $dates[$idx] ?? null;
+                    $mdId = Database::insert("INSERT INTO matchdays (tournament_id, number, round, match_date, status) VALUES (?,?,?,?, 'scheduled')", [$tournamentId, $jn, 1, $mdDate]);
+                    $dayMatches = CalendarGenerator::rotateForEquity($byJ[$jn], $idx);
+                    foreach ($dayMatches as $slotIdx => $r) {
+                        $mt = CalendarGenerator::slotTime($time, $intervalMin, $slotIdx);
+                        Database::q("INSERT INTO matches (tournament_id, matchday_id, slot, home_team_id, away_team_id, match_date, match_time, status) VALUES (?,?,?,?,?,?,?, 'pending')", [$tournamentId, $mdId, $slotIdx + 1, $r['home'], $r['away'], $mdDate, $mt]);
+                    }
+                    $idx++;
+                }
+                if ($tournament['status'] === 'draft') { Database::q("UPDATE tournaments SET status = 'active' WHERE id = ?", [$tournamentId]); }
+                $pdo->commit();
+                Audit::log('import_calendar', 'calendar', $tournamentId, null, ['jornadas' => count($numbers)]);
+                flash('success', 'Calendario importado desde PDF (' . count($numbers) . ' jornadas).');
+                redirect(base_url('admin/matches.php?tournament=' . $tournamentId));
+            } catch (Throwable $ex) {
+                $pdo->rollBack();
+                $errors[] = 'Error al guardar: ' . $ex->getMessage();
+                $importRows = $rowsIn; $showImport = true;
+            }
+        }
+    }
+
+    // Standard round-robin generator (only when there is no PDF/delete op).
+    if (!$op) {
     // Validate teams belong to the tournament's league.
     if (count($teamIds) < 2) {
         $errors[] = 'Seleccione al menos 2 equipos.';
@@ -138,6 +255,7 @@ if (is_post()) {
             $errors[] = 'Error al guardar: ' . $ex->getMessage();
         }
     }
+    } // end standard generator (no PDF/delete op)
 }
 
 $PAGE_TITLE = 'Generador de calendario';
@@ -173,7 +291,57 @@ if (!$teamIds && $assigned) { $teamIds = array_map('intval', $assigned); }
 <?php if ($tournament): ?>
     <?php foreach ($errors as $er): ?><div class="alert alert-danger"><span><?= e($er) ?></span></div><?php endforeach; ?>
 
-    <?php if ($preview && !$errors && $stage !== 'confirm'): ?>
+    <?php if ($showImport):
+        $teamOptsAll = []; foreach ($leagueTeams as $lt) { $teamOptsAll[$lt['id']] = team_display($lt); }
+    ?>
+        <!-- PDF IMPORT — EDITABLE PREVIEW -->
+        <div class="card mb-3">
+            <div class="section-head" style="margin-bottom:1rem">
+                <div><h2 style="font-size:1.2rem;margin:0">Revisar calendario importado</h2>
+                <p class="muted" style="margin:0">Corrige cualquier equipo antes de guardar. El sistema valida que ningún equipo juegue dos veces en la misma jornada.</p></div>
+                <?php if ($importStats): ?><div class="flex gap-1 wrap"><span class="badge">Detectados: <?= (int)$importStats['detected'] ?></span><span class="badge badge-success">Reconocidos: <?= (int)$importStats['matched'] ?></span><span class="badge"><?= (int)$importStats['jornadas'] ?> jornadas</span></div><?php endif; ?>
+            </div>
+            <form method="post">
+                <?= Security::csrfField() ?>
+                <input type="hidden" name="op" value="import_confirm">
+                <input type="hidden" name="tournament" value="<?= (int)$tournamentId ?>">
+                <div class="table-wrap mb-2">
+                    <table class="data">
+                        <thead><tr><th style="width:90px">Jornada</th><th>Local</th><th>Visitante</th><th>Quitar</th></tr></thead>
+                        <tbody>
+                        <?php foreach ($importRows as $i => $r): ?>
+                            <tr>
+                                <td><input class="input" type="number" min="1" style="width:80px" name="mj[<?= $i ?>]" value="<?= (int)$r['jornada'] ?>"></td>
+                                <td><select class="select" name="mh[<?= $i ?>]"><?= options($teamOptsAll, $r['home'], '—') ?></select></td>
+                                <td><select class="select" name="ma[<?= $i ?>]"><?= options($teamOptsAll, $r['away'], '—') ?></select></td>
+                                <td><label class="help"><input type="checkbox" name="rm[<?= $i ?>]" value="1"> Quitar</label></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <h3>Fechas y horarios</h3>
+                <div class="form-row">
+                    <div class="field"><label>Fecha inicial</label><input class="input" type="date" name="start_date" value="<?= e($formParams['start'] ?? date('Y-m-d')) ?>"></div>
+                    <div class="field"><label>Intervalo entre jornadas (días)</label><input class="input" type="number" min="1" name="interval" value="<?= e($formParams['interval'] ?? 7) ?>"></div>
+                    <div class="field"><label>Hora del primer partido</label><input class="input" type="time" name="match_time" value="<?= e($formParams['time'] ?? '15:00') ?>"></div>
+                    <div class="field"><label>Intervalo entre partidos (min)</label><input class="input" type="number" min="0" step="15" name="interval_min" value="<?= e($formParams['intervalMin'] ?? 120) ?>"></div>
+                </div>
+                <div class="field">
+                    <label>Días de juego</label>
+                    <div class="check-grid">
+                        <?php $selDays = $formParams['days'] ?? [6,7]; foreach ($DAYS as $num => $name): ?>
+                            <label class="check-item"><input type="checkbox" name="days[]" value="<?= $num ?>"<?= checked(in_array($num, array_map('intval',$selDays), true)) ?>> <?= e($name) ?></label>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <div class="page-actions mt-3">
+                    <button class="btn" type="submit">✔ Confirmar y guardar calendario</button>
+                    <a class="btn btn-ghost" href="<?= e(base_url('admin/calendar.php?tournament=' . $tournamentId)) ?>">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    <?php elseif ($preview && !$errors && $stage !== 'confirm'): ?>
         <!-- PREVIEW STAGE -->
         <div class="card mb-3">
             <div class="section-head" style="margin-bottom:1rem">
@@ -294,6 +462,34 @@ if (!$teamIds && $assigned) { $teamIds = array_map('intval', $assigned); }
                 </div>
             <?php endif; ?>
         </form>
+
+        <!-- Importar calendario desde PDF -->
+        <div class="card card-pad-lg mt-3">
+            <h3 style="margin-top:0">📄 Subir calendario (PDF)</h3>
+            <p class="muted" style="margin-top:-.4rem">Sube un PDF con las jornadas y partidos. El sistema los detecta y muestra una previsualización editable; solo se guarda cuando el calendario es válido (sin errores). Funciona con PDF de texto (no imágenes escaneadas) y con los nombres de equipos registrados en la liga.</p>
+            <form method="post" enctype="multipart/form-data">
+                <?= Security::csrfField() ?>
+                <input type="hidden" name="op" value="import_pdf">
+                <input type="hidden" name="tournament" value="<?= (int)$tournamentId ?>">
+                <div class="field">
+                    <label for="calendar_pdf">Archivo PDF</label>
+                    <input class="input" type="file" id="calendar_pdf" name="calendar_pdf" accept="application/pdf,.pdf" required>
+                </div>
+                <button class="btn" type="submit">Subir calendario PDF</button>
+            </form>
+        </div>
+
+        <!-- Eliminar calendario completo -->
+        <div class="card card-pad-lg mt-3">
+            <h3 style="margin-top:0">🗑️ Eliminar calendario completo</h3>
+            <p class="muted" style="margin-top:-.4rem">Elimina todas las jornadas y partidos de la fase regular de este torneo. Esta acción no se puede deshacer.</p>
+            <form method="post" data-confirm="¿Eliminar por completo el calendario de este torneo? Se borrarán todas las jornadas y partidos de la fase regular.">
+                <?= Security::csrfField() ?>
+                <input type="hidden" name="op" value="delete_calendar">
+                <input type="hidden" name="tournament" value="<?= (int)$tournamentId ?>">
+                <button class="btn btn-danger" type="submit">Eliminar calendario completo</button>
+            </form>
+        </div>
     <?php endif; ?>
 <?php endif; ?>
 <?php endif; ?>

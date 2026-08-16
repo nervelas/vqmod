@@ -220,6 +220,8 @@ return [
     round         TINYINT UNSIGNED NOT NULL DEFAULT 1,
     match_date    DATE NULL,
     status        ENUM('scheduled','in_progress','finished') NOT NULL DEFAULT 'scheduled',
+    results_completed_at DATETIME NULL,
+    notified_at   DATETIME NULL,
     notes         VARCHAR(255) NULL,
     INDEX idx_md_tournament (tournament_id),
     CONSTRAINT fk_md_tournament FOREIGN KEY (tournament_id) REFERENCES tournaments(id) ON DELETE CASCADE
@@ -330,6 +332,26 @@ return [
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_media_league (league_id),
     CONSTRAINT fk_media_league FOREIGN KEY (league_id) REFERENCES leagues(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
+"CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    endpoint   VARCHAR(500) NOT NULL,
+    p256dh     VARCHAR(255) NOT NULL,
+    auth       VARCHAR(255) NOT NULL,
+    league_id  INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_endpoint (endpoint(191))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
+"CREATE TABLE IF NOT EXISTS notifications_log (
+    id          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    type        VARCHAR(40) NOT NULL,
+    title       VARCHAR(190) NOT NULL,
+    body        TEXT NULL,
+    matchday_id INT UNSIGNED NULL,
+    sent_count  INT NOT NULL DEFAULT 0,
+    created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 
 ];

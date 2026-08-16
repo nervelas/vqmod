@@ -36,6 +36,7 @@ $nav = [
         ['admins',     '👥', 'Administradores',   'admins.php',     'admins.manage'],
         ['roles',      '🔐', 'Roles y permisos',  'roles.php',      'roles.manage'],
         ['settings',   '⚙️', 'Configuración',     'settings.php',   'settings.manage'],
+        ['notifications','🔔','Notificaciones',    'notifications.php','settings.manage'],
         ['security',   '🛡️', 'Seguridad',         'security.php',   'security.manage'],
         ['audit',      '🧾', 'Auditoría',         'audit.php',      'audit.view'],
         ['backups',    '💾', 'Backups',           'backups.php',    'backups.manage'],

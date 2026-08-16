@@ -108,6 +108,7 @@ if (is_post()) {
         );
         Audit::log('update', 'matches', $matchId, $before, null);
         Discipline::recompute((int)$m['tournament_id']);
+        if (!empty($m['matchday_id'])) { Push::refreshMatchdayCompletion((int)$m['matchday_id']); }
         flash('success', 'Partido actualizado.');
         redirect(base_url('admin/matches.php?action=edit&id=' . $matchId));
     }

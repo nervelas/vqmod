@@ -93,26 +93,35 @@ if (is_post()) {
         } elseif ($file['size'] <= 0 || $file['size'] > 8 * 1024 * 1024) {
             $errors[] = 'El PDF supera el tamaño permitido (8 MB).';
         } else {
-            $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
-            $ext  = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-            if ($mime !== 'application/pdf' && $ext !== 'pdf') {
+            $mime = '';
+            if (class_exists('finfo')) {
+                try { $mime = (string)(new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']); } catch (Throwable $e) { $mime = ''; }
+            }
+            $ext = strtolower(pathinfo((string)$file['name'], PATHINFO_EXTENSION));
+            $looksPdf = (strncmp((string)@file_get_contents($file['tmp_name'], false, null, 0, 5), '%PDF-', 5) === 0);
+            if ($ext !== 'pdf' && $mime !== 'application/pdf' && !$looksPdf) {
                 $errors[] = 'El archivo debe ser un PDF.';
             } else {
-                $lt = Database::all("SELECT id, name FROM teams WHERE league_id = ?", [$tournament['league_id']]);
-                $teamMap = []; foreach ($lt as $t) { $teamMap[(int)$t['id']] = $t['name']; }
-                $parsed = PdfCalendar::parse(PdfCalendar::extractText($file['tmp_name']), $teamMap);
-                foreach ($parsed['jornadas'] as $j) {
-                    foreach ($j['matches'] as $mm) {
-                        $importRows[] = [
-                            'jornada' => $j['number'], 'home' => $mm['home_id'], 'away' => $mm['away_id'],
-                            'date' => ($mm['date'] ?: $j['date']) ?: '', 'time' => $mm['time'] ?: '',
-                        ];
+                try {
+                    $lt = Database::all("SELECT id, name FROM teams WHERE league_id = ?", [$tournament['league_id']]);
+                    $teamMap = []; foreach ($lt as $t) { $teamMap[(int)$t['id']] = $t['name']; }
+                    $parsed = PdfCalendar::parse(PdfCalendar::extractText($file['tmp_name']), $teamMap);
+                    foreach ($parsed['jornadas'] as $j) {
+                        foreach ($j['matches'] as $mm) {
+                            $importRows[] = [
+                                'jornada' => $j['number'], 'home' => $mm['home_id'], 'away' => $mm['away_id'],
+                                'date' => ($mm['date'] ?: $j['date']) ?: '', 'time' => $mm['time'] ?: '',
+                            ];
+                        }
                     }
+                    $importStats = ['detected' => $parsed['detected_matches'], 'matched' => $parsed['matched'], 'jornadas' => count($parsed['jornadas'])];
+                } catch (Throwable $ex) {
+                    $importRows = [];
+                    $errors[] = 'No se pudo leer el PDF automáticamente. Puedes crear el calendario con el generador o subir un PDF de texto (no escaneado).';
                 }
-                $importStats = ['detected' => $parsed['detected_matches'], 'matched' => $parsed['matched'], 'jornadas' => count($parsed['jornadas'])];
-                if (!$importRows) {
-                    $errors[] = 'No se detectaron partidos. Asegúrate de que el PDF sea de texto (no una imagen escaneada) y que los nombres de los equipos coincidan con los registrados en la liga.';
-                } else {
+                if (!$errors && !$importRows) {
+                    $errors[] = 'No se detectaron partidos en el PDF. Asegúrate de que sea un PDF de texto (no una imagen escaneada) y que los nombres de los equipos coincidan con los registrados en la liga. También puedes usar el generador automático.';
+                } elseif ($importRows) {
                     $showImport = true;
                 }
             }

@@ -24,46 +24,59 @@ class PdfCalendar
         return $s;
     }
 
-    /** Extract approximate text (with line breaks) from a PDF file. */
+    /**
+     * Extract approximate text (with line breaks) from a PDF file.
+     * Hardened: never runs the text regex over raw binary (avoids memory blow-ups
+     * and 500s). Only decoded content streams that contain text operators are read.
+     */
     public static function extractText(string $path): string
     {
-        $data = @file_get_contents($path);
-        if ($data === false || $data === '') { return ''; }
+        // Cap the read so a huge PDF can never exhaust memory.
+        $data = @file_get_contents($path, false, null, 0, 20 * 1024 * 1024);
+        if (!is_string($data) || $data === '') { return ''; }
+
         $text = '';
-        if (preg_match_all('/stream\r?\n(.*?)\r?\nendstream/s', $data, $m)) {
-            foreach ($m[1] as $stream) {
-                $decoded = @gzuncompress($stream);
-                if ($decoded === false) { $decoded = @gzinflate($stream); }
-                if ($decoded === false) { $decoded = $stream; }
-                if (is_string($decoded) && $decoded !== '') {
-                    $text .= self::extractFromContent($decoded) . "\n";
-                }
-            }
-        }
-        if (trim($text) === '') {
-            $text = self::extractFromContent($data);
+        $offset = 0; $streams = 0;
+        $len = strlen($data);
+        while ($streams < 800 && ($sp = strpos($data, 'stream', $offset)) !== false) {
+            $streams++;
+            $start = $sp + 6;
+            if ($start < $len && $data[$start] === "\r") { $start++; }
+            if ($start < $len && $data[$start] === "\n") { $start++; }
+            $ep = strpos($data, 'endstream', $start);
+            if ($ep === false) { break; }
+            $raw = substr($data, $start, $ep - $start);
+            $offset = $ep + 9;
+
+            $decoded = @gzuncompress($raw);
+            if ($decoded === false) { $decoded = @gzinflate($raw); }
+            if ($decoded === false) { $decoded = $raw; }
+            if (!is_string($decoded) || $decoded === '') { continue; }
+
+            // Only parse streams that actually contain text-showing operators.
+            if (strpos($decoded, 'Tj') === false && strpos($decoded, 'TJ') === false) { continue; }
+            $text .= self::extractFromContent(substr($decoded, 0, 3 * 1024 * 1024)) . "\n";
         }
         return $text;
     }
 
-    /** Pull visible text out of a decoded PDF content stream. */
+    /** Pull visible text out of a decoded PDF content stream (text-ops only). */
     private static function extractFromContent(string $c): string
     {
         $out = '';
-        $re = '/\(((?:[^()\\\\]|\\\\.)*)\)|<([0-9A-Fa-f\s]+)>|\b(Td|TD|T\*)\b|(\')|(")/';
-        if (!preg_match_all($re, $c, $matches, PREG_SET_ORDER)) {
+        $re = '/\(((?:[^()\\\\]|\\\\.)*)\)|<([0-9A-Fa-f\s]{2,})>|\b(Td|TD|T\*)\b|(\')|(")/';
+        $matches = null;
+        if (@preg_match_all($re, $c, $matches, PREG_SET_ORDER) === false || !is_array($matches)) {
             return '';
         }
         foreach ($matches as $mt) {
-            if (isset($mt[1]) && $mt[1] !== '' || (isset($mt[0]) && $mt[0][0] === '(')) {
+            if (($mt[0][0] ?? '') === '(') {
                 $out .= self::decodeLiteral($mt[1] ?? '');
-            } elseif (!empty($mt[2])) {
+            } elseif (($mt[0][0] ?? '') === '<' && !empty($mt[2])) {
                 $out .= self::decodeHex($mt[2]);
             } elseif (!empty($mt[3])) {
                 $out .= "\n"; // Td/TD/T* => new text line
-            } elseif (isset($mt[4]) && $mt[4] === "'") {
-                $out .= "\n";
-            } elseif (isset($mt[5]) && $mt[5] === '"') {
+            } elseif (($mt[4] ?? '') === "'" || ($mt[5] ?? '') === '"') {
                 $out .= "\n";
             }
         }
@@ -175,7 +188,14 @@ class PdfCalendar
         $normMap = [];
         foreach ($teams as $id => $name) { $normMap[self::norm($name)] = (int)$id; }
 
-        $lines = preg_split('/[\r\n]+/', $text);
+        // Ensure valid UTF-8 so the /u regexes below never fail on binary bytes.
+        if (!mb_check_encoding($text, 'UTF-8')) {
+            $conv = @iconv('UTF-8', 'UTF-8//IGNORE', $text);
+            $text = $conv !== false ? $conv : preg_replace('/[^\x09\x0A\x0D\x20-\x7E]/', ' ', $text);
+        }
+
+        $lines = preg_split('/[\r\n]+/', (string)$text);
+        if (!is_array($lines)) { $lines = []; }
         $jornadas = [];
         $current = null;
         $currentDate = null;
@@ -211,7 +231,7 @@ class PdfCalendar
 
             // Try to split into two team names.
             $parts = preg_split($sepRe, $line, 2);
-            if (count($parts) === 2) {
+            if (is_array($parts) && count($parts) === 2) {
                 $detected++;
                 $homeId = self::matchTeam($parts[0], $teams, $normMap);
                 $awayId = self::matchTeam($parts[1], $teams, $normMap);

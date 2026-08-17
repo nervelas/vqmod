@@ -51,12 +51,15 @@ window.FL_VAPID = <?= json_encode($pushEnabled ? $vapidPublic : '') ?>;
             <?php else: ?><span class="brand-mark">⚽</span><?php endif; ?>
             <span><?= e($siteName) ?></span>
         </a>
-        <button class="nav-toggle" aria-label="Menú">☰</button>
-        <nav class="nav">
-            <?php foreach ($nav as $key => $item): ?>
-                <a href="<?= e($item[1]) ?>" class="<?= ($activeNav ?? '') === $key ? 'active' : '' ?>"><?= e($item[0]) ?></a>
-            <?php endforeach; ?>
-        </nav>
+        <div style="display:flex;align-items:center;gap:.6rem">
+            <button class="btn btn-sm" id="app-install" style="display:none">📲 Instalar app</button>
+            <button class="nav-toggle" aria-label="Menú">☰</button>
+            <nav class="nav">
+                <?php foreach ($nav as $key => $item): ?>
+                    <a href="<?= e($item[1]) ?>" class="<?= ($activeNav ?? '') === $key ? 'active' : '' ?>"><?= e($item[0]) ?></a>
+                <?php endforeach; ?>
+            </nav>
+        </div>
     </div>
 </header>
 
@@ -66,55 +69,99 @@ window.FL_VAPID = <?= json_encode($pushEnabled ? $vapidPublic : '') ?>;
             <span style="font-size:1.6rem">📲</span>
             <div>
                 <strong>Descarga la app</strong>
-                <div class="muted" style="font-size:.85rem">Instálala en tu teléfono (Android o iPhone) y recibe los resultados por notificación.</div>
+                <div class="muted" style="font-size:.85rem">Instálala en tu teléfono y consulta la información cuando quieras. Todo lo que cambie en la web se ve en la app.</div>
             </div>
         </div>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
-            <button class="btn btn-sm" id="app-install-btn" style="display:none">⬇️ Instalar app</button>
-            <button class="btn btn-sm btn-ghost" id="app-ios-btn" style="display:none">🍎 Instalar en iPhone</button>
+            <button class="btn btn-sm" id="app-install-btn">⬇️ Instalar app</button>
             <button class="btn btn-sm btn-accent" id="app-notify-btn" style="display:none">🔔 Activar notificaciones</button>
             <button class="btn btn-sm btn-ghost" id="app-close-btn" aria-label="Cerrar" title="Cerrar">✕</button>
         </div>
     </div>
-    <div class="container" id="app-ios-help" hidden style="padding-bottom:.8rem">
-        <div class="card" style="font-size:.88rem">
-            <strong>Instalar en iPhone / iPad:</strong>
-            <ol style="margin:.4rem 0 0;padding-left:1.2rem">
-                <li>Abre esta página en <strong>Safari</strong>.</li>
-                <li>Toca el botón <strong>Compartir</strong> (el cuadro con la flecha ↑).</li>
-                <li>Elige <strong>“Añadir a pantalla de inicio”</strong>.</li>
-                <li>Abre la app desde el ícono para activar las notificaciones.</li>
+</div>
+
+<!-- How-to-install modal -->
+<div id="app-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:1rem" role="dialog" aria-modal="true">
+    <div class="card card-pad-lg" style="max-width:440px;width:100%">
+        <div class="flex justify-between items-center" style="margin-bottom:.4rem">
+            <h3 style="margin:0">📲 Instalar la app</h3>
+            <button class="btn btn-sm btn-ghost" id="app-modal-close" aria-label="Cerrar">✕</button>
+        </div>
+        <div id="app-steps-android">
+            <p class="muted" style="margin:.2rem 0 .6rem">En tu teléfono Android (Chrome):</p>
+            <ol style="margin:0;padding-left:1.2rem;line-height:1.9">
+                <li>Abre el menú <strong>⋮</strong> (arriba a la derecha).</li>
+                <li>Toca <strong>“Instalar aplicación”</strong> o <strong>“Agregar a pantalla de inicio”</strong>.</li>
+                <li>Confirma. El ícono quedará en tu pantalla de inicio.</li>
             </ol>
         </div>
+        <div id="app-steps-ios">
+            <p class="muted" style="margin:.2rem 0 .6rem">En iPhone / iPad (Safari):</p>
+            <ol style="margin:0;padding-left:1.2rem;line-height:1.9">
+                <li>Toca el botón <strong>Compartir</strong> (cuadro con la flecha ↑).</li>
+                <li>Elige <strong>“Añadir a pantalla de inicio”</strong>.</li>
+                <li>Toca <strong>Añadir</strong>. Abre la app desde el ícono.</li>
+            </ol>
+        </div>
+        <p class="help mt-2">Al abrir desde el ícono, verás siempre la información actualizada del sitio.</p>
     </div>
 </div>
+
 <script>
 (function () {
     var base = window.FL_BASE || './';
     if ('serviceWorker' in navigator) { navigator.serviceWorker.register(base + 'sw.js').catch(function () {}); }
 
     var banner = document.getElementById('app-banner');
+    var headerBtn = document.getElementById('app-install');
     var installBtn = document.getElementById('app-install-btn');
-    var iosBtn = document.getElementById('app-ios-btn');
-    var iosHelp = document.getElementById('app-ios-help');
     var notifyBtn = document.getElementById('app-notify-btn');
     var closeBtn = document.getElementById('app-close-btn');
-    if (!banner) { return; }
-    var dismissed = localStorage.getItem('fl_app_banner') === 'off';
+    var modal = document.getElementById('app-modal');
+    var modalClose = document.getElementById('app-modal-close');
+    var stepsAndroid = document.getElementById('app-steps-android');
+    var stepsIOS = document.getElementById('app-steps-ios');
+
     var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    function show() { if (!dismissed && !standalone) { banner.hidden = false; } }
-
     var deferred = null;
-    window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; installBtn.style.display = 'inline-flex'; show(); });
-    installBtn.addEventListener('click', function () { if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; installBtn.style.display = 'none'; }); } });
 
-    if (isIOS && !standalone) { iosBtn.style.display = 'inline-flex'; }
-    iosBtn.addEventListener('click', function () { iosHelp.hidden = !iosHelp.hidden; });
+    // The install option is always available to every visitor (until installed).
+    if (!standalone && headerBtn) { headerBtn.style.display = 'inline-flex'; }
+    // Show the banner once per session so every new visitor sees it.
+    if (banner && !standalone && sessionStorage.getItem('fl_app_banner') !== 'off') { banner.hidden = false; }
 
+    window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; });
+    window.addEventListener('appinstalled', function () {
+        if (headerBtn) headerBtn.style.display = 'none';
+        if (banner) banner.hidden = true;
+    });
+
+    function openModal() {
+        if (stepsAndroid) stepsAndroid.style.display = isIOS ? 'none' : 'block';
+        if (stepsIOS) stepsIOS.style.display = isIOS ? 'block' : 'none';
+        modal.style.display = 'flex';
+    }
+    function closeModal() { modal.style.display = 'none'; }
+
+    function doInstall() {
+        if (deferred) {
+            deferred.prompt();
+            deferred.userChoice.finally(function () { deferred = null; });
+        } else {
+            openModal(); // iOS, or Android before the prompt is ready: show clear steps
+        }
+    }
+    if (headerBtn) headerBtn.addEventListener('click', doInstall);
+    if (installBtn) installBtn.addEventListener('click', doInstall);
+    if (modalClose) modalClose.addEventListener('click', closeModal);
+    if (modal) modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+
+    // Notifications opt-in (only if enabled by the admin)
     function b64ToUint8(b) { var p = '='.repeat((4 - b.length % 4) % 4); var s = (b + p).replace(/-/g, '+').replace(/_/g, '/'); var raw = atob(s); var a = new Uint8Array(raw.length); for (var i = 0; i < raw.length; i++) { a[i] = raw.charCodeAt(i); } return a; }
-    if (window.FL_PUSH && 'PushManager' in window && 'serviceWorker' in navigator && window.FL_VAPID) { notifyBtn.style.display = 'inline-flex'; }
-    notifyBtn.addEventListener('click', function () {
+    if (window.FL_PUSH && 'PushManager' in window && 'serviceWorker' in navigator && window.FL_VAPID && notifyBtn) { notifyBtn.style.display = 'inline-flex'; }
+    if (notifyBtn) notifyBtn.addEventListener('click', function () {
         if (!('Notification' in window)) { return; }
         Notification.requestPermission().then(function (perm) {
             if (perm !== 'granted') { alert('Activa el permiso de notificaciones para recibir los resultados.'); return; }
@@ -130,8 +177,7 @@ window.FL_VAPID = <?= json_encode($pushEnabled ? $vapidPublic : '') ?>;
         });
     });
 
-    closeBtn.addEventListener('click', function () { banner.hidden = true; localStorage.setItem('fl_app_banner', 'off'); });
-    show();
+    if (closeBtn) closeBtn.addEventListener('click', function () { banner.hidden = true; sessionStorage.setItem('fl_app_banner', 'off'); });
 })();
 </script>
 

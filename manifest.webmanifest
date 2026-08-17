@@ -1,4 +1,7 @@
 {
+  "id": "/",
+  "lang": "es",
+  "dir": "ltr",
   "name": "Plataforma de Ligas de Fútbol",
   "short_name": "Ligas Fútbol",
   "description": "Resultados, tablas, goleadores y estadísticas de tus ligas de fútbol.",

@@ -20,7 +20,7 @@ require 'partials/head.php';
         <label for="tournament">Torneo</label>
         <select class="select" id="tournament" name="tournament" onchange="this.form.submit()">
             <option value="">Seleccione…</option>
-            <?php foreach ($tournaments as $tr): ?><option value="<?= (int)$tr['id'] ?>"<?= selected($tr['id'], $tournamentId) ?>><?= e($tr['league_name']) ?> — <?= e($tr['name']) ?></option><?php endforeach; ?>
+            <?php foreach ($tournaments as $tr): ?><option value="<?= (int)$tr['id'] ?>"<?= selected($tr['id'], $tournamentId) ?>><?= e($tr['name']) ?></option><?php endforeach; ?>
         </select>
     </div>
 </form>

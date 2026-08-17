@@ -13,7 +13,7 @@ $nav = [
         ['dashboard', '📊', 'Dashboard', 'index.php', null],
     ],
     'Competiciones' => [
-        ['leagues',     '🏆', 'Ligas',        'leagues.php',     'leagues.manage'],
+        ['leagues',     '🏆', 'Liga',         'leagues.php',     'leagues.manage'],
         ['tournaments', '🎯', 'Torneos',      'tournaments.php', 'tournaments.manage'],
         ['calendar',    '📅', 'Calendario',   'calendar.php',    'calendar.manage'],
         ['matches',     '⚽', 'Partidos',     'matches.php',     'results.manage'],
@@ -67,11 +67,11 @@ $nav = [
             <span><?= e($__site) ?></span>
         </div>
         <nav class="sidebar-nav">
-            <?php foreach ($nav as $group => $items):
-                $visible = array_filter($items, fn($it) => $it[4] === null || Auth::can($it[4]));
-                if (!$visible) continue; ?>
-                <div class="nav-group-title"><?= e($group) ?></div>
-                <?php foreach ($visible as $it): ?>
+            <?php foreach ($nav as $__navGroup => $__navItems):
+                $__navVisible = array_filter($__navItems, fn($it) => $it[4] === null || Auth::can($it[4]));
+                if (!$__navVisible) continue; ?>
+                <div class="nav-group-title"><?= e($__navGroup) ?></div>
+                <?php foreach ($__navVisible as $it): ?>
                     <a class="nav-item <?= ($ACTIVE ?? '') === $it[0] ? 'active' : '' ?>" href="<?= e(base_url('admin/' . $it[3])) ?>">
                         <span class="ni-icon"><?= $it[1] ?></span><span><?= e($it[2]) ?></span>
                     </a>

@@ -9,10 +9,14 @@ $logo = Settings::get('logo');
 $fav  = Settings::get('favicon');
 $vapidPublic = (string)Settings::get('vapid_public', '');
 $pushEnabled = Settings::bool('push_enabled', false) && $vapidPublic !== '';
+$__lg = the_league();
+$__ligaUrl = ($__lg && $__lg['visibility'] === 'public')
+    ? base_url('liga.php?slug=' . urlencode($__lg['slug']))
+    : base_url('index.php');
 $nav = [
     'inicio'    => ['Inicio', base_url('index.php')],
-    'ligas'     => ['Ligas', base_url('index.php#ligas')],
-    'noticias'  => ['Noticias', base_url('index.php#noticias')],
+    'liga'      => ['La Liga', $__ligaUrl],
+    'noticias'  => ['Noticias', $__ligaUrl . '#noticias'],
 ];
 ?><!DOCTYPE html>
 <html lang="es">

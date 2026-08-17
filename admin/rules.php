@@ -7,10 +7,6 @@ Auth::require('content.manage');
 $action = str_input('action', 'list');
 $id = int_input('id');
 
-$leagues = Database::all("SELECT id, name FROM leagues ORDER BY name");
-$leagueOptions = [];
-foreach ($leagues as $l) { $leagueOptions[$l['id']] = $l['name']; }
-
 $tournaments = Database::all("SELECT id, name FROM tournaments ORDER BY name");
 $tournamentOptions = [];
 foreach ($tournaments as $t) { $tournamentOptions[$t['id']] = $t['name']; }
@@ -25,7 +21,7 @@ if (is_post()) {
     }
 
     $data = [
-        'league_id'     => int_input('league_id') ?: null,
+        'league_id'     => the_league_id(),
         'tournament_id' => int_input('tournament_id') ?: null,
         'category'      => str_input('category'),
         'title'         => $title,
@@ -99,19 +95,11 @@ if ($action === 'new' || $action === 'edit') {
             <label for="body">Contenido</label>
             <textarea class="textarea" id="body" name="body" rows="10"><?= $v('body') ?></textarea>
         </div>
-        <div class="form-row">
-            <div class="field">
-                <label for="league_id">Liga (opcional)</label>
-                <select class="select" id="league_id" name="league_id">
-                    <?= options($leagueOptions, $rule['league_id'] ?? null, 'Todas las ligas') ?>
-                </select>
-            </div>
-            <div class="field">
-                <label for="tournament_id">Torneo (opcional)</label>
-                <select class="select" id="tournament_id" name="tournament_id">
-                    <?= options($tournamentOptions, $rule['tournament_id'] ?? null, 'Todos los torneos') ?>
-                </select>
-            </div>
+        <div class="field">
+            <label for="tournament_id">Torneo (opcional)</label>
+            <select class="select" id="tournament_id" name="tournament_id">
+                <?= options($tournamentOptions, $rule['tournament_id'] ?? null, 'Todos los torneos') ?>
+            </select>
         </div>
         <div class="page-actions mt-3">
             <button class="btn" type="submit">Guardar regla</button>
@@ -124,9 +112,8 @@ if ($action === 'new' || $action === 'edit') {
 }
 
 /* ---- List view ---------------------------------------------------------- */
-$rules = Database::all("SELECT r.*, l.name AS league_name, t.name AS tournament_name
+$rules = Database::all("SELECT r.*, t.name AS tournament_name
     FROM rules r
-    LEFT JOIN leagues l ON l.id = r.league_id
     LEFT JOIN tournaments t ON t.id = r.tournament_id
     ORDER BY r.category, r.sort_order, r.title");
 require 'partials/head.php';
@@ -164,11 +151,10 @@ require 'partials/head.php';
                         <td class="num"><?= (int)$r['sort_order'] ?></td>
                         <td><strong><?= e($r['title']) ?></strong></td>
                         <td>
-                            <?php if ($r['league_name'] || $r['tournament_name']): ?>
-                                <?php if ($r['league_name']): ?><span class="badge"><?= e($r['league_name']) ?></span><?php endif; ?>
-                                <?php if ($r['tournament_name']): ?><span class="badge badge-muted"><?= e($r['tournament_name']) ?></span><?php endif; ?>
+                            <?php if ($r['tournament_name']): ?>
+                                <span class="badge badge-muted"><?= e($r['tournament_name']) ?></span>
                             <?php else: ?>
-                                <span class="muted">Global</span>
+                                <span class="muted">General</span>
                             <?php endif; ?>
                         </td>
                         <td>

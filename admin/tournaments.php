@@ -7,10 +7,6 @@ Auth::require('tournaments.manage');
 $action = str_input('action', 'list');
 $id = int_input('id');
 
-$leagues = Database::all("SELECT id, name FROM leagues ORDER BY name");
-$leagueOptions = [];
-foreach ($leagues as $l) { $leagueOptions[$l['id']] = $l['name']; }
-
 $TB = [
     'goal_diff' => 'Diferencia de goles',
     'goals_for' => 'Goles a favor',
@@ -20,10 +16,14 @@ $TB = [
 
 if (is_post()) {
     Security::requireCsrf();
-    $leagueId = int_input('league_id');
+    $leagueId = the_league_id();   // single-league mode: always the one league
     $name = str_input('name');
-    if (!$leagueId || $name === '') {
-        flash('danger', 'Liga y nombre del torneo son obligatorios.');
+    if (!$leagueId) {
+        flash('danger', 'Primero configura la liga.');
+        redirect(base_url('admin/leagues.php'));
+    }
+    if ($name === '') {
+        flash('danger', 'El nombre del torneo es obligatorio.');
         redirect(base_url('admin/tournaments.php?action=' . ($id ? 'edit&id=' . $id : 'new')));
     }
     // Season (optional): reuse or create for this league.
@@ -97,9 +97,9 @@ $PAGE_TITLE = 'Torneos';
 $ACTIVE = 'tournaments';
 
 if ($action === 'new' || $action === 'edit') {
-    if (!$leagues) {
+    if (!the_league()) {
         require 'partials/head.php';
-        echo '<div class="empty-state card"><div class="es-icon">🎯</div><h2>Primero crea una liga</h2><p>Los torneos pertenecen a una liga.</p><a class="btn" href="' . e(base_url('admin/leagues.php?action=new')) . '">+ Crear Liga</a></div>';
+        echo '<div class="empty-state card"><div class="es-icon">🏆</div><h2>Primero configura la liga</h2><p>Los torneos pertenecen a la liga. Configúrala para empezar.</p><a class="btn" href="' . e(base_url('admin/leagues.php')) . '">Configurar la liga</a></div>';
         require 'partials/foot.php'; exit;
     }
     $t = $action === 'edit' && $id ? Database::one("SELECT * FROM tournaments WHERE id = ?", [$id]) : null;
@@ -113,15 +113,9 @@ if ($action === 'new' || $action === 'edit') {
     <div class="page-head"><h1><?= $t ? 'Editar torneo' : 'Nuevo torneo' ?></h1><p>Formato, puntuación, desempates y reglas disciplinarias.</p></div>
     <form method="post" class="card card-pad-lg">
         <?= Security::csrfField() ?>
-        <div class="form-row">
-            <div class="field">
-                <label for="league_id">Liga *</label>
-                <select class="select" id="league_id" name="league_id" required><?= options($leagueOptions, $t['league_id'] ?? null, 'Seleccione…') ?></select>
-            </div>
-            <div class="field">
-                <label for="name">Nombre del torneo *</label>
-                <input class="input" id="name" name="name" required value="<?= $v('name') ?>" data-slug-source="#slug">
-            </div>
+        <div class="field">
+            <label for="name">Nombre del torneo *</label>
+            <input class="input" id="name" name="name" required value="<?= $v('name') ?>" data-slug-source="#slug" placeholder="Ej: Torneo Masculino, Torneo Femenino…">
         </div>
         <div class="form-row">
             <div class="field"><label for="slug">Slug</label><input class="input" id="slug" name="slug" value="<?= $v('slug') ?>"></div>
@@ -194,27 +188,26 @@ if ($action === 'new' || $action === 'edit') {
 }
 
 /* ---- List --------------------------------------------------------------- */
-$tournaments = Database::all("SELECT tr.*, l.name AS league_name,
+$tournaments = Database::all("SELECT tr.*,
     (SELECT COUNT(*) FROM tournament_teams WHERE tournament_id = tr.id) AS teams,
     (SELECT COUNT(*) FROM matches WHERE tournament_id = tr.id) AS matches
-    FROM tournaments tr JOIN leagues l ON l.id = tr.league_id ORDER BY tr.created_at DESC");
+    FROM tournaments tr ORDER BY tr.created_at DESC");
 require 'partials/head.php';
 ?>
 <div class="page-head flex justify-between items-center wrap">
-    <div><h1>Torneos</h1><p>Competiciones dentro de cada liga.</p></div>
+    <div><h1>Torneos</h1><p>Competiciones dentro de la liga.</p></div>
     <div class="page-actions"><a class="btn" href="<?= e(base_url('admin/tournaments.php?action=new')) ?>">+ Nuevo torneo</a></div>
 </div>
 <?php if (!$tournaments): ?>
-    <div class="empty-state card"><div class="es-icon">🎯</div><h2>Sin torneos</h2><p>Crea un torneo dentro de una liga.</p><a class="btn" href="<?= e(base_url('admin/tournaments.php?action=new')) ?>">+ Nuevo torneo</a></div>
+    <div class="empty-state card"><div class="es-icon">🎯</div><h2>Sin torneos</h2><p>Crea el primer torneo de la liga.</p><a class="btn" href="<?= e(base_url('admin/tournaments.php?action=new')) ?>">+ Nuevo torneo</a></div>
 <?php else: ?>
     <div class="table-wrap">
         <table class="data">
-            <thead><tr><th>Torneo</th><th>Liga</th><th>Formato</th><th class="num">Equipos</th><th class="num">Partidos</th><th>Estado</th><th></th></tr></thead>
+            <thead><tr><th>Torneo</th><th>Formato</th><th class="num">Equipos</th><th class="num">Partidos</th><th>Estado</th><th></th></tr></thead>
             <tbody>
             <?php foreach ($tournaments as $t): ?>
                 <tr>
                     <td><strong><?= e($t['name']) ?></strong><br><span class="muted" style="font-size:.8rem"><?= $t['rounds']==2?'Dos vueltas':'Una vuelta' ?> · <?= $t['final_phase']!=='none'?strtoupper($t['final_phase']):'sin fase final' ?></span></td>
-                    <td><?= e($t['league_name']) ?></td>
                     <td><?= $t['format']==='league'?'Liga':'Copa' ?></td>
                     <td class="num"><?= (int)$t['teams'] ?></td>
                     <td class="num"><?= (int)$t['matches'] ?></td>

@@ -35,6 +35,7 @@ $ovColor = $league['banner_overlay'] ?: '#000000';
 $ovAlpha = max(0, min(90, (int)$league['overlay_intensity'])) / 100;
 $objPos = ['top'=>'center top','center'=>'center center','bottom'=>'center bottom'][$league['banner_position']] ?? 'center';
 
+$activeNav = 'liga';
 require __DIR__ . '/public/top.php';
 ?>
 <section class="hero">
@@ -219,6 +220,37 @@ require __DIR__ . '/public/top.php';
         <?php endif; ?>
     </div>
 </section>
+
+<?php
+// ---- News for this league (published) ----------------------------------
+if ($modNews):
+    $ligaNews = Database::all(
+        "SELECT * FROM news
+         WHERE status = 'published' AND (league_id = ? OR league_id IS NULL)
+         ORDER BY COALESCE(published_at, created_at) DESC, id DESC LIMIT 6",
+        [$league['id']]
+    );
+    if ($ligaNews):
+?>
+<section class="section" id="noticias" style="background:var(--c-surface)">
+    <div class="container">
+        <div class="section-head"><div><div class="eyebrow">Actualidad</div><h2>Noticias</h2></div></div>
+        <div class="league-grid">
+            <?php foreach ($ligaNews as $n): ?>
+                <article class="card card-hover reveal" style="padding:0;overflow:hidden">
+                    <?php if (!empty($n['image'])): ?><div class="lc-banner" style="height:150px"><img src="<?= e(base_url($n['image'])) ?>" alt=""></div><?php endif; ?>
+                    <div style="padding:1.25rem">
+                        <h4 style="margin:.2rem 0 .3rem"><?= e($n['title']) ?></h4>
+                        <p class="muted" style="font-size:.9rem"><?= e($n['excerpt'] ?: mb_substr(strip_tags((string)$n['body']), 0, 120)) ?></p>
+                        <div class="subtle" style="font-size:.78rem"><?= e(fmt_date($n['published_at'] ?: $n['created_at'])) ?></div>
+                    </div>
+                </article>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; endif; ?>
+
 <div id="acta-lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;align-items:center;justify-content:center;padding:1.5rem;cursor:zoom-out">
     <img id="acta-lightbox-img" src="" alt="Acta arbitral" style="max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.6)">
 </div>

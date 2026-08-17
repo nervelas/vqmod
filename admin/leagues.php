@@ -7,9 +7,21 @@ Auth::require('leagues.manage');
 $action = str_input('action', 'list');
 $id = int_input('id');
 
+// SINGLE-LEAGUE MODE: the platform administers exactly one league.
+$only = the_league();
+// Redirect list / new straight to the single league's editor when it exists.
+if (!is_post() && $only && ($action === 'list' || $action === 'new')) {
+    redirect(base_url('admin/leagues.php?action=edit&id=' . (int)$only['id']));
+}
+
 /* ---- Handle POST (create / update) ------------------------------------- */
 if (is_post()) {
     Security::requireCsrf();
+    // Never allow creating a second league.
+    if (empty($id) && $only && $action !== 'delete') {
+        flash('warning', 'Esta plataforma administra una sola liga. Edita la liga existente y crea torneos dentro de ella.');
+        redirect(base_url('admin/leagues.php?action=edit&id=' . (int)$only['id']));
+    }
     $name = str_input('name');
     if ($name === '') {
         flash('danger', 'El nombre de la liga es obligatorio.');
@@ -89,7 +101,7 @@ $themes = Theme::all();
 $themeOptions = [];
 foreach ($themes as $t) { $themeOptions[$t['id']] = $t['name']; }
 
-$PAGE_TITLE = 'Ligas';
+$PAGE_TITLE = 'La Liga';
 $ACTIVE = 'leagues';
 
 /* ---- Form view (new/edit) ---------------------------------------------- */
@@ -100,8 +112,8 @@ if ($action === 'new' || $action === 'edit') {
     require 'partials/head.php';
     ?>
     <div class="page-head">
-        <h1><?= $action === 'edit' ? 'Editar liga' : 'Nueva liga' ?></h1>
-        <p>Configura la identidad visual y los datos de la liga.</p>
+        <h1><?= $action === 'edit' ? 'Datos de la liga' : 'Configurar la liga' ?></h1>
+        <p>Esta plataforma administra una sola liga. Configura aquí su identidad; los torneos (masculino, femenino, libre, infantil, etc.) se crean dentro de ella.</p>
     </div>
     <form method="post" enctype="multipart/form-data" class="card card-pad-lg">
         <?= Security::csrfField() ?>
@@ -220,20 +232,17 @@ $leagues = Database::all("SELECT l.*, t.name AS theme_name,
     FROM leagues l LEFT JOIN themes t ON t.id = l.theme_id ORDER BY l.created_at DESC");
 require 'partials/head.php';
 ?>
-<div class="page-head flex justify-between items-center wrap">
-    <div>
-        <h1>Ligas</h1>
-        <p>Gestiona todas las ligas de la plataforma. Cada liga es independiente.</p>
-    </div>
-    <div class="page-actions"><a class="btn" href="<?= e(base_url('admin/leagues.php?action=new')) ?>">+ Nueva liga</a></div>
+<div class="page-head">
+    <h1>La Liga</h1>
+    <p>Esta plataforma administra una sola liga.</p>
 </div>
 
 <?php if (!$leagues): ?>
     <div class="empty-state card">
         <div class="es-icon">🏆</div>
-        <h2>No hay ligas todavía</h2>
-        <p>Crea tu primera liga para comenzar.</p>
-        <a class="btn" href="<?= e(base_url('admin/leagues.php?action=new')) ?>">+ Crear Liga</a>
+        <h2>Configura tu liga</h2>
+        <p>Crea la liga (nombre, escudo, banner y tema). Después crea sus torneos y equipos.</p>
+        <a class="btn" href="<?= e(base_url('admin/leagues.php?action=new')) ?>">+ Crear la liga</a>
     </div>
 <?php else: ?>
     <div class="league-grid">

@@ -178,7 +178,7 @@ if (!$teamIds && $assigned) { $teamIds = array_map('intval', $assigned); }
         <select class="select" id="tournament" name="tournament" onchange="this.form.submit()">
             <option value="">Seleccione un torneo…</option>
             <?php foreach ($tournaments as $tr): ?>
-                <option value="<?= (int)$tr['id'] ?>"<?= selected($tr['id'], $tournamentId) ?>><?= e($tr['league_name']) ?> — <?= e($tr['name']) ?></option>
+                <option value="<?= (int)$tr['id'] ?>"<?= selected($tr['id'], $tournamentId) ?>><?= e($tr['name']) ?></option>
             <?php endforeach; ?>
         </select>
     </div>

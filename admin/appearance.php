@@ -7,26 +7,23 @@ Auth::require('appearance.manage');
 if (is_post()) {
     Security::requireCsrf();
     $themeId = int_input('theme_id');
-    $scope   = str_input('scope', 'global'); // 'global' or 'league'
-    $leagueId = int_input('league_id');
     $theme = Theme::find($themeId);
     if (!$theme) {
         flash('danger', 'Tema no válido.');
-    } elseif ($scope === 'league' && $leagueId) {
-        Database::q("UPDATE leagues SET theme_id = ? WHERE id = ?", [$themeId, $leagueId]);
-        Audit::log('apply_theme', 'appearance', $leagueId, null, ['theme_id' => $themeId, 'scope' => 'league']);
-        flash('success', 'Tema aplicado a la liga seleccionada.');
     } else {
+        // Single-league mode: the chosen theme is the platform theme. Apply it
+        // as the default and to the league itself so it always takes effect.
         Settings::set('default_theme_id', (string)$themeId, 'general');
-        Audit::log('apply_theme', 'appearance', null, null, ['theme_id' => $themeId, 'scope' => 'global']);
-        flash('success', 'Tema aplicado como predeterminado de la plataforma.');
+        $lid = the_league_id();
+        if ($lid) { Database::q("UPDATE leagues SET theme_id = ? WHERE id = ?", [$themeId, $lid]); }
+        Audit::log('apply_theme', 'appearance', $lid, null, ['theme_id' => $themeId]);
+        flash('success', 'Tema aplicado a la plataforma.');
     }
     redirect(base_url('admin/appearance.php'));
 }
 
 $themes = Theme::all();
 $currentGlobal = (int)Settings::get('default_theme_id', 1);
-$leagues = Database::all("SELECT id, name, theme_id FROM leagues ORDER BY name");
 
 $PAGE_TITLE = 'Apariencia';
 $ACTIVE = 'appearance';
@@ -35,27 +32,6 @@ require 'partials/head.php';
 <div class="page-head">
     <h1>Apariencia</h1>
     <p>Elige uno de los 10 temas visuales. Los cambios de tema solo se realizan desde aquí; el público no puede modificarlos.</p>
-</div>
-
-<div class="card mb-3">
-    <div class="form-row" style="align-items:end">
-        <div class="field" style="margin-bottom:0">
-            <label for="scope">Aplicar a</label>
-            <select class="select" id="scope" onchange="document.getElementById('league-wrap').classList.toggle('hidden', this.value!=='league')">
-                <option value="global">Toda la plataforma (predeterminado)</option>
-                <option value="league"<?= $leagues ? '' : ' disabled' ?>>Una liga específica</option>
-            </select>
-        </div>
-        <div class="field hidden" id="league-wrap" style="margin-bottom:0">
-            <label for="league_id">Liga</label>
-            <select class="select" id="league_id">
-                <?php foreach ($leagues as $l): ?>
-                    <option value="<?= (int)$l['id'] ?>"><?= e($l['name']) ?><?= $l['theme_id'] ? ' · tema actual: ' . e(($themes[array_search($l['theme_id'], array_column($themes,'id'))]['name'] ?? '')) : '' ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-    </div>
-    <p class="help mt-1">Cada liga puede usar un tema distinto. Sin selección de liga, se cambia el tema predeterminado.</p>
 </div>
 
 <div class="theme-grid">
@@ -83,11 +59,9 @@ require 'partials/head.php';
                 </div>
                 <div class="theme-card-actions mt-2">
                     <button class="btn btn-sm btn-ghost" type="button" data-theme-preview-btn data-theme-vars="<?= e($vars) ?>">Previsualizar</button>
-                    <form method="post" data-apply-form style="display:inline">
+                    <form method="post" style="display:inline">
                         <?= Security::csrfField() ?>
                         <input type="hidden" name="theme_id" value="<?= (int)$t['id'] ?>">
-                        <input type="hidden" name="scope" class="apply-scope" value="global">
-                        <input type="hidden" name="league_id" class="apply-league" value="">
                         <button class="btn btn-sm" type="submit">Aplicar</button>
                     </form>
                 </div>
@@ -123,17 +97,4 @@ require 'partials/head.php';
     <div class="field" style="margin:0"><label>Campo de formulario</label><input class="input" placeholder="Escribe aquí…"></div>
 </div>
 
-<script>
-// Wire apply forms to the current scope/league selection.
-(function () {
-    var scopeSel = document.getElementById('scope');
-    var leagueSel = document.getElementById('league_id');
-    document.querySelectorAll('[data-apply-form]').forEach(function (f) {
-        f.addEventListener('submit', function () {
-            f.querySelector('.apply-scope').value = scopeSel ? scopeSel.value : 'global';
-            f.querySelector('.apply-league').value = (scopeSel && scopeSel.value === 'league' && leagueSel) ? leagueSel.value : '';
-        });
-    });
-})();
-</script>
 <?php require 'partials/foot.php'; ?>

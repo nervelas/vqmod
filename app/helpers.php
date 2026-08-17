@@ -174,6 +174,28 @@ function options(array $pairs, $current = null, ?string $placeholder = null): st
     return $out;
 }
 
+/**
+ * Single-league mode: the platform administers exactly ONE league.
+ * Returns the (only) league row, or null if it hasn't been created yet.
+ */
+function the_league(): ?array
+{
+    static $loaded = false;
+    static $row = null;
+    if (!$loaded) {
+        try { $row = Database::one("SELECT * FROM leagues ORDER BY id ASC LIMIT 1"); }
+        catch (Throwable $e) { $row = null; }
+        $loaded = true;
+    }
+    return $row ?: null;
+}
+
+function the_league_id(): ?int
+{
+    $l = the_league();
+    return $l ? (int)$l['id'] : null;
+}
+
 /** Player display name. */
 function player_name(array $p): string
 {

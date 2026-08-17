@@ -108,14 +108,14 @@ if (is_post()) {
     }
 
     /* ---- Save the team (create / update) -------------------------------- */
-    $leagueId = int_input('league_id');
+    $leagueId = the_league_id();   // single-league mode: always the one league
     $name = str_input('name');
-    if (!$leagueId || $name === '') {
-        flash('danger', 'La liga y el nombre del equipo son obligatorios.');
-        redirect(base_url('admin/teams.php?action=' . ($id ? 'edit&id=' . $id : 'new')));
+    if (!$leagueId) {
+        flash('danger', 'Primero configura la liga.');
+        redirect(base_url('admin/leagues.php'));
     }
-    if (!isset($leagueOptions[$leagueId])) {
-        flash('danger', 'La liga seleccionada no existe.');
+    if ($name === '') {
+        flash('danger', 'El nombre del equipo es obligatorio.');
         redirect(base_url('admin/teams.php?action=' . ($id ? 'edit&id=' . $id : 'new')));
     }
     $slug = slugify(str_input('slug') ?: $name);
@@ -184,9 +184,9 @@ $ACTIVE = 'teams';
 
 /* ---- Form view (new/edit) ---------------------------------------------- */
 if ($action === 'new' || $action === 'edit') {
-    if (!$leagues) {
+    if (!the_league()) {
         require 'partials/head.php';
-        echo '<div class="empty-state card"><div class="es-icon">🛡️</div><h2>Primero crea una liga</h2><p>Los equipos pertenecen a una liga.</p><a class="btn" href="' . e(base_url('admin/leagues.php?action=new')) . '">+ Crear Liga</a></div>';
+        echo '<div class="empty-state card"><div class="es-icon">🏆</div><h2>Primero configura la liga</h2><p>Los equipos pertenecen a la liga. Configúrala para empezar.</p><a class="btn" href="' . e(base_url('admin/leagues.php')) . '">Configurar la liga</a></div>';
         require 'partials/foot.php'; exit;
     }
     $team = $action === 'edit' && $id ? Database::one("SELECT * FROM teams WHERE id = ?", [$id]) : null;
@@ -202,20 +202,14 @@ if ($action === 'new' || $action === 'edit') {
     ?>
     <div class="page-head">
         <h1><?= $action === 'edit' ? 'Editar equipo' : 'Nuevo equipo' ?></h1>
-        <p>Identidad, datos y jugadores del equipo. Cada equipo pertenece a una sola liga.</p>
+        <p>Identidad, datos y jugadores del equipo.</p>
     </div>
     <form method="post" enctype="multipart/form-data" class="card card-pad-lg">
         <?= Security::csrfField() ?>
         <input type="hidden" name="op" value="save_team">
-        <div class="form-row">
-            <div class="field">
-                <label for="league_id">Liga *</label>
-                <select class="select" id="league_id" name="league_id" required><?= options($leagueOptions, $team['league_id'] ?? null, 'Seleccione…') ?></select>
-            </div>
-            <div class="field">
-                <label for="name">Nombre del equipo *</label>
-                <input class="input" id="name" name="name" required value="<?= $v('name') ?>" data-slug-source="#slug">
-            </div>
+        <div class="field">
+            <label for="name">Nombre del equipo *</label>
+            <input class="input" id="name" name="name" required value="<?= $v('name') ?>" data-slug-source="#slug">
         </div>
         <div class="form-row">
             <div class="field">
@@ -358,54 +352,38 @@ if ($action === 'new' || $action === 'edit') {
 }
 
 /* ---- List view ---------------------------------------------------------- */
-$filterLeague = int_input('league');
-if ($filterLeague && !isset($leagueOptions[$filterLeague])) { $filterLeague = null; }
-
-$sql = "SELECT t.*, l.name AS league_name,
+$teams = Database::all("SELECT t.*,
         (SELECT COUNT(*) FROM players WHERE team_id = t.id) AS players
-        FROM teams t JOIN leagues l ON l.id = t.league_id";
-$params = [];
-if ($filterLeague) { $sql .= " WHERE t.league_id = ?"; $params[] = $filterLeague; $sql .= " ORDER BY t.name"; }
-else { $sql .= " ORDER BY l.name, t.name"; }
-$teams = Database::all($sql, $params);
+        FROM teams t ORDER BY t.name");
 require 'partials/head.php';
 ?>
 <div class="page-head flex justify-between items-center wrap">
     <div>
         <h1>Equipos</h1>
-        <p>Gestiona los equipos y sus jugadores. Cada equipo pertenece a una sola liga.</p>
+        <p>Gestiona los equipos y sus jugadores de la liga.</p>
     </div>
     <div class="page-actions"><a class="btn" href="<?= e(base_url('admin/teams.php?action=new')) ?>">+ Nuevo equipo</a></div>
 </div>
 
-<?php if (!$leagues): ?>
+<?php if (!the_league()): ?>
     <div class="empty-state card">
-        <div class="es-icon">🛡️</div>
-        <h2>Primero crea una liga</h2>
-        <p>Los equipos pertenecen a una liga. Crea una para comenzar.</p>
-        <a class="btn" href="<?= e(base_url('admin/leagues.php?action=new')) ?>">+ Crear Liga</a>
+        <div class="es-icon">🏆</div>
+        <h2>Primero configura la liga</h2>
+        <p>Los equipos pertenecen a la liga. Configúrala para comenzar.</p>
+        <a class="btn" href="<?= e(base_url('admin/leagues.php')) ?>">Configurar la liga</a>
     </div>
 <?php else: ?>
-    <div class="card card-pad-lg" style="margin-bottom:1rem">
-        <div class="field" style="margin:0;max-width:340px">
-            <label for="league">Filtrar por liga</label>
-            <select class="select" id="league" name="league" onchange="location.href='<?= e(base_url('admin/teams.php')) ?>' + (this.value ? '?league=' + this.value : '')">
-                <?= options($leagueOptions, $filterLeague, 'Todas las ligas') ?>
-            </select>
-        </div>
-    </div>
-
     <?php if (!$teams): ?>
         <div class="empty-state card">
             <div class="es-icon">🛡️</div>
             <h2>Sin equipos</h2>
-            <p>No hay equipos <?= $filterLeague ? 'en esta liga' : 'todavía' ?>. Crea el primero.</p>
+            <p>No hay equipos todavía. Crea el primero.</p>
             <a class="btn" href="<?= e(base_url('admin/teams.php?action=new')) ?>">+ Nuevo equipo</a>
         </div>
     <?php else: ?>
         <div class="table-wrap">
             <table class="data">
-                <thead><tr><th>Equipo</th><th>Nombre corto</th><th>Liga</th><th class="num">Jugadores</th><th>Estado</th><th></th></tr></thead>
+                <thead><tr><th>Equipo</th><th>Nombre corto</th><th class="num">Jugadores</th><th>Estado</th><th></th></tr></thead>
                 <tbody>
                 <?php foreach ($teams as $t): ?>
                     <tr>
@@ -416,7 +394,6 @@ require 'partials/head.php';
                             </div>
                         </td>
                         <td><?= $t['short_name'] !== null && $t['short_name'] !== '' ? e($t['short_name']) : '—' ?></td>
-                        <td><?= e($t['league_name']) ?></td>
                         <td class="num"><?= (int)$t['players'] ?></td>
                         <td><span class="badge <?= $t['status']==='active'?'badge-success':'badge-muted' ?>"><?= $t['status']==='active'?'Activo':'Archivado' ?></span></td>
                         <td>

@@ -7,9 +7,6 @@ Auth::require('content.manage');
 $action = str_input('action', 'list');
 $id = int_input('id');
 
-$leagues = Database::all("SELECT id, name FROM leagues ORDER BY name");
-$leagueOptions = [];
-foreach ($leagues as $l) { $leagueOptions[$l['id']] = $l['name']; }
 
 /* ---- Handle POST (create / update) ------------------------------------- */
 if (is_post()) {
@@ -37,7 +34,7 @@ if (is_post()) {
     }
 
     $data = [
-        'league_id'    => int_input('league_id') ?: null,
+        'league_id'    => the_league_id(),
         'title'        => $title,
         'slug'         => $slug,
         'excerpt'      => str_input('excerpt'),
@@ -117,20 +114,12 @@ if ($action === 'new' || $action === 'edit') {
                 <input class="input" id="slug" name="slug" value="<?= $v('slug') ?>" placeholder="se-genera-automaticamente">
             </div>
         </div>
-        <div class="form-row">
-            <div class="field">
-                <label for="league_id">Liga</label>
-                <select class="select" id="league_id" name="league_id">
-                    <?= options($leagueOptions, $news['league_id'] ?? null, 'Global / todas las ligas') ?>
-                </select>
-            </div>
-            <div class="field">
-                <label for="status">Estado</label>
-                <select class="select" id="status" name="status">
-                    <option value="draft"<?= selected('draft', $news['status'] ?? 'draft') ?>>Borrador</option>
-                    <option value="published"<?= selected('published', $news['status'] ?? '') ?>>Publicada</option>
-                </select>
-            </div>
+        <div class="field">
+            <label for="status">Estado</label>
+            <select class="select" id="status" name="status">
+                <option value="draft"<?= selected('draft', $news['status'] ?? 'draft') ?>>Borrador</option>
+                <option value="published"<?= selected('published', $news['status'] ?? '') ?>>Publicada</option>
+            </select>
         </div>
         <div class="field">
             <label for="excerpt">Extracto</label>
@@ -168,15 +157,15 @@ if ($action === 'new' || $action === 'edit') {
 }
 
 /* ---- List view ---------------------------------------------------------- */
-$items = Database::all("SELECT n.*, l.name AS league_name
-    FROM news n LEFT JOIN leagues l ON l.id = n.league_id
+$items = Database::all("SELECT n.*
+    FROM news n
     ORDER BY COALESCE(n.published_at, n.created_at) DESC, n.id DESC");
 require 'partials/head.php';
 ?>
 <div class="page-head flex justify-between items-center wrap">
     <div>
         <h1>Noticias</h1>
-        <p>Gestiona las noticias del sitio. Pueden ser globales o de una liga específica.</p>
+        <p>Gestiona las noticias del sitio.</p>
     </div>
     <div class="page-actions"><a class="btn" href="<?= e(base_url('admin/news.php?action=new')) ?>">+ Nueva noticia</a></div>
 </div>
@@ -191,13 +180,12 @@ require 'partials/head.php';
 <?php else: ?>
     <div class="table-wrap">
         <table class="data">
-            <thead><tr><th></th><th>Título</th><th>Liga</th><th>Estado</th><th>Publicación</th><th></th></tr></thead>
+            <thead><tr><th></th><th>Título</th><th>Estado</th><th>Publicación</th><th></th></tr></thead>
             <tbody>
             <?php foreach ($items as $n): ?>
                 <tr>
                     <td><?= media_thumb($n['image'], $n['title'], 'team-logo') ?></td>
                     <td><strong><?= e($n['title']) ?></strong></td>
-                    <td><?= $n['league_name'] ? e($n['league_name']) : '<span class="muted">Global</span>' ?></td>
                     <td><span class="badge <?= $n['status']==='published'?'badge-success':'badge-muted' ?>"><?= $n['status']==='published'?'Publicada':'Borrador' ?></span></td>
                     <td><?= e(fmt_date($n['published_at'], 'd/m/Y H:i')) ?></td>
                     <td>

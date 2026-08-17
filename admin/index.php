@@ -22,14 +22,14 @@ require 'partials/head.php';
     <div class="empty-state reveal">
         <div class="es-icon">⚽</div>
         <div class="eyebrow">Bienvenido</div>
-        <h2>Crea tu primera liga</h2>
-        <p>Aún no hay competiciones registradas. Comienza creando una liga; luego podrás añadir torneos, equipos, jugadores, generar el calendario y publicar.</p>
-        <a class="btn btn-lg" href="<?= e(base_url('admin/leagues.php?action=new')) ?>">+ Crear Liga</a>
+        <h2>Configura tu liga</h2>
+        <p>Aún no has configurado la liga. Comienza por configurarla; luego podrás añadir torneos, equipos, jugadores, generar el calendario y publicar.</p>
+        <a class="btn btn-lg" href="<?= e(base_url('admin/leagues.php')) ?>">Configurar la liga</a>
 
         <div class="wizard-steps">
             <?php
             $steps = [
-                ['1', 'Crear Liga', 'Nombre, escudo, banner y tema visual.'],
+                ['1', 'Configurar Liga', 'Nombre, escudo, banner y tema visual.'],
                 ['2', 'Crear Torneo', 'Formato, vueltas y reglas de puntos.'],
                 ['3', 'Agregar Equipos', 'Registra los equipos participantes.'],
                 ['4', 'Generar Calendario', 'Round robin automático y validado.'],
@@ -52,7 +52,6 @@ require 'partials/head.php';
     <div class="stat-grid mb-3">
         <?php
         $tiles = [
-            ['Ligas', $counts['leagues'], 'leagues.php'],
             ['Torneos', $counts['tournaments'], 'tournaments.php'],
             ['Equipos', $counts['teams'], 'teams.php'],
             ['Jugadores', $counts['players'], 'teams.php'],
@@ -72,7 +71,7 @@ require 'partials/head.php';
             <h2 style="font-size:1.2rem">Accesos rápidos</h2>
         </div>
         <div class="page-actions">
-            <a class="btn btn-sm" href="<?= e(base_url('admin/leagues.php?action=new')) ?>">+ Nueva liga</a>
+            <a class="btn btn-sm" href="<?= e(base_url('admin/tournaments.php?action=new')) ?>">+ Nuevo torneo</a>
             <a class="btn btn-sm btn-ghost" href="<?= e(base_url('admin/tournaments.php')) ?>">Torneos</a>
             <a class="btn btn-sm btn-ghost" href="<?= e(base_url('admin/calendar.php')) ?>">Generar calendario</a>
             <a class="btn btn-sm btn-ghost" href="<?= e(base_url('admin/matches.php')) ?>">Cargar resultados</a>

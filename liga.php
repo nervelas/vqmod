@@ -1,5 +1,7 @@
 <?php
-require __DIR__ . '/app/bootstrap.php';
+// May be included from index.php (single-league home) after bootstrap already
+// ran — guard so the app is bootstrapped exactly once.
+if (!defined('FL_APP')) { require __DIR__ . '/app/bootstrap.php'; }
 if (defined('FL_NOT_INSTALLED')) { redirect(base_url('install/')); }
 
 $slug = str_input('slug');

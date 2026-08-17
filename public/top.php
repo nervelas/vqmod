@@ -31,7 +31,7 @@ $nav = [
 <?php if ($fav): ?><link rel="icon" href="<?= e(base_url($fav)) ?>"><?php else: ?>
 <link rel="icon" href="data:image/svg+xml,<?= rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#111"/><text x="50" y="70" font-size="56" text-anchor="middle">⚽</text></svg>') ?>"><?php endif; ?>
 <link rel="stylesheet" href="<?= e(base_url('assets/css/app.css')) ?>">
-<link rel="manifest" href="<?= e(base_url('manifest.webmanifest')) ?>">
+<link rel="manifest" href="<?= e(base_url('manifest.php')) ?>">
 <meta name="theme-color" content="<?= e($theme['color_bg']) ?>">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">

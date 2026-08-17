@@ -3,10 +3,13 @@ require __DIR__ . '/app/bootstrap.php';
 if (defined('FL_NOT_INSTALLED')) { redirect(base_url('install/')); }
 
 // Single-league mode: the homepage IS the league. If the (only) league is
-// published, send visitors straight to it. Otherwise show a "coming soon" page.
+// published, render it right here at the site root — no redirect — so the PWA
+// start_url is a real 200 page and Chrome installs a proper app (not a shortcut).
 $league = the_league();
 if ($league && $league['status'] === 'active' && $league['visibility'] === 'public') {
-    redirect(base_url('liga.php?slug=' . urlencode($league['slug'])));
+    $_GET['slug'] = $league['slug'];
+    require __DIR__ . '/liga.php';
+    return;
 }
 
 $theme = Theme::resolve((int)Settings::get('default_theme_id', 1));

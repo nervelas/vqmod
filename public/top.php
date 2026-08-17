@@ -56,7 +56,6 @@ window.FL_VAPID = <?= json_encode($pushEnabled ? $vapidPublic : '') ?>;
             <span><?= e($siteName) ?></span>
         </a>
         <div style="display:flex;align-items:center;gap:.6rem">
-            <button class="btn btn-sm" id="app-install" style="display:none">📲 Instalar app</button>
             <button class="nav-toggle" aria-label="Menú">☰</button>
             <nav class="nav">
                 <?php foreach ($nav as $key => $item): ?>
@@ -67,77 +66,22 @@ window.FL_VAPID = <?= json_encode($pushEnabled ? $vapidPublic : '') ?>;
     </div>
 </header>
 
-<div id="app-banner" hidden style="background:var(--c-surface);border-bottom:1px solid var(--c-border)">
-    <div class="container" style="display:flex;gap:1rem;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:.6rem 0">
-        <div style="display:flex;gap:.7rem;align-items:center">
-            <span style="font-size:1.6rem">📲</span>
-            <div>
-                <strong>Descarga la app</strong>
-                <div class="muted" style="font-size:.85rem">Instálala en tu teléfono y consulta la información cuando quieras. Todo lo que cambie en la web se ve en la app.</div>
-            </div>
-        </div>
-        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
-            <button class="btn btn-sm" id="app-install-btn">⬇️ Instalar app</button>
-            <button class="btn btn-sm btn-accent" id="app-notify-btn" style="display:none">🔔 Activar notificaciones</button>
-            <button class="btn btn-sm btn-ghost" id="app-close-btn" aria-label="Cerrar" title="Cerrar">✕</button>
-        </div>
-    </div>
-</div>
-
-<!-- How-to-install modal -->
-<div id="app-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:1rem" role="dialog" aria-modal="true">
-    <div class="card card-pad-lg" style="max-width:440px;width:100%">
-        <div class="flex justify-between items-center" style="margin-bottom:.4rem">
-            <h3 style="margin:0">📲 Instalar la app</h3>
-            <button class="btn btn-sm btn-ghost" id="app-modal-close" aria-label="Cerrar">✕</button>
-        </div>
-        <div id="app-steps-android">
-            <p class="muted" style="margin:.2rem 0 .6rem">En tu teléfono Android (Chrome):</p>
-            <ol style="margin:0;padding-left:1.2rem;line-height:1.9">
-                <li>Abre el menú <strong>⋮</strong> (arriba a la derecha).</li>
-                <li>Toca <strong>“Instalar aplicación”</strong> o <strong>“Agregar a pantalla de inicio”</strong>.</li>
-                <li>Confirma. El ícono quedará en tu pantalla de inicio.</li>
-            </ol>
-        </div>
-        <div id="app-steps-ios">
-            <p class="muted" style="margin:.2rem 0 .6rem">En iPhone / iPad (Safari):</p>
-            <ol style="margin:0;padding-left:1.2rem;line-height:1.9">
-                <li>Toca el botón <strong>Compartir</strong> (cuadro con la flecha ↑).</li>
-                <li>Elige <strong>“Añadir a pantalla de inicio”</strong>.</li>
-                <li>Toca <strong>Añadir</strong>. Abre la app desde el ícono.</li>
-            </ol>
-        </div>
-        <p class="help mt-2">Al abrir desde el ícono, verás siempre la información actualizada del sitio.</p>
-    </div>
-</div>
-
 <script>
 (function () {
     var base = window.FL_BASE || './';
-    if ('serviceWorker' in navigator) { navigator.serviceWorker.register(base + 'sw.js').catch(function () {}); }
+    if (!('serviceWorker' in navigator)) { return; }
 
-    var banner = document.getElementById('app-banner');
-    var headerBtn = document.getElementById('app-install');
-    var installBtn = document.getElementById('app-install-btn');
-    var notifyBtn = document.getElementById('app-notify-btn');
-    var closeBtn = document.getElementById('app-close-btn');
-    var modal = document.getElementById('app-modal');
-    var modalClose = document.getElementById('app-modal-close');
-    var stepsAndroid = document.getElementById('app-steps-android');
-    var stepsIOS = document.getElementById('app-steps-ios');
+    // Register the service worker (required so Chrome treats this as an app).
+    navigator.serviceWorker.register(base + 'sw.js').catch(function () {});
 
     var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    var deferred = null, promptShown = false, autoArmed = false;
+    if (standalone) { subscribePush(); return; } // already installed as an app
 
-    // The install option is always available to every visitor (until installed).
-    if (!standalone && headerBtn) { headerBtn.style.display = 'inline-flex'; }
-    // Show the banner once per session so every new visitor sees it.
-    if (banner && !standalone && sessionStorage.getItem('fl_app_banner') !== 'off') { banner.hidden = false; }
+    var deferred = null, promptShown = false, armed = false;
 
-    // Show the browser's native install dialog. prompt() needs a user gesture,
-    // so we arm it to fire on the visitor's first tap/keypress — that feels
-    // automatic and never triggers a console warning.
+    // Show Chrome's NATIVE install dialog (installs a real app / WebAPK).
+    // prompt() must run inside a user gesture, so we fire it on the visitor's
+    // very first interaction — it feels automatic and never logs a warning.
     function firePrompt() {
         if (!deferred || promptShown) { return; }
         promptShown = true;
@@ -145,70 +89,43 @@ window.FL_VAPID = <?= json_encode($pushEnabled ? $vapidPublic : '') ?>;
         deferred.userChoice.then(function () { deferred = null; });
     }
     function armAutoPrompt() {
-        if (autoArmed || standalone) { return; }
-        autoArmed = true;
-        var evs = ['pointerdown', 'touchend', 'keydown'];
+        if (armed) { return; }
+        armed = true;
+        var evs = ['pointerdown', 'touchend', 'click', 'keydown'];
         var handler = function () {
-            evs.forEach(function (ev) { window.removeEventListener(ev, handler); });
+            evs.forEach(function (ev) { window.removeEventListener(ev, handler, true); });
             firePrompt();
         };
-        evs.forEach(function (ev) { window.addEventListener(ev, handler, { passive: true }); });
+        evs.forEach(function (ev) { window.addEventListener(ev, handler, { capture: true, passive: true }); });
     }
 
     window.addEventListener('beforeinstallprompt', function (e) {
-        // Chrome fired: the PWA is installable. Capture the event and offer it.
-        e.preventDefault();
+        e.preventDefault();       // suppress Chrome's mini-infobar…
         deferred = e;
         promptShown = false;
-        if (banner && !standalone && sessionStorage.getItem('fl_app_banner') !== 'off') { banner.hidden = false; }
-        armAutoPrompt();   // ask automatically on the first interaction
+        armAutoPrompt();          // …and show the full native dialog automatically
     });
+
     window.addEventListener('appinstalled', function () {
         deferred = null;
-        if (headerBtn) headerBtn.style.display = 'none';
-        if (banner) banner.hidden = true;
+        subscribePush();          // installed: turn on result notifications
     });
 
-    function openModal() {
-        if (stepsAndroid) stepsAndroid.style.display = isIOS ? 'none' : 'block';
-        if (stepsIOS) stepsIOS.style.display = isIOS ? 'block' : 'none';
-        modal.style.display = 'flex';
-    }
-    function closeModal() { modal.style.display = 'none'; }
-
-    function doInstall() {
-        if (deferred && !promptShown) {
-            firePrompt(); // Android/Chrome: show the native install dialog
-        } else {
-            openModal(); // iOS, or Android before the prompt is ready: show clear steps
-        }
-    }
-    if (headerBtn) headerBtn.addEventListener('click', doInstall);
-    if (installBtn) installBtn.addEventListener('click', doInstall);
-    if (modalClose) modalClose.addEventListener('click', closeModal);
-    if (modal) modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
-
-    // Notifications opt-in (only if enabled by the admin)
+    // ---- Push notifications (only if the admin enabled them) ----------------
     function b64ToUint8(b) { var p = '='.repeat((4 - b.length % 4) % 4); var s = (b + p).replace(/-/g, '+').replace(/_/g, '/'); var raw = atob(s); var a = new Uint8Array(raw.length); for (var i = 0; i < raw.length; i++) { a[i] = raw.charCodeAt(i); } return a; }
-    if (window.FL_PUSH && 'PushManager' in window && 'serviceWorker' in navigator && window.FL_VAPID && notifyBtn) { notifyBtn.style.display = 'inline-flex'; }
-    if (notifyBtn) notifyBtn.addEventListener('click', function () {
-        if (!('Notification' in window)) { return; }
+    function subscribePush() {
+        if (!(window.FL_PUSH && 'PushManager' in window && window.FL_VAPID && 'Notification' in window)) { return; }
+        if (Notification.permission === 'denied') { return; }
         Notification.requestPermission().then(function (perm) {
-            if (perm !== 'granted') { alert('Activa el permiso de notificaciones para recibir los resultados.'); return; }
+            if (perm !== 'granted') { return; }
             navigator.serviceWorker.ready.then(function (reg) {
                 return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToUint8(window.FL_VAPID) });
             }).then(function (sub) {
                 var j = sub.toJSON();
                 return fetch(base + 'push-subscribe.php', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.FL_CSRF }, body: JSON.stringify({ endpoint: j.endpoint, keys: j.keys }) });
-            }).then(function (r) { return r.json(); }).then(function (d) {
-                if (d && d.ok) { notifyBtn.textContent = '✅ Notificaciones activadas'; notifyBtn.disabled = true; }
-                else { alert('No se pudo activar las notificaciones.'); }
-            }).catch(function () { alert('No se pudo activar las notificaciones.'); });
-        });
-    });
-
-    if (closeBtn) closeBtn.addEventListener('click', function () { banner.hidden = true; sessionStorage.setItem('fl_app_banner', 'off'); });
+            }).catch(function () {});
+        }).catch(function () {});
+    }
 })();
 </script>
 

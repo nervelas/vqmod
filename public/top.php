@@ -128,15 +128,43 @@ window.FL_VAPID = <?= json_encode($pushEnabled ? $vapidPublic : '') ?>;
 
     var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    var deferred = null;
+    var deferred = null, promptShown = false, autoArmed = false;
 
     // The install option is always available to every visitor (until installed).
     if (!standalone && headerBtn) { headerBtn.style.display = 'inline-flex'; }
     // Show the banner once per session so every new visitor sees it.
     if (banner && !standalone && sessionStorage.getItem('fl_app_banner') !== 'off') { banner.hidden = false; }
 
-    window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; });
+    // Show the browser's native install dialog. prompt() needs a user gesture,
+    // so we arm it to fire on the visitor's first tap/keypress — that feels
+    // automatic and never triggers a console warning.
+    function firePrompt() {
+        if (!deferred || promptShown) { return; }
+        promptShown = true;
+        deferred.prompt();
+        deferred.userChoice.then(function () { deferred = null; });
+    }
+    function armAutoPrompt() {
+        if (autoArmed || standalone) { return; }
+        autoArmed = true;
+        var evs = ['pointerdown', 'touchend', 'keydown'];
+        var handler = function () {
+            evs.forEach(function (ev) { window.removeEventListener(ev, handler); });
+            firePrompt();
+        };
+        evs.forEach(function (ev) { window.addEventListener(ev, handler, { passive: true }); });
+    }
+
+    window.addEventListener('beforeinstallprompt', function (e) {
+        // Chrome fired: the PWA is installable. Capture the event and offer it.
+        e.preventDefault();
+        deferred = e;
+        promptShown = false;
+        if (banner && !standalone && sessionStorage.getItem('fl_app_banner') !== 'off') { banner.hidden = false; }
+        armAutoPrompt();   // ask automatically on the first interaction
+    });
     window.addEventListener('appinstalled', function () {
+        deferred = null;
         if (headerBtn) headerBtn.style.display = 'none';
         if (banner) banner.hidden = true;
     });
@@ -149,9 +177,8 @@ window.FL_VAPID = <?= json_encode($pushEnabled ? $vapidPublic : '') ?>;
     function closeModal() { modal.style.display = 'none'; }
 
     function doInstall() {
-        if (deferred) {
-            deferred.prompt();
-            deferred.userChoice.finally(function () { deferred = null; });
+        if (deferred && !promptShown) {
+            firePrompt(); // Android/Chrome: show the native install dialog
         } else {
             openModal(); // iOS, or Android before the prompt is ready: show clear steps
         }

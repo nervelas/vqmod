@@ -162,22 +162,27 @@ table.data.standings { min-width: 100%; width: max-content; border-collapse: sep
     padding-left: .5rem; padding-right: .25rem; text-align: center;
     background: var(--c-surface);
 }
-/* Fixed column 2: escudo + team name (one line, ellipsis if extreme) */
-.standings th.std-team, .standings td.std-team {
+/* Fixed column 2: escudo + team name. Selectors are POSITION-based (2nd column)
+ * so this works whether the cell markup is new (.std-team) or old (.team-cell),
+ * i.e. updating only app.css already fixes the table.                          */
+.standings th:nth-child(2), .standings td:nth-child(2) {
     position: sticky; left: 42px; z-index: 3;
     background: var(--c-surface);
     box-shadow: 8px 0 12px -8px rgba(var(--c-shadow-rgb), .6);
     padding-left: .3rem; padding-right: .5rem;
+    white-space: nowrap;               /* team name NEVER breaks into lines */
 }
-.standings td.std-team .team-cell { gap: .55rem; }
+.standings td:nth-child(2) .team-cell { gap: .55rem; white-space: nowrap; min-width: 0; }
+/* Force one line even if the name is a bare text node (old markup) */
+.standings td:nth-child(2), .standings td:nth-child(2) * { word-break: normal; overflow-wrap: normal; }
 .standings .std-name {
     display: inline-block; max-width: clamp(140px, 44vw, 200px);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     vertical-align: middle;
 }
 /* Header fixed cells sit above body fixed cells */
-.standings thead th:first-child, .standings thead th.std-team { background: var(--c-surface-2); z-index: 4; }
-.standings tbody tr:hover td:first-child, .standings tbody tr:hover td.std-team { background: var(--c-surface-2); }
+.standings thead th:first-child, .standings thead th:nth-child(2) { background: var(--c-surface-2); z-index: 4; }
+.standings tbody tr:hover td:first-child, .standings tbody tr:hover td:nth-child(2) { background: var(--c-surface-2); }
 /* Compact, aligned stat columns */
 .standings td.num, .standings th.num { width: 40px; min-width: 40px; padding-left: .5rem; padding-right: .5rem; }
 /* Scroll hint (only useful on narrow screens) */
@@ -186,13 +191,13 @@ table.data.standings { min-width: 100%; width: max-content; border-collapse: sep
 @media (min-width: 900px) {
     table.data.standings { width: 100%; }    /* fill the card on desktop */
     .standings .std-name { max-width: none; }
-    .standings td.std-team, .standings th.std-team { box-shadow: none; }
+    .standings td:nth-child(2), .standings th:nth-child(2) { box-shadow: none; }
 }
 @media (max-width: 559px) {
     .standings th, .standings td { padding-top: .55rem; padding-bottom: .55rem; }
     .standings td.num, .standings th.num { width: 34px; min-width: 34px; padding-left: .4rem; padding-right: .4rem; font-size: .92rem; }
-    .standings td.std-team .team-cell { gap: .45rem; font-size: .94rem; font-weight: 800; }
-    .standings td.std-team .team-logo, .standings td.std-team .avatar { width: 26px; height: 26px; }
+    .standings td:nth-child(2) .team-cell { gap: .45rem; font-size: .94rem; font-weight: 800; }
+    .standings td:nth-child(2) .team-logo, .standings td:nth-child(2) .avatar { width: 26px; height: 26px; }
     .std-hint {
         display: block; text-align: right; font-size: .72rem; color: var(--c-text-subtle);
         margin: .4rem .2rem 0; letter-spacing: .03em;

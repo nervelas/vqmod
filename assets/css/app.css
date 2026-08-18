@@ -142,66 +142,44 @@ table.data td.pts { font-weight: 800; color: var(--c-link); }
 .pos-1 .pos-badge, .zone-champion .pos-badge { background: var(--c-accent); color: var(--c-on-accent); }
 .zone-final td:first-child { box-shadow: inset 4px 0 0 var(--c-primary); }
 
-/* ============ STANDINGS TABLE ============================================== *
- * POS + team column stay FIXED (position:sticky); PJ..PTS scroll horizontally.
- * The team name ALWAYS stays on one line (nowrap + ellipsis for extreme cases).
- * border-collapse:separate is REQUIRED so sticky <td> works on mobile Safari /
- * some Android browsers (collapse breaks position:sticky).                     */
-.standings-wrap { position: relative; }
-.std-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
-/* table.data.standings beats the generic table.data{min-width:560px;width:100%} */
-table.data.standings { min-width: 100%; width: max-content; border-collapse: separate; border-spacing: 0; }
-.standings thead th { border-bottom: 2px solid var(--c-border-strong); }
-.standings tbody td { border-bottom: 1px solid var(--c-border); }
-.standings tbody tr:last-child td { border-bottom: none; }
+/* ============ STANDINGS TABLE — frozen column (rebuilt, NO position:sticky) = *
+ * Two real tables side by side. LEFT (POS + escudo + equipo) is fixed and never
+ * scrolls. RIGHT (PJ PG PE PP GF GC DG PTS) scrolls horizontally on its own.
+ * Row heights are locked equal so both tables line up. This works on EVERY
+ * browser/mobile because it does not rely on position:sticky.                  */
+.postable { display: flex; align-items: stretch; border: 1px solid var(--c-border);
+    border-radius: 16px; overflow: hidden; background: var(--c-surface); }
+.postable table { border-collapse: collapse; }
+.postable th, .postable td { box-sizing: border-box; white-space: nowrap; vertical-align: middle; text-align: left; }
+.postable thead th { height: 48px; background: var(--c-surface-2); color: var(--c-text);
+    font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; font-weight: 800;
+    border-bottom: 2px solid var(--c-border-strong); }
+.postable tbody td { height: 56px; border-bottom: 1px solid var(--c-border); }
+.postable tbody tr:last-child td { border-bottom: none; }
 
-/* Fixed column 1: position */
-.standings th:first-child, .standings td:first-child {
-    position: sticky; left: 0; z-index: 3;
-    width: 42px; min-width: 42px; max-width: 42px;
-    padding-left: .5rem; padding-right: .25rem; text-align: center;
-    background: var(--c-surface);
-}
-/* Fixed column 2: escudo + team name. Selectors are POSITION-based (2nd column)
- * so this works whether the cell markup is new (.std-team) or old (.team-cell),
- * i.e. updating only app.css already fixes the table.                          */
-.standings th:nth-child(2), .standings td:nth-child(2) {
-    position: sticky; left: 42px; z-index: 3;
-    background: var(--c-surface);
-    box-shadow: 8px 0 12px -8px rgba(var(--c-shadow-rgb), .6);
-    padding-left: .3rem; padding-right: .5rem;
-    white-space: nowrap;               /* team name NEVER breaks into lines */
-}
-.standings td:nth-child(2) .team-cell { gap: .55rem; white-space: nowrap; min-width: 0; }
-/* Force one line even if the name is a bare text node (old markup) */
-.standings td:nth-child(2), .standings td:nth-child(2) * { word-break: normal; overflow-wrap: normal; }
-.standings .std-name {
-    display: inline-block; max-width: clamp(140px, 44vw, 200px);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    vertical-align: middle;
-}
-/* Header fixed cells sit above body fixed cells */
-.standings thead th:first-child, .standings thead th:nth-child(2) { background: var(--c-surface-2); z-index: 4; }
-.standings tbody tr:hover td:first-child, .standings tbody tr:hover td:nth-child(2) { background: var(--c-surface-2); }
-/* Compact, aligned stat columns */
-.standings td.num, .standings th.num { width: 40px; min-width: 40px; padding-left: .5rem; padding-right: .5rem; }
-/* Scroll hint (only useful on narrow screens) */
-.std-hint { display: none; }
+/* Left, fixed block ------------------------------------------------------- */
+.postable-fixed { flex: 0 0 auto; z-index: 1; box-shadow: 8px 0 14px -9px rgba(var(--c-shadow-rgb), .55); }
+.postable-fixed table { width: auto; }
+.postable-fixed .c-pos { width: 46px; min-width: 46px; text-align: center; padding: 0 .35rem; font-weight: 800; }
+.postable-fixed .c-team { padding: 0 .8rem 0 .25rem; }
+.postable-fixed .c-team .team-logo, .postable-fixed .c-team img {
+    width: 30px; height: 30px; vertical-align: middle; margin-right: .55rem; flex: 0 0 auto; }
+.pt-name { display: inline-block; vertical-align: middle; font-weight: 800;
+    max-width: clamp(150px, 46vw, 340px);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-@media (min-width: 900px) {
-    table.data.standings { width: 100%; }    /* fill the card on desktop */
-    .standings .std-name { max-width: none; }
-    .standings td:nth-child(2), .standings th:nth-child(2) { box-shadow: none; }
-}
+/* Right, scrollable block ------------------------------------------------- */
+.postable-scroll { flex: 1 1 auto; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.postable-scroll table { width: 100%; min-width: max-content; }
+.postable-scroll th, .postable-scroll td { width: 46px; min-width: 46px; text-align: center;
+    padding: 0 .55rem; font-variant-numeric: tabular-nums; }
+.postable-scroll td.pts, .postable-scroll thead th:last-child { color: var(--c-link); font-weight: 800; }
+
 @media (max-width: 559px) {
-    .standings th, .standings td { padding-top: .55rem; padding-bottom: .55rem; }
-    .standings td.num, .standings th.num { width: 34px; min-width: 34px; padding-left: .4rem; padding-right: .4rem; font-size: .92rem; }
-    .standings td:nth-child(2) .team-cell { gap: .45rem; font-size: .94rem; font-weight: 800; }
-    .standings td:nth-child(2) .team-logo, .standings td:nth-child(2) .avatar { width: 26px; height: 26px; }
-    .std-hint {
-        display: block; text-align: right; font-size: .72rem; color: var(--c-text-subtle);
-        margin: .4rem .2rem 0; letter-spacing: .03em;
-    }
+    .postable tbody td { height: 52px; }
+    .postable-fixed .c-team .team-logo, .postable-fixed .c-team img { width: 26px; height: 26px; margin-right: .45rem; }
+    .pt-name { max-width: clamp(130px, 44vw, 230px); font-size: .95rem; }
+    .postable-scroll th, .postable-scroll td { width: 40px; min-width: 40px; padding: 0 .45rem; font-size: .93rem; }
 }
 
 /* ---- PWA install invitation ---------------------------------------------- */

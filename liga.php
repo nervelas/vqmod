@@ -96,21 +96,38 @@ $heroBanner = ($tournament && !empty($tournament['banner'])) ? $tournament['bann
                     if (!$table): ?>
                         <div class="empty-state card"><div class="es-icon">📊</div><h3>Sin datos</h3><p>La tabla se genera al cargar resultados.</p></div>
                     <?php else: ?>
-                        <div class="standings-wrap">
-                            <div class="table-wrap std-scroll"><table class="data standings">
-                            <thead><tr><th class="num">#</th><th class="std-team">Equipo</th><th class="num">PJ</th><th class="num">PG</th><th class="num">PE</th><th class="num">PP</th><th class="num">GF</th><th class="num">GC</th><th class="num">DG</th><th class="num">PTS</th></tr></thead>
-                            <tbody>
-                            <?php foreach ($table as $r): ?>
-                                <tr>
-                                    <td class="num"><span class="pos-badge"><?= (int)$r['pos'] ?></span></td>
-                                    <td class="std-team"><span class="team-cell"><?= media_thumb($r['logo'], $r['name']) ?><span class="std-name" title="<?= e($r['name']) ?>"><?= e($r['name']) ?></span></span></td>
-                                    <td class="num"><?= (int)$r['pj'] ?></td><td class="num"><?= (int)$r['pg'] ?></td><td class="num"><?= (int)$r['pe'] ?></td><td class="num"><?= (int)$r['pp'] ?></td>
-                                    <td class="num"><?= (int)$r['gf'] ?></td><td class="num"><?= (int)$r['gc'] ?></td><td class="num"><?= (int)$r['dg'] ?></td><td class="num pts"><?= (int)$r['pts'] ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                            </tbody>
-                        </table></div>
-                            <span class="std-hint" aria-hidden="true">← desliza →</span>
+                        <!-- Standings: frozen left table (POS+escudo+equipo) + scrollable stats.
+                             Two real tables side by side, equal fixed row heights → no sticky. -->
+                        <div class="postable">
+                            <div class="postable-fixed">
+                                <table>
+                                    <thead><tr><th class="c-pos">#</th><th class="c-team">Equipo</th></tr></thead>
+                                    <tbody>
+                                    <?php foreach ($table as $r): ?>
+                                        <tr>
+                                            <td class="c-pos"><span class="pos-badge"><?= (int)$r['pos'] ?></span></td>
+                                            <td class="c-team">
+                                                <?= media_thumb($r['logo'], $r['name']) ?>
+                                                <span class="pt-name" title="<?= e($r['name']) ?>"><?= e($r['name']) ?></span>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="postable-scroll">
+                                <table>
+                                    <thead><tr><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th>GF</th><th>GC</th><th>DG</th><th>PTS</th></tr></thead>
+                                    <tbody>
+                                    <?php foreach ($table as $r): ?>
+                                        <tr>
+                                            <td><?= (int)$r['pj'] ?></td><td><?= (int)$r['pg'] ?></td><td><?= (int)$r['pe'] ?></td><td><?= (int)$r['pp'] ?></td>
+                                            <td><?= (int)$r['gf'] ?></td><td><?= (int)$r['gc'] ?></td><td><?= (int)$r['dg'] ?></td><td class="pts"><?= (int)$r['pts'] ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     <?php endif; ?>
                 </div>

@@ -142,40 +142,85 @@ table.data td.pts { font-weight: 800; color: var(--c-link); }
 .pos-1 .pos-badge, .zone-champion .pos-badge { background: var(--c-accent); color: var(--c-on-accent); }
 .zone-final td:first-child { box-shadow: inset 4px 0 0 var(--c-primary); }
 
-/* Standings: freeze the position + team columns; the stats scroll horizontally.
-   Team names always read on one line while PJ/PG/… slide under the team column.
-   border-collapse:separate is REQUIRED so sticky columns work on mobile Safari
-   and some Android browsers (collapse breaks position:sticky on <td>). */
-.standings { min-width: 0; border-collapse: separate; border-spacing: 0; }
+/* ============ STANDINGS TABLE ============================================== *
+ * POS + team column stay FIXED (position:sticky); PJ..PTS scroll horizontally.
+ * The team name ALWAYS stays on one line (nowrap + ellipsis for extreme cases).
+ * border-collapse:separate is REQUIRED so sticky <td> works on mobile Safari /
+ * some Android browsers (collapse breaks position:sticky).                     */
+.standings-wrap { position: relative; }
+.std-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+/* table.data.standings beats the generic table.data{min-width:560px;width:100%} */
+table.data.standings { min-width: 100%; width: max-content; border-collapse: separate; border-spacing: 0; }
 .standings thead th { border-bottom: 2px solid var(--c-border-strong); }
 .standings tbody td { border-bottom: 1px solid var(--c-border); }
 .standings tbody tr:last-child td { border-bottom: none; }
+
+/* Fixed column 1: position */
 .standings th:first-child, .standings td:first-child {
     position: sticky; left: 0; z-index: 3;
-    width: 40px; min-width: 40px;
-    padding-left: .5rem; padding-right: .3rem;
+    width: 42px; min-width: 42px; max-width: 42px;
+    padding-left: .5rem; padding-right: .25rem; text-align: center;
     background: var(--c-surface);
 }
-.standings th:nth-child(2), .standings td:nth-child(2) {
-    position: sticky; left: 40px; z-index: 3;
+/* Fixed column 2: escudo + team name (one line, ellipsis if extreme) */
+.standings th.std-team, .standings td.std-team {
+    position: sticky; left: 42px; z-index: 3;
     background: var(--c-surface);
-    box-shadow: 10px 0 12px -8px rgba(var(--c-shadow-rgb), .55);
+    box-shadow: 8px 0 12px -8px rgba(var(--c-shadow-rgb), .6);
+    padding-left: .3rem; padding-right: .5rem;
 }
-.standings thead th:first-child, .standings thead th:nth-child(2) { background: var(--c-surface-2); z-index: 4; }
-.standings tbody tr:hover td:first-child, .standings tbody tr:hover td:nth-child(2) { background: var(--c-surface-2); }
-/* Compact stat columns so several are visible before you scroll. */
-.standings td.num, .standings th.num { width: 34px; padding-left: .45rem; padding-right: .45rem; }
+.standings td.std-team .team-cell { gap: .55rem; }
+.standings .std-name {
+    display: inline-block; max-width: clamp(140px, 44vw, 200px);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    vertical-align: middle;
+}
+/* Header fixed cells sit above body fixed cells */
+.standings thead th:first-child, .standings thead th.std-team { background: var(--c-surface-2); z-index: 4; }
+.standings tbody tr:hover td:first-child, .standings tbody tr:hover td.std-team { background: var(--c-surface-2); }
+/* Compact, aligned stat columns */
+.standings td.num, .standings th.num { width: 40px; min-width: 40px; padding-left: .5rem; padding-right: .5rem; }
+/* Scroll hint (only useful on narrow screens) */
+.std-hint { display: none; }
 
-@media (max-width: 680px) {
-    .standings th, .standings td { padding-top: .6rem; padding-bottom: .6rem; }
-    .standings td.num, .standings th.num { width: 30px; padding-left: .35rem; padding-right: .35rem; font-size: .9rem; }
-    .standings .team-cell { gap: .45rem; font-size: .92rem; }
-    .standings .team-cell .team-logo, .standings .team-cell .avatar { width: 26px; height: 26px; }
-    .standings td:nth-child(2), .standings th:nth-child(2) { padding-left: .4rem; padding-right: .5rem; }
+@media (min-width: 900px) {
+    table.data.standings { width: 100%; }    /* fill the card on desktop */
+    .standings .std-name { max-width: none; }
+    .standings td.std-team, .standings th.std-team { box-shadow: none; }
 }
+@media (max-width: 559px) {
+    .standings th, .standings td { padding-top: .55rem; padding-bottom: .55rem; }
+    .standings td.num, .standings th.num { width: 34px; min-width: 34px; padding-left: .4rem; padding-right: .4rem; font-size: .92rem; }
+    .standings td.std-team .team-cell { gap: .45rem; font-size: .94rem; font-weight: 800; }
+    .standings td.std-team .team-logo, .standings td.std-team .avatar { width: 26px; height: 26px; }
+    .std-hint {
+        display: block; text-align: right; font-size: .72rem; color: var(--c-text-subtle);
+        margin: .4rem .2rem 0; letter-spacing: .03em;
+    }
+}
+
+/* ---- PWA install invitation ---------------------------------------------- */
+.pwa-invite { position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 200; animation: fadeInUp .35s ease; }
+.pwa-invite-in { display: flex; align-items: center; gap: .8rem; max-width: 560px; margin: 0 auto;
+    background: var(--c-elevated); border: 1px solid var(--c-border-strong); border-radius: 16px;
+    padding: .8rem 1rem; box-shadow: 0 18px 46px rgba(var(--c-shadow-rgb), .5); }
+.pwa-ico { font-size: 1.7rem; flex: 0 0 auto; }
+.pwa-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.pwa-text strong { font-size: .98rem; }
+.pwa-text span { font-size: .82rem; color: var(--c-text-muted); line-height: 1.35; }
+.pwa-actions { display: flex; align-items: center; gap: .35rem; flex: 0 0 auto; }
+.pwa-close { background: none; border: none; color: var(--c-text-muted); font-size: 1.05rem; cursor: pointer; padding: .2rem .45rem; border-radius: 8px; }
+.pwa-close:hover { background: var(--c-surface-2); }
+
+/* ---- Breadcrumbs --------------------------------------------------------- */
+.crumbs { display: flex; align-items: center; flex-wrap: wrap; gap: .45rem; font-size: .85rem; color: var(--c-text-muted); margin-bottom: 1rem; }
+.crumbs a { color: var(--c-link); font-weight: 600; }
+.crumbs a:hover { text-decoration: underline; }
+.crumbs span { color: var(--c-text-subtle); }
 
 /* ---- Tournament cards (home landing) ------------------------------------- */
 .tourney-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1.25rem; }
+.tc-meta { display: flex; flex-wrap: wrap; gap: .4rem; margin: .1rem 0 .5rem; }
 .tourney-card { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
 .tc-media { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; background: var(--c-surface-2); }
 .tc-media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .45s ease; }
@@ -210,7 +255,10 @@ table.data td.pts { font-weight: 800; color: var(--c-link); }
 .brand .brand-mark { width: 38px; height: 38px; border-radius: 11px; background: var(--c-primary); color: var(--c-on-primary); display: grid; place-items: center; font-size: 1.2rem; }
 .nav { display: flex; align-items: center; gap: .35rem; }
 .nav a { padding: .5rem .9rem; border-radius: 10px; font-weight: 600; color: var(--c-text); font-size: .93rem; }
+.nav a.nav-link { display: inline-flex; align-items: center; gap: .5rem; }
+.nav .nav-ico { display: inline-flex; opacity: .85; }
 .nav a:hover, .nav a.active { background: var(--c-surface-2); color: var(--c-link); }
+.nav a.active .nav-ico { opacity: 1; }
 .nav-toggle { display: none; background: var(--c-surface-2); border: 1px solid var(--c-border); color: var(--c-text); width: 44px; height: 44px; border-radius: 11px; cursor: pointer; font-size: 1.3rem; }
 
 /* ---- Hero ---------------------------------------------------------------- */

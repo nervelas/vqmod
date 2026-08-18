@@ -14,15 +14,9 @@ $contact = Settings::get('contact_email', '');
             </div>
             <div>
                 <h4>Navegación</h4>
-                <?php
-                $__flg = the_league();
-                $__ligaHref = ($__flg && $__flg['visibility'] === 'public')
-                    ? base_url('liga.php?slug=' . urlencode($__flg['slug']))
-                    : base_url('index.php');
-                ?>
-                <a href="<?= e(base_url('index.php')) ?>">Inicio</a>
-                <a href="<?= e($__ligaHref) ?>">La Liga</a>
-                <a href="<?= e($__ligaHref . '#noticias') ?>">Noticias</a>
+                <a href="<?= e(base_url('index.php')) ?>">La Liga</a>
+                <a href="<?= e(base_url('torneos.php')) ?>">Torneos</a>
+                <a href="<?= e(base_url('noticias.php')) ?>">Noticias</a>
             </div>
             <div>
                 <h4>Contacto</h4>

@@ -10,13 +10,16 @@ $fav  = Settings::get('favicon');
 $vapidPublic = (string)Settings::get('vapid_public', '');
 $pushEnabled = Settings::bool('push_enabled', false) && $vapidPublic !== '';
 $__lg = the_league();
-$__ligaUrl = ($__lg && $__lg['visibility'] === 'public')
-    ? base_url('liga.php?slug=' . urlencode($__lg['slug']))
-    : base_url('index.php');
+// Professional inline SVG icons for the public menu.
+$__ico = [
+    'liga'     => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V5z"/></svg>',
+    'torneos'  => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v3a6 6 0 0 1-12 0z"/><path d="M6 5H3v1a3 3 0 0 0 3 3M18 5h3v1a3 3 0 0 1-3 3"/><path d="M9 13.5V17h6v-3.5M8 21h8M12 17v4"/></svg>',
+    'noticias' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h13v14H6a2 2 0 0 1-2-2z"/><path d="M17 8h3v9a2 2 0 0 1-2 2M8 9h6M8 13h6"/></svg>',
+];
 $nav = [
-    'inicio'    => ['Inicio', base_url('index.php')],
-    'liga'      => ['La Liga', $__ligaUrl],
-    'noticias'  => ['Noticias', $__ligaUrl . '#noticias'],
+    'liga'     => ['La Liga',  base_url('index.php'),    $__ico['liga']],
+    'torneos'  => ['Torneos',  base_url('torneos.php'),  $__ico['torneos']],
+    'noticias' => ['Noticias', base_url('noticias.php'), $__ico['noticias']],
 ];
 ?><!DOCTYPE html>
 <html lang="es">
@@ -60,59 +63,80 @@ window.FL_VAPID = <?= json_encode($pushEnabled ? $vapidPublic : '') ?>;
             <button class="nav-toggle" aria-label="Menú">☰</button>
             <nav class="nav">
                 <?php foreach ($nav as $key => $item): ?>
-                    <a href="<?= e($item[1]) ?>" class="<?= ($activeNav ?? '') === $key ? 'active' : '' ?>"><?= e($item[0]) ?></a>
+                    <a href="<?= e($item[1]) ?>" class="nav-link <?= ($activeNav ?? '') === $key ? 'active' : '' ?>"><span class="nav-ico"><?= $item[2] ?? '' ?></span><span><?= e($item[0]) ?></span></a>
                 <?php endforeach; ?>
             </nav>
         </div>
     </div>
 </header>
 
+<!-- PWA install invitation (shown only when the browser allows installation) -->
+<div id="pwa-install" class="pwa-invite" hidden role="dialog" aria-label="Instalar aplicación">
+    <div class="pwa-invite-in">
+        <span class="pwa-ico">📲</span>
+        <div class="pwa-text">
+            <strong>Instalar aplicación</strong>
+            <span id="pwa-sub">Añádela a tu teléfono para acceder más rápido y recibir resultados.</span>
+        </div>
+        <div class="pwa-actions">
+            <button type="button" id="pwa-btn" class="btn btn-sm">Instalar</button>
+            <button type="button" id="pwa-close" class="pwa-close" aria-label="Cerrar">✕</button>
+        </div>
+    </div>
+</div>
+
 <script>
 (function () {
     var base = window.FL_BASE || './';
     if (!('serviceWorker' in navigator)) { return; }
 
-    // Register the service worker (required so the browser treats this as an app).
     navigator.serviceWorker.register(base + 'sw.js').catch(function () {});
 
+    var box = document.getElementById('pwa-install');
+    var btn = document.getElementById('pwa-btn');
+    var sub = document.getElementById('pwa-sub');
+    var closeBtn = document.getElementById('pwa-close');
+
     var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    if (standalone) { subscribePush(); return; } // already installed as an app
+    var ua = navigator.userAgent || '';
+    var isIOS = /iphone|ipad|ipod/i.test(ua) && !window.MSStream;
+    var deferred = null;
 
-    var deferred = null, promptShown = false, armed = false;
+    if (standalone) { subscribePush(); return; }        // already installed → nothing to show
+    if (sessionStorage.getItem('pwa_hide') === '1') { /* dismissed this session */ }
 
-    // Show the browser's NATIVE install dialog automatically (no button).
-    // prompt() must run inside a user gesture, so we fire it on the visitor's
-    // very first interaction with the page — it feels automatic on entry.
-    function firePrompt() {
-        if (!deferred || promptShown) { return; }
-        promptShown = true;
+    function show() {
+        if (box && sessionStorage.getItem('pwa_hide') !== '1') { box.hidden = false; }
+    }
+    function hide() { if (box) box.hidden = true; }
+    if (closeBtn) closeBtn.addEventListener('click', function () { sessionStorage.setItem('pwa_hide', '1'); hide(); });
+
+    // ---- Android / Chromium: capture the install event and show the button ----
+    window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        deferred = e;
+        if (btn) btn.style.display = '';
+        show();
+    });
+    if (btn) btn.addEventListener('click', function () {
+        if (!deferred) { return; }
         deferred.prompt();
         deferred.userChoice.then(function (c) {
             deferred = null;
-            if (!(c && c.outcome === 'accepted')) { promptShown = false; }
+            if (c && c.outcome === 'accepted') { hide(); }
         });
-    }
-    function armAutoPrompt() {
-        if (armed) { return; }
-        armed = true;
-        var evs = ['pointerdown', 'touchend', 'click', 'keydown'];
-        var handler = function () {
-            evs.forEach(function (ev) { window.removeEventListener(ev, handler, true); });
-            firePrompt();
-        };
-        evs.forEach(function (ev) { window.addEventListener(ev, handler, { capture: true, passive: true }); });
-    }
-
-    window.addEventListener('beforeinstallprompt', function (e) {
-        e.preventDefault();       // suppress the mini-infobar…
-        deferred = e;
-        promptShown = false;
-        armAutoPrompt();          // …and show the full native install dialog automatically
     });
 
+    // ---- iOS / iPadOS Safari: no beforeinstallprompt → show manual steps ------
+    if (isIOS) {
+        if (sub) sub.innerHTML = 'Toca <strong>Compartir</strong> (el icono ⬆️) y luego <strong>“Añadir a pantalla de inicio”</strong>.';
+        if (btn) btn.style.display = 'none';
+        // give the page a moment so it isn't jarring on entry
+        setTimeout(show, 1200);
+    }
+
     window.addEventListener('appinstalled', function () {
-        deferred = null;
-        subscribePush();          // installed: turn on result notifications
+        deferred = null; hide(); subscribePush();
     });
 
     // ---- Push notifications (only if the admin enabled them) ----------------

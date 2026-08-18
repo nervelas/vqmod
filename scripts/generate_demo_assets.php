@@ -192,8 +192,11 @@ function make_banner(string $path, string $title, string $sub, string $font): vo
         imagefilledellipse($im, mt_rand(40, $W - 40), mt_rand(30, $H - 30), $r, $r,
             imagecolorallocatealpha($im, 130, 255, 200, mt_rand(90, 118)));
     }
-    imagejpeg($im, $path, 88);
-    imagedestroy($im);
+    // Standard banner canvas: 2172 x 724.
+    $D = imagecreatetruecolor(2172, 724);
+    imagecopyresampled($D, $im, 0, 0, 0, 0, 2172, 724, $W, $H);
+    imagejpeg($D, $path, 88);
+    imagedestroy($im); imagedestroy($D);
 }
 
 /* ---- Court banners (realistic cement futsal-5 court) per tournament ------- */
@@ -272,8 +275,9 @@ function make_court(string $path, array $accent): void {
         imagefilledrectangle($im, 0, $y, $W, $y, imagecolorallocatealpha($im, 0, 0, 0, max(60, $a)));
     }
 
-    $D = imagecreatetruecolor(1600, 520);
-    imagecopyresampled($D, $im, 0, 0, 0, 0, 1600, 520, $W, $H);
+    // Standard banner canvas: 2172 x 724.
+    $D = imagecreatetruecolor(2172, 724);
+    imagecopyresampled($D, $im, 0, 0, 0, 0, 2172, 724, $W, $H);
     imagejpeg($D, $path, 86);
     imagedestroy($im); imagedestroy($D);
 }

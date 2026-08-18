@@ -81,7 +81,7 @@ if (is_post() && $action !== 'delete') {
 
     // Per-tournament banner upload.
     try {
-        $banner = Upload::image('banner', 'tournaments');
+        $banner = Upload::image('banner', 'tournaments', [Upload::BANNER_W, Upload::BANNER_H]);
     } catch (RuntimeException $ex) {
         flash('danger', $ex->getMessage());
         redirect(base_url('admin/tournaments.php?action=' . ($id ? 'edit&id=' . $id : 'new')));

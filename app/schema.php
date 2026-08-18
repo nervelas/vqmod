@@ -146,6 +146,7 @@ return [
     tiebreakers   VARCHAR(255) NOT NULL DEFAULT 'points,goal_diff,goals_for,wins,head_to_head',
     discipline    MEDIUMTEXT   NULL,
     banner        VARCHAR(255) NULL,
+    description   VARCHAR(600) NULL,
     final_phase   ENUM('none','top4','top8') NOT NULL DEFAULT 'none',
     champion_team_id INT UNSIGNED NULL,
     runnerup_team_id INT UNSIGNED NULL,

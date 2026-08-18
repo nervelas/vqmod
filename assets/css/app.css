@@ -142,6 +142,34 @@ table.data td.pts { font-weight: 800; color: var(--c-link); }
 .pos-1 .pos-badge, .zone-champion .pos-badge { background: var(--c-accent); color: var(--c-on-accent); }
 .zone-final td:first-child { box-shadow: inset 4px 0 0 var(--c-primary); }
 
+/* Standings: freeze the position + team columns; the stats scroll horizontally.
+   Team names always read on one line while PJ/PG/… slide under the team column. */
+.standings th:first-child, .standings td:first-child {
+    position: sticky; left: 0; z-index: 3;
+    width: 46px; min-width: 46px;
+    padding-left: .55rem; padding-right: .35rem;
+    background: var(--c-surface);
+}
+.standings th:nth-child(2), .standings td:nth-child(2) {
+    position: sticky; left: 46px; z-index: 3;
+    background: var(--c-surface);
+    box-shadow: 10px 0 12px -8px rgba(var(--c-shadow-rgb), .55);
+}
+.standings thead th:first-child, .standings thead th:nth-child(2) { background: var(--c-surface-2); z-index: 4; }
+.standings tbody tr:hover td:first-child, .standings tbody tr:hover td:nth-child(2) { background: var(--c-surface-2); }
+
+/* ---- Tournament cards (home landing) ------------------------------------- */
+.tourney-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1.25rem; }
+.tourney-card { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+.tc-media { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; background: var(--c-surface-2); }
+.tc-media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .45s ease; }
+.tourney-card:hover .tc-media img { transform: scale(1.06); }
+.tc-badge { position: absolute; top: .6rem; right: .6rem; background: rgba(0,0,0,.62); color: #fff; font-size: .74rem; font-weight: 800; padding: .28rem .65rem; border-radius: 999px; backdrop-filter: blur(4px); }
+.tc-body { padding: 1.05rem 1.15rem 1.2rem; display: flex; flex-direction: column; flex: 1; }
+.tc-title { margin: 0 0 .35rem; font-size: 1.18rem; }
+.tc-desc { color: var(--c-text-muted); font-size: .9rem; line-height: 1.5; margin: 0; flex: 1; }
+.rich :first-child { margin-top: 0; } .rich :last-child { margin-bottom: 0; }
+
 /* ---- Team cell ----------------------------------------------------------- */
 .team-cell { display: flex; align-items: center; gap: .65rem; font-weight: 700; white-space: nowrap; }
 .team-cell img, .team-cell .team-logo, .team-cell .avatar { flex: 0 0 auto; }
@@ -228,6 +256,23 @@ table.data td.pts { font-weight: 800; color: var(--c-link); }
 .site-footer a:hover { color: var(--c-link); }
 .footer-bottom { border-top: 1px solid var(--c-border); padding-top: 1.25rem; font-size: .85rem; text-align: center; }
 
+/* ---- Fixtures (friendly calendar) ---------------------------------------- */
+.jornada { padding: 0; overflow: hidden; }
+.jornada-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .8rem 1.1rem; background: var(--c-surface-2); border-bottom: 1px solid var(--c-border); }
+.jornada-head strong { font-size: 1rem; }
+.jornada-head .muted { font-size: .82rem; }
+.fixture { padding: .5rem 1.1rem; border-bottom: 1px solid var(--c-border); }
+.fixture:last-child { border-bottom: none; }
+.fx-row { display: flex; align-items: center; gap: .6rem; padding: .3rem 0; }
+.fx-team { display: flex; align-items: center; gap: .6rem; min-width: 0; flex: 1; font-weight: 700; }
+.fx-team .team-logo, .fx-team img { width: 30px; height: 30px; flex: 0 0 auto; }
+.fx-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fx-win .fx-name { font-weight: 800; }
+.fx-goals { font-weight: 900; font-size: 1.15rem; min-width: 1.6rem; text-align: center; font-variant-numeric: tabular-nums; color: var(--c-text); }
+.fx-dash { color: var(--c-text-subtle); font-weight: 700; }
+.fx-meta { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin-top: .3rem; font-size: .78rem; color: var(--c-text-muted); }
+.fx-meta .liga-acta-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; border: 1px solid var(--c-border); cursor: zoom-in; }
+
 /* ---- Empty state --------------------------------------------------------- */
 .empty-state { text-align: center; padding: clamp(40px, 8vw, 90px) 1rem; }
 .empty-state .es-icon { font-size: 3.4rem; margin-bottom: 1rem; }
@@ -263,11 +308,14 @@ table.data td.pts { font-weight: 800; color: var(--c-link); }
 /* ---- Animations ---------------------------------------------------------- */
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-.reveal { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
-.reveal.in { opacity: 1; transform: translateY(0); }
+/* Content is visible by default; the reveal animation only applies when JS is
+   active (html.js), so primary content is never stuck invisible. */
+.reveal { opacity: 1; transform: none; }
+html.js .reveal { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
+html.js .reveal.in { opacity: 1; transform: translateY(0); }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
-    .reveal { opacity: 1; transform: none; }
+    html.js .reveal { opacity: 1; transform: none; }
 }
 
 /* ---- Responsive ---------------------------------------------------------- */
@@ -280,6 +328,5 @@ table.data td.pts { font-weight: 800; color: var(--c-link); }
 }
 @media (max-width: 560px) {
     .match-card { grid-template-columns: 1fr auto 1fr; gap: .5rem; padding: .9rem; }
-    .match-team span.name { display: none; }
     .btn { width: auto; }
 }

@@ -95,10 +95,10 @@ function fl_seed_demo(PDO $pdo): array
     require_once __DIR__ . '/CalendarGenerator.php';
 
     $tournaments = [
-        ['masculino', 'Torneo Masculino Libre', 'none', $maleFirst],
-        ['femenino',  'Torneo Femenino Libre',  'none', $femaleFirst],
-        ['juvenil',   'Torneo Juvenil',         'none', $maleFirst],
-        ['infantil',  'Torneo Infantil',        'none', $maleFirst],
+        ['masculino', 'Torneo Masculino Libre', 'none', $maleFirst,   'Categoría libre masculina de fútbol 5. 14 equipos compiten todos contra todos por el título.'],
+        ['femenino',  'Torneo Femenino Libre',  'none', $femaleFirst, 'Categoría libre femenina de fútbol 5, con 10 equipos y mucha emoción cada jornada.'],
+        ['juvenil',   'Torneo Juvenil',         'none', $maleFirst,   'Torneo juvenil de fútbol 5 para las nuevas promesas de la liga.'],
+        ['infantil',  'Torneo Infantil',        'none', $maleFirst,   'Torneo infantil de fútbol 5: diversión, aprendizaje y compañerismo.'],
     ];
 
     // Base kickoff Saturday (first Saturday at least 7 days out from a fixed anchor).
@@ -106,12 +106,12 @@ function fl_seed_demo(PDO $pdo): array
     $globalTeamIndex = 0;
     $summary = ['tournaments' => 0, 'teams' => 0, 'players' => 0, 'matches' => 0, 'goals' => 0];
 
-    $setBanner = $pdo->prepare("UPDATE tournaments SET banner = ? WHERE id = ?");
-    foreach ($tournaments as [$key, $tname, $finalPhase, $firstNames]) {
+    $setMeta = $pdo->prepare("UPDATE tournaments SET banner = ?, description = ? WHERE id = ?");
+    foreach ($tournaments as [$key, $tname, $finalPhase, $firstNames, $tdesc]) {
         $insTourn->execute([$leagueId, $seasonId, $tname, $slugify($tname), $discipline, $finalPhase]);
         $tournamentId = (int)$pdo->lastInsertId();
-        $court = $root . "/assets/demo/court-$key.jpg";
-        if (is_file($court)) { $setBanner->execute(["assets/demo/court-$key.jpg", $tournamentId]); }
+        $court = is_file($root . "/assets/demo/court-$key.jpg") ? "assets/demo/court-$key.jpg" : null;
+        $setMeta->execute([$court, $tdesc, $tournamentId]);
         $summary['tournaments']++;
 
         $teamIds = [];

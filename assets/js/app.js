@@ -25,8 +25,10 @@
             entries.forEach(function (en) {
                 if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
             });
-        }, { threshold: 0.12 });
+        }, { threshold: 0.08, rootMargin: '0px 0px -5% 0px' });
         els.forEach(function (el) { io.observe(el); });
+        // Safety net: never leave content invisible. Reveal anything still hidden.
+        setTimeout(function () { els.forEach(function (el) { el.classList.add('in'); }); }, 1400);
     }
 
     /* Tabs */

@@ -118,22 +118,28 @@ $heroBanner = ($tournament && !empty($tournament['banner'])) ? $tournament['bann
                         <div class="empty-state card"><div class="es-icon">📅</div><h3>Sin calendario</h3><p>Aún no se ha publicado el calendario.</p></div>
                     <?php else: foreach ($mds as $md):
                         $ms = Database::all("SELECT m.*, h.name hn, h.logo hl, a.name an, a.logo al FROM matches m LEFT JOIN teams h ON h.id=m.home_team_id LEFT JOIN teams a ON a.id=m.away_team_id WHERE m.matchday_id=? ORDER BY m.match_date, m.match_time, m.id", [$md['id']]); ?>
-                        <div class="card mb-2">
-                            <div class="flex justify-between items-center wrap" style="margin-bottom:.5rem"><strong>Jornada <?= (int)$md['number'] ?></strong><span class="muted" style="font-size:.82rem"><?= e(fmt_date($md['match_date'])) ?></span></div>
-                            <?php foreach ($ms as $mt): ?>
-                                <div class="match-card" style="padding:.55rem .4rem;border-bottom:1px solid var(--c-border)">
-                                    <div class="match-team"><?= media_thumb($mt['hl'], $mt['hn'] ?? '') ?> <span class="name"><?= e($mt['hn'] ?? '—') ?></span></div>
-                                    <div style="text-align:center">
-                                        <div class="match-score"><?php if ($mt['home_goals']!==null): ?><?= (int)$mt['home_goals'] ?> - <?= (int)$mt['away_goals'] ?><?php else: ?><span class="vs"><?= e(fmt_time($mt['match_time'])) ?></span><?php endif; ?></div>
+                        <div class="card mb-2 jornada">
+                            <div class="jornada-head"><strong>Jornada <?= (int)$md['number'] ?></strong><span class="muted"><?= e(fmt_date($md['match_date'])) ?></span></div>
+                            <?php foreach ($ms as $mt):
+                                $played = $mt['home_goals'] !== null && $mt['away_goals'] !== null;
+                                $hg = (int)$mt['home_goals']; $ag = (int)$mt['away_goals'];
+                            ?>
+                                <div class="fixture">
+                                    <div class="fx-row<?= $played && $hg > $ag ? ' fx-win' : '' ?>">
+                                        <span class="fx-team"><?= media_thumb($mt['hl'], $mt['hn'] ?? '') ?><span class="fx-name"><?= e($mt['hn'] ?? '—') ?></span></span>
+                                        <span class="fx-goals"><?= $played ? $hg : '<span class="fx-dash">–</span>' ?></span>
                                     </div>
-                                    <div class="match-team away"><span class="name"><?= e($mt['an'] ?? '—') ?></span> <?= media_thumb($mt['al'], $mt['an'] ?? '') ?></div>
+                                    <div class="fx-row<?= $played && $ag > $hg ? ' fx-win' : '' ?>">
+                                        <span class="fx-team"><?= media_thumb($mt['al'], $mt['an'] ?? '') ?><span class="fx-name"><?= e($mt['an'] ?? '—') ?></span></span>
+                                        <span class="fx-goals"><?= $played ? $ag : '<span class="fx-dash">–</span>' ?></span>
+                                    </div>
+                                    <div class="fx-meta">
+                                        <span><?= $played ? 'Final' : ('🕒 ' . e(fmt_time($mt['match_time']))) ?><?php if ($mt['venue']): ?> · <?= e($mt['venue']) ?><?php endif; ?></span>
+                                        <?php if (!empty($mt['referee_report']) && !empty($mt['referee_report_public'])): ?>
+                                            <img class="liga-acta-thumb" src="<?= e(base_url($mt['referee_report'])) ?>" data-full="<?= e(base_url($mt['referee_report'])) ?>" alt="Acta arbitral" title="Ver acta arbitral">
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
-                                <?php if (!empty($mt['referee_report']) && !empty($mt['referee_report_public'])): ?>
-                                    <div style="text-align:center;padding:.1rem 0 .55rem">
-                                        <img class="liga-acta-thumb" src="<?= e(base_url($mt['referee_report'])) ?>" data-full="<?= e(base_url($mt['referee_report'])) ?>" alt="Acta arbitral" title="Ver acta arbitral" style="width:52px;height:52px;object-fit:cover;border-radius:8px;border:1px solid var(--c-border);cursor:zoom-in;display:inline-block">
-                                        <div class="subtle" style="font-size:.7rem">📄 Acta arbitral</div>
-                                    </div>
-                                <?php endif; ?>
                             <?php endforeach; ?>
                         </div>
                     <?php endforeach; endif; ?>

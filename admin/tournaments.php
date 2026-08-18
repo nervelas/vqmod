@@ -7,13 +7,18 @@ Auth::require('tournaments.manage');
 $action = str_input('action', 'list');
 $id = int_input('id');
 
-/** Idempotent migration: tournaments.banner column (per-tournament banner). */
+/** Idempotent migrations: tournaments.banner + tournaments.description. */
 (function () {
-    $has = Database::scalar(
-        "SELECT COUNT(*) FROM information_schema.columns
-         WHERE table_schema = DATABASE() AND table_name = 'tournaments' AND column_name = 'banner'"
-    );
-    if (!$has) { Database::q("ALTER TABLE tournaments ADD COLUMN banner VARCHAR(255) NULL AFTER discipline"); }
+    foreach ([
+        'banner'      => "ALTER TABLE tournaments ADD COLUMN banner VARCHAR(255) NULL AFTER discipline",
+        'description' => "ALTER TABLE tournaments ADD COLUMN description VARCHAR(600) NULL AFTER banner",
+    ] as $col => $ddl) {
+        $has = Database::scalar(
+            "SELECT COUNT(*) FROM information_schema.columns
+             WHERE table_schema = DATABASE() AND table_name = 'tournaments' AND column_name = ?", [$col]
+        );
+        if (!$has) { Database::q($ddl); }
+    }
 })();
 
 $TB = [
@@ -69,6 +74,7 @@ if (is_post() && $action !== 'delete') {
         'points_loss' => max(0, (int)int_input('points_loss', 0)),
         'tiebreakers' => implode(',', $order),
         'discipline'  => $discipline,
+        'description' => str_input('description'),
         'final_phase' => 'none',
         'status'      => in_array(str_input('status'), ['draft','active','finished'], true) ? str_input('status') : 'draft',
     ];
@@ -145,6 +151,10 @@ if ($action === 'new' || $action === 'edit') {
                 <div class="mt-1"><img src="<?= e(base_url($t['banner'])) ?>" alt="" style="max-height:90px;border-radius:10px">
                 <label class="help"><input type="checkbox" name="remove_banner" value="1"> Eliminar banner</label></div>
             <?php endif; ?>
+        </div>
+        <div class="field">
+            <label for="description">Descripción del torneo</label>
+            <textarea class="textarea" id="description" name="description" rows="2" placeholder="Breve descripción que se muestra en la portada (Inicio) y en la tarjeta del torneo."><?= $v('description') ?></textarea>
         </div>
         <div class="form-row">
             <div class="field"><label for="slug">Slug</label><input class="input" id="slug" name="slug" value="<?= $v('slug') ?>"></div>

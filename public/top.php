@@ -21,6 +21,7 @@ $nav = [
 ?><!DOCTYPE html>
 <html lang="es">
 <head>
+<script>document.documentElement.className+=' js';</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= e($pageTitle ?? $siteName) ?></title>
@@ -66,37 +67,31 @@ window.FL_VAPID = <?= json_encode($pushEnabled ? $vapidPublic : '') ?>;
     </div>
 </header>
 
-<button id="fl-install" type="button" hidden aria-label="Instalar la app"
-    style="position:fixed;right:16px;bottom:16px;z-index:150;display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.1rem;border:none;border-radius:999px;background:var(--c-primary);color:var(--c-on-primary);font-weight:800;font-size:.95rem;box-shadow:0 10px 30px rgba(0,0,0,.35);cursor:pointer">📲 Instalar app</button>
-
 <script>
 (function () {
     var base = window.FL_BASE || './';
     if (!('serviceWorker' in navigator)) { return; }
 
-    // Register the service worker (required so Chrome treats this as an app).
+    // Register the service worker (required so the browser treats this as an app).
     navigator.serviceWorker.register(base + 'sw.js').catch(function () {});
 
-    var installBtn = document.getElementById('fl-install');
     var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     if (standalone) { subscribePush(); return; } // already installed as an app
 
     var deferred = null, promptShown = false, armed = false;
 
-    // Show Chrome's NATIVE install dialog (installs a real app / WebAPK).
+    // Show the browser's NATIVE install dialog automatically (no button).
     // prompt() must run inside a user gesture, so we fire it on the visitor's
-    // very first interaction — it feels automatic and never logs a warning.
+    // very first interaction with the page — it feels automatic on entry.
     function firePrompt() {
         if (!deferred || promptShown) { return; }
         promptShown = true;
         deferred.prompt();
         deferred.userChoice.then(function (c) {
             deferred = null;
-            if (installBtn && c && c.outcome === 'accepted') { installBtn.hidden = true; }
-            else { promptShown = false; } // let the button work again if dismissed
+            if (!(c && c.outcome === 'accepted')) { promptShown = false; }
         });
     }
-    if (installBtn) { installBtn.addEventListener('click', firePrompt); }
     function armAutoPrompt() {
         if (armed) { return; }
         armed = true;
@@ -109,16 +104,14 @@ window.FL_VAPID = <?= json_encode($pushEnabled ? $vapidPublic : '') ?>;
     }
 
     window.addEventListener('beforeinstallprompt', function (e) {
-        e.preventDefault();       // suppress Chrome's mini-infobar…
+        e.preventDefault();       // suppress the mini-infobar…
         deferred = e;
         promptShown = false;
-        if (installBtn) { installBtn.hidden = false; }  // show a reliable manual button
-        armAutoPrompt();          // …and also show the full native dialog automatically
+        armAutoPrompt();          // …and show the full native install dialog automatically
     });
 
     window.addEventListener('appinstalled', function () {
         deferred = null;
-        if (installBtn) { installBtn.hidden = true; }
         subscribePush();          // installed: turn on result notifications
     });
 

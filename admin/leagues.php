@@ -51,7 +51,7 @@ if (is_post() && $action !== 'delete') {
     try {
         // Uploads
         $logo   = Upload::image('logo', 'leagues');
-        $banner = Upload::image('banner', 'leagues', [Upload::BANNER_W, Upload::BANNER_H]);
+        $banner = Upload::image('banner', 'leagues', [2172, 724]);
     } catch (RuntimeException $ex) {
         flash('danger', $ex->getMessage());
         redirect(base_url('admin/leagues.php?action=' . ($id ? 'edit&id=' . $id : 'new')));

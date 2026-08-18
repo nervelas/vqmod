@@ -66,6 +66,9 @@ window.FL_VAPID = <?= json_encode($pushEnabled ? $vapidPublic : '') ?>;
     </div>
 </header>
 
+<button id="fl-install" type="button" hidden aria-label="Instalar la app"
+    style="position:fixed;right:16px;bottom:16px;z-index:150;display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.1rem;border:none;border-radius:999px;background:var(--c-primary);color:var(--c-on-primary);font-weight:800;font-size:.95rem;box-shadow:0 10px 30px rgba(0,0,0,.35);cursor:pointer">📲 Instalar app</button>
+
 <script>
 (function () {
     var base = window.FL_BASE || './';
@@ -74,6 +77,7 @@ window.FL_VAPID = <?= json_encode($pushEnabled ? $vapidPublic : '') ?>;
     // Register the service worker (required so Chrome treats this as an app).
     navigator.serviceWorker.register(base + 'sw.js').catch(function () {});
 
+    var installBtn = document.getElementById('fl-install');
     var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     if (standalone) { subscribePush(); return; } // already installed as an app
 
@@ -86,8 +90,13 @@ window.FL_VAPID = <?= json_encode($pushEnabled ? $vapidPublic : '') ?>;
         if (!deferred || promptShown) { return; }
         promptShown = true;
         deferred.prompt();
-        deferred.userChoice.then(function () { deferred = null; });
+        deferred.userChoice.then(function (c) {
+            deferred = null;
+            if (installBtn && c && c.outcome === 'accepted') { installBtn.hidden = true; }
+            else { promptShown = false; } // let the button work again if dismissed
+        });
     }
+    if (installBtn) { installBtn.addEventListener('click', firePrompt); }
     function armAutoPrompt() {
         if (armed) { return; }
         armed = true;
@@ -103,11 +112,13 @@ window.FL_VAPID = <?= json_encode($pushEnabled ? $vapidPublic : '') ?>;
         e.preventDefault();       // suppress Chrome's mini-infobar…
         deferred = e;
         promptShown = false;
-        armAutoPrompt();          // …and show the full native dialog automatically
+        if (installBtn) { installBtn.hidden = false; }  // show a reliable manual button
+        armAutoPrompt();          // …and also show the full native dialog automatically
     });
 
     window.addEventListener('appinstalled', function () {
         deferred = null;
+        if (installBtn) { installBtn.hidden = true; }
         subscribePush();          // installed: turn on result notifications
     });
 

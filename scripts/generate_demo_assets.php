@@ -196,4 +196,94 @@ function make_banner(string $path, string $title, string $sub, string $font): vo
     imagedestroy($im);
 }
 
-echo "Generated " . count($manifest) . " crests + logo + banner into assets/demo/\n";
+/* ---- Court banners (realistic cement futsal-5 court) per tournament ------- */
+function make_court(string $path, array $accent): void {
+    $S = 2; $W = 1600 * $S; $H = 520 * $S;
+    $im = imagecreatetruecolor($W, $H);
+    imagealphablending($im, true);
+
+    // Concrete base: subtle vertical gradient, cool gray.
+    for ($y = 0; $y < $H; $y++) {
+        $t = $y / $H; $g = (int)(118 + $t * 26);
+        imagefilledrectangle($im, 0, $y, $W, $y, imagecolorallocate($im, $g, $g + 3, $g + 6));
+    }
+    // Concrete staining: large soft patches.
+    mt_srand(41);
+    for ($i = 0; $i < 60; $i++) {
+        $r = mt_rand(40, 180) * $S / 2;
+        $shade = mt_rand(0, 1) ? 0 : 255;
+        imagefilledellipse($im, mt_rand(0, $W), mt_rand(0, $H), $r, $r,
+            imagecolorallocatealpha($im, $shade, $shade, $shade, mt_rand(118, 125)));
+    }
+    // Fine speckle (cement grain).
+    for ($i = 0; $i < 9000; $i++) {
+        $x = mt_rand(0, $W); $y = mt_rand(0, $H); $d = mt_rand(0, 60) - 30;
+        $c = max(0, min(255, 130 + $d));
+        imagesetpixel($im, $x, $y, imagecolorallocatealpha($im, $c, $c, $c, 70));
+    }
+    // Expansion joints (concrete slab lines).
+    $joint = imagecolorallocatealpha($im, 60, 62, 64, 80);
+    imagesetthickness($im, 1 * $S);
+    for ($x = $W / 4; $x < $W; $x += $W / 4) { imageline($im, (int)$x, 0, (int)$x, $H, $joint); }
+    imageline($im, 0, (int)($H / 2), $W, (int)($H / 2), $joint);
+
+    // Painted court lines (slightly translucent white for a worn look).
+    $line = imagecolorallocatealpha($im, 240, 242, 245, 18);
+    imagesetthickness($im, 5 * $S);
+    $m = 70 * $S;
+    $L = $m; $R = $W - $m; $T = $m; $B = $H - $m; $CX = (int)($W / 2); $CY = (int)($H / 2);
+    // boundary
+    imagerectangle($im, $L, $T, $R, $B, $line);
+    // halfway line + center circle + spot
+    imageline($im, $CX, $T, $CX, $B, $line);
+    imageellipse($im, $CX, $CY, 190 * $S, 190 * $S, $line);
+    imagefilledellipse($im, $CX, $CY, 12 * $S, 12 * $S, $line);
+    // penalty areas (rectangles) + penalty spots
+    $paW = 150 * $S; $paH = 220 * $S;
+    imagerectangle($im, $L, (int)($CY - $paH / 2), $L + $paW, (int)($CY + $paH / 2), $line);
+    imagerectangle($im, $R - $paW, (int)($CY - $paH / 2), $R, (int)($CY + $paH / 2), $line);
+    imagefilledellipse($im, $L + (int)($paW * 0.7), $CY, 9 * $S, 9 * $S, $line);
+    imagefilledellipse($im, $R - (int)($paW * 0.7), $CY, 9 * $S, 9 * $S, $line);
+    // corner arcs
+    imagearc($im, $L, $T, 34 * $S, 34 * $S, 0, 90, $line);
+    imagearc($im, $R, $T, 34 * $S, 34 * $S, 90, 180, $line);
+    imagearc($im, $L, $B, 34 * $S, 34 * $S, 270, 360, $line);
+    imagearc($im, $R, $B, 34 * $S, 34 * $S, 180, 270, $line);
+
+    // Goals painted in the tournament's accent colour.
+    $ac = imagecolorallocatealpha($im, $accent[0], $accent[1], $accent[2], 30);
+    imagesetthickness($im, 7 * $S);
+    $gh = 90 * $S;
+    imageline($im, $L, (int)($CY - $gh / 2), $L, (int)($CY + $gh / 2), $ac);
+    imageline($im, $L, (int)($CY - $gh / 2), $L + 16 * $S, (int)($CY - $gh / 2), $ac);
+    imageline($im, $L, (int)($CY + $gh / 2), $L + 16 * $S, (int)($CY + $gh / 2), $ac);
+    imageline($im, $R, (int)($CY - $gh / 2), $R, (int)($CY + $gh / 2), $ac);
+    imageline($im, $R, (int)($CY - $gh / 2), $R - 16 * $S, (int)($CY - $gh / 2), $ac);
+    imageline($im, $R, (int)($CY + $gh / 2), $R - 16 * $S, (int)($CY + $gh / 2), $ac);
+
+    // Accent glow (top corners) for a professional tint.
+    for ($i = 0; $i < 3; $i++) {
+        imagefilledellipse($im, $W, 0, (900 - $i * 220) * $S, (900 - $i * 220) * $S,
+            imagecolorallocatealpha($im, $accent[0], $accent[1], $accent[2], 120));
+    }
+    // Vignette bottom for legibility of the overlaid title.
+    for ($y = (int)($H * 0.55); $y < $H; $y++) {
+        $a = 127 - (int)(70 * (($y - $H * 0.55) / ($H * 0.45)));
+        imagefilledrectangle($im, 0, $y, $W, $y, imagecolorallocatealpha($im, 0, 0, 0, max(60, $a)));
+    }
+
+    $D = imagecreatetruecolor(1600, 520);
+    imagecopyresampled($D, $im, 0, 0, 0, 0, 1600, 520, $W, $H);
+    imagejpeg($D, $path, 86);
+    imagedestroy($im); imagedestroy($D);
+}
+
+$courts = [
+    'masculino' => [47, 216, 90],   // green (Planes)
+    'femenino'  => [236, 72, 153],  // pink
+    'juvenil'   => [56, 132, 255],  // blue
+    'infantil'  => [249, 115, 22],  // orange
+];
+foreach ($courts as $key => $ac) { make_court("$OUT/court-$key.jpg", $ac); }
+
+echo "Generated " . count($manifest) . " crests + logo + banner + " . count($courts) . " court banners into assets/demo/\n";

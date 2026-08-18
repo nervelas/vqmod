@@ -63,7 +63,6 @@ if (is_post()) {
         'module_scorers'    => post('module_scorers') ? '1' : '0',
         'module_discipline' => post('module_discipline') ? '1' : '0',
         'module_rules'      => post('module_rules') ? '1' : '0',
-        'module_final'      => post('module_final') ? '1' : '0',
     ], 'modules');
 
     Audit::log('update', 'content', null, null, ['saved' => true]);
@@ -175,7 +174,6 @@ require 'partials/head.php';
             <label class="check-item"><input type="checkbox" name="module_scorers" value="1"<?= checked(Settings::bool('module_scorers')) ?>> Goleadores</label>
             <label class="check-item"><input type="checkbox" name="module_discipline" value="1"<?= checked(Settings::bool('module_discipline')) ?>> Disciplina</label>
             <label class="check-item"><input type="checkbox" name="module_rules" value="1"<?= checked(Settings::bool('module_rules')) ?>> Reglamento</label>
-            <label class="check-item"><input type="checkbox" name="module_final" value="1"<?= checked(Settings::bool('module_final')) ?>> Fase final</label>
         </div>
     </div>
 

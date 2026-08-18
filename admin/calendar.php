@@ -76,9 +76,9 @@ if (is_post()) {
     if ($op === 'delete_calendar') {
         Database::q("DELETE FROM matches WHERE tournament_id = ? AND is_final_phase = 0", [$tournamentId]);
         Database::q("DELETE FROM matchdays WHERE tournament_id = ?", [$tournamentId]);
-        Database::q("DELETE FROM tournament_teams WHERE tournament_id = ?", [$tournamentId]);
+        // Keep the tournament's team assignments so the fixture can be regenerated.
         Audit::log('delete_calendar', 'calendar', $tournamentId);
-        flash('success', 'Calendario eliminado por completo.');
+        flash('success', 'Calendario eliminado. Los equipos del torneo se conservan.');
         redirect(base_url('admin/calendar.php?tournament=' . $tournamentId));
     }
 
@@ -158,8 +158,11 @@ $PAGE_TITLE = 'Generador de calendario';
 $ACTIVE = 'calendar';
 require 'partials/head.php';
 
-// Load teams for the selected tournament's league.
-$leagueTeams = $tournament ? Database::all("SELECT id, name, short_name, logo FROM teams WHERE league_id = ? AND status = 'active' ORDER BY name", [$tournament['league_id']]) : [];
+// Teams that belong to THIS tournament only (assigned in the Equipos section).
+$leagueTeams = $tournament ? Database::all(
+    "SELECT t.id, t.name, t.short_name, t.logo
+     FROM teams t JOIN tournament_teams tt ON tt.team_id = t.id
+     WHERE tt.tournament_id = ? AND t.status = 'active' ORDER BY t.name", [$tournamentId]) : [];
 $assigned = $tournament ? array_column(Database::all("SELECT team_id FROM tournament_teams WHERE tournament_id = ?", [$tournamentId]), 'team_id') : [];
 if (!$teamIds && $assigned) { $teamIds = array_map('intval', $assigned); }
 ?>
@@ -267,11 +270,11 @@ if (!$teamIds && $assigned) { $teamIds = array_map('intval', $assigned); }
             <?= Security::csrfField() ?>
             <input type="hidden" name="stage" value="preview">
             <input type="hidden" name="tournament" value="<?= (int)$tournamentId ?>">
-            <h3 style="margin-top:0">Equipos participantes</h3>
+            <h3 style="margin-top:0">Equipos del torneo</h3>
             <?php if (!$leagueTeams): ?>
-                <div class="alert alert-warning"><span>La liga de este torneo no tiene equipos. <a href="<?= e(base_url('admin/teams.php?action=new')) ?>">Crea equipos</a> primero.</span></div>
+                <div class="alert alert-warning"><span>Este torneo aún no tiene equipos asignados. Ve a <a href="<?= e(base_url('admin/teams.php?action=new')) ?>">Equipos</a> y asigna cada equipo a este torneo; después vuelve aquí para generar el calendario.</span></div>
             <?php else: ?>
-                <p class="muted" style="font-size:.85rem;margin-top:-.3rem">Selecciona los equipos. Con número impar se generan descansos automáticamente.</p>
+                <p class="muted" style="font-size:.85rem;margin-top:-.3rem">Solo se muestran los equipos de <strong><?= e($tournament['name']) ?></strong>. Desmarca alguno para excluirlo del fixture. Con número impar se generan descansos automáticamente.</p>
                 <div class="check-grid mb-2">
                     <?php foreach ($leagueTeams as $lt): ?>
                         <label class="check-item"><input type="checkbox" name="team_ids[]" value="<?= (int)$lt['id'] ?>"<?= checked(in_array((int)$lt['id'], $teamIds, true)) ?>> <?= e(team_display($lt)) ?></label>

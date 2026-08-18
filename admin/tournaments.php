@@ -7,6 +7,15 @@ Auth::require('tournaments.manage');
 $action = str_input('action', 'list');
 $id = int_input('id');
 
+/** Idempotent migration: tournaments.banner column (per-tournament banner). */
+(function () {
+    $has = Database::scalar(
+        "SELECT COUNT(*) FROM information_schema.columns
+         WHERE table_schema = DATABASE() AND table_name = 'tournaments' AND column_name = 'banner'"
+    );
+    if (!$has) { Database::q("ALTER TABLE tournaments ADD COLUMN banner VARCHAR(255) NULL AFTER discipline"); }
+})();
+
 $TB = [
     'goal_diff' => 'Diferencia de goles',
     'goals_for' => 'Goles a favor',
@@ -60,9 +69,20 @@ if (is_post() && $action !== 'delete') {
         'points_loss' => max(0, (int)int_input('points_loss', 0)),
         'tiebreakers' => implode(',', $order),
         'discipline'  => $discipline,
-        'final_phase' => in_array(str_input('final_phase'), ['none','top4','top8'], true) ? str_input('final_phase') : 'none',
+        'final_phase' => 'none',
         'status'      => in_array(str_input('status'), ['draft','active','finished'], true) ? str_input('status') : 'draft',
     ];
+
+    // Per-tournament banner upload.
+    try {
+        $banner = Upload::image('banner', 'tournaments');
+    } catch (RuntimeException $ex) {
+        flash('danger', $ex->getMessage());
+        redirect(base_url('admin/tournaments.php?action=' . ($id ? 'edit&id=' . $id : 'new')));
+    }
+    $curBanner = $id ? Database::scalar("SELECT banner FROM tournaments WHERE id = ?", [$id]) : null;
+    if ($id && post('remove_banner') && $curBanner) { Upload::delete($curBanner); $data['banner'] = null; }
+    if ($banner) { if ($curBanner) Upload::delete($curBanner); $data['banner'] = $banner; }
 
     if ($id) {
         $before = Database::one("SELECT * FROM tournaments WHERE id = ?", [$id]);
@@ -111,11 +131,20 @@ if ($action === 'new' || $action === 'edit') {
     require 'partials/head.php';
     ?>
     <div class="page-head"><h1><?= $t ? 'Editar torneo' : 'Nuevo torneo' ?></h1><p>Formato, puntuación, desempates y reglas disciplinarias.</p></div>
-    <form method="post" class="card card-pad-lg">
+    <form method="post" enctype="multipart/form-data" class="card card-pad-lg">
         <?= Security::csrfField() ?>
         <div class="field">
             <label for="name">Nombre del torneo *</label>
             <input class="input" id="name" name="name" required value="<?= $v('name') ?>" data-slug-source="#slug" placeholder="Ej: Torneo Masculino, Torneo Femenino…">
+        </div>
+        <div class="field">
+            <label for="banner">Banner del torneo (JPG, PNG, WEBP)</label>
+            <input class="input" type="file" id="banner" name="banner" accept=".jpg,.jpeg,.png,.webp">
+            <div class="help">Imagen de cabecera de este torneo. Se muestra en la página pública. Puedes cambiarla cuando quieras.</div>
+            <?php if (!empty($t['banner'])): ?>
+                <div class="mt-1"><img src="<?= e(base_url($t['banner'])) ?>" alt="" style="max-height:90px;border-radius:10px">
+                <label class="help"><input type="checkbox" name="remove_banner" value="1"> Eliminar banner</label></div>
+            <?php endif; ?>
         </div>
         <div class="form-row">
             <div class="field"><label for="slug">Slug</label><input class="input" id="slug" name="slug" value="<?= $v('slug') ?>"></div>
@@ -134,14 +163,6 @@ if ($action === 'new' || $action === 'edit') {
                 <select class="select" id="rounds" name="rounds">
                     <option value="1"<?= selected('1', $t['rounds'] ?? 2) ?>>Una vuelta</option>
                     <option value="2"<?= selected('2', $t['rounds'] ?? 2) ?>>Dos vueltas</option>
-                </select>
-            </div>
-            <div class="field">
-                <label for="final_phase">Fase final</label>
-                <select class="select" id="final_phase" name="final_phase">
-                    <option value="none"<?= selected('none', $t['final_phase'] ?? 'none') ?>>Sin fase final</option>
-                    <option value="top4"<?= selected('top4', $t['final_phase'] ?? '') ?>>Top 4</option>
-                    <option value="top8"<?= selected('top8', $t['final_phase'] ?? '') ?>>Top 8</option>
                 </select>
             </div>
         </div>
@@ -207,7 +228,7 @@ require 'partials/head.php';
             <tbody>
             <?php foreach ($tournaments as $t): ?>
                 <tr>
-                    <td><strong><?= e($t['name']) ?></strong><br><span class="muted" style="font-size:.8rem"><?= $t['rounds']==2?'Dos vueltas':'Una vuelta' ?> · <?= $t['final_phase']!=='none'?strtoupper($t['final_phase']):'sin fase final' ?></span></td>
+                    <td><strong><?= e($t['name']) ?></strong><br><span class="muted" style="font-size:.8rem"><?= $t['rounds']==2?'Dos vueltas':'Una vuelta' ?></span></td>
                     <td><?= $t['format']==='league'?'Liga':'Copa' ?></td>
                     <td class="num"><?= (int)$t['teams'] ?></td>
                     <td class="num"><?= (int)$t['matches'] ?></td>

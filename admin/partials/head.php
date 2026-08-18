@@ -17,7 +17,6 @@ $nav = [
         ['tournaments', '🎯', 'Torneos',      'tournaments.php', 'tournaments.manage'],
         ['calendar',    '📅', 'Calendario',   'calendar.php',    'calendar.manage'],
         ['matches',     '⚽', 'Partidos',     'matches.php',     'results.manage'],
-        ['final',       '🥇', 'Fase Final',   'final_phase.php', 'tournaments.manage'],
     ],
     'Participantes' => [
         ['teams',   '🛡️', 'Equipos', 'teams.php', 'teams.manage'],

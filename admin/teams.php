@@ -32,6 +32,11 @@ $leagues = Database::all("SELECT id, name FROM leagues ORDER BY name");
 $leagueOptions = [];
 foreach ($leagues as $l) { $leagueOptions[$l['id']] = $l['name']; }
 
+$tournamentOptions = [];
+foreach (Database::all("SELECT id, name FROM tournaments ORDER BY created_at DESC") as $tr) {
+    $tournamentOptions[$tr['id']] = $tr['name'];
+}
+
 /* ---- POST handling ------------------------------------------------------ */
 if (is_post() && $action !== 'delete') {
     Security::requireCsrf();
@@ -122,6 +127,15 @@ if (is_post() && $action !== 'delete') {
     $exists = Database::scalar("SELECT id FROM teams WHERE league_id = ? AND slug = ? AND id <> ?", [$leagueId, $slug, $id ?? 0]);
     if ($exists) { $slug .= '-' . substr(bin2hex(random_bytes(2)), 0, 4); }
 
+    // Assign the team to a single tournament (participants list per tournament).
+    $syncTournament = function (int $teamId) use ($leagueId) {
+        $tid = int_input('tournament_id');
+        Database::q("DELETE FROM tournament_teams WHERE team_id = ?", [$teamId]);
+        if ($tid && Database::scalar("SELECT id FROM tournaments WHERE id = ? AND league_id = ?", [$tid, $leagueId])) {
+            Database::q("INSERT INTO tournament_teams (tournament_id, team_id) VALUES (?,?)", [$tid, $teamId]);
+        }
+    };
+
     $data = [
         'league_id'   => $leagueId,
         'name'        => $name,
@@ -150,6 +164,7 @@ if (is_post() && $action !== 'delete') {
         foreach ($data as $k => $v) { $sets[] = "$k = ?"; $params[] = $v; }
         $params[] = $id;
         Database::q("UPDATE teams SET " . implode(',', $sets) . " WHERE id = ?", $params);
+        $syncTournament((int)$id);
         Audit::log('update', 'teams', $id, $before, $data);
         flash('success', 'Equipo actualizado correctamente.');
         redirect(base_url('admin/teams.php?action=edit&id=' . $id));
@@ -158,6 +173,7 @@ if (is_post() && $action !== 'delete') {
         $cols = implode(',', array_keys($data));
         $ph   = implode(',', array_fill(0, count($data), '?'));
         $newId = Database::insert("INSERT INTO teams ($cols) VALUES ($ph)", array_values($data));
+        $syncTournament((int)$newId);
         Audit::log('create', 'teams', $newId, null, $data);
         flash('success', 'Equipo creado. Ahora puedes agregar sus jugadores.');
         redirect(base_url('admin/teams.php?action=edit&id=' . $newId . '#jugadores'));
@@ -197,6 +213,7 @@ if ($action === 'new' || $action === 'edit') {
     $editPlayerId = int_input('player');
     $editPlayer = ($team && $editPlayerId) ? Database::one("SELECT * FROM players WHERE id = ? AND team_id = ?", [$editPlayerId, $team['id']]) : null;
     $players = $team ? Database::all("SELECT * FROM players WHERE team_id = ? ORDER BY first_name, last_name", [$team['id']]) : [];
+    $teamTournamentId = $team ? Database::scalar("SELECT tournament_id FROM tournament_teams WHERE team_id = ? LIMIT 1", [$team['id']]) : null;
 
     require 'partials/head.php';
     ?>
@@ -207,9 +224,16 @@ if ($action === 'new' || $action === 'edit') {
     <form method="post" enctype="multipart/form-data" class="card card-pad-lg">
         <?= Security::csrfField() ?>
         <input type="hidden" name="op" value="save_team">
-        <div class="field">
-            <label for="name">Nombre del equipo *</label>
-            <input class="input" id="name" name="name" required value="<?= $v('name') ?>" data-slug-source="#slug">
+        <div class="form-row">
+            <div class="field">
+                <label for="name">Nombre del equipo *</label>
+                <input class="input" id="name" name="name" required value="<?= $v('name') ?>" data-slug-source="#slug">
+            </div>
+            <div class="field">
+                <label for="tournament_id">Torneo</label>
+                <select class="select" id="tournament_id" name="tournament_id"><?= options($tournamentOptions, $teamTournamentId, 'Sin torneo asignado') ?></select>
+                <div class="help">El equipo aparecerá en el calendario y la tabla de este torneo.</div>
+            </div>
         </div>
         <div class="form-row">
             <div class="field">
@@ -352,9 +376,20 @@ if ($action === 'new' || $action === 'edit') {
 }
 
 /* ---- List view ---------------------------------------------------------- */
-$teams = Database::all("SELECT t.*,
-        (SELECT COUNT(*) FROM players WHERE team_id = t.id) AS players
-        FROM teams t ORDER BY t.name");
+$filterTournament = int_input('tournament');
+if ($filterTournament && !isset($tournamentOptions[$filterTournament])) { $filterTournament = null; }
+
+$sql = "SELECT t.*,
+        (SELECT COUNT(*) FROM players WHERE team_id = t.id) AS players,
+        (SELECT tr.name FROM tournament_teams tt JOIN tournaments tr ON tr.id = tt.tournament_id WHERE tt.team_id = t.id LIMIT 1) AS tournament_name
+        FROM teams t";
+$params = [];
+if ($filterTournament) {
+    $sql .= " JOIN tournament_teams tf ON tf.team_id = t.id AND tf.tournament_id = ?";
+    $params[] = $filterTournament;
+}
+$sql .= " ORDER BY t.name";
+$teams = Database::all($sql, $params);
 require 'partials/head.php';
 ?>
 <div class="page-head flex justify-between items-center wrap">
@@ -373,17 +408,27 @@ require 'partials/head.php';
         <a class="btn" href="<?= e(base_url('admin/leagues.php')) ?>">Configurar la liga</a>
     </div>
 <?php else: ?>
+    <?php if ($tournamentOptions): ?>
+    <div class="card card-pad-lg" style="margin-bottom:1rem">
+        <div class="field" style="margin:0;max-width:360px">
+            <label for="fltr">Filtrar por torneo</label>
+            <select class="select" id="fltr" onchange="location.href='<?= e(base_url('admin/teams.php')) ?>' + (this.value ? '?tournament=' + this.value : '')">
+                <?= options($tournamentOptions, $filterTournament, 'Todos los equipos') ?>
+            </select>
+        </div>
+    </div>
+    <?php endif; ?>
     <?php if (!$teams): ?>
         <div class="empty-state card">
             <div class="es-icon">🛡️</div>
             <h2>Sin equipos</h2>
-            <p>No hay equipos todavía. Crea el primero.</p>
+            <p>No hay equipos <?= $filterTournament ? 'en este torneo' : 'todavía' ?>. Crea el primero.</p>
             <a class="btn" href="<?= e(base_url('admin/teams.php?action=new')) ?>">+ Nuevo equipo</a>
         </div>
     <?php else: ?>
         <div class="table-wrap">
             <table class="data">
-                <thead><tr><th>Equipo</th><th>Nombre corto</th><th class="num">Jugadores</th><th>Estado</th><th></th></tr></thead>
+                <thead><tr><th>Equipo</th><th>Torneo</th><th>Nombre corto</th><th class="num">Jugadores</th><th>Estado</th><th></th></tr></thead>
                 <tbody>
                 <?php foreach ($teams as $t): ?>
                     <tr>
@@ -393,6 +438,7 @@ require 'partials/head.php';
                                 <strong><?= e(team_display($t)) ?></strong>
                             </div>
                         </td>
+                        <td><?= $t['tournament_name'] ? e($t['tournament_name']) : '<span class="muted">Sin torneo</span>' ?></td>
                         <td><?= $t['short_name'] !== null && $t['short_name'] !== '' ? e($t['short_name']) : '—' ?></td>
                         <td class="num"><?= (int)$t['players'] ?></td>
                         <td><span class="badge <?= $t['status']==='active'?'badge-success':'badge-muted' ?>"><?= $t['status']==='active'?'Activo':'Archivado' ?></span></td>

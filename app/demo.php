@@ -95,9 +95,9 @@ function fl_seed_demo(PDO $pdo): array
     require_once __DIR__ . '/CalendarGenerator.php';
 
     $tournaments = [
-        ['masculino', 'Torneo Masculino Libre', 'top8', $maleFirst],
-        ['femenino',  'Torneo Femenino Libre',  'top4', $femaleFirst],
-        ['juvenil',   'Torneo Juvenil',         'top4', $maleFirst],
+        ['masculino', 'Torneo Masculino Libre', 'none', $maleFirst],
+        ['femenino',  'Torneo Femenino Libre',  'none', $femaleFirst],
+        ['juvenil',   'Torneo Juvenil',         'none', $maleFirst],
         ['infantil',  'Torneo Infantil',        'none', $maleFirst],
     ];
 
@@ -106,9 +106,12 @@ function fl_seed_demo(PDO $pdo): array
     $globalTeamIndex = 0;
     $summary = ['tournaments' => 0, 'teams' => 0, 'players' => 0, 'matches' => 0, 'goals' => 0];
 
+    $setBanner = $pdo->prepare("UPDATE tournaments SET banner = ? WHERE id = ?");
     foreach ($tournaments as [$key, $tname, $finalPhase, $firstNames]) {
         $insTourn->execute([$leagueId, $seasonId, $tname, $slugify($tname), $discipline, $finalPhase]);
         $tournamentId = (int)$pdo->lastInsertId();
+        $court = $root . "/assets/demo/court-$key.jpg";
+        if (is_file($court)) { $setBanner->execute(["assets/demo/court-$key.jpg", $tournamentId]); }
         $summary['tournaments']++;
 
         $teamIds = [];

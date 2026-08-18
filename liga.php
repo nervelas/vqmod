@@ -25,7 +25,6 @@ foreach ($tournaments as $tr) { if ((int)$tr['id'] === (int)$tournamentId) { $to
 $modScorers = Settings::bool('module_scorers');
 $modDisc    = Settings::bool('module_discipline');
 $modRules   = Settings::bool('module_rules');
-$modFinal   = Settings::bool('module_final');
 $modNews    = Settings::bool('module_news');
 
 $pageTitle = ($league['seo_title'] ?: $league['name']) . ' · ' . Settings::get('site_name', '');
@@ -39,10 +38,11 @@ $objPos = ['top'=>'center top','center'=>'center center','bottom'=>'center botto
 
 $activeNav = 'liga';
 require __DIR__ . '/public/top.php';
+$heroBanner = ($tournament && !empty($tournament['banner'])) ? $tournament['banner'] : $league['banner'];
 ?>
 <section class="hero">
-    <?php if ($league['banner']): ?>
-        <img class="hero-bg" src="<?= e(base_url($league['banner'])) ?>" alt="" style="object-position:<?= e($objPos) ?>">
+    <?php if ($heroBanner): ?>
+        <img class="hero-bg" src="<?= e(base_url($heroBanner)) ?>" alt="" style="object-position:<?= e($objPos) ?>">
         <div class="hero-overlay" style="background:linear-gradient(to top, rgba(<?= "$or,$og,$ob" ?>,<?= min(0.92, $ovAlpha + 0.25) ?>), rgba(<?= "$or,$og,$ob" ?>,<?= $ovAlpha ?>))"></div>
     <?php else: ?>
         <div class="hero-pattern"></div>
@@ -76,9 +76,7 @@ require __DIR__ . '/public/top.php';
 
         <?php if (!$tournament): ?>
             <div class="empty-state card"><div class="es-icon">🎯</div><h2>Muy pronto</h2><p>Esta liga aún no tiene torneos publicados.</p></div>
-        <?php else:
-            $hasFinal = $modFinal && $tournament['final_phase'] !== 'none';
-        ?>
+        <?php else: ?>
         <div data-tabs="#liga-panels">
             <div class="tabs">
                 <button class="tab active" data-target="#p-tabla">Tabla</button>
@@ -87,14 +85,12 @@ require __DIR__ . '/public/top.php';
                 <?php if ($modDisc): ?><button class="tab" data-target="#p-disciplina">Disciplina</button><?php endif; ?>
                 <button class="tab" data-target="#p-equipos">Equipos</button>
                 <?php if ($modRules): ?><button class="tab" data-target="#p-reglamento">Reglamento</button><?php endif; ?>
-                <?php if ($hasFinal): ?><button class="tab" data-target="#p-final">Fase Final</button><?php endif; ?>
             </div>
             <div id="liga-panels">
                 <!-- Standings -->
                 <div class="tab-panel" id="p-tabla">
                     <?php
                     $table = Standings::compute($tournamentId);
-                    $cut = $tournament['final_phase'] === 'top8' ? 8 : ($tournament['final_phase'] === 'top4' ? 4 : 0);
                     if (!$table): ?>
                         <div class="empty-state card"><div class="es-icon">📊</div><h3>Sin datos</h3><p>La tabla se genera al cargar resultados.</p></div>
                     <?php else: ?>
@@ -102,7 +98,7 @@ require __DIR__ . '/public/top.php';
                             <thead><tr><th class="num">#</th><th>Equipo</th><th class="num">PJ</th><th class="num">PG</th><th class="num">PE</th><th class="num">PP</th><th class="num">GF</th><th class="num">GC</th><th class="num">DG</th><th class="num">PTS</th></tr></thead>
                             <tbody>
                             <?php foreach ($table as $r): ?>
-                                <tr class="<?= $cut && $r['pos'] <= $cut ? 'zone-final' : '' ?>">
+                                <tr>
                                     <td class="num"><span class="pos-badge"><?= (int)$r['pos'] ?></span></td>
                                     <td class="team-cell"><?= media_thumb($r['logo'], $r['name']) ?> <?= e($r['name']) ?></td>
                                     <td class="num"><?= (int)$r['pj'] ?></td><td class="num"><?= (int)$r['pg'] ?></td><td class="num"><?= (int)$r['pe'] ?></td><td class="num"><?= (int)$r['pp'] ?></td>
@@ -111,7 +107,6 @@ require __DIR__ . '/public/top.php';
                             <?php endforeach; ?>
                             </tbody>
                         </table></div>
-                        <?php if ($cut): ?><p class="subtle mt-1" style="font-size:.8rem">Los primeros <?= $cut ?> clasifican a la fase final.</p><?php endif; ?>
                     <?php endif; ?>
                 </div>
 
@@ -188,33 +183,6 @@ require __DIR__ . '/public/top.php';
                     <?php else: $lastCat=null; foreach ($rules as $ru): if ($ru['category']!==$lastCat){ if($lastCat!==null) echo '</div>'; echo '<h3 class="mt-3">'.e($ru['category'] ?: 'General').'</h3><div class="card">'; $lastCat=$ru['category']; } ?>
                         <div style="padding:.6rem 0;border-bottom:1px solid var(--c-border)"><strong><?= e($ru['title']) ?></strong><?php if ($ru['body']): ?><p class="muted" style="margin:.3rem 0 0"><?= nl2br(e($ru['body'])) ?></p><?php endif; ?></div>
                     <?php endforeach; echo '</div>'; endif; ?>
-                </div>
-                <?php endif; ?>
-
-                <?php if ($hasFinal): ?>
-                <div class="tab-panel hidden" id="p-final">
-                    <?php $bracket = FinalPhase::bracket($tournamentId);
-                    $tn = function($id){ if(!$id) return '—'; $r=Database::one("SELECT name FROM teams WHERE id=?",[$id]); return $r?$r['name']:'—'; };
-                    if (!$bracket): ?><div class="empty-state card"><div class="es-icon">🥇</div><h3>Fase final por definir</h3></div>
-                    <?php else: ?>
-                        <?php if ($tournament['champion_team_id']): ?>
-                            <div class="card card-pad-lg text-center mb-3"><div style="font-size:2.5rem">🏆</div><h3 style="margin:.3rem 0">Campeón: <?= e($tn($tournament['champion_team_id'])) ?></h3>
-                            <p class="muted">Subcampeón: <?= e($tn($tournament['runnerup_team_id'])) ?><?php if ($tournament['third_team_id']): ?> · Tercer lugar: <?= e($tn($tournament['third_team_id'])) ?><?php endif; ?></p></div>
-                        <?php endif; ?>
-                        <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
-                        <?php foreach ($bracket as $phase=>$matches): ?>
-                            <div class="card"><h4 style="margin-top:0"><?= e($phase) ?></h4>
-                            <?php foreach ($matches as $mt): $w=FinalPhase::winner($mt); ?>
-                                <div style="padding:.5rem 0;border-bottom:1px solid var(--c-border)">
-                                    <div class="flex justify-between"><span style="font-weight:<?= $w==$mt['home_team_id']?800:500 ?>"><?= e($tn($mt['home_team_id'])) ?></span><strong><?= $mt['home_goals']!==null?(int)$mt['home_goals']:'-' ?></strong></div>
-                                    <div class="flex justify-between"><span style="font-weight:<?= $w==$mt['away_team_id']?800:500 ?>"><?= e($tn($mt['away_team_id'])) ?></span><strong><?= $mt['away_goals']!==null?(int)$mt['away_goals']:'-' ?></strong></div>
-                                    <?php if($mt['home_pens']!==null): ?><div class="subtle" style="font-size:.75rem">Pen: <?= (int)$mt['home_pens'] ?>-<?= (int)$mt['away_pens'] ?></div><?php endif; ?>
-                                </div>
-                            <?php endforeach; ?>
-                            </div>
-                        <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
                 </div>
                 <?php endif; ?>
             </div>

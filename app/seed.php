@@ -11,15 +11,15 @@
 function fl_seed(PDO $pdo, array $admin): void
 {
     // ---- Themes: the 10 mandatory, visually distinct themes -----------------
-    // 10 temas premium: 6 oscuros + 4 claros.
+    // 10 temas premium: 6 oscuros + 4 claros. El primero (Planes) es el predeterminado.
     $themes = [
         // ---- Oscuros (6) ----
-        ['neon-nocturno',  'Neón Nocturno',   '#05070A', '#B6FF2E', '#FFFFFF', '#6CFFB8', 0, 'Deportivo, tecnológico, energético y premium.'],
-        ['imperial',       'Imperial',        '#0E0E10', '#D4AF37', '#F7F3E8', '#B8860B', 0, 'Lujo, campeonato, prestigio y elegancia.'],
-        ['oceano-electrico','Océano Eléctrico','#071A2B', '#00B8FF', '#EAF8FF', '#00E0C6', 0, 'Tecnológico, fresco, moderno y deportivo.'],
-        ['royal',          'Royal',           '#120B25', '#7C3AED', '#F5EFFF', '#FF4FCB', 0, 'Elegante, exclusivo, tecnológico y contemporáneo.'],
-        ['esmeralda',      'Esmeralda',       '#061A14', '#18C37E', '#E9FFF5', '#D6FF3F', 0, 'Deportivo, natural, moderno y elegante.'],
-        ['grafito',        'Grafito',         '#141619', '#F97316', '#F2F5F8', '#38BDF8', 0, 'Industrial, moderno, masculino y profesional.'],
+        ['planes',         'Planes',          '#04130B', '#2FD85A', '#ECFFF3', '#C6FF3D', 0, 'Verde intenso del escudo Planes, deportivo y premium.'],
+        ['neon-nocturno',  'Neón Nocturno',   '#050608', '#B6FF2E', '#FFFFFF', '#6CFFB8', 0, 'Deportivo, tecnológico, energético y premium.'],
+        ['imperial',       'Imperial',        '#0A0A0B', '#D4AF37', '#F7F3E8', '#B8860B', 0, 'Lujo, campeonato, prestigio y elegancia.'],
+        ['oceano-electrico','Océano Eléctrico','#04101B', '#1FB6FF', '#EAF8FF', '#00E0C6', 0, 'Tecnológico, fresco, moderno y deportivo.'],
+        ['royal',          'Royal',           '#0C0717', '#8B5CF6', '#F5EFFF', '#FF4FCB', 0, 'Elegante, exclusivo, tecnológico y contemporáneo.'],
+        ['grafito',        'Grafito',         '#0E1013', '#F97316', '#F2F5F8', '#38BDF8', 0, 'Industrial, moderno, masculino y profesional.'],
         // ---- Claros (4) ----
         ['artico',         'Ártico',          '#F4F9FF', '#175CD3', '#0B1220', '#0EA5E9', 1, 'Limpio, corporativo, deportivo y moderno.'],
         ['solar',          'Solar',           '#FFF8EC', '#EA580C', '#1D2939', '#B91C1C', 1, 'Luminoso, enérgico, premium y llamativo.'],
@@ -100,7 +100,6 @@ function fl_seed(PDO $pdo, array $admin): void
         ['module_scorers',   'modules', '1'],
         ['module_discipline','modules', '1'],
         ['module_rules',     'modules', '1'],
-        ['module_final',     'modules', '1'],
         ['login_max_attempts','security','8'],
         ['login_lockout_min', 'security','15'],
     ];

@@ -144,19 +144,30 @@ table.data td.pts { font-weight: 800; color: var(--c-link); }
 
 /* Standings: freeze the position + team columns; the stats scroll horizontally.
    Team names always read on one line while PJ/PG/… slide under the team column. */
+.standings { min-width: 0; }                       /* never force extra width */
 .standings th:first-child, .standings td:first-child {
     position: sticky; left: 0; z-index: 3;
-    width: 46px; min-width: 46px;
-    padding-left: .55rem; padding-right: .35rem;
+    width: 40px; min-width: 40px;
+    padding-left: .5rem; padding-right: .3rem;
     background: var(--c-surface);
 }
 .standings th:nth-child(2), .standings td:nth-child(2) {
-    position: sticky; left: 46px; z-index: 3;
+    position: sticky; left: 40px; z-index: 3;
     background: var(--c-surface);
     box-shadow: 10px 0 12px -8px rgba(var(--c-shadow-rgb), .55);
 }
 .standings thead th:first-child, .standings thead th:nth-child(2) { background: var(--c-surface-2); z-index: 4; }
 .standings tbody tr:hover td:first-child, .standings tbody tr:hover td:nth-child(2) { background: var(--c-surface-2); }
+/* Compact stat columns so several are visible before you scroll. */
+.standings td.num, .standings th.num { width: 34px; padding-left: .45rem; padding-right: .45rem; }
+
+@media (max-width: 680px) {
+    .standings th, .standings td { padding-top: .6rem; padding-bottom: .6rem; }
+    .standings td.num, .standings th.num { width: 30px; padding-left: .35rem; padding-right: .35rem; font-size: .9rem; }
+    .standings .team-cell { gap: .45rem; font-size: .92rem; }
+    .standings .team-cell .team-logo, .standings .team-cell .avatar { width: 26px; height: 26px; }
+    .standings td:nth-child(2), .standings th:nth-child(2) { padding-left: .4rem; padding-right: .5rem; }
+}
 
 /* ---- Tournament cards (home landing) ------------------------------------- */
 .tourney-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1.25rem; }

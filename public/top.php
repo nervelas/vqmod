@@ -4,12 +4,14 @@
  * optional $activeNav, $extraHead.
  */
 if (!defined('FL_APP')) { exit; }
-$siteName = Settings::get('site_name', 'Ligas de Fútbol');
-$logo = Settings::get('logo');
+$__lg = the_league();
+// Single-league platform: the header brand IS the league. Prefer the league's
+// own logo/name (editable in admin → Liga); fall back to the site settings.
+$siteName = ($__lg && !empty($__lg['name'])) ? $__lg['name'] : Settings::get('site_name', 'Ligas de Fútbol');
+$logo = ($__lg && !empty($__lg['logo'])) ? $__lg['logo'] : Settings::get('logo');
 $fav  = Settings::get('favicon');
 $vapidPublic = (string)Settings::get('vapid_public', '');
 $pushEnabled = Settings::bool('push_enabled', false) && $vapidPublic !== '';
-$__lg = the_league();
 // Professional inline SVG icons for the public menu.
 $__ico = [
     'liga'     => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V5z"/></svg>',

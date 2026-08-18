@@ -14,7 +14,7 @@ $TB = [
     'head_to_head' => 'Enfrentamiento directo',
 ];
 
-if (is_post()) {
+if (is_post() && $action !== 'delete') {
     Security::requireCsrf();
     $leagueId = the_league_id();   // single-league mode: always the one league
     $name = str_input('name');

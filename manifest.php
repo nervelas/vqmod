@@ -52,6 +52,7 @@ if (mb_strlen($name) > 12) {
         $short = $candidate;
     }
     if ($short === '') { $short = mb_substr($name, 0, 12); } // single very long word
+    $short = preg_replace('/\s+(de|del|la|el|los|las|y)$/iu', '', $short) ?: $short; // no trailing connector
 }
 
 // Absolute, same-origin URLs (with correct scheme/host) remove any ambiguity

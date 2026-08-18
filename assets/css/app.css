@@ -132,7 +132,8 @@ table.data thead th {
 table.data tbody tr { border-bottom: 1px solid var(--c-border); transition: background .14s ease; }
 table.data tbody tr:hover { background: var(--c-surface-2); }
 table.data tbody tr:last-child { border-bottom: none; }
-table.data td.num, table.data th.num { text-align: center; font-variant-numeric: tabular-nums; }
+table.data td.num, table.data th.num { text-align: center; font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.data thead th { white-space: nowrap; }
 table.data td.pts { font-weight: 800; color: var(--c-link); }
 
 /* Standings position accents */

@@ -15,7 +15,7 @@ if (!is_post() && $only && ($action === 'list' || $action === 'new')) {
 }
 
 /* ---- Handle POST (create / update) ------------------------------------- */
-if (is_post()) {
+if (is_post() && $action !== 'delete') {
     Security::requireCsrf();
     // Never allow creating a second league.
     if (empty($id) && $only && $action !== 'delete') {

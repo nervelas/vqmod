@@ -11,17 +11,20 @@
 function fl_seed(PDO $pdo, array $admin): void
 {
     // ---- Themes: the 10 mandatory, visually distinct themes -----------------
+    // 10 temas premium: 6 oscuros + 4 claros.
     $themes = [
-        ['neon-nocturno',  'Neón Nocturno',   '#000000', '#B6FF2E', '#FFFFFF', '#6CFFB8', 0, 'Deportivo, tecnológico, energético y premium.'],
-        ['imperial',       'Imperial',        '#111111', '#D4AF37', '#F7F3E8', '#7A0019', 0, 'Lujo, campeonato, prestigio y elegancia.'],
+        // ---- Oscuros (6) ----
+        ['neon-nocturno',  'Neón Nocturno',   '#05070A', '#B6FF2E', '#FFFFFF', '#6CFFB8', 0, 'Deportivo, tecnológico, energético y premium.'],
+        ['imperial',       'Imperial',        '#0E0E10', '#D4AF37', '#F7F3E8', '#B8860B', 0, 'Lujo, campeonato, prestigio y elegancia.'],
         ['oceano-electrico','Océano Eléctrico','#071A2B', '#00B8FF', '#EAF8FF', '#00E0C6', 0, 'Tecnológico, fresco, moderno y deportivo.'],
-        ['fuego',          'Fuego',           '#170806', '#FF4D00', '#FFD6C2', '#FFB000', 0, 'Competitivo, energético, intenso y agresivo.'],
         ['royal',          'Royal',           '#120B25', '#7C3AED', '#F5EFFF', '#FF4FCB', 0, 'Elegante, exclusivo, tecnológico y contemporáneo.'],
-        ['artico',         'Ártico',          '#EFF8FF', '#175CD3', '#101828', '#00A6FB', 1, 'Limpio, corporativo, deportivo y moderno.'],
-        ['titanio',        'Titanio',         '#161A1D', '#C5CCD3', '#FFFFFF', '#FF5C35', 0, 'Industrial, moderno, masculino y profesional.'],
         ['esmeralda',      'Esmeralda',       '#061A14', '#18C37E', '#E9FFF5', '#D6FF3F', 0, 'Deportivo, natural, moderno y elegante.'],
-        ['solar',          'Solar',           '#FFF8E7', '#F79009', '#1D2939', '#D92D20', 1, 'Luminoso, enérgico, premium y llamativo.'],
-        ['atlantico',      'Atlántico',       '#FFFFFF', '#003EA8', '#101828', '#FF6B00', 1, 'Elegante, deportivo, profesional y contemporáneo.'],
+        ['grafito',        'Grafito',         '#141619', '#F97316', '#F2F5F8', '#38BDF8', 0, 'Industrial, moderno, masculino y profesional.'],
+        // ---- Claros (4) ----
+        ['artico',         'Ártico',          '#F4F9FF', '#175CD3', '#0B1220', '#0EA5E9', 1, 'Limpio, corporativo, deportivo y moderno.'],
+        ['solar',          'Solar',           '#FFF8EC', '#EA580C', '#1D2939', '#B91C1C', 1, 'Luminoso, enérgico, premium y llamativo.'],
+        ['atlantico',      'Atlántico',       '#FFFFFF', '#003EA8', '#0B1220', '#FF6B00', 1, 'Elegante, deportivo, profesional y contemporáneo.'],
+        ['marfil',         'Marfil',          '#F6F4EC', '#0F766E', '#17223B', '#B45309', 1, 'Editorial, cálido, elegante y premium.'],
     ];
     $ts = $pdo->prepare("INSERT INTO themes (slug,name,color_bg,color_primary,color_secondary,color_accent,is_light,style,is_system,sort_order)
                          VALUES (?,?,?,?,?,?,?,?,1,?)");

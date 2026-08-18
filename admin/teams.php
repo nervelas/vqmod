@@ -33,7 +33,7 @@ $leagueOptions = [];
 foreach ($leagues as $l) { $leagueOptions[$l['id']] = $l['name']; }
 
 /* ---- POST handling ------------------------------------------------------ */
-if (is_post()) {
+if (is_post() && $action !== 'delete') {
     Security::requireCsrf();
     $op = str_input('op', 'save_team');
 

@@ -40,28 +40,20 @@ $activeNav = 'liga';
 require __DIR__ . '/public/top.php';
 $heroBanner = ($tournament && !empty($tournament['banner'])) ? $tournament['banner'] : $league['banner'];
 ?>
-<section class="hero">
+<!-- Tournament header: ONLY the banner. -->
+<section class="banner-head">
     <?php if ($heroBanner): ?>
-        <img class="hero-bg" src="<?= e(base_url($heroBanner)) ?>" alt="" style="object-position:<?= e($objPos) ?>">
-        <div class="hero-overlay" style="background:linear-gradient(to top, rgba(<?= "$or,$og,$ob" ?>,<?= min(0.92, $ovAlpha + 0.25) ?>), rgba(<?= "$or,$og,$ob" ?>,<?= $ovAlpha ?>))"></div>
+        <img src="<?= e(base_url($heroBanner)) ?>" alt="" style="object-position:<?= e($objPos) ?>">
     <?php else: ?>
         <div class="hero-pattern"></div>
     <?php endif; ?>
-    <div class="hero-inner">
-        <div class="container">
-            <div class="flex items-center gap-2 wrap">
-                <?php if ($league['logo']): ?><img class="hero-league-logo" src="<?= e(base_url($league['logo'])) ?>" alt=""><?php endif; ?>
-                <div>
-                    <h1><?= e($league['name']) ?></h1>
-                    <?php if ($tournament): ?><p class="hero-sub"><?= e($tournament['name']) ?></p><?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </div>
 </section>
 
-<section class="section">
+<section class="section" style="padding-top:1.5rem">
     <div class="container">
+        <div class="page-head" style="margin-bottom:1.25rem">
+            <h1><?= e($tournament ? $tournament['name'] : $league['name']) ?></h1>
+        </div>
         <?php if (count($tournaments) > 1): ?>
             <form method="get" class="mb-3" style="max-width:420px">
                 <input type="hidden" name="slug" value="<?= e($league['slug']) ?>">

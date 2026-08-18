@@ -32,33 +32,31 @@ require __DIR__ . '/public/top.php';
         <p class="hero-sub"><?= e(Settings::get('hero_subtitle', 'La liga aún no está publicada. Vuelve pronto.')) ?></p>
     </div></div></section>
 <?php else: ?>
-    <!-- Hero: league banner + name + short info -->
-    <section class="hero">
+    <!-- League header: banner only. -->
+    <section class="banner-head">
         <?php if ($league['banner']): ?>
-            <img class="hero-bg" src="<?= e(base_url($league['banner'])) ?>" alt="" style="object-position:<?= e($objPos) ?>">
-            <div class="hero-overlay" style="background:linear-gradient(to top, rgba(<?= "$or,$og,$ob" ?>,<?= min(0.92, $ovAlpha + 0.28) ?>), rgba(<?= "$or,$og,$ob" ?>,<?= $ovAlpha ?>))"></div>
+            <img src="<?= e(base_url($league['banner'])) ?>" alt="" style="object-position:<?= e($objPos) ?>">
         <?php else: ?>
             <div class="hero-pattern"></div>
         <?php endif; ?>
-        <div class="hero-inner"><div class="container">
-            <div class="flex items-center gap-2 wrap">
-                <?php if ($league['logo']): ?><img class="hero-league-logo" src="<?= e(base_url($league['logo'])) ?>" alt=""><?php endif; ?>
-                <div>
-                    <div class="eyebrow" style="color:#fff"><span class="badge badge-accent">DEMO</span> <?= e(Settings::get('site_tagline', 'Fútbol 5')) ?></div>
-                    <h1><?= e($league['name']) ?></h1>
-                    <?php if ($league['description']): ?><p class="hero-sub"><?= e($league['description']) ?></p><?php endif; ?>
-                </div>
-            </div>
-        </div></div>
     </section>
 
-    <?php if (!empty($league['info'])): ?>
+    <!-- League name + info (plain content, always visible) -->
     <section class="section" style="padding-bottom:0">
         <div class="container">
-            <div class="card card-pad-lg"><div class="rich"><?= $league['info'] /* admin-managed HTML */ ?></div></div>
+            <div class="flex items-center gap-2 wrap" style="margin-bottom:1rem">
+                <?php if ($league['logo']): ?><img src="<?= e(base_url($league['logo'])) ?>" alt="" style="width:64px;height:64px;border-radius:14px;object-fit:cover;background:#fff;flex:0 0 auto"><?php endif; ?>
+                <div>
+                    <div class="eyebrow"><span class="badge badge-accent">DEMO</span> <?= e(Settings::get('site_tagline', 'Fútbol 5')) ?></div>
+                    <h1 style="margin:.15rem 0 0"><?= e($league['name']) ?></h1>
+                    <?php if ($league['description']): ?><p class="muted" style="margin:.35rem 0 0;max-width:640px"><?= e($league['description']) ?></p><?php endif; ?>
+                </div>
+            </div>
+            <?php if (!empty($league['info'])): ?>
+                <div class="card card-pad-lg"><div class="rich"><?= $league['info'] /* admin-managed HTML */ ?></div></div>
+            <?php endif; ?>
         </div>
     </section>
-    <?php endif; ?>
 
     <!-- Tournament cards -->
     <section class="section" id="torneos">

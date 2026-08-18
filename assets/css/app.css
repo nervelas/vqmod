@@ -143,8 +143,13 @@ table.data td.pts { font-weight: 800; color: var(--c-link); }
 .zone-final td:first-child { box-shadow: inset 4px 0 0 var(--c-primary); }
 
 /* Standings: freeze the position + team columns; the stats scroll horizontally.
-   Team names always read on one line while PJ/PG/… slide under the team column. */
-.standings { min-width: 0; }                       /* never force extra width */
+   Team names always read on one line while PJ/PG/… slide under the team column.
+   border-collapse:separate is REQUIRED so sticky columns work on mobile Safari
+   and some Android browsers (collapse breaks position:sticky on <td>). */
+.standings { min-width: 0; border-collapse: separate; border-spacing: 0; }
+.standings thead th { border-bottom: 2px solid var(--c-border-strong); }
+.standings tbody td { border-bottom: 1px solid var(--c-border); }
+.standings tbody tr:last-child td { border-bottom: none; }
 .standings th:first-child, .standings td:first-child {
     position: sticky; left: 0; z-index: 3;
     width: 40px; min-width: 40px;
@@ -214,6 +219,9 @@ table.data td.pts { font-weight: 800; color: var(--c-link); }
     min-height: clamp(320px, 46vw, 520px); display: flex; align-items: flex-end;
     background: var(--c-surface-2);
 }
+/* Banner-only tournament header (image only, name goes below it). */
+.banner-head { position: relative; width: 100%; height: clamp(150px, 34vw, 340px); overflow: hidden; background: var(--c-surface-2); }
+.banner-head > img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .hero-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
 .hero-overlay { position: absolute; inset: 0; z-index: 1; }
 .hero-inner { position: relative; z-index: 2; width: 100%; padding: clamp(24px, 5vw, 56px) 0; }

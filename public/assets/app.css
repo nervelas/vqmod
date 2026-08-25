@@ -1,0 +1,116 @@
+/* Interfaz del sistema de facturacion FEL */
+:root{
+  --tinta:#101922;
+  --tinta-suave:#5b6875;
+  --linea:#dfe4ea;
+  --fondo:#f2f4f7;
+  --panel:#ffffff;
+  --acento:#0f5f8a;
+  --acento-claro:#e6f1f7;
+  --exito:#1a7f4b;
+  --exito-fondo:#e4f5eb;
+  --error:#b32431;
+  --error-fondo:#fdeaec;
+  --aviso:#8a6100;
+  --aviso-fondo:#fdf3dc;
+  --radio:6px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--tinta);
+  font:14px/1.5 "Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+a{color:var(--acento);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ---------------------------------------------------------------- barra */
+.barra{background:var(--tinta);color:#fff;padding:0 20px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.barra .marca{font-weight:700;letter-spacing:.02em;padding:13px 0;font-size:15px}
+.barra nav{display:flex;gap:2px;flex-wrap:wrap;flex:1}
+.barra nav a{color:#c6d0da;padding:13px 12px;font-size:13.5px;border-bottom:3px solid transparent}
+.barra nav a:hover{color:#fff;text-decoration:none}
+.barra nav a.activo{color:#fff;border-bottom-color:var(--acento)}
+.barra .usuario{font-size:12.5px;color:#9fb0bf;display:flex;align-items:center;gap:10px}
+.barra .usuario a{color:#9fb0bf}
+
+.contenedor{max-width:1180px;margin:0 auto;padding:22px 20px 60px}
+
+/* --------------------------------------------------------------- piezas */
+.tarjeta{background:var(--panel);border:1px solid var(--linea);border-radius:var(--radio);padding:18px 20px;margin-bottom:18px}
+.tarjeta h2{margin:0 0 14px;font-size:15px;letter-spacing:.01em}
+.tarjeta h3{margin:18px 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--tinta-suave)}
+.encabezado-pagina{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.encabezado-pagina h1{font-size:20px;margin:0}
+.rejilla{display:grid;gap:16px}
+.rejilla.k4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.rejilla.k2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+
+.indicador{background:var(--panel);border:1px solid var(--linea);border-radius:var(--radio);padding:14px 16px}
+.indicador span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--tinta-suave)}
+.indicador strong{display:block;font-size:23px;margin-top:5px;font-variant-numeric:tabular-nums}
+
+/* --------------------------------------------------------------- tablas */
+table.datos{width:100%;border-collapse:collapse;font-size:13px}
+table.datos th{text-align:left;padding:8px 10px;background:#f7f9fb;border-bottom:1px solid var(--linea);
+  font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--tinta-suave);white-space:nowrap}
+table.datos td{padding:8px 10px;border-bottom:1px solid #eef1f4;vertical-align:middle}
+table.datos tr:hover td{background:#fafcfd}
+table.datos .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.vacio{padding:26px;text-align:center;color:var(--tinta-suave);font-size:13px}
+
+/* ------------------------------------------------------------ etiquetas */
+.etiqueta{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;letter-spacing:.02em}
+.etiqueta.CERTIFICADO{background:var(--exito-fondo);color:var(--exito)}
+.etiqueta.PENDIENTE{background:var(--aviso-fondo);color:var(--aviso)}
+.etiqueta.RECHAZADO{background:var(--error-fondo);color:var(--error)}
+.etiqueta.ANULADO{background:#eceff2;color:#5b6875;text-decoration:line-through}
+.etiqueta.BORRADOR{background:#eceff2;color:#5b6875}
+
+/* ------------------------------------------------------------ formulario */
+label{display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--tinta-suave);margin-bottom:4px}
+input,select,textarea{width:100%;padding:7px 9px;border:1px solid #c9d2db;border-radius:4px;font:inherit;background:#fff;color:var(--tinta)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--acento-claro);border-color:var(--acento)}
+input[readonly]{background:#f4f6f8;color:var(--tinta-suave)}
+.campo{margin-bottom:12px}
+.fila{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+fieldset{border:1px solid var(--linea);border-radius:var(--radio);padding:14px 16px;margin:0 0 16px}
+legend{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--tinta-suave);padding:0 6px}
+.casilla{display:flex;align-items:center;gap:7px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--tinta)}
+.casilla input{width:auto}
+
+/* -------------------------------------------------------------- botones */
+.boton{display:inline-block;padding:8px 15px;border-radius:4px;border:1px solid transparent;background:var(--acento);
+  color:#fff;font:inherit;font-size:13px;font-weight:600;cursor:pointer;text-align:center}
+.boton:hover{background:#0c4d70;text-decoration:none;color:#fff}
+.boton.secundario{background:#fff;color:var(--tinta);border-color:#c9d2db}
+.boton.secundario:hover{background:#f4f6f8;color:var(--tinta)}
+.boton.peligro{background:var(--error)}
+.boton.peligro:hover{background:#8f1c27}
+.boton.pequeno{padding:5px 10px;font-size:12px}
+.acciones{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* -------------------------------------------------------------- avisos */
+.mensaje{padding:10px 14px;border-radius:var(--radio);margin-bottom:12px;font-size:13px;border:1px solid}
+.mensaje.exito{background:var(--exito-fondo);border-color:#bde3cd;color:var(--exito)}
+.mensaje.error{background:var(--error-fondo);border-color:#f3c3c8;color:var(--error)}
+.mensaje.aviso{background:var(--aviso-fondo);border-color:#ecd79a;color:var(--aviso)}
+
+.cinta{background:var(--aviso-fondo);border:1px solid #ecd79a;color:var(--aviso);
+  padding:9px 14px;border-radius:var(--radio);font-size:12.5px;margin-bottom:16px}
+.cinta strong{font-weight:700}
+
+/* --------------------------------------------------------------- ingreso */
+.ingreso{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.ingreso .caja{background:var(--panel);border:1px solid var(--linea);border-radius:8px;padding:30px;width:100%;max-width:370px}
+.ingreso h1{font-size:19px;margin:0 0 4px}
+.ingreso p.sub{margin:0 0 20px;color:var(--tinta-suave);font-size:13px}
+
+/* ------------------------------------------------------------- detalle */
+.uuid{font-family:"SFMono-Regular",Consolas,monospace;font-size:12px;word-break:break-all;background:#f4f6f8;
+  padding:6px 9px;border-radius:4px;display:inline-block}
+.definiciones{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:13px;align-items:baseline}
+.definiciones dt{color:var(--tinta-suave);font-size:11.5px;text-transform:uppercase;letter-spacing:.05em}
+.definiciones dd{margin:0}
+.registro{font-size:12px;font-family:"SFMono-Regular",Consolas,monospace;background:#f7f9fb;border:1px solid var(--linea);
+  border-radius:4px;padding:10px;max-height:230px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.totales-caja{margin-left:auto;max-width:330px;font-size:13px}
+.totales-caja div{display:flex;justify-content:space-between;padding:4px 0}
+.totales-caja .grande{border-top:2px solid var(--tinta);margin-top:6px;padding-top:8px;font-size:17px;font-weight:700}

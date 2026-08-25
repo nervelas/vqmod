@@ -1,0 +1,17 @@
+# Configuracion real: contiene llaves de firma y credenciales del certificador.
+/config/config.php
+
+# XML emitidos y bitacoras (se conservan en el servidor, no en el repositorio)
+/storage/xml/*
+!/storage/xml/.gitkeep
+/storage/logs/*
+!/storage/logs/.gitkeep
+
+# Base de datos local de pruebas y contador del simulador
+/storage/*.sqlite
+/storage/simulador-correlativo.txt
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.swp

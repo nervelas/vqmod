@@ -1,0 +1,22 @@
+# Solo esta carpeta debe ser accesible desde el navegador.
+# En cPanel apunte el dominio o subdominio directamente a public/.
+
+Options -Indexes
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "same-origin"
+</IfModule>
+
+# Fuerce HTTPS: la aplicacion maneja datos fiscales y llaves de acceso.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+<FilesMatch "\.(sqlite|log|md|sql)$">
+    Require all denied
+</FilesMatch>

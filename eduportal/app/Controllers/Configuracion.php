@@ -63,9 +63,15 @@ final class Configuracion extends Controller
             'pond_zona'         => 'required|numeric|min:0|max:100',
             'pond_examen'       => 'required|numeric|min:0|max:100',
         ], [
-            'colegio_nombre' => 'nombre del colegio', 'moneda' => 'moneda',
+            'colegio_nombre' => 'nombre del colegio', 'colegio_lema' => 'lema',
+            'colegio_direccion' => 'direccion', 'colegio_telefono' => 'telefono',
+            'colegio_whatsapp' => 'WhatsApp', 'colegio_email' => 'correo del colegio',
+            'colegio_nit' => 'NIT', 'moneda' => 'moneda',
             'zona_horaria' => 'zona horaria', 'tema' => 'tema',
-            'nota_minima' => 'nota minima', 'pond_zona' => 'ponderacion de zona',
+            'color_personalizado' => 'color personalizado',
+            'director_nombre' => 'nombre del director',
+            'nota_minima' => 'nota minima', 'nota_maxima' => 'nota maxima',
+            'pond_zona' => 'ponderacion de zona', 'pond_examen' => 'ponderacion de examen',
         ]);
         if ($v->fails()) {
             $this->error($v->firstError());

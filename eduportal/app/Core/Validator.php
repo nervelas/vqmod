@@ -32,6 +32,10 @@ final class Validator
             $list = is_array($ruleset) ? $ruleset : explode('|', $ruleset);
             $required = in_array('required', $list, true);
             $nullable = in_array('nullable', $list, true);
+            // min y max miden longitud, salvo que el campo se declare numerico.
+            // Sin esto un telefono o un NIT de solo digitos se compararia como
+            // cantidad: 50255551234 "excederia" un max:40 pensado para caracteres.
+            $comoNumero = in_array('int', $list, true) || in_array('numeric', $list, true);
 
             if ($required && ($value === null || $value === '' || $value === [])) {
                 $this->errors[$field] = "El campo {$label} es obligatorio.";
@@ -68,13 +72,17 @@ final class Validator
                         }
                         break;
                     case 'min':
-                        if (is_numeric($value) ? ((float)$value < (float)$arg) : (mb_strlen((string)$value) < (int)$arg)) {
-                            $this->errors[$field] = "El campo {$label} es demasiado corto o pequeno (minimo {$arg}).";
+                        if ($comoNumero ? ((float)$value < (float)$arg) : (mb_strlen((string)$value) < (int)$arg)) {
+                            $this->errors[$field] = $comoNumero
+                                ? "El campo {$label} no puede ser menor que {$arg}."
+                                : "El campo {$label} debe tener al menos {$arg} caracteres.";
                         }
                         break;
                     case 'max':
-                        if (is_numeric($value) ? ((float)$value > (float)$arg) : (mb_strlen((string)$value) > (int)$arg)) {
-                            $this->errors[$field] = "El campo {$label} excede el maximo permitido ({$arg}).";
+                        if ($comoNumero ? ((float)$value > (float)$arg) : (mb_strlen((string)$value) > (int)$arg)) {
+                            $this->errors[$field] = $comoNumero
+                                ? "El campo {$label} no puede ser mayor que {$arg}."
+                                : "El campo {$label} no puede pasar de {$arg} caracteres.";
                         }
                         break;
                     case 'len':

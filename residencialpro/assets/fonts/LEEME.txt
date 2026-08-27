@@ -1,0 +1,25 @@
+TIPOGRAFÍAS DEL SISTEMA
+=======================
+
+ResidencialPro incluye sus dos tipografías de forma local:
+
+  cormorant-garamond-variable-latin.woff2   (títulos)
+  inter-variable-latin.woff2                (interfaz y datos)
+
+Son los archivos oficiales publicados por Google Fonts (subconjunto latino,
+formato variable) y se distribuyen bajo la SIL Open Font License 1.1.
+El texto completo de la licencia está en LICENCIA-FUENTES.txt.
+
+¿Por qué locales y no desde el CDN de Google?
+  · El sistema no depende de ningún servicio externo.
+  · Carga más rápido: no hay conexión adicional ni bloqueo de renderizado.
+  · La aplicación instalada (PWA) conserva su tipografía sin conexión.
+  · Evita transferir datos de los residentes a terceros.
+
+Si prefiere cargarlas desde Google Fonts, agregue en
+/app/Views/partials/head.php la línea:
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+
+La política de seguridad de contenido (CSP) del sistema ya permite
+fonts.googleapis.com y fonts.gstatic.com.

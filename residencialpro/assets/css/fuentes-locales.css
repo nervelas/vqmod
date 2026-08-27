@@ -1,0 +1,31 @@
+/* ============================================================================
+   Tipografías del sistema — copias locales.
+   Archivos variables (subconjunto latino) descargados de Google Fonts y
+   distribuidos bajo la SIL Open Font License 1.1 (ver LICENCIA-FUENTES.txt).
+   Al servirse desde el propio hosting, el sistema no depende de ningún
+   servicio externo y funciona igual sin conexión (PWA).
+   ========================================================================== */
+
+@font-face {
+  font-family: "Cormorant Garamond";
+  src: url("../fonts/cormorant-garamond-variable-latin.woff2") format("woff2-variations"),
+       url("../fonts/cormorant-garamond-variable-latin.woff2") format("woff2");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                 U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+                 U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("../fonts/inter-variable-latin.woff2") format("woff2-variations"),
+       url("../fonts/inter-variable-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                 U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+                 U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}

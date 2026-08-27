@@ -11,6 +11,7 @@ cp -r "$ORIGEN/." "$PAQ/"
 
 # Archivos que nunca deben viajar en el paquete
 rm -f  "$PAQ/config/config.php" "$PAQ/install/.lock" "$PAQ/router-pruebas.php" "$PAQ/build-zip.sh"
+rm -rf "$PAQ/tools"
 rm -rf "$PAQ/.git" "$PAQ/node_modules"
 find "$PAQ/storage" -type f ! -name '.htaccess' ! -name '.gitkeep' ! -name 'index.html' -delete
 find "$PAQ/storage" -type d -empty -not -path "$PAQ/storage" -exec rm -rf {} + 2>/dev/null || true

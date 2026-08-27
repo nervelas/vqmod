@@ -227,7 +227,8 @@ class Pdf
         for ($i = 0; $i < $len; $i++) {
             $t += $anchos[ord($s[$i])] ?? 500;
         }
-        return $t * $this->tam / 1000;
+        // El resultado se expresa en milimetros, igual que el resto de medidas.
+        return $t * $this->tam / 1000 / $this->k;
     }
 
     public function celda(

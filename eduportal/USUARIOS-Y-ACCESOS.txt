@@ -1,20 +1,20 @@
 ================================================================================
-EDUPORTAL - USUARIOS, ROLES Y ENLACES DE ACCESO
+GESTION COLEGIO - USUARIOS, ROLES Y ENLACES DE ACCESO
 ================================================================================
 
 --------------------------------------------------------------------------------
 1. ENLACES DE ACCESO
 --------------------------------------------------------------------------------
-Reemplace SUDOMINIO por su dominio real (ejemplo: colegio.edu.gt).
+Portal: Gestión Colegio.
 
-  Sitio publico            https://SUDOMINIO/
-  INGRESAR (login)         https://SUDOMINIO/ingresar     <-- enlace principal
-  Panel (admin/secre/doc)  https://SUDOMINIO/panel
-  Portal de padres         https://SUDOMINIO/portal
-  Recuperar contrasena     https://SUDOMINIO/recuperar
-  Cerrar sesion            https://SUDOMINIO/salir
-  Instalador (una vez)     https://SUDOMINIO/install/
-  Cron automatico          https://SUDOMINIO/cron/run.php?token=SU_TOKEN
+  Sitio publico            https://gestioncolegio.paginasweb.gt/
+  INGRESAR (login)         https://gestioncolegio.paginasweb.gt/ingresar     <-- enlace principal
+  Panel (admin/secre/doc)  https://gestioncolegio.paginasweb.gt/panel
+  Portal de padres         https://gestioncolegio.paginasweb.gt/portal
+  Recuperar contrasena     https://gestioncolegio.paginasweb.gt/recuperar
+  Cerrar sesion            https://gestioncolegio.paginasweb.gt/salir
+  Instalador (una vez)     https://gestioncolegio.paginasweb.gt/install/
+  Cron automatico          https://gestioncolegio.paginasweb.gt/cron/run.php?token=SU_TOKEN
 
 Despues de ingresar, el sistema lo envia solo al lugar correcto:
 superadmin, secretaria y docente van a /panel; padre/encargado va a /portal.

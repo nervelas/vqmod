@@ -1,0 +1,180 @@
+================================================================================
+EDUPORTAL - USUARIOS, ROLES Y ENLACES DE ACCESO
+================================================================================
+
+--------------------------------------------------------------------------------
+1. ENLACES DE ACCESO
+--------------------------------------------------------------------------------
+Reemplace SUDOMINIO por su dominio real (ejemplo: colegio.edu.gt).
+
+  Sitio publico            https://SUDOMINIO/
+  INGRESAR (login)         https://SUDOMINIO/ingresar     <-- enlace principal
+  Panel (admin/secre/doc)  https://SUDOMINIO/panel
+  Portal de padres         https://SUDOMINIO/portal
+  Recuperar contrasena     https://SUDOMINIO/recuperar
+  Cerrar sesion            https://SUDOMINIO/salir
+  Instalador (una vez)     https://SUDOMINIO/install/
+  Cron automatico          https://SUDOMINIO/cron/run.php?token=SU_TOKEN
+
+Despues de ingresar, el sistema lo envia solo al lugar correcto:
+superadmin, secretaria y docente van a /panel; padre/encargado va a /portal.
+
+--------------------------------------------------------------------------------
+2. IMPORTANTE: EN SU SERVIDOR TODAVIA NO EXISTE NINGUN USUARIO
+--------------------------------------------------------------------------------
+El PRIMER usuario (superadmin) se crea en el PASO 3 del instalador /install/,
+donde usted escribe su nombre, su correo y su contrasena. Ese sera su acceso
+real. Las cuentas de la seccion 5 solo existen si usted importa el archivo
+de datos de demostracion (database_demo.sql).
+
+--------------------------------------------------------------------------------
+3. LOS 4 ROLES
+--------------------------------------------------------------------------------
+SUPERADMIN
+  Acceso total. Configuracion del colegio (nombre, logo, tema, NIT, ciclo,
+  SMTP, plantillas), estructura academica (ciclos, niveles, grados, secciones,
+  materias, asignacion de docentes, periodos, escala de notas), alumnos y
+  encargados, cobros y pagos, notas, asistencia, avisos y tareas, reportes,
+  usuarios y accesos, respaldos .sql.gz y bitacora de auditoria.
+
+SECRETARIA / CONTABILIDAD
+  Alumnos y encargados (ver y editar), cobranza completa (conceptos, cargos
+  mensuales, pagos, recibos PDF, estados de cuenta, morosidad, corte de caja),
+  aprobar o rechazar comprobantes subidos por padres, reportes, avisos,
+  preinscripciones, calendario, mensajes, ver asistencia.
+  NO TIENE ACCESO A NOTAS (restriccion pedida en el diseno).
+
+DOCENTE
+  Solo sus propios grupos y materias asignadas. Captura de notas tipo hoja de
+  calculo con autoguardado, actividades con ponderacion, zona 60 + examen 40,
+  conducta y comentarios, pase de asistencia diario, tareas con confirmacion
+  de entrega, avisos y mensajes con encargados.
+  NO ve notas ni asistencia de grupos que no son suyos. NO ve dinero.
+
+PADRE / ENCARGADO
+  Solo sus propios hijos (con selector si tiene varios). Estado de cuenta,
+  subir comprobante de pago (queda "en revision"), descargar recibos, boletas
+  de calificaciones, asistencia, tareas, avisos y mensajes con docentes.
+  NO ve informacion de otros alumnos ni de otras familias.
+
+--------------------------------------------------------------------------------
+4. MATRIZ DE PERMISOS
+--------------------------------------------------------------------------------
+Permiso                    Superadmin  Secretaria  Docente  Padre
+configuracion.ver              SI          no        no       no
+configuracion.editar           SI          no        no       no
+academico.ver                  SI          no        no       no
+academico.editar               SI          no        no       no
+alumnos.ver                    SI          SI        SI       no
+alumnos.editar                 SI          SI        no       no
+encargados.editar              SI          SI        no       no
+cobranza.ver                   SI          SI        no       no
+cobranza.editar                SI          SI        no       no
+pagos.aprobar                  SI          SI        no       no
+notas.ver                      SI          no        SI       no
+notas.editar                   SI          no        SI       no
+asistencia.ver                 SI          SI        SI       no
+asistencia.editar              SI          no        SI       no
+tareas.ver / tareas.editar     SI          no        SI       no
+avisos.ver / avisos.editar     SI          SI        SI       no
+preinscripciones.ver           SI          SI        no       no
+calendario.editar              SI          SI        no       no
+reportes.ver                   SI          SI        no       no
+mensajes.ver                   SI          SI        SI       SI
+portal.ver (portal de padres)  no          no        no       SI
+usuarios / respaldos / auditoria SI        no        no       no
+
+Ademas del rol, el sistema verifica PROPIEDAD en cada consulta: un padre solo
+puede consultar a SUS hijos y un docente solo SUS asignaciones. No basta con
+conocer el numero del alumno en la direccion web.
+
+--------------------------------------------------------------------------------
+5. CUENTAS DEL JUEGO DE DEMOSTRACION (database_demo.sql)
+--------------------------------------------------------------------------------
+ADVERTENCIA: estas contrasenas son publicas (van dentro del ZIP). Si deja los
+datos demo en un sitio real, CAMBIELAS de inmediato o borre las cuentas.
+
+Cuentas principales:
+
+  ROL          CORREO                      CONTRASENA
+  Superadmin   admin@colegio.gt            Admin2026!
+  Secretaria   secretaria@colegio.gt       Secre2026!
+  Docente      docente@colegio.gt          Docente2026!
+  Padre        padre@colegio.gt            Padre2026!
+
+Listado completo (30 usuarios):
+
+  #   ROL          CORREO                      CONTRASENA
+  1   Superadmin   admin@colegio.gt            Admin2026!
+  2   Secretaria   secretaria@colegio.gt       Secre2026!
+  3   Docente      docente@colegio.gt          Docente2026!
+  4   Docente      lucia.herrera@colegio.gt    Docente2026!
+  5   Docente      marco.solis@colegio.gt      Docente2026!
+  6   Padre        padre@colegio.gt            Padre2026!
+  7   Padre        encargado2@correo.gt        Padre2026!
+  8   Padre        encargado3@correo.gt        Padre2026!
+  9   Padre        encargado4@correo.gt        Padre2026!
+  10  Padre        encargado5@correo.gt        Padre2026!
+  11  Padre        encargado6@correo.gt        Padre2026!
+  12  Padre        encargado7@correo.gt        Padre2026!
+  13  Padre        encargado8@correo.gt        Padre2026!
+  14  Padre        encargado9@correo.gt        Padre2026!
+  15  Padre        encargado10@correo.gt       Padre2026!
+  16  Padre        encargado11@correo.gt       Padre2026!
+  17  Padre        encargado12@correo.gt       Padre2026!
+  18  Padre        encargado13@correo.gt       Padre2026!
+  19  Padre        encargado14@correo.gt       Padre2026!
+  20  Padre        encargado15@correo.gt       Padre2026!
+  21  Padre        encargado16@correo.gt       Padre2026!
+  22  Padre        encargado17@correo.gt       Padre2026!
+  23  Padre        encargado18@correo.gt       Padre2026!
+  24  Padre        encargado19@correo.gt       Padre2026!
+  25  Padre        encargado20@correo.gt       Padre2026!
+  26  Padre        encargado21@correo.gt       Padre2026!
+  27  Padre        encargado22@correo.gt       Padre2026!
+  28  Padre        encargado23@correo.gt       Padre2026!
+  29  Padre        encargado24@correo.gt       Padre2026!
+  30  Padre        encargado25@correo.gt       Padre2026!
+
+Notas del juego demo: colegio "Colegio Ejemplo", 2 niveles, 4 grados,
+3 docentes (cada uno con 8 materias entre los 4 grupos), 30 alumnos,
+25 encargados (los primeros 5 con 2 hijos cada uno, para probar el selector
+de hijos), 3 meses de cargos mensuales con algunos morosos, un bimestre de
+notas, avisos y tareas.
+
+--------------------------------------------------------------------------------
+6. COMO SE CREAN LOS USUARIOS REALES
+--------------------------------------------------------------------------------
+PERSONAL (secretaria, docentes, otros administradores):
+  Ingrese como superadmin -> Configuracion -> Usuarios y accesos -> Nuevo.
+  Escriba nombre, correo, rol y una contrasena inicial. El usuario ya puede
+  entrar en /ingresar y cambiar su contrasena desde su perfil.
+
+DOCENTES:
+  Ademas de crear el usuario con rol "docente", debe asignarle materias en
+  Academico -> Asignaciones. Sin asignaciones no vera ningun grupo.
+
+PADRES / ENCARGADOS:
+  Se crean solos. Al registrar un encargado del alumno (Alumnos -> ficha ->
+  Encargados) escriba su correo y marque "Crear acceso al portal". El sistema
+  genera el usuario con rol padre y le envia sus datos por correo. Cada alumno
+  admite hasta 3 encargados y un encargado puede tener varios hijos.
+
+--------------------------------------------------------------------------------
+7. SEGURIDAD DE LAS CUENTAS
+--------------------------------------------------------------------------------
+  Contrasenas          Minimo 10 caracteres, guardadas con Argon2id.
+  Intentos fallidos    5 intentos -> bloqueo de 15 minutos por IP y por usuario.
+  Sesion inactiva      Expira a los 30 minutos.
+  Recuperacion         Enlace de un solo uso que vence en 30 minutos.
+  2FA por correo       Opcional, solo para superadmin.
+  Cerrar en todos los  Boton en el perfil: invalida la sesion en todos los
+  dispositivos         dispositivos donde quedo abierta.
+  Auditoria            Toda accion sensible queda registrada con usuario,
+                       fecha e IP (Configuracion -> Bitacora).
+  Bajas                No borre usuarios: desactivelos. Asi conserva el
+                       historial de pagos, notas y acciones.
+
+================================================================================
+EduPortal - Documento de referencia de accesos
+================================================================================

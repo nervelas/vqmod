@@ -1,0 +1,18 @@
+User-agent: *
+Disallow: /config/
+Disallow: /storage/
+Disallow: /vendor/
+Disallow: /app/
+Disallow: /install/
+Disallow: /cron/
+Disallow: /panel
+Disallow: /portal
+Disallow: /alumnos
+Disallow: /cobranza
+Disallow: /notas
+Disallow: /asistencia
+Disallow: /mensajes
+Disallow: /archivo/
+Allow: /
+
+Sitemap: /sitemap.xml

@@ -1,0 +1,110 @@
+# ============================================================
+#  EduPortal · Configuración de Apache
+#  Compatible con hosting compartido cPanel (mod_rewrite)
+# ============================================================
+
+# ---------- Índices de directorio ----------
+Options -Indexes -MultiViews
+<IfModule mod_autoindex.c>
+    IndexIgnore *
+</IfModule>
+
+DirectoryIndex index.php
+
+# ---------- Codificación ----------
+AddDefaultCharset UTF-8
+
+# ---------- Métodos permitidos ----------
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Bloquear TRACE y TRACK
+    RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK|DEBUG) [NC]
+    RewriteRule .* - [F,L]
+
+    # Bloquear agentes maliciosos conocidos
+    RewriteCond %{HTTP_USER_AGENT} (havij|sqlmap|nikto|libwww-perl|python-requests/0|zgrab|masscan|nmap|acunetix|dirbuster|wpscan) [NC]
+    RewriteRule .* - [F,L]
+
+    # Forzar HTTPS (se omite en localhost para desarrollo)
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1) [NC]
+    RewriteCond %{REQUEST_URI} !^/\.well-known/
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+    # Bloquear acceso directo a carpetas internas
+    RewriteRule ^(app|config|storage|vendor)(/|$) - [F,L]
+
+    # Enrutar al front controller todo lo que no sea un archivo o carpeta real.
+    # Las carpetas reales (por ejemplo /install/) las sirve DirectoryIndex.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+# ---------- Cabeceras de seguridad ----------
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
+    Header always set Cross-Origin-Opener-Policy "same-origin"
+    Header unset X-Powered-By
+    Header always unset Server
+
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+
+    # El service worker debe poder controlar toda la raíz
+    <FilesMatch "service-worker\.js$">
+        Header set Service-Worker-Allowed "/"
+        Header set Cache-Control "no-cache, must-revalidate"
+    </FilesMatch>
+</IfModule>
+
+# ---------- Caché de estáticos ----------
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType image/png "access plus 6 months"
+    ExpiresByType image/jpeg "access plus 6 months"
+    ExpiresByType image/webp "access plus 6 months"
+    ExpiresByType image/svg+xml "access plus 6 months"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType application/manifest+json "access plus 1 day"
+</IfModule>
+
+# ---------- Compresión ----------
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml
+    AddOutputFilterByType DEFLATE application/javascript application/json
+    AddOutputFilterByType DEFLATE application/xml image/svg+xml
+</IfModule>
+
+# ---------- Tipos MIME ----------
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+    AddType font/woff2 .woff2
+</IfModule>
+
+# ---------- Archivos sensibles ----------
+<FilesMatch "(^\.|composer\.(json|lock)|\.(env|ini|log|sql|sh|bak|old|swp|dist|md)$)">
+    Require all denied
+</FilesMatch>
+<Files "LEEME.md">
+    Require all denied
+</Files>
+
+# ---------- Límites de PHP ----------
+<IfModule mod_php.c>
+    php_flag display_errors Off
+    php_flag log_errors On
+    php_flag expose_php Off
+    php_value upload_max_filesize 16M
+    php_value post_max_size 20M
+    php_value max_execution_time 120
+    php_value memory_limit 256M
+    php_flag session.cookie_httponly On
+    php_value session.cookie_samesite Strict
+</IfModule>

@@ -8,3 +8,16 @@
 *.log
 .DS_Store
 /fuentedevida-web.zip
+
+# EduPortal
+/eduportal/config/config.php
+/eduportal/install/.lock
+/eduportal/router-pruebas.php
+/eduportal/storage/uploads/*
+/eduportal/storage/backups/*
+/eduportal/storage/logs/*
+/eduportal/storage/cache/*
+/eduportal/storage/sessions/*
+!/eduportal/storage/*/.gitkeep
+!/eduportal/storage/*/.htaccess
+!/eduportal/storage/*/index.html

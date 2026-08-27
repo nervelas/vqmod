@@ -195,6 +195,69 @@ function dividirSql(string $sql): array
     return $sentencias;
 }
 
+/**
+ * Traduce los errores más comunes de MySQL a una explicación accionable.
+ * @return array{0:string,1:array<int,string>} mensaje y lista de comprobaciones
+ */
+function explicarErrorBd(Throwable $e, array $datos): array
+{
+    $texto = $e->getMessage();
+    $codigo = 0;
+    if (preg_match('/\[(\d{4})\]/', $texto, $m)) {
+        $codigo = (int)$m[1];
+    }
+
+    switch ($codigo) {
+        case 1045: // ER_ACCESS_DENIED_ERROR
+            return [
+                'El servidor MySQL rechazó el usuario o la contraseña. No es un problema de permisos: '
+                . 'todavía no llegamos a la base de datos.',
+                [
+                    'En cPanel abra <strong>Bases de datos MySQL &rarr; Usuarios actuales</strong> y copie el nombre '
+                    . 'tal como aparece ahí. MySQL distingue mayúsculas de minúsculas y cPanel suele guardarlo '
+                    . 'en minúsculas.',
+                    'Si el nombre coincide, pulse <strong>Cambiar contraseña</strong> junto a ese usuario y ponga una '
+                    . 'nueva solo con letras y números. Los símbolos se pierden al copiar y pegar.',
+                    'Al pegar la contraseña, cuide que no quede un espacio al final.',
+                    'Usuario que se intentó: <code>' . h($datos['user']) . '</code>',
+                ],
+            ];
+
+        case 1044: // ER_DBACCESS_DENIED_ERROR
+            return [
+                'El usuario y la contraseña son correctos, pero ese usuario no tiene permisos sobre la base «'
+                . $datos['database'] . '».',
+                [
+                    'En cPanel, sección <strong>Agregar usuario a la base de datos</strong>, seleccione el usuario '
+                    . 'y la base, y márquele <strong>TODOS LOS PRIVILEGIOS</strong>.',
+                ],
+            ];
+
+        case 1049: // ER_BAD_DB_ERROR
+            return [
+                'El usuario existe, pero no hay ninguna base de datos llamada «'
+                . $datos['database'] . '».',
+                [
+                    'Copie el nombre completo desde <strong>Bases de datos actuales</strong> en cPanel: '
+                    . 'lleva el prefijo de su cuenta, por ejemplo <code>micuenta_eduportal</code>.',
+                ],
+            ];
+
+        case 2002:
+        case 2003:
+        case 2005:
+            return [
+                'No se encontró el servidor MySQL en ' . $datos['host'] . ':' . (int)$datos['puerto'] . '.',
+                [
+                    'En un hosting cPanel el servidor casi siempre es <code>localhost</code> y el puerto <code>3306</code>.',
+                    'Si su proveedor usa un servidor de base de datos aparte, pídale la dirección exacta.',
+                ],
+            ];
+    }
+
+    return ['No se pudo conectar con la base de datos.', ['Detalle técnico: <code>' . h($texto) . '</code>']];
+}
+
 /** Ejecuta un archivo .sql sentencia por sentencia. */
 function ejecutarSql(PDO $pdo, string $archivo): void
 {
@@ -209,6 +272,7 @@ function ejecutarSql(PDO $pdo, string $archivo): void
 
 $paso = max(1, min(3, (int)($_GET['paso'] ?? 1)));
 $errores = [];
+$ayuda = [];
 $aviso = null;
 
 // ---------------- Paso 2: conexión a la base ----------------
@@ -220,8 +284,10 @@ if ($paso === 2 && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             'host'     => trim((string)($_POST['host'] ?? 'localhost')),
             'puerto'   => (int)($_POST['puerto'] ?? 3306),
             'database' => trim((string)($_POST['database'] ?? '')),
-            'user'     => trim((string)($_POST['user'] ?? '')),
-            'password' => (string)($_POST['password'] ?? ''),
+            'user'     => trim(str_replace(["\r", "\n", "\t", "\0"], '', (string)($_POST['user'] ?? ''))),
+            // La contraseña no se recorta (puede llevar espacios), pero los saltos de línea
+            // que se cuelan al pegar nunca son parte de ella.
+            'password' => str_replace(["\r", "\n", "\t", "\0"], '', (string)($_POST['password'] ?? '')),
         ];
         if ($datos['database'] === '' || $datos['user'] === '') {
             $errores[] = 'Indique el nombre de la base de datos y el usuario.';
@@ -241,7 +307,9 @@ if ($paso === 2 && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 header('Location: ?paso=3');
                 exit;
             } catch (Throwable $e) {
-                $errores[] = 'No se pudo conectar: ' . $e->getMessage();
+                [$mensaje, $comprobaciones] = explicarErrorBd($e, $datos);
+                $errores[] = $mensaje;
+                $ayuda = $comprobaciones;
             }
         }
     }
@@ -417,6 +485,17 @@ $base = baseUrl();
     <?php foreach ($errores as $err): ?>
       <div class="aviso aviso--bad"><span><?= h($err) ?></span></div>
     <?php endforeach; ?>
+
+    <?php if ($ayuda !== []): ?>
+      <div class="tarjeta mb-4">
+        <h3 style="margin-top:0">Cómo resolverlo</h3>
+        <ol class="sm txt-2" style="margin:0;padding-left:1.2rem;line-height:1.7">
+          <?php foreach ($ayuda as $linea): ?>
+            <li><?= $linea ?></li>
+          <?php endforeach; ?>
+        </ol>
+      </div>
+    <?php endif; ?>
 
     <?php if ($listo && $resumen): ?>
       <div class="tarjeta">

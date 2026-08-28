@@ -1,0 +1,13 @@
+config/config.php
+install/.lock
+install/.htaccess
+router-dev.php
+residencialpro.zip
+parche-php80.zip
+storage/logs/*
+storage/cache/*
+storage/tmp/*
+storage/backups/*
+!storage/*/.gitkeep
+uploads/*/*
+!uploads/*/.gitkeep

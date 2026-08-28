@@ -1,0 +1,21 @@
+FOTOGRAFÍAS DE DEMOSTRACIÓN
+===========================
+
+Las imágenes de esta carpeta acompañan al sitio público como material de
+muestra, con una gradación de color unificada para que el conjunto se lea como
+una sola campaña. Provienen de plantillas web de código abierto publicadas en
+GitHub y están recortadas y optimizadas para este proyecto.
+
+IMPORTANTE
+----------
+Son un punto de partida, no el retrato de su residencial. Antes de publicar el
+sitio, sustitúyalas por fotografías propias:
+
+  · Administración → Sitio público → Galería  (portada y galería)
+  · Administración → Sitio público → Amenidades
+
+La primera imagen de la galería se usa como fotografía de portada. Si sube una,
+reemplaza automáticamente a la de demostración.
+
+Formato recomendado: JPEG o WebP, 1600 px de ancho como mínimo, proporción
+16:9 para la portada y 3:2 para el resto.

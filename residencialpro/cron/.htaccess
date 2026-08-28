@@ -1,0 +1,4 @@
+# El cron se ejecuta solo con el token configurado.
+<IfModule mod_headers.c>
+    Header set X-Robots-Tag "noindex, nofollow"
+</IfModule>

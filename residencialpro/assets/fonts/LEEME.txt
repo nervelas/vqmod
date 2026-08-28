@@ -1,0 +1,18 @@
+TIPOGRAFÍAS DEL SISTEMA
+=======================
+
+ResidencialPro incluye sus tres tipografías de forma local, sin depender de
+Google Fonts ni de ningún servicio externo. Así el sitio se ve igual aunque
+el hosting no tenga salida a Internet y funciona sin conexión (PWA).
+
+  fraunces-variable-latin.woff2    Titulares. Serif variable con eje óptico:
+                                   a tamaño grande gana carácter y a tamaño
+                                   pequeño se mantiene legible.
+  archivo-variable-latin.woff2     Interfaz y lectura. Grotesca de trazo firme,
+                                   pensada para datos y formularios.
+  plexmono-400/500/600-latin.woff2 Etiquetas técnicas, códigos de vivienda y
+                                   cifras de tabla, siempre en ancho fijo.
+
+Todas son subconjuntos latinos (español completo) para que pesen poco.
+Si desea sustituirlas, reemplace los archivos y ajuste
+assets/css/fuentes-locales.css. Revise antes la licencia de la nueva familia.

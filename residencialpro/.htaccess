@@ -1,0 +1,108 @@
+# ============================================================================
+#  ResidencialPro — configuración de Apache
+#  Funciona en dominio raíz o en subdominio/subcarpeta sin tocar código.
+# ============================================================================
+
+Options -Indexes -MultiViews
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # --- HTTPS obligatorio (desactive estas 3 líneas si aún no tiene certificado)
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+    RewriteCond %{HTTP_HOST} !^localhost [NC]
+    RewriteCond %{REQUEST_URI} !^/\.well-known/ [NC]
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+    # --- Bloqueo de carpetas internas
+    RewriteRule ^(app|config|database|storage|vendor)(/|$) - [F,L]
+    RewriteRule ^install/\.lock$ - [F,L]
+
+    # --- Métodos peligrosos
+    RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK|DEBUG)
+    RewriteRule .* - [F,L]
+
+    # --- Agentes maliciosos conocidos
+    RewriteCond %{HTTP_USER_AGENT} (sqlmap|nikto|havij|acunetix|nessus|masscan|zgrab|dirbuster|wpscan) [NC]
+    RewriteRule .* - [F,L]
+
+    # --- Front controller: todo lo que no sea archivo real pasa por index.php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+# ------------------------------------------------------------- Cabeceras
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(self), camera=(self), microphone=(), payment=(), usb=()"
+    Header always set X-Permitted-Cross-Domain-Policies "none"
+    Header unset X-Powered-By
+    <FilesMatch "\.(css|js|png|jpg|jpeg|gif|webp|svg|ico|woff2?)$">
+        Header set Cache-Control "public, max-age=2592000, immutable"
+    </FilesMatch>
+    <FilesMatch "^(service-worker\.js|manifest\.json)$">
+        Header set Cache-Control "no-cache, must-revalidate"
+    </FilesMatch>
+    <FilesMatch "^service-worker\.js$">
+        Header set Service-Worker-Allowed "/"
+    </FilesMatch>
+</IfModule>
+
+# ------------------------------------------------------- Archivos ocultos
+<FilesMatch "^\.">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+<FilesMatch "\.(sql|log|md|ini|sh|bak|old|yml|yaml|lock)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# --------------------------------------------------------------- Compresión
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml
+    AddOutputFilterByType DEFLATE application/javascript application/json
+    AddOutputFilterByType DEFLATE application/xml image/svg+xml application/manifest+json
+</IfModule>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>
+
+# --------------------------------------------------------------- Tipos MIME
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+    AddType font/woff2 .woff2
+</IfModule>
+
+# ----------------------------------------------------------- Límites de PHP
+<IfModule mod_php.c>
+    php_flag display_errors off
+    php_value upload_max_filesize 12M
+    php_value post_max_size 14M
+    php_value max_execution_time 120
+    php_value memory_limit 256M
+</IfModule>

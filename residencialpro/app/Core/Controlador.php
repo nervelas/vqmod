@@ -5,7 +5,7 @@ namespace App\Core;
 
 abstract class Controlador
 {
-    protected function mostrar(string $vista, array $datos = [], string $layout = 'app'): never
+    protected function mostrar(string $vista, array $datos = [], string $layout = 'app'): void
     {
         echo Vista::render($vista, $datos, $layout);
         exit;
@@ -16,24 +16,24 @@ abstract class Controlador
         return Vista::render($vista, $datos, $layout);
     }
 
-    protected function json(array $datos, int $codigo = 200): never
+    protected function json(array $datos, int $codigo = 200): void
     {
         Respuesta::json($datos, $codigo);
     }
 
-    protected function redirigir(string $ruta): never
+    protected function redirigir(string $ruta): void
     {
         Respuesta::redirigir($ruta);
     }
 
-    protected function exito(string $mensaje, string $ruta): never
+    protected function exito(string $mensaje, string $ruta): void
     {
         Sesion::flash('exito', $mensaje);
         Sesion::limpiarViejos();
         Respuesta::redirigir($ruta);
     }
 
-    protected function error(string $mensaje, string $ruta): never
+    protected function error(string $mensaje, string $ruta): void
     {
         Sesion::flash('error', $mensaje);
         Sesion::guardarViejos($_POST);

@@ -45,7 +45,7 @@ final class Respuesta
         header('Content-Security-Policy: ' . $csp);
     }
 
-    public static function redirigir(string $ruta, int $codigo = 302): never
+    public static function redirigir(string $ruta, int $codigo = 302): void
     {
         if (!headers_sent()) {
             header('Location: ' . (str_starts_with($ruta, 'http') ? $ruta : Url::a($ruta)), true, $codigo);
@@ -53,7 +53,7 @@ final class Respuesta
         exit;
     }
 
-    public static function json(array $datos, int $codigo = 200): never
+    public static function json(array $datos, int $codigo = 200): void
     {
         if (!headers_sent()) {
             http_response_code($codigo);
@@ -64,7 +64,7 @@ final class Respuesta
         exit;
     }
 
-    public static function descargar(string $contenido, string $nombre, string $mime): never
+    public static function descargar(string $contenido, string $nombre, string $mime): void
     {
         if (!headers_sent()) {
             header('Content-Type: ' . $mime);
@@ -77,7 +77,7 @@ final class Respuesta
         exit;
     }
 
-    public static function verEnLinea(string $contenido, string $nombre, string $mime): never
+    public static function verEnLinea(string $contenido, string $nombre, string $mime): void
     {
         if (!headers_sent()) {
             header('Content-Type: ' . $mime);
@@ -88,7 +88,7 @@ final class Respuesta
         exit;
     }
 
-    public static function abortar(int $codigo, string $mensaje = ''): never
+    public static function abortar(int $codigo, string $mensaje = ''): void
     {
         if (Peticion::esAjax()) {
             self::json(['ok' => false, 'error' => $mensaje !== '' ? $mensaje : 'Error ' . $codigo], $codigo);

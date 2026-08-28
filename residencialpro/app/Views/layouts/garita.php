@@ -52,6 +52,7 @@ $u = Auth::usuario();
   </nav>
 </div>
 <script<?= nonce() ?> src="<?= e(url('/assets/js/app.js')) ?>?v=<?= RPRO_VERSION ?>"></script>
+<script<?= nonce() ?> src="<?= e(url('/assets/vendor/jsqr.js')) ?>?v=<?= RPRO_VERSION ?>"></script>
 <script<?= nonce() ?> src="<?= e(url('/assets/js/garita.js')) ?>?v=<?= RPRO_VERSION ?>"></script>
 <?php if (!empty($scripts)): ?><?= $scripts ?><?php endif; ?>
 </body>

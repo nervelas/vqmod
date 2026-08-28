@@ -76,8 +76,14 @@
         bucle(video, alLeer);
       } catch (e) { detector = null; }
     }
-    if (!detector) {
-      RP.aviso('Su navegador no lee códigos QR automáticamente. Puede escribir el código de 6 dígitos.', 'info', 8);
+    // Safari en iPhone y Firefox no traen BarcodeDetector. Sin respaldo, la
+    // cámara se abría y no leía nada: la función principal del sistema no
+    // servía en medio parque de teléfonos. Se usa un decodificador propio.
+    if (!detector && typeof jsQR === 'function') {
+      leyendo = true;
+      bucleJs(video, alLeer);
+    } else if (!detector) {
+      RP.aviso('Su navegador no lee códigos QR automáticamente. Escriba el código de 6 dígitos.', 'info', 8);
     }
     return true;
   };
@@ -99,8 +105,36 @@
     requestAnimationFrame(() => bucle(video, alLeer));
   }
 
+  /**
+   * Lectura por programa, para navegadores sin BarcodeDetector.
+   * Analiza un fotograma cada 250 ms sobre un lienzo reducido: suficiente para
+   * leer y liviano para un teléfono de garita.
+   */
+  function bucleJs(video, alLeer) {
+    const lienzo = document.createElement('canvas');
+    const ctx = lienzo.getContext('2d', { willReadFrequently: true });
+    const paso = function () {
+      if (!leyendo || !flujo) { return; }
+      if (video.videoWidth) {
+        const an = Math.min(480, video.videoWidth);
+        const al = Math.round((video.videoHeight / video.videoWidth) * an);
+        lienzo.width = an; lienzo.height = al;
+        ctx.drawImage(video, 0, 0, an, al);
+        try {
+          const d = ctx.getImageData(0, 0, an, al);
+          const r = jsQR(d.data, an, al, { inversionAttempts: 'dontInvert' });
+          if (r && r.data) { leyendo = false; alLeer(r.data); return; }
+        } catch (e) { /* un fotograma ilegible no debe cortar la lectura */ }
+      }
+      setTimeout(paso, 250);
+    };
+    setTimeout(paso, 250);
+  }
+
   Garita.reanudar = function (video, alLeer) {
-    if (detector && flujo) { leyendo = true; bucle(video, alLeer); }
+    if (!flujo) { return; }
+    if (detector) { leyendo = true; bucle(video, alLeer); }
+    else if (typeof jsQR === 'function') { leyendo = true; bucleJs(video, alLeer); }
   };
 
   Garita.cerrarCamara = function () {
@@ -108,9 +142,50 @@
     if (flujo) { flujo.getTracks().forEach((t) => t.stop()); flujo = null; }
   };
 
+  /**
+   * Cámara sólo para la fotografía del visitante.
+   *
+   * No arranca la lectura de códigos: si lo hiciera, al encuadrar a alguien
+   * que lleva el QR a la vista el lector dispararía el envío del formulario y
+   * la pantalla se recargaría en plena captura.
+   */
+  Garita.abrirCamaraFoto = async function (video) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      RP.aviso('Este dispositivo no permite usar la cámara.', 'error');
+      return false;
+    }
+    if (flujo) { Garita.cerrarCamara(); }
+    try {
+      flujo = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
+      });
+    } catch (e) {
+      RP.aviso('No se pudo abrir la cámara. Revise los permisos del navegador.', 'error');
+      return false;
+    }
+    leyendo = false;
+    video.srcObject = flujo;
+    video.setAttribute('playsinline', '');
+    await video.play().catch(() => {});
+    await Garita.esperarImagen(video);
+    return true;
+  };
+
+  /** Sin fotogramas todavía, la captura saldría en blanco. */
+  Garita.esperarImagen = function (video, ms) {
+    if (video.videoWidth) return Promise.resolve(true);
+    return new Promise((resolver) => {
+      const reloj = setTimeout(() => resolver(!!video.videoWidth), ms || 4000);
+      video.addEventListener('loadeddata', () => { clearTimeout(reloj); resolver(true); }, { once: true });
+    });
+  };
+
   /* Fotografía del visitante */
   Garita.tomarFoto = async function (video, canvas) {
-    if (!video || !video.videoWidth) return null;
+    if (!video) return null;
+    if (!video.videoWidth) { await Garita.esperarImagen(video, 2500); }
+    if (!video.videoWidth) return null;
     const an = 640;
     const al = Math.round((video.videoHeight / video.videoWidth) * an);
     canvas.width = an; canvas.height = al;

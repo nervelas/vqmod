@@ -135,15 +135,34 @@
     if (!abierta) { lector.hidden = true; }
   });
 
-  document.getElementById('btn-foto').addEventListener('click', async function () {
-    if (!abierta) { RP.aviso('Abra primero la cámara.', 'info'); return; }
-    var dato = await Garita.tomarFoto(video, lienzo);
-    if (dato) {
-      document.getElementById('foto_data').value = dato;
-      var img = document.getElementById('previa-foto');
-      img.src = dato; img.hidden = false;
-      RP.aviso('Fotografía capturada.');
+  // La fotografía abre su propia cámara. Antes exigía tener abierto el lector
+  // de QR, pero esta pantalla aparece tras recargar con el código validado, es
+  // decir con el lector ya cerrado: el botón sólo respondía «Abra primero la
+  // cámara» y no había forma de tomar la foto.
+  var btnFoto  = document.getElementById('btn-foto');
+  var enFoto   = false;
+  var ICO_CAM  = <?= json_encode(ico('camara', 18)) ?>;
+  var ICO_TIRO = <?= json_encode(ico('checkCirculo', 18)) ?>;
+
+  btnFoto.addEventListener('click', async function () {
+    if (!enFoto && !abierta) {
+      lector.hidden = false;
+      btnFoto.disabled = true;
+      enFoto = await Garita.abrirCamaraFoto(video);
+      btnFoto.disabled = false;
+      if (!enFoto) { lector.hidden = true; return; }
+      btnFoto.innerHTML = ICO_TIRO + ' Capturar';
+      RP.aviso('Encuadre al visitante y toque «Capturar».', 'info');
+      return;
     }
+    var dato = await Garita.tomarFoto(video, lienzo);
+    if (!dato) { RP.aviso('La cámara todavía no da imagen. Intente otra vez.', 'error'); return; }
+    document.getElementById('foto_data').value = dato;
+    var img = document.getElementById('previa-foto');
+    img.src = dato; img.hidden = false;
+    if (enFoto) { Garita.cerrarCamara(); lector.hidden = true; enFoto = false; }
+    btnFoto.innerHTML = ICO_CAM + ' Repetir fotografía';
+    RP.aviso('Fotografía capturada.');
   });
 
   // Sin conexión: guardar el ingreso en el dispositivo.

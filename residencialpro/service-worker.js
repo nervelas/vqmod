@@ -2,7 +2,7 @@
  * ResidencialPro — Service Worker
  * Precarga del armazón, caché de recursos y modo sin conexión para la garita.
  */
-const VERSION = 'rpro-v4';
+const VERSION = 'rpro-v5';
 const CACHE_ESTATICO = VERSION + '-estatico';
 const CACHE_DATOS    = VERSION + '-datos';
 
@@ -20,6 +20,8 @@ const PRECARGA = [
   ruta('/assets/js/app.js'),
   ruta('/assets/js/garita.js'),
   ruta('/assets/vendor/grafica.js'),
+  // El lector de QR debe estar disponible aunque la garita se quede sin red.
+  ruta('/assets/vendor/jsqr.js'),
   ruta('/assets/img/icono-192.png'),
   ruta('/assets/img/icono-512.png'),
   ruta('/manifest.json'),

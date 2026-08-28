@@ -1,0 +1,272 @@
+/* =====================================================================
+   MenúGold · Temas premium
+   8 paletas listas + color personalizado por restaurante.
+   ===================================================================== */
+
+/* ---------------------------------------------------- 1. Negro & Oro (base) */
+:root,
+[data-tema="negro-oro"] {
+  --fondo:          #141414;
+  --fondo-alt:      #1B1B1B;
+  --superficie:     #1E1E1E;
+  --superficie-2:   #262626;
+  --superficie-3:   #2F2F2F;
+  --texto:          #F7F3EA;
+  --texto-suave:    #B5AE9F;
+  --texto-tenue:    #958F81;
+  --acento:         #D4AF37;
+  --acento-claro:   #E8CC6A;
+  --acento-oscuro:  #A8871F;
+  --acento-texto:   #141414;
+  --borde:          rgba(247, 243, 234, .12);
+  --borde-fuerte:   rgba(247, 243, 234, .22);
+  --sombra:         0 10px 34px rgba(0, 0, 0, .45);
+  --sombra-sm:      0 3px 12px rgba(0, 0, 0, .32);
+  --velo:           rgba(10, 10, 10, .72);
+  --exito:          #4FA97C;
+  --aviso:          #E0A63C;
+  --peligro:        #D9614F;
+  --info:           #5B93C7;
+  --grafica-texto:  #B5AE9F;
+  --grafica-rejilla: rgba(247, 243, 234, .10);
+  color-scheme: dark;
+  /* Texto de las etiquetas: legible sobre su propio tinte (AA) */
+  --et-exito: #52AE80;
+  --et-aviso: #E0A63C;
+  --et-peligro: #E07D6F;
+  --et-info: #6FA0CE;
+  --et-acento: #D4AF37;
+  /* Fondo de la cinta de promocion: texto blanco legible (AA) */
+  --cinta-promo: #D1432D;
+}
+
+/* ---------------------------------------------------- 2. Blanco & Oro */
+[data-tema="blanco-oro"] {
+  --fondo:          #FBF9F5;
+  --fondo-alt:      #F4F0E8;
+  --superficie:     #FFFFFF;
+  --superficie-2:   #F6F2EA;
+  --superficie-3:   #EDE7DA;
+  --texto:          #1D1B17;
+  --texto-suave:    #5E594F;
+  --texto-tenue:    #726D62;
+  --acento:         #B8912A;
+  --acento-claro:   #D4AF37;
+  --acento-oscuro:  #8E6E1C;
+  --acento-texto:   #FFFFFF;
+  --borde:          rgba(29, 27, 23, .10);
+  --borde-fuerte:   rgba(29, 27, 23, .20);
+  --sombra:         0 12px 32px rgba(60, 50, 25, .12);
+  --sombra-sm:      0 3px 10px rgba(60, 50, 25, .08);
+  --velo:           rgba(255, 255, 255, .82);
+  --exito:          #2E7D55;
+  --aviso:          #B57F14;
+  --peligro:        #B2382A;
+  --info:           #2E6597;
+  --grafica-texto:  #5E594F;
+  --grafica-rejilla: rgba(29, 27, 23, .09);
+  color-scheme: light;
+  /* Texto de las etiquetas: legible sobre su propio tinte (AA) */
+  --et-exito: #29704C;
+  --et-aviso: #885F0F;
+  --et-peligro: #B0372A;
+  --et-info: #2E6597;
+  --et-acento: #7F641D;
+  /* Fondo de la cinta de promocion: texto blanco legible (AA) */
+  --cinta-promo: #B2382A;
+}
+
+/* ---------------------------------------------------- 3. Verde Botella */
+[data-tema="verde-botella"] {
+  --fondo:          #10231C;
+  --fondo-alt:      #163026;
+  --superficie:     #17342A;
+  --superficie-2:   #1F4234;
+  --superficie-3:   #2A5443;
+  --texto:          #F0F4EF;
+  --texto-suave:    #A8BFAF;
+  --texto-tenue:    #97ACA0;
+  --acento:         #C9A961;
+  --acento-claro:   #E0C888;
+  --acento-oscuro:  #9E8340;
+  --acento-texto:   #10231C;
+  --borde:          rgba(240, 244, 239, .13);
+  --borde-fuerte:   rgba(240, 244, 239, .24);
+  --sombra:         0 10px 34px rgba(0, 20, 12, .5);
+  --sombra-sm:      0 3px 12px rgba(0, 20, 12, .34);
+  --velo:           rgba(8, 24, 18, .74);
+  --exito:          #5DBB8A; --aviso: #DFAE4F; --peligro: #DE6E5C; --info: #6BA6D0;
+  --grafica-texto:  #A8BFAF; --grafica-rejilla: rgba(240, 244, 239, .10);
+  color-scheme: dark;
+  /* Texto de las etiquetas: legible sobre su propio tinte (AA) */
+  --et-exito: #72C499;
+  --et-aviso: #DFAE4F;
+  --et-peligro: #E79486;
+  --et-info: #87B7D9;
+  --et-acento: #CDB06E;
+  /* Fondo de la cinta de promocion: texto blanco legible (AA) */
+  --cinta-promo: #D1412A;
+}
+
+/* ---------------------------------------------------- 4. Borgoña */
+[data-tema="borgona"] {
+  --fondo:          #241014;
+  --fondo-alt:      #2F161B;
+  --superficie:     #331820;
+  --superficie-2:   #422029;
+  --superficie-3:   #542A35;
+  --texto:          #F8EFEF;
+  --texto-suave:    #C4A8AC;
+  --texto-tenue:    #A68D91;
+  --acento:         #D9AE63;
+  --acento-claro:   #EFCC8B;
+  --acento-oscuro:  #AC8642;
+  --acento-texto:   #241014;
+  --borde:          rgba(248, 239, 239, .13);
+  --borde-fuerte:   rgba(248, 239, 239, .24);
+  --sombra:         0 10px 34px rgba(24, 4, 8, .5);
+  --sombra-sm:      0 3px 12px rgba(24, 4, 8, .34);
+  --velo:           rgba(20, 8, 11, .74);
+  --exito:          #5DBB8A; --aviso: #E0AE4F; --peligro: #E4776A; --info: #7FA9CD;
+  --grafica-texto:  #C4A8AC; --grafica-rejilla: rgba(248, 239, 239, .10);
+  color-scheme: dark;
+  /* Texto de las etiquetas: legible sobre su propio tinte (AA) */
+  --et-exito: #5DBB8A;
+  --et-aviso: #E0AE4F;
+  --et-peligro: #E78579;
+  --et-info: #7FA9CD;
+  --et-acento: #D9AE63;
+  /* Fondo de la cinta de promocion: texto blanco legible (AA) */
+  --cinta-promo: #D73A27;
+}
+
+/* ---------------------------------------------------- 5. Azul Marino */
+[data-tema="azul-marino"] {
+  --fondo:          #101A2B;
+  --fondo-alt:      #152238;
+  --superficie:     #17253C;
+  --superficie-2:   #1E304C;
+  --superficie-3:   #293F60;
+  --texto:          #EEF3FA;
+  --texto-suave:    #A6B6CD;
+  --texto-tenue:    #8D9AB0;
+  --acento:         #D2B368;
+  --acento-claro:   #EBD08D;
+  --acento-oscuro:  #A68A45;
+  --acento-texto:   #101A2B;
+  --borde:          rgba(238, 243, 250, .13);
+  --borde-fuerte:   rgba(238, 243, 250, .24);
+  --sombra:         0 10px 34px rgba(0, 8, 24, .5);
+  --sombra-sm:      0 3px 12px rgba(0, 8, 24, .34);
+  --velo:           rgba(8, 16, 30, .74);
+  --exito:          #58BC90; --aviso: #E0AE4F; --peligro: #E0776A; --info: #74AEE0;
+  --grafica-texto:  #A6B6CD; --grafica-rejilla: rgba(238, 243, 250, .10);
+  color-scheme: dark;
+  /* Texto de las etiquetas: legible sobre su propio tinte (AA) */
+  --et-exito: #58BC90;
+  --et-aviso: #E0AE4F;
+  --et-peligro: #E4897D;
+  --et-info: #74AEE0;
+  --et-acento: #D2B368;
+  /* Fondo de la cinta de promocion: texto blanco legible (AA) */
+  --cinta-promo: #D3402E;
+}
+
+/* ---------------------------------------------------- 6. Terracota */
+[data-tema="terracota"] {
+  --fondo:          #FDF6F0;
+  --fondo-alt:      #F6E9DE;
+  --superficie:     #FFFFFF;
+  --superficie-2:   #F8ECE2;
+  --superficie-3:   #EFDCCC;
+  --texto:          #2A1C14;
+  --texto-suave:    #6A5346;
+  --texto-tenue:    #7A6659;
+  --acento:         #B4643C;
+  --acento-claro:   #D08359;
+  --acento-oscuro:  #8C4A2B;
+  --acento-texto:   #FFFFFF;
+  --borde:          rgba(42, 28, 20, .11);
+  --borde-fuerte:   rgba(42, 28, 20, .21);
+  --sombra:         0 12px 32px rgba(120, 70, 40, .14);
+  --sombra-sm:      0 3px 10px rgba(120, 70, 40, .10);
+  --velo:           rgba(253, 246, 240, .84);
+  --exito:          #2F7D57; --aviso: #B57F14; --peligro: #B2382A; --info: #2E6597;
+  --grafica-texto:  #6A5346; --grafica-rejilla: rgba(42, 28, 20, .09);
+  color-scheme: light;
+  /* Texto de las etiquetas: legible sobre su propio tinte (AA) */
+  --et-exito: #2A704E;
+  --et-aviso: #885F0F;
+  --et-peligro: #B0372A;
+  --et-info: #2E6597;
+  --et-acento: #975432;
+  /* Fondo de la cinta de promocion: texto blanco legible (AA) */
+  --cinta-promo: #B2382A;
+}
+
+/* ---------------------------------------------------- 7. Grafito */
+[data-tema="grafito"] {
+  --fondo:          #1A1C1E;
+  --fondo-alt:      #202325;
+  --superficie:     #232629;
+  --superficie-2:   #2C3033;
+  --superficie-3:   #383D41;
+  --texto:          #EDEFF1;
+  --texto-suave:    #A9AFB5;
+  --texto-tenue:    #94999F;
+  --acento:         #C0C6CC;
+  --acento-claro:   #E2E6EA;
+  --acento-oscuro:  #8D949B;
+  --acento-texto:   #1A1C1E;
+  --borde:          rgba(237, 239, 241, .13);
+  --borde-fuerte:   rgba(237, 239, 241, .24);
+  --sombra:         0 10px 34px rgba(0, 0, 0, .45);
+  --sombra-sm:      0 3px 12px rgba(0, 0, 0, .3);
+  --velo:           rgba(14, 16, 18, .74);
+  --exito:          #5FB98D; --aviso: #DCAA4E; --peligro: #DD7566; --info: #77A8D2;
+  --grafica-texto:  #A9AFB5; --grafica-rejilla: rgba(237, 239, 241, .10);
+  color-scheme: dark;
+  /* Texto de las etiquetas: legible sobre su propio tinte (AA) */
+  --et-exito: #5FB98D;
+  --et-aviso: #DCAA4E;
+  --et-peligro: #E28B7E;
+  --et-info: #7EACD4;
+  --et-acento: #C0C6CC;
+  /* Fondo de la cinta de promocion: texto blanco legible (AA) */
+  --cinta-promo: #D1432F;
+}
+
+/* ---------------------------------------------------- 8. Marfil */
+[data-tema="marfil"] {
+  --fondo:          #F7F3EA;
+  --fondo-alt:      #EFE9DA;
+  --superficie:     #FFFDF8;
+  --superficie-2:   #F2EDE0;
+  --superficie-3:   #E7E0CE;
+  --texto:          #211E17;
+  --texto-suave:    #635C4C;
+  --texto-tenue:    #706A5C;
+  --acento:         #8C7A3F;
+  --acento-claro:   #B39E5C;
+  --acento-oscuro:  #6B5C2B;
+  --acento-texto:   #FFFDF8;
+  --borde:          rgba(33, 30, 23, .11);
+  --borde-fuerte:   rgba(33, 30, 23, .21);
+  --sombra:         0 12px 32px rgba(90, 78, 45, .12);
+  --sombra-sm:      0 3px 10px rgba(90, 78, 45, .09);
+  --velo:           rgba(247, 243, 234, .84);
+  --exito:          #2F7D57; --aviso: #A97C15; --peligro: #AC3729; --info: #2C6293;
+  --grafica-texto:  #635C4C; --grafica-rejilla: rgba(33, 30, 23, .09);
+  color-scheme: light;
+  /* Texto de las etiquetas: legible sobre su propio tinte (AA) */
+  --et-exito: #2A704E;
+  --et-aviso: #825F10;
+  --et-peligro: #AC3729;
+  --et-info: #2C6293;
+  --et-acento: #736434;
+  /* Fondo de la cinta de promocion: texto blanco legible (AA) */
+  --cinta-promo: #AC3729;
+}
+
+/* ------------------------------------------- Color personalizado del negocio */
+[data-acento-personalizado] { --acento: var(--acento-custom, #D4AF37); }

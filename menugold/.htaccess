@@ -1,0 +1,105 @@
+# ===========================================================
+#  MenuGold - Sistema de Menu QR con Pedidos
+#  .htaccess raiz (Apache 2.4 / hosting compartido cPanel)
+# ===========================================================
+
+Options -Indexes -MultiViews
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # --- Base automatica (raiz o subcarpeta) ---
+    RewriteCond %{REQUEST_URI}::$1 ^(/.+)/(.*)::\2$
+    RewriteRule ^(.*)$ - [E=BASE:%1]
+
+    # --- Forzar HTTPS (se desactiva definiendo FORZAR_HTTPS=0 en config) ---
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+    RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)
+    RewriteCond %{REQUEST_URI} !^/\.well-known/
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # --- Bloquear metodos peligrosos ---
+    RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK|CONNECT)
+    RewriteRule .* - [F,L]
+
+    # --- Bloquear user-agents maliciosos / escaneres ---
+    RewriteCond %{HTTP_USER_AGENT} (sqlmap|nikto|havij|acunetix|nessus|masscan|zgrab|dirbuster|wpscan|fimap|libwww-perl|nmap) [NC]
+    RewriteRule .* - [F,L]
+
+    # --- Bloquear acceso directo a carpetas internas ---
+    RewriteRule ^(config|app|vendor|storage)(/|$) - [F,L]
+
+    # --- Archivos y carpetas reales pasan directo ---
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # --- Todo lo demas al front controller ---
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# ===========================================================
+#  Cabeceras de seguridad
+# ===========================================================
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(self), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()"
+    Header always set X-Permitted-Cross-Domain-Policies "none"
+    Header always set Cross-Origin-Opener-Policy "same-origin"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+    Header unset X-Powered-By
+    Header always unset X-Powered-By
+    # El service worker nunca debe cachearse
+    <FilesMatch "^(sw\.js|manifest\.webmanifest)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+    </FilesMatch>
+</IfModule>
+
+# ===========================================================
+#  Cache de estaticos
+# ===========================================================
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg          "access plus 1 year"
+    ExpiresByType image/png           "access plus 1 year"
+    ExpiresByType image/webp          "access plus 1 year"
+    ExpiresByType image/svg+xml       "access plus 1 year"
+    ExpiresByType image/x-icon        "access plus 1 year"
+    ExpiresByType text/css            "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType font/woff2          "access plus 1 year"
+</IfModule>
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml application/json application/javascript application/xml image/svg+xml
+</IfModule>
+
+# ===========================================================
+#  Archivos sensibles
+# ===========================================================
+<FilesMatch "(^\.|composer\.(json|lock)|\.(sql|log|md|ini|sh|bak|old|yml|yaml|lock|dist|env)$)">
+    Require all denied
+</FilesMatch>
+<Files "LEEME.md">
+    Require all denied
+</Files>
+
+# ===========================================================
+#  PHP (si el hosting lo permite)
+# ===========================================================
+<IfModule mod_php.c>
+    php_flag display_errors Off
+    php_flag log_errors On
+    php_value upload_max_filesize 12M
+    php_value post_max_size 16M
+    php_value max_execution_time 120
+    php_value memory_limit 256M
+    php_flag session.cookie_httponly On
+    php_flag expose_php Off
+</IfModule>
+
+ErrorDocument 404 /index.php

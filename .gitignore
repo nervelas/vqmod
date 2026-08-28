@@ -8,3 +8,15 @@
 *.log
 .DS_Store
 /fuentedevida-web.zip
+
+# MenúGold: archivos que se generan en cada instalación
+/menugold/config/config.php
+/menugold/install/.lock
+/menugold/router-dev.php
+/menugold/storage/uploads/*
+/menugold/storage/sessions/*
+/menugold/storage/cache/*
+/menugold/storage/logs/*
+/menugold/storage/backups/*
+/menugold/storage/qr/*
+/menugold/storage/tmp/*

@@ -7,6 +7,13 @@ use Fel\Core\Db;
 
 final class ProductoRepositorio
 {
+    public function __construct(private int $empresaId)
+    {
+        if ($empresaId <= 0) {
+            throw new \InvalidArgumentException('El repositorio de productos requiere una empresa valida.');
+        }
+    }
+
     /** @param array<string,mixed> $datos */
     public function guardar(array $datos, ?int $id = null): int
     {
@@ -20,24 +27,26 @@ final class ProductoRepositorio
         ];
 
         if ($id !== null) {
-            $parametros['id'] = $id;
+            $parametros['id']      = $id;
+            $parametros['empresa'] = $this->empresaId;
             $sentencia = Db::conexion()->prepare(
                 'UPDATE fel_productos SET
                     codigo = :codigo, descripcion = :descripcion, tipo = :tipo,
                     unidad_medida = :unidad_medida, precio_unitario = :precio_unitario, exento = :exento
-                 WHERE id = :id'
+                 WHERE id = :id AND empresa_id = :empresa'
             );
             $sentencia->execute($parametros);
 
             return $id;
         }
 
-        $parametros['creado_en'] = date('Y-m-d H:i:s');
+        $parametros['creado_en']  = date('Y-m-d H:i:s');
+        $parametros['empresa_id']  = $this->empresaId;
         $sentencia = Db::conexion()->prepare(
             'INSERT INTO fel_productos
-                (codigo, descripcion, tipo, unidad_medida, precio_unitario, exento, creado_en)
+                (empresa_id, codigo, descripcion, tipo, unidad_medida, precio_unitario, exento, creado_en)
              VALUES
-                (:codigo, :descripcion, :tipo, :unidad_medida, :precio_unitario, :exento, :creado_en)'
+                (:empresa_id, :codigo, :descripcion, :tipo, :unidad_medida, :precio_unitario, :exento, :creado_en)'
         );
         $sentencia->execute($parametros);
 
@@ -47,8 +56,10 @@ final class ProductoRepositorio
     /** @return array<string,mixed>|null */
     public function buscar(int $id): ?array
     {
-        $sentencia = Db::conexion()->prepare('SELECT * FROM fel_productos WHERE id = :id');
-        $sentencia->execute(['id' => $id]);
+        $sentencia = Db::conexion()->prepare(
+            'SELECT * FROM fel_productos WHERE id = :id AND empresa_id = :empresa'
+        );
+        $sentencia->execute(['id' => $id, 'empresa' => $this->empresaId]);
         $fila = $sentencia->fetch();
 
         return $fila === false ? null : $fila;
@@ -59,26 +70,30 @@ final class ProductoRepositorio
     {
         if ($busqueda === '') {
             $sentencia = Db::conexion()->prepare(
-                'SELECT * FROM fel_productos WHERE activo = 1 ORDER BY descripcion LIMIT ' . max(1, $limite)
+                'SELECT * FROM fel_productos WHERE empresa_id = :empresa AND activo = 1
+                 ORDER BY descripcion LIMIT ' . max(1, $limite)
             );
-            $sentencia->execute();
+            $sentencia->execute(['empresa' => $this->empresaId]);
 
             return $sentencia->fetchAll();
         }
 
         $sentencia = Db::conexion()->prepare(
             'SELECT * FROM fel_productos
-             WHERE activo = 1 AND (descripcion LIKE :b OR codigo LIKE :b)
+             WHERE empresa_id = :empresa AND activo = 1
+               AND (descripcion LIKE :b OR codigo LIKE :b)
              ORDER BY descripcion LIMIT ' . max(1, $limite)
         );
-        $sentencia->execute(['b' => '%' . $busqueda . '%']);
+        $sentencia->execute(['empresa' => $this->empresaId, 'b' => '%' . $busqueda . '%']);
 
         return $sentencia->fetchAll();
     }
 
     public function desactivar(int $id): void
     {
-        $sentencia = Db::conexion()->prepare('UPDATE fel_productos SET activo = 0 WHERE id = :id');
-        $sentencia->execute(['id' => $id]);
+        $sentencia = Db::conexion()->prepare(
+            'UPDATE fel_productos SET activo = 0 WHERE id = :id AND empresa_id = :empresa'
+        );
+        $sentencia->execute(['id' => $id, 'empresa' => $this->empresaId]);
     }
 }

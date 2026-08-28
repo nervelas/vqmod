@@ -7,6 +7,13 @@ use Fel\Core\Db;
 
 final class AnulacionRepositorio
 {
+    public function __construct(private int $empresaId)
+    {
+        if ($empresaId <= 0) {
+            throw new \InvalidArgumentException('El repositorio de anulaciones requiere una empresa valida.');
+        }
+    }
+
     public function crear(int $documentoId, string $motivo, string $xmlEnviado, string $usuario = ''): int
     {
         $sentencia = Db::conexion()->prepare(
@@ -55,9 +62,12 @@ final class AnulacionRepositorio
     public function porDocumento(int $documentoId): array
     {
         $sentencia = Db::conexion()->prepare(
-            'SELECT * FROM fel_anulaciones WHERE documento_id = :id ORDER BY id DESC'
+            'SELECT a.* FROM fel_anulaciones a
+             INNER JOIN fel_documentos d ON d.id = a.documento_id
+             WHERE a.documento_id = :id AND d.empresa_id = :empresa
+             ORDER BY a.id DESC'
         );
-        $sentencia->execute(['id' => $documentoId]);
+        $sentencia->execute(['id' => $documentoId, 'empresa' => $this->empresaId]);
 
         return $sentencia->fetchAll();
     }

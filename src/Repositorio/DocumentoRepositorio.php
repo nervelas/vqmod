@@ -13,6 +13,18 @@ use Fel\Dte\Documento;
  */
 final class DocumentoRepositorio
 {
+    /**
+     * El identificador de la empresa se fija al construir el repositorio y se
+     * aplica a TODAS las consultas. Asi ninguna consulta puede olvidarse del
+     * filtro y ver documentos de otro contribuyente.
+     */
+    public function __construct(private int $empresaId)
+    {
+        if ($empresaId <= 0) {
+            throw new \InvalidArgumentException('El repositorio de documentos requiere una empresa valida.');
+        }
+    }
+
     public const BORRADOR    = 'BORRADOR';
     public const PENDIENTE   = 'PENDIENTE';
     public const CERTIFICADO = 'CERTIFICADO';
@@ -37,14 +49,14 @@ final class DocumentoRepositorio
 
         try {
             $sql = 'INSERT INTO fel_documentos (
-                        identificador, tipo, estado, moneda, tipo_cambio, fecha_emision,
+                        empresa_id, identificador, tipo, estado, moneda, tipo_cambio, fecha_emision,
                         emisor_nit, emisor_nombre, establecimiento,
                         receptor_id, receptor_nombre, receptor_correo, cliente_id,
                         total_gravable, total_descuentos, total_iva, gran_total,
                         xml_enviado, referencia_interna, observaciones,
                         creado_por, creado_en, actualizado_en
                     ) VALUES (
-                        :identificador, :tipo, :estado, :moneda, :tipo_cambio, :fecha_emision,
+                        :empresa_id, :identificador, :tipo, :estado, :moneda, :tipo_cambio, :fecha_emision,
                         :emisor_nit, :emisor_nombre, :establecimiento,
                         :receptor_id, :receptor_nombre, :receptor_correo, :cliente_id,
                         :total_gravable, :total_descuentos, :total_iva, :gran_total,
@@ -56,6 +68,7 @@ final class DocumentoRepositorio
 
             $sentencia = $pdo->prepare($sql);
             $sentencia->execute([
+                'empresa_id'         => $this->empresaId,
                 'identificador'      => $identificador,
                 'tipo'               => $documento->tipo,
                 'estado'             => $estado,
@@ -128,10 +141,11 @@ final class DocumentoRepositorio
                 fecha_certificacion = :fecha, certificador = :certificador,
                 xml_certificado = :xml, error_mensaje = NULL,
                 intentos = intentos + 1, actualizado_en = :ahora
-             WHERE id = :id'
+             WHERE id = :id AND empresa_id = :empresa'
         );
 
         $sentencia->execute([
+            'empresa'      => $this->empresaId,
             'estado'       => self::CERTIFICADO,
             'uuid'         => $resultado->uuid,
             'serie'        => $resultado->serie,
@@ -150,10 +164,11 @@ final class DocumentoRepositorio
             'UPDATE fel_documentos SET
                 estado = :estado, error_mensaje = :mensaje,
                 intentos = intentos + 1, actualizado_en = :ahora
-             WHERE id = :id'
+             WHERE id = :id AND empresa_id = :empresa'
         );
 
         $sentencia->execute([
+            'empresa' => $this->empresaId,
             'estado'  => $reintentable ? self::PENDIENTE : self::RECHAZADO,
             'mensaje' => $mensaje,
             'ahora'   => date('Y-m-d H:i:s'),
@@ -164,9 +179,11 @@ final class DocumentoRepositorio
     public function marcarAnulado(int $documentoId): void
     {
         $sentencia = Db::conexion()->prepare(
-            'UPDATE fel_documentos SET estado = :estado, actualizado_en = :ahora WHERE id = :id'
+            'UPDATE fel_documentos SET estado = :estado, actualizado_en = :ahora
+             WHERE id = :id AND empresa_id = :empresa'
         );
         $sentencia->execute([
+            'empresa' => $this->empresaId,
             'estado' => self::ANULADO,
             'ahora'  => date('Y-m-d H:i:s'),
             'id'     => $documentoId,
@@ -176,8 +193,10 @@ final class DocumentoRepositorio
     /** @return array<string,mixed>|null */
     public function buscar(int $documentoId): ?array
     {
-        $sentencia = Db::conexion()->prepare('SELECT * FROM fel_documentos WHERE id = :id');
-        $sentencia->execute(['id' => $documentoId]);
+        $sentencia = Db::conexion()->prepare(
+            'SELECT * FROM fel_documentos WHERE id = :id AND empresa_id = :empresa'
+        );
+        $sentencia->execute(['id' => $documentoId, 'empresa' => $this->empresaId]);
         $fila = $sentencia->fetch();
 
         return $fila === false ? null : $fila;
@@ -186,8 +205,10 @@ final class DocumentoRepositorio
     /** @return array<string,mixed>|null */
     public function buscarPorUuid(string $uuid): ?array
     {
-        $sentencia = Db::conexion()->prepare('SELECT * FROM fel_documentos WHERE uuid = :uuid');
-        $sentencia->execute(['uuid' => $uuid]);
+        $sentencia = Db::conexion()->prepare(
+            'SELECT * FROM fel_documentos WHERE uuid = :uuid AND empresa_id = :empresa'
+        );
+        $sentencia->execute(['uuid' => $uuid, 'empresa' => $this->empresaId]);
         $fila = $sentencia->fetch();
 
         return $fila === false ? null : $fila;
@@ -197,9 +218,12 @@ final class DocumentoRepositorio
     public function items(int $documentoId): array
     {
         $sentencia = Db::conexion()->prepare(
-            'SELECT * FROM fel_documento_items WHERE documento_id = :id ORDER BY numero_linea'
+            'SELECT i.* FROM fel_documento_items i
+             INNER JOIN fel_documentos d ON d.id = i.documento_id
+             WHERE i.documento_id = :id AND d.empresa_id = :empresa
+             ORDER BY i.numero_linea'
         );
-        $sentencia->execute(['id' => $documentoId]);
+        $sentencia->execute(['id' => $documentoId, 'empresa' => $this->empresaId]);
 
         return $sentencia->fetchAll();
     }
@@ -210,8 +234,8 @@ final class DocumentoRepositorio
      */
     public function listar(array $filtros = [], int $limite = 100, int $desplazamiento = 0): array
     {
-        $condiciones = [];
-        $parametros  = [];
+        $condiciones = ['empresa_id = :empresa'];
+        $parametros  = ['empresa' => $this->empresaId];
 
         if (($filtros['estado'] ?? '') !== '') {
             $condiciones[]        = 'estado = :estado';
@@ -234,10 +258,7 @@ final class DocumentoRepositorio
             $parametros['hasta'] = $filtros['hasta'] . 'T23:59:59-06:00';
         }
 
-        $sql = 'SELECT * FROM fel_documentos';
-        if ($condiciones !== []) {
-            $sql .= ' WHERE ' . implode(' AND ', $condiciones);
-        }
+        $sql = 'SELECT * FROM fel_documentos WHERE ' . implode(' AND ', $condiciones);
         $sql .= ' ORDER BY id DESC LIMIT ' . max(1, $limite) . ' OFFSET ' . max(0, $desplazamiento);
 
         $sentencia = Db::conexion()->prepare($sql);
@@ -255,8 +276,31 @@ final class DocumentoRepositorio
     {
         $sentencia = Db::conexion()->prepare(
             'SELECT * FROM fel_documentos
-             WHERE estado = :estado AND intentos < :maximo
+             WHERE empresa_id = :empresa AND estado = :estado AND intentos < :maximo
              ORDER BY id ASC LIMIT ' . max(1, $limite)
+        );
+        $sentencia->execute([
+            'empresa' => $this->empresaId,
+            'estado'  => self::PENDIENTE,
+            'maximo'  => $maximoIntentos,
+        ]);
+
+        return $sentencia->fetchAll();
+    }
+
+    /**
+     * Pendientes de TODAS las empresas. Solo para el proceso de contingencia,
+     * que corre desde el cron y no pertenece a ninguna empresa en particular.
+     *
+     * @return list<array<string,mixed>>
+     */
+    public static function pendientesGlobales(int $limite = 100, int $maximoIntentos = 10): array
+    {
+        $sentencia = Db::conexion()->prepare(
+            'SELECT d.* FROM fel_documentos d
+             INNER JOIN fel_empresas e ON e.id = d.empresa_id
+             WHERE d.estado = :estado AND d.intentos < :maximo AND e.activa = 1
+             ORDER BY d.id ASC LIMIT ' . max(1, $limite)
         );
         $sentencia->execute(['estado' => self::PENDIENTE, 'maximo' => $maximoIntentos]);
 
@@ -276,9 +320,11 @@ final class DocumentoRepositorio
                     COALESCE(SUM(total_iva), 0)      AS iva,
                     COALESCE(SUM(gran_total), 0)     AS total
              FROM fel_documentos
-             WHERE estado = :estado AND fecha_emision >= :desde AND fecha_emision <= :hasta'
+             WHERE empresa_id = :empresa AND estado = :estado
+               AND fecha_emision >= :desde AND fecha_emision <= :hasta'
         );
         $sentencia->execute([
+            'empresa' => $this->empresaId,
             'estado' => self::CERTIFICADO,
             'desde'  => $desde,
             'hasta'  => $hasta . 'T23:59:59-06:00',

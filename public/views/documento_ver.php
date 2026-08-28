@@ -1,6 +1,7 @@
 <?php
-/** @var array<string,mixed> $documento @var list<array<string,mixed>> $items
- *  @var list<array<string,mixed>> $bitacora @var list<array<string,mixed>> $anulaciones @var string $csrf */
+/** @var \Fel\Plataforma\Empresa $empresa @var array<string,mixed> $documento
+ *  @var list<array<string,mixed>> $items @var list<array<string,mixed>> $bitacora
+ *  @var list<array<string,mixed>> $anulaciones @var string $csrf */
 use Fel\Dte\Catalogos;
 use Fel\Web\Vista;
 
@@ -12,7 +13,8 @@ $simbolo    = $documento['moneda'] === 'GTQ' ? 'Q' : ($documento['moneda'] === '
   <h1><?= Vista::e($nombreTipo) ?> <?= Vista::e(($documento['serie'] ?: '—') . '-' . ($documento['numero'] ?: '—')) ?></h1>
   <div class="acciones">
     <span class="etiqueta <?= Vista::e($documento['estado']) ?>"><?= Vista::e($documento['estado']) ?></span>
-    <a class="boton secundario" href="index.php?r=imprimir&amp;id=<?= (int) $documento['id'] ?>" target="_blank">Representación gráfica</a>
+    <a class="boton secundario" href="index.php?r=imprimir&amp;id=<?= (int) $documento['id'] ?>&amp;formato=carta" target="_blank">Hoja carta</a>
+    <a class="boton secundario" href="index.php?r=imprimir&amp;id=<?= (int) $documento['id'] ?>&amp;formato=ticket" target="_blank">Ticket 80 mm</a>
     <a class="boton secundario" href="index.php?r=imprimir&amp;id=<?= (int) $documento['id'] ?>&amp;imprimir=1" target="_blank">Imprimir / PDF</a>
     <a class="boton secundario" href="index.php?r=xml&amp;id=<?= (int) $documento['id'] ?>">Descargar XML</a>
   </div>

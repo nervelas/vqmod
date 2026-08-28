@@ -3,8 +3,13 @@
  * ---------------------------------------------------------------------------
  * Configuracion del sistema de facturacion FEL (Guatemala)
  * ---------------------------------------------------------------------------
- * Copie este archivo como config/config.php y complete sus datos reales.
- * NUNCA suba config.php a un repositorio: contiene llaves de firma y de API.
+ * Copie este archivo como config/config.php y complete sus datos.
+ * NUNCA suba config.php a un repositorio.
+ *
+ * IMPORTANTE: los datos de cada empresa emisora (NIT, razon social,
+ * credenciales del certificador) NO van aqui: se cargan desde la pantalla
+ * "Empresas" y se guardan CIFRADOS en la base de datos. Este archivo solo
+ * tiene la configuracion de la instalacion.
  * ---------------------------------------------------------------------------
  */
 
@@ -13,37 +18,6 @@ declare(strict_types=1);
 return [
 
     'zona_horaria' => 'America/Guatemala',
-
-    // -----------------------------------------------------------------------
-    // Ambiente: 'pruebas' o 'produccion'.
-    // En 'pruebas' se usa el certificador simulado salvo que indique otro.
-    // -----------------------------------------------------------------------
-    'ambiente' => 'pruebas',
-
-    // -----------------------------------------------------------------------
-    // DATOS DEL EMISOR
-    // Deben coincidir EXACTAMENTE con lo registrado en la Agencia Virtual
-    // de SAT (RTU). Cualquier diferencia hace que el certificador rechace
-    // el documento.
-    // -----------------------------------------------------------------------
-    'emisor' => [
-        'nit'                    => '12345679',           // sin guion
-        'nombre'                 => 'MI EMPRESA, SOCIEDAD ANONIMA',
-        'nombre_comercial'       => 'MI EMPRESA',
-        // GEN = regimen general | PEQ = pequeño contribuyente
-        // PEE = pequeño contribuyente electronico | AGR/AGE = agropecuario
-        // EXE = exento
-        'afiliacion_iva'         => 'GEN',
-        // Codigo que SAT asigna a cada establecimiento habilitado.
-        'codigo_establecimiento' => '1',
-        'correo'                 => 'facturacion@miempresa.gt',
-        'telefono'               => '+502 0000-0000',
-        'direccion'              => '5a. Avenida 10-50 zona 1',
-        'codigo_postal'          => '01001',
-        'municipio'              => 'Guatemala',
-        'departamento'           => 'Guatemala',
-        'pais'                   => 'GT',
-    ],
 
     // -----------------------------------------------------------------------
     // BASE DE DATOS
@@ -63,95 +37,91 @@ return [
     ],
 
     // -----------------------------------------------------------------------
-    // CERTIFICADOR
+    // APLICACION
+    // -----------------------------------------------------------------------
+    'app' => [
+        'nombre'         => 'Facturación FEL',
+        'sesion_minutos' => 120,
+
+        // CLAVE MAESTRA. Con ella se cifran las credenciales de certificador
+        // de cada empresa. Genere una con:
+        //     php -r "echo bin2hex(random_bytes(32));"
+        //
+        // Si la pierde, las credenciales guardadas no se pueden recuperar y
+        // hay que volver a capturarlas. Respaldela junto con la base de datos.
+        'clave_aplicacion' => 'CAMBIE_ESTA_CLAVE_ALEATORIA',
+    ],
+
+    // -----------------------------------------------------------------------
+    // EMPRESA INICIAL (opcional)
     //
-    // En Guatemala NO se transmite directamente a SAT. Hay que contratar a
-    // un CERTIFICADOR autorizado (INFILE, Digifact, Guatefacturas, Megaprint,
-    // Certifika, entre otros). El certificador entrega:
-    //   - usuario y llave de API
-    //   - llave / alias para el servicio de firma
-    //   - las URL de sus ambientes de pruebas y de produccion
+    // Solo se usa la PRIMERA VEZ, al correr bin/instalar.php o
+    // bin/migrar_multiempresa.php: sirve para dar de alta la primera empresa
+    // sin pasar por la pantalla. Despues de eso, todo se administra desde
+    // "Empresas" y estos valores se ignoran.
     //
-    // Las URL de abajo son de referencia: CONFIRMELAS contra el manual
-    // tecnico que le entregue su certificador, porque cambian por plan y
-    // por version de API.
+    // Si va a dar de alta las empresas desde la pantalla, deje esto vacio.
+    // -----------------------------------------------------------------------
+    'emisor' => [
+        'nit'                    => '',           // sin guion
+        'nombre'                 => '',           // razon social, igual al RTU
+        'nombre_comercial'       => '',
+        // GEN = regimen general | PEQ = pequeño contribuyente
+        // PEE = pequeño contribuyente electronico | AGR/AGE = agropecuario
+        // EXE = exento
+        'afiliacion_iva'         => 'GEN',
+        'codigo_establecimiento' => '1',          // el que asigno SAT
+        'correo'                 => '',
+        'telefono'               => '',
+        'direccion'              => 'Ciudad',
+        'codigo_postal'          => '01001',
+        'municipio'              => 'Guatemala',
+        'departamento'           => 'Guatemala',
+        'pais'                   => 'GT',
+    ],
+
+    'ambiente' => 'pruebas',   // ambiente de la empresa inicial
+
+    // -----------------------------------------------------------------------
+    // CERTIFICADOR DE LA EMPRESA INICIAL (opcional, igual que 'emisor')
+    //
+    // En Guatemala NO se transmite directamente a SAT: hay que contratar a un
+    // CERTIFICADOR autorizado (INFILE, Digifact, Guatefacturas, Megaprint,
+    // Certifika, entre otros), que entrega usuario y llave de API, llave y
+    // alias de firma, y las URL de sus ambientes.
+    //
+    // Las URL de abajo son de referencia: CONFIRMELAS contra el manual tecnico
+    // de su certificador. Se pueden cargar tambien desde la pantalla Empresas.
     // -----------------------------------------------------------------------
     'certificador' => [
-
-        // 'simulador' | 'infile' | cualquier clave definida abajo (adaptador REST generico)
-        'proveedor' => 'simulador',
-
-        // Datos que se imprimen en la representacion grafica
-        'nombre_visible' => 'CERTIFICADOR SIMULADO (SIN VALIDEZ FISCAL)',
-        'nit_visible'    => '12345679',
+        'proveedor'      => 'simulador',   // 'simulador' | 'infile' | otro
+        'nombre_visible' => '',
+        'nit_visible'    => '',
 
         'infile' => [
             'url_firma'         => 'https://signer-emisor.feel.com.gt/sign_solicitud',
             'url_certificacion' => 'https://certificador.feel.com.gt/fel/certificacion/v2/dte',
             'url_anulacion'     => 'https://certificador.feel.com.gt/fel/anulacion/v2/dte',
-
-            // Servicio de firma
-            'llave_firma'  => 'LLAVE_DE_FIRMA_QUE_LE_ENTREGO_EL_CERTIFICADOR',
-            'alias_firma'  => '12345679',   // normalmente el NIT del emisor
-            'codigo_firma' => 'DTE',
-
-            // API de certificacion
-            'usuario_api' => 'USUARIO_API',
-            'llave_api'   => 'LLAVE_API',
-
-            // Nombres de cabecera. Ajustelos si su manual usa otros.
-            'cabeceras' => [
+            'llave_firma'       => '',
+            'alias_firma'       => '',
+            'codigo_firma'      => 'DTE',
+            'usuario_api'       => '',
+            'llave_api'         => '',
+            'cabeceras'         => [
                 'usuario'       => 'UsuarioApi',
                 'llave'         => 'LlaveApi',
                 'identificador' => 'Identificador',
             ],
         ],
-
-        // ------------------------------------------------------------------
-        // Adaptador REST generico: sirve para CUALQUIER certificador.
-        // Marcadores disponibles: {XML} {XML_BASE64} {IDENTIFICADOR}
-        // Copie este bloque, renombrelo y ponga su nombre en 'proveedor'.
-        // ------------------------------------------------------------------
-        'otro_certificador' => [
-            'firma' => [
-                'habilitada'          => true,
-                'url'                 => 'https://ejemplo-certificador.gt/firma',
-                'formato'             => 'json',
-                'cabeceras'           => ['Content-Type' => 'application/json'],
-                'plantilla'           => [
-                    'llave'   => 'SU_LLAVE_DE_FIRMA',
-                    'alias'   => '12345679',
-                    'archivo' => '{XML_BASE64}',
-                ],
-                'campo_respuesta_xml' => 'archivo',
-            ],
-            'certificacion' => [
-                'url'       => 'https://ejemplo-certificador.gt/certificar',
-                'formato'   => 'xml',        // 'xml' | 'json' | 'base64'
-                'cabeceras' => [
-                    'Usuario'       => 'SU_USUARIO',
-                    'Llave'         => 'SU_LLAVE_API',
-                    'Identificador' => '{IDENTIFICADOR}',
-                ],
-            ],
-            'anulacion' => [
-                'url'       => 'https://ejemplo-certificador.gt/anular',
-                'formato'   => 'xml',
-                'cabeceras' => [
-                    'Usuario'       => 'SU_USUARIO',
-                    'Llave'         => 'SU_LLAVE_API',
-                    'Identificador' => '{IDENTIFICADOR}',
-                ],
-            ],
-        ],
     ],
 
     // -----------------------------------------------------------------------
-    // REGLAS DE NEGOCIO
+    // REGLAS POR OMISION
+    // Cada empresa puede tener las suyas; estas se usan como valor inicial.
     // -----------------------------------------------------------------------
     'reglas' => [
-        // Monto a partir del cual SAT espera que se identifique al comprador
-        // en lugar de facturar a Consumidor Final. Verifique el monto vigente
+        // Monto desde el que SAT espera que se identifique al comprador en
+        // lugar de facturar a Consumidor Final. Verifique el monto vigente
         // con su contador; 0 desactiva la advertencia.
         'limite_consumidor_final' => 2500.00,
 
@@ -166,12 +136,12 @@ return [
     // COMUNICACION HTTP
     // -----------------------------------------------------------------------
     'http' => [
-        'timeout'           => 60,
-        'timeout_conexion'  => 15,
-        'reintentos'        => 3,
-        'espera_reintento'  => 2,
+        'timeout'          => 60,
+        'timeout_conexion' => 15,
+        'reintentos'       => 3,
+        'espera_reintento' => 2,
         // No lo cambie: la conexion transporta datos fiscales.
-        'verificar_tls'     => true,
+        'verificar_tls'    => true,
     ],
 
     // -----------------------------------------------------------------------
@@ -199,16 +169,13 @@ return [
     // SAT
     // -----------------------------------------------------------------------
     'sat' => [
-        'url_verificador' => 'https://felpub.c.sat.gob.gt/verificador-web/publico/vistas/verificacionDte.jsf',
-    ],
-
-    // -----------------------------------------------------------------------
-    // APLICACION WEB
-    // -----------------------------------------------------------------------
-    'app' => [
-        'nombre'          => 'Facturación FEL',
-        'sesion_minutos'  => 120,
-        // Genere uno nuevo con: php -r "echo bin2hex(random_bytes(32));"
-        'clave_aplicacion' => 'CAMBIE_ESTA_CLAVE_ALEATORIA',
+        // Contenido del codigo QR que se imprime en la representacion grafica.
+        // Marcadores: {UUID} {NIT_EMISOR} {NIT_RECEPTOR} {MONTO} {FECHA}
+        //             {SERIE} {NUMERO}
+        //
+        // Cada certificador publica su propia URL de consulta: si el suyo le
+        // indica otra, pongala aqui.
+        'plantilla_qr' => 'https://felpub.c.sat.gob.gt/verificador-web/publico/vistas/verificacionDte.jsf'
+            . '?tipo=autorizacion&numero={UUID}&emisor={NIT_EMISOR}&receptor={NIT_RECEPTOR}&monto={MONTO}',
     ],
 ];

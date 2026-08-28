@@ -11,6 +11,7 @@ use Fel\Core\Logger;
 use Fel\Dte\Calculator;
 use Fel\Dte\Documento;
 use Fel\Dte\XmlBuilder;
+use Fel\Plataforma\Empresa;
 use Fel\Repositorio\BitacoraRepositorio;
 use Fel\Repositorio\DocumentoRepositorio;
 
@@ -27,17 +28,28 @@ use Fel\Repositorio\DocumentoRepositorio;
 final class FacturacionService
 {
     public function __construct(
+        private Empresa $empresa,
         private ?CertificadorInterface $certificador = null,
         private ?DocumentoRepositorio $documentos = null,
         private ?BitacoraRepositorio $bitacora = null,
     ) {
-        $this->certificador ??= Fabrica::crear();
-        $this->documentos   ??= new DocumentoRepositorio();
-        $this->bitacora     ??= new BitacoraRepositorio();
+        $this->certificador ??= Fabrica::paraEmpresa($empresa);
+        $this->documentos   ??= new DocumentoRepositorio($empresa->id());
+        $this->bitacora     ??= new BitacoraRepositorio($empresa->id());
     }
 
     public function emitir(Documento $documento, string $usuario = '', ?int $clienteId = null): ResultadoEmision
     {
+        // El emisor siempre es el de la empresa activa: nunca se toma del
+        // formulario, para que nadie pueda facturar a nombre de otro NIT.
+        $documento->emisor                = $this->empresa->emisor();
+        $documento->limiteConsumidorFinal = $this->empresa->limiteConsumidorFinal();
+
+        $problemas = $this->empresa->problemas();
+        if ($problemas !== []) {
+            return new ResultadoEmision(exito: false, errores: $problemas, estado: 'INVALIDO');
+        }
+
         $documento->completarFrases();
         Calculator::calcular($documento);
 

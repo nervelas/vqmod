@@ -7,9 +7,54 @@
 
 SET NAMES utf8mb4;
 
+-- Empresas emisoras. Cada una es un cliente del sistema: sus propios datos de
+-- emisor ante SAT, sus credenciales de certificador y sus documentos.
+CREATE TABLE IF NOT EXISTS fel_empresas (
+    id                      INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    nombre_interno          VARCHAR(120) NOT NULL COMMENT 'Como identifica usted a este cliente',
+
+    -- Datos del emisor, tal como estan en el RTU de SAT
+    nit                     VARCHAR(25)  NOT NULL,
+    nombre_emisor           VARCHAR(255) NOT NULL,
+    nombre_comercial        VARCHAR(255) NOT NULL,
+    afiliacion_iva          VARCHAR(5)   NOT NULL DEFAULT 'GEN',
+    codigo_establecimiento  VARCHAR(10)  NOT NULL DEFAULT '1',
+    correo                  VARCHAR(255) NOT NULL DEFAULT '',
+    telefono                VARCHAR(50)  NOT NULL DEFAULT '',
+    direccion               VARCHAR(255) NOT NULL DEFAULT 'Ciudad',
+    codigo_postal           VARCHAR(10)  NOT NULL DEFAULT '01001',
+    municipio               VARCHAR(100) NOT NULL DEFAULT 'Guatemala',
+    departamento            VARCHAR(100) NOT NULL DEFAULT 'Guatemala',
+    pais                    VARCHAR(3)   NOT NULL DEFAULT 'GT',
+
+    -- Certificador de esta empresa
+    ambiente                VARCHAR(15)  NOT NULL DEFAULT 'pruebas' COMMENT 'pruebas o produccion',
+    certificador_proveedor  VARCHAR(50)  NOT NULL DEFAULT 'simulador',
+    certificador_config     TEXT         NULL COMMENT 'JSON cifrado con AES-256-GCM: llaves y credenciales',
+    certificador_nombre     VARCHAR(255) NOT NULL DEFAULT '',
+    certificador_nit        VARCHAR(25)  NOT NULL DEFAULT '',
+
+    -- Preferencias de operacion e imagen
+    formato_impresion       VARCHAR(10)  NOT NULL DEFAULT 'carta' COMMENT 'carta o ticket',
+    color_marca             VARCHAR(9)   NOT NULL DEFAULT '#0f5f8a',
+    logo                    MEDIUMTEXT   NULL COMMENT 'Imagen en data URI',
+    limite_consumidor_final DECIMAL(18,2) NOT NULL DEFAULT 2500.00,
+    dias_maximos_anulacion  INT UNSIGNED NOT NULL DEFAULT 30,
+
+    plan                    VARCHAR(40)  NOT NULL DEFAULT '',
+    notas                   VARCHAR(500) NOT NULL DEFAULT '',
+    activa                  TINYINT(1)   NOT NULL DEFAULT 1,
+    creado_en               DATETIME     NOT NULL,
+    actualizado_en          DATETIME     NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_empresas_nit_establecimiento (nit, codigo_establecimiento),
+    KEY idx_empresas_nombre (nombre_interno)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Clientes (receptores del DTE)
 CREATE TABLE IF NOT EXISTS fel_clientes (
     id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    empresa_id     INT UNSIGNED NOT NULL,
     identificador  VARCHAR(25)  NOT NULL DEFAULT 'CF' COMMENT 'NIT, CF, CUI o pasaporte',
     tipo_especial  VARCHAR(10)  NOT NULL DEFAULT ''   COMMENT 'Vacio=NIT, CUI, EXT',
     nombre         VARCHAR(255) NOT NULL,
@@ -23,13 +68,17 @@ CREATE TABLE IF NOT EXISTS fel_clientes (
     activo         TINYINT(1)   NOT NULL DEFAULT 1,
     creado_en      DATETIME     NOT NULL,
     PRIMARY KEY (id),
-    KEY idx_clientes_identificador (identificador),
-    KEY idx_clientes_nombre (nombre)
+    KEY idx_clientes_empresa (empresa_id),
+    KEY idx_clientes_identificador (empresa_id, identificador),
+    KEY idx_clientes_nombre (nombre),
+    CONSTRAINT fk_clientes_empresa FOREIGN KEY (empresa_id)
+        REFERENCES fel_empresas (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Catalogo de productos y servicios
 CREATE TABLE IF NOT EXISTS fel_productos (
     id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    empresa_id      INT UNSIGNED NOT NULL,
     codigo          VARCHAR(50)  NOT NULL DEFAULT '',
     descripcion     VARCHAR(255) NOT NULL,
     tipo            CHAR(1)      NOT NULL DEFAULT 'B' COMMENT 'B=Bien, S=Servicio',
@@ -39,13 +88,17 @@ CREATE TABLE IF NOT EXISTS fel_productos (
     activo          TINYINT(1)   NOT NULL DEFAULT 1,
     creado_en       DATETIME     NOT NULL,
     PRIMARY KEY (id),
-    KEY idx_productos_codigo (codigo),
-    KEY idx_productos_descripcion (descripcion)
+    KEY idx_productos_empresa (empresa_id),
+    KEY idx_productos_codigo (empresa_id, codigo),
+    KEY idx_productos_descripcion (descripcion),
+    CONSTRAINT fk_productos_empresa FOREIGN KEY (empresa_id)
+        REFERENCES fel_empresas (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Documentos tributarios electronicos
 CREATE TABLE IF NOT EXISTS fel_documentos (
     id                  INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    empresa_id          INT UNSIGNED NOT NULL,
     identificador       CHAR(36)     NOT NULL COMMENT 'Identificador interno enviado al certificador (idempotencia)',
     tipo                VARCHAR(6)   NOT NULL COMMENT 'FACT, FPEQ, NCRE, ...',
     estado              VARCHAR(20)  NOT NULL DEFAULT 'BORRADOR'
@@ -87,10 +140,13 @@ CREATE TABLE IF NOT EXISTS fel_documentos (
 
     PRIMARY KEY (id),
     UNIQUE KEY uq_documentos_identificador (identificador),
+    KEY idx_documentos_empresa (empresa_id),
     KEY idx_documentos_uuid (uuid),
-    KEY idx_documentos_estado (estado),
-    KEY idx_documentos_fecha (fecha_emision),
-    KEY idx_documentos_receptor (receptor_id)
+    KEY idx_documentos_estado (empresa_id, estado),
+    KEY idx_documentos_fecha (empresa_id, fecha_emision),
+    KEY idx_documentos_receptor (receptor_id),
+    CONSTRAINT fk_documentos_empresa FOREIGN KEY (empresa_id)
+        REFERENCES fel_empresas (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Detalle de cada documento
@@ -137,6 +193,7 @@ CREATE TABLE IF NOT EXISTS fel_anulaciones (
 -- Bitacora de comunicacion con el certificador (respaldo ante una revision de SAT)
 CREATE TABLE IF NOT EXISTS fel_bitacora (
     id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    empresa_id    INT UNSIGNED NULL,
     documento_id  INT UNSIGNED NULL,
     operacion     VARCHAR(30)  NOT NULL COMMENT 'FIRMA, CERTIFICACION, ANULACION',
     exito         TINYINT(1)   NOT NULL DEFAULT 0,
@@ -145,18 +202,23 @@ CREATE TABLE IF NOT EXISTS fel_bitacora (
     creado_en     DATETIME     NOT NULL,
     PRIMARY KEY (id),
     KEY idx_bitacora_documento (documento_id),
+    KEY idx_bitacora_empresa (empresa_id),
     KEY idx_bitacora_fecha (creado_en)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Usuarios del sistema
 CREATE TABLE IF NOT EXISTS fel_usuarios (
     id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    empresa_id INT UNSIGNED NULL COMMENT 'NULL = superadministrador de la plataforma',
     usuario    VARCHAR(60)  NOT NULL,
     clave_hash VARCHAR(255) NOT NULL,
     nombre     VARCHAR(120) NOT NULL,
-    rol        VARCHAR(20)  NOT NULL DEFAULT 'operador' COMMENT 'admin, operador',
+    rol        VARCHAR(20)  NOT NULL DEFAULT 'operador' COMMENT 'superadmin, admin, operador',
     activo     TINYINT(1)   NOT NULL DEFAULT 1,
     creado_en  DATETIME     NOT NULL,
     PRIMARY KEY (id),
-    UNIQUE KEY uq_usuarios_usuario (usuario)
+    UNIQUE KEY uq_usuarios_usuario (usuario),
+    KEY idx_usuarios_empresa (empresa_id),
+    CONSTRAINT fk_usuarios_empresa FOREIGN KEY (empresa_id)
+        REFERENCES fel_empresas (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

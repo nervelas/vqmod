@@ -5,8 +5,13 @@ Esta es la lista de lo que debe estar en orden para facturar con sistema propio
 documento real.
 
 > Esta guía es orientación técnica sobre cómo opera el sistema, **no asesoría
-> tributaria**. Las obligaciones concretas de su empresa dependen de su régimen,
-> su actividad y su situación. Consúltelas con su contador o su asesor fiscal.
+> tributaria**. Las obligaciones concretas de cada empresa dependen de su
+> régimen, su actividad y su situación. Consúltelas con su contador o su asesor
+> fiscal.
+>
+> Si atiende a varias empresas desde una sola instalación, esta lista se recorre
+> **una vez por empresa**: cada contribuyente tiene su propia habilitación ante
+> SAT y su propio contrato con un certificador.
 
 ---
 
@@ -139,6 +144,10 @@ Distinga siempre:
 - [ ] El dominio tiene HTTPS activo y forzado.
 - [ ] `config/config.php` está fuera de `public_html` o bloqueado por `.htaccess`.
 - [ ] `config/config.php` **no** está en ningún repositorio de código.
+- [ ] `app.clave_aplicacion` está respaldada en un lugar seguro: con ella se
+      descifran las credenciales de certificador de todas las empresas.
+- [ ] Cada empresa tiene sus propios usuarios; nadie comparte cuenta entre
+      empresas distintas.
 - [ ] Cada persona tiene su propio usuario: cada documento registra quién lo emitió.
 - [ ] Las contraseñas son de 10 caracteres o más.
 - [ ] `http.verificar_tls` sigue en `true`.

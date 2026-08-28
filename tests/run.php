@@ -27,10 +27,15 @@ use Fel\Dte\Item;
 use Fel\Dte\Receptor;
 use Fel\Dte\Referencia;
 use Fel\Dte\XmlBuilder;
+use Fel\Core\Cifrado;
+use Fel\Plataforma\Empresa;
+use Fel\Presentacion\CodigoQr;
 use Fel\Presentacion\RepresentacionGrafica;
 use Fel\Repositorio\ClienteRepositorio;
 use Fel\Repositorio\DocumentoRepositorio;
+use Fel\Repositorio\EmpresaRepositorio;
 use Fel\Repositorio\ProductoRepositorio;
+use Fel\Repositorio\UsuarioRepositorio;
 use Fel\Servicio\AnulacionService;
 use Fel\Servicio\ContingenciaService;
 use Fel\Servicio\FacturacionService;
@@ -84,12 +89,30 @@ Config::establecer([
     ],
     'xml'          => ['formato_legible' => false],
     'emisor'       => ['nombre_comercial' => 'PRUEBAS'],
+    'app'          => ['clave_aplicacion' => str_repeat('c1a2v3e4', 8)],
 ]);
 
 $sql = (string) file_get_contents(__DIR__ . '/../db/schema.sqlite.sql');
 foreach (array_filter(array_map('trim', explode(';', $sql))) as $sentencia) {
     Db::conexion()->exec($sentencia);
 }
+
+// Empresa emisora sobre la que corren las pruebas
+$empresas  = new EmpresaRepositorio();
+$empresaId = $empresas->guardar([
+    'nombre_interno'   => 'Empresa de pruebas',
+    'nit'              => '12345679',
+    'nombre_emisor'    => 'MI EMPRESA, SOCIEDAD ANONIMA',
+    'nombre_comercial' => 'MI EMPRESA',
+    'afiliacion_iva'   => 'GEN',
+    'correo'           => 'facturacion@miempresa.gt',
+    'certificador_proveedor'  => 'simulador',
+    'certificador_nombre'     => 'CERTIFICADOR SIMULADO',
+    'certificador_nit'        => '12345679',
+    'limite_consumidor_final' => 2500.00,
+    'dias_maximos_anulacion'  => 30,
+]);
+$empresa = $empresas->buscar($empresaId);
 
 function emisorPrueba(string $afiliacion = 'GEN'): Emisor
 {
@@ -245,7 +268,7 @@ afirmar('Se rechaza un tipo de DTE inexistente', $tipoMalo->validar() !== []);
 // ---------------------------------------------------------------- emision completa
 grupo('Emision completa contra el certificador simulado');
 
-$servicio = new FacturacionService(new SimuladorCertificador());
+$servicio = new FacturacionService($empresa, new SimuladorCertificador());
 
 $factura = new Documento('FACT', emisorPrueba(), new Receptor('80000002', 'CLIENTE DE PRUEBA, S.A.', 'cliente@ejemplo.gt'));
 $factura->agregarItem(new Item('Servicio de soporte mensual', 1, 1000.00, 'S', 'SER'));
@@ -258,7 +281,7 @@ afirmar('La emision fue exitosa', $emision->exito, $emision->mensaje());
 afirmar('Se obtuvo numero de autorizacion (UUID)', $emision->uuid() !== '');
 iguales('Estado final del documento', 'CERTIFICADO', $emision->estado);
 
-$repo = new DocumentoRepositorio();
+$repo = new DocumentoRepositorio($empresa->id());
 $fila = $repo->buscar((int) $emision->documentoId);
 
 afirmar('El documento quedo guardado', $fila !== null);
@@ -274,18 +297,44 @@ afirmar('El resumen del mes cuenta el documento', (int) $resumen['documentos'] >
 // ---------------------------------------------------------------- representacion grafica
 grupo('Representacion grafica');
 
-$html = (new RepresentacionGrafica())->html($fila, $repo->items((int) $emision->documentoId), ['Sujeto a pagos trimestrales']);
+$html = (new RepresentacionGrafica())->html(
+    $empresa,
+    $fila,
+    $repo->items((int) $emision->documentoId),
+    ['Sujeto a pagos trimestrales']
+);
 afirmar('Incluye el numero de autorizacion', str_contains($html, $emision->uuid()));
 afirmar('Incluye el NIT del emisor', str_contains($html, '12345679'));
 afirmar('Incluye el nombre del receptor', str_contains($html, 'CLIENTE DE PRUEBA'));
 afirmar('Incluye el total', str_contains($html, '1,140.00'));
-afirmar('Incluye el enlace del verificador de SAT', str_contains($html, 'verificacionDte'));
 afirmar('Incluye el total en letras', str_contains($html, 'QUETZALES CON'));
+afirmar('Incluye el codigo QR', str_contains($html, '<svg') && str_contains($html, 'Código QR'));
+afirmar(
+    'El contenido del QR apunta al verificador de SAT con el UUID',
+    (static function () use ($fila, $emision): bool {
+        $contenido = (new RepresentacionGrafica())->contenidoQr($fila);
+
+        return str_contains($contenido, 'verificacionDte') && str_contains($contenido, $emision->uuid());
+    })()
+);
+
+$ticket = (new RepresentacionGrafica())->html(
+    $empresa,
+    $fila,
+    $repo->items((int) $emision->documentoId),
+    ['Sujeto a pagos trimestrales'],
+    'ticket'
+);
+afirmar('El formato ticket mide 80 mm', str_contains($ticket, 'size:80mm auto'));
+afirmar('El ticket trae el numero de autorizacion', str_contains($ticket, $emision->uuid()));
+afirmar('El ticket trae los datos del certificador', str_contains($ticket, 'Datos Del Certificador'));
+afirmar('El ticket trae el QR', str_contains($ticket, '<svg'));
+afirmar('El ticket trae el detalle', str_contains($ticket, 'Servicio de soporte mensual'));
 
 // ---------------------------------------------------------------- anulacion
 grupo('Anulacion');
 
-$anulacion = new AnulacionService(new SimuladorCertificador());
+$anulacion = new AnulacionService($empresa, new SimuladorCertificador());
 $resultadoAnulacion = $anulacion->anular((int) $emision->documentoId, 'Error en el detalle', 'pruebas');
 
 afirmar('La anulacion fue exitosa', $resultadoAnulacion['exito'], $resultadoAnulacion['mensaje']);
@@ -333,7 +382,7 @@ final class CertificadorCaido implements \Fel\Certificador\CertificadorInterface
     }
 }
 
-$offline = new FacturacionService(new CertificadorCaido());
+$offline = new FacturacionService($empresa, new CertificadorCaido());
 $enContingencia = new Documento('FACT', emisorPrueba(), Receptor::consumidorFinal());
 $enContingencia->agregarItem(new Item('Venta mostrador', 2, 60.00));
 $resultadoOffline = $offline->emitir($enContingencia, 'pruebas');
@@ -345,7 +394,7 @@ afirmar('El documento se guardo aunque no se certifico', $resultadoOffline->docu
 $pendientesAntes = count($repo->pendientes());
 afirmar('Hay documentos en contingencia', $pendientesAntes >= 1);
 
-$reanudado = new ContingenciaService(new FacturacionService(new SimuladorCertificador()));
+$reanudado = new ContingenciaService();
 $procesado = $reanudado->procesarPendientes();
 
 iguales('Se certificaron los pendientes al volver el servicio', $pendientesAntes, $procesado['certificados']);
@@ -379,7 +428,7 @@ final class CertificadorQueRechaza implements \Fel\Certificador\CertificadorInte
     }
 }
 
-$rechazo = (new FacturacionService(new CertificadorQueRechaza()))->emitir(
+$rechazo = (new FacturacionService($empresa, new CertificadorQueRechaza()))->emitir(
     (static function (): Documento {
         $d = new Documento('FACT', emisorPrueba(), Receptor::consumidorFinal());
         $d->agregarItem(new Item('Producto', 1, 25.00));
@@ -437,7 +486,7 @@ iguales('Frase de agente de retencion de IVA', 2, Frase::porClave('IVA_AGENTE_RE
 // ---------------------------------------------------------------- repositorios
 grupo('Clientes y productos');
 
-$clientes  = new ClienteRepositorio();
+$clientes  = new ClienteRepositorio($empresa->id());
 $clienteId = $clientes->guardar([
     'identificador' => '80000002',
     'nombre'        => 'CLIENTE DE PRUEBA, S.A.',
@@ -447,7 +496,7 @@ afirmar('Se guarda un cliente', $clienteId > 0);
 iguales('Se recupera por identificador', 'CLIENTE DE PRUEBA, S.A.', (string) $clientes->buscarPorIdentificador('80000002')['nombre']);
 iguales('Busqueda por nombre', 1, count($clientes->listar('PRUEBA')));
 
-$productos  = new ProductoRepositorio();
+$productos  = new ProductoRepositorio($empresa->id());
 $productoId = $productos->guardar([
     'codigo'          => 'SOP-01',
     'descripcion'     => 'Soporte tecnico mensual',
@@ -459,6 +508,162 @@ afirmar('Se guarda un producto', $productoId > 0);
 iguales('Se recupera el producto', 'Soporte tecnico mensual', (string) $productos->buscar($productoId)['descripcion']);
 $productos->desactivar($productoId);
 iguales('El producto desactivado no aparece en el listado', 0, count($productos->listar()));
+
+// ---------------------------------------------------------------- codigo QR
+grupo('Codigo QR');
+
+$qr = new CodigoQr('https://felpub.c.sat.gob.gt/verificador-web/publico/vistas/verificacionDte.jsf?uuid=' . $emision->uuid());
+iguales('Tamaño coherente con la version', 17 + ($qr->version() * 4), $qr->tamano());
+afirmar('La version esta dentro del rango soportado', $qr->version() >= 1 && $qr->version() <= 15);
+afirmar('Genera SVG', str_starts_with($qr->svg(), '<svg'));
+afirmar('Genera data URI', str_starts_with($qr->dataUri(), 'data:image/svg+xml;base64,'));
+
+$matriz = $qr->matriz();
+afirmar('Los tres patrones de deteccion estan presentes', (static function (array $m): bool {
+    $n = count($m);
+    foreach ([[0, 0], [$n - 7, 0], [0, $n - 7]] as [$x, $y]) {
+        // esquina oscura, anillo claro, centro oscuro
+        if ($m[$y][$x] !== 1 || $m[$y + 1][$x + 1] !== 0 || $m[$y + 3][$x + 3] !== 1) {
+            return false;
+        }
+    }
+
+    return true;
+})($matriz));
+
+afirmar('El patron de sincronizacion alterna', (static function (array $m): bool {
+    for ($i = 8; $i < count($m) - 8; $i++) {
+        if ($m[6][$i] !== ($i % 2 === 0 ? 1 : 0)) {
+            return false;
+        }
+    }
+
+    return true;
+})($matriz));
+
+$mezcla = array_sum(array_map('array_sum', $matriz)) / (count($matriz) ** 2);
+afirmar('La proporcion de modulos oscuros es razonable', $mezcla > 0.35 && $mezcla < 0.65);
+
+$corto = new CodigoQr('a', CodigoQr::NIVEL_H);
+iguales('Un contenido corto cabe en la version 1', 1, $corto->version());
+
+$distintos = (new CodigoQr('AAA'))->matriz() !== (new CodigoQr('BBB'))->matriz();
+afirmar('Contenidos distintos generan matrices distintas', $distintos);
+
+$excepcion = false;
+try {
+    new CodigoQr(str_repeat('x', 5000));
+} catch (\InvalidArgumentException) {
+    $excepcion = true;
+}
+afirmar('Un contenido excesivo se rechaza con un mensaje claro', $excepcion);
+
+// ------------------------------------------------------- cifrado de credenciales
+grupo('Cifrado de credenciales');
+
+$secreto = 'LLAVE-DE-FIRMA-DEL-CERTIFICADOR';
+$cifrado = Cifrado::cifrar($secreto);
+afirmar('El texto cifrado no contiene el original', !str_contains($cifrado, $secreto));
+iguales('Se recupera el original', $secreto, Cifrado::descifrar($cifrado));
+afirmar('Dos cifrados del mismo dato son distintos', Cifrado::cifrar($secreto) !== $cifrado);
+iguales('Cadena vacia se conserva', '', Cifrado::cifrar(''));
+iguales(
+    'Arreglos completos van y vuelven',
+    ['usuario_api' => 'u', 'llave_api' => 'k'],
+    Cifrado::descifrarArreglo(Cifrado::cifrarArreglo(['usuario_api' => 'u', 'llave_api' => 'k']))
+);
+
+$alterado = false;
+try {
+    Cifrado::descifrar('fel1:' . base64_encode(random_bytes(48)));
+} catch (\RuntimeException) {
+    $alterado = true;
+}
+afirmar('Un dato alterado se detecta y se rechaza', $alterado);
+
+// --------------------------------------------------- aislamiento entre empresas
+grupo('Aislamiento entre empresas');
+
+$otraId = $empresas->guardar([
+    'nombre_interno'         => 'Otra empresa',
+    'nit'                    => '80000002',
+    'nombre_emisor'          => 'OTRA EMPRESA, S.A.',
+    'nombre_comercial'       => 'OTRA',
+    'certificador_proveedor' => 'simulador',
+], null, ['usuario_api' => 'secreto-de-la-otra']);
+$otra = $empresas->buscar($otraId);
+
+afirmar('Se dio de alta la segunda empresa', $otra !== null);
+iguales('Las credenciales se guardan cifradas y se leen bien', 'secreto-de-la-otra', (string) $otra->configCertificador()['usuario_api']);
+
+$filaCruda = Db::conexion()->query('SELECT certificador_config FROM fel_empresas WHERE id = ' . $otraId)->fetchColumn();
+afirmar('En la base no queda el secreto en claro', !str_contains((string) $filaCruda, 'secreto-de-la-otra'));
+
+$servicioOtra = new FacturacionService($otra, new SimuladorCertificador());
+$docOtra = new Documento('FACT', emisorPrueba(), Receptor::consumidorFinal());
+$docOtra->agregarItem(new Item('Venta de la otra empresa', 1, 200.00));
+$emisionOtra = $servicioOtra->emitir($docOtra, 'pruebas');
+afirmar('La segunda empresa puede emitir', $emisionOtra->exito, $emisionOtra->mensaje());
+
+$repoOtra = new DocumentoRepositorio($otraId);
+afirmar('Cada empresa ve solo sus documentos',
+    count($repo->listar()) >= 1 && count($repoOtra->listar()) === 1);
+afirmar('Una empresa NO puede leer el documento de otra',
+    $repoOtra->buscar((int) $emision->documentoId) === null);
+afirmar('La empresa original NO ve el documento de la otra',
+    $repo->buscar((int) $emisionOtra->documentoId) === null);
+afirmar('Tampoco puede leer sus lineas de detalle',
+    $repoOtra->items((int) $emision->documentoId) === []);
+
+$clientesOtra = new ClienteRepositorio($otraId);
+$clientesOtra->guardar(['identificador' => '80000002', 'nombre' => 'CLIENTE DE LA OTRA']);
+iguales('Los clientes tampoco se mezclan', 1, count($clientesOtra->listar()));
+afirmar('No se puede leer el cliente de otra empresa',
+    $clientesOtra->buscar($clienteId) === null);
+
+$anulacionCruzada = (new AnulacionService($otra, new SimuladorCertificador()))
+    ->anular((int) $emisionOtra->documentoId, 'prueba');
+afirmar('Se anula el documento propio', $anulacionCruzada['exito'], $anulacionCruzada['mensaje']);
+
+$emisorForzado = new Documento('FACT', new Emisor('80000002', 'NIT AJENO', 'AJENO'), Receptor::consumidorFinal());
+$emisorForzado->agregarItem(new Item('Intento de suplantacion', 1, 50.00));
+$resultadoForzado = $servicio->emitir($emisorForzado, 'pruebas');
+afirmar('El emisor del DTE siempre es el de la empresa activa, no el del formulario',
+    $resultadoForzado->exito
+    && (string) $repo->buscar((int) $resultadoForzado->documentoId)['emisor_nit'] === '12345679');
+
+$repoInvalido = false;
+try {
+    new DocumentoRepositorio(0);
+} catch (\InvalidArgumentException) {
+    $repoInvalido = true;
+}
+afirmar('No se puede construir un repositorio sin empresa', $repoInvalido);
+
+// ------------------------------------------------------------------- usuarios
+grupo('Usuarios y roles');
+
+$usuarios = new UsuarioRepositorio();
+$usuarios->crear('super', 'claveLarguisima1', 'Superadministrador', UsuarioRepositorio::SUPERADMIN);
+$usuarios->crear('opera', 'claveLarguisima2', 'Operador', UsuarioRepositorio::OPERADOR, $empresa->id());
+
+afirmar('El superadministrador no queda atado a una empresa',
+    (new UsuarioRepositorio())->porEmpresa(null)[0]['empresa_id'] === null
+    || array_filter($usuarios->porEmpresa(null), static fn (array $u): bool =>
+        $u['usuario'] === 'super' && $u['empresa_id'] === null) !== []);
+iguales('El operador pertenece a su empresa', 1, count($usuarios->porEmpresa($empresa->id())));
+afirmar('Se detecta un usuario existente', $usuarios->existe('opera'));
+afirmar('Se puede cambiar la contrasena', $usuarios->cambiarClave('opera', 'otraClaveLarga3'));
+afirmar('No se cambia la de un usuario inexistente', !$usuarios->cambiarClave('nadie', 'claveLarguisima9'));
+
+// ------------------------------------------------------- uso por empresa
+grupo('Uso por empresa (para facturar el servicio)');
+
+$uso = $empresas->uso($empresa->id(), date('Y-m-01'), date('Y-m-d'));
+afirmar('Se cuentan los documentos de la empresa', $uso['documentos'] >= 1);
+afirmar('Se cuentan los certificados', $uso['certificados'] >= 1);
+$usoOtra = $empresas->uso($otraId, date('Y-m-01'), date('Y-m-d'));
+iguales('El uso de cada empresa es independiente', 1, $usoOtra['documentos']);
 
 // ---------------------------------------------------------------- cierre
 @unlink($archivoDb);

@@ -7,8 +7,8 @@ use Fel\Certificador\CertificadorInterface;
 use Fel\Certificador\Fabrica;
 use Fel\Certificador\Resultado;
 use Fel\Certificador\SimuladorCertificador;
-use Fel\Core\Config;
 use Fel\Dte\AnulacionXmlBuilder;
+use Fel\Plataforma\Empresa;
 use Fel\Repositorio\AnulacionRepositorio;
 use Fel\Repositorio\BitacoraRepositorio;
 use Fel\Repositorio\DocumentoRepositorio;
@@ -24,15 +24,16 @@ use Fel\Repositorio\DocumentoRepositorio;
 final class AnulacionService
 {
     public function __construct(
+        private Empresa $empresa,
         private ?CertificadorInterface $certificador = null,
         private ?DocumentoRepositorio $documentos = null,
         private ?AnulacionRepositorio $anulaciones = null,
         private ?BitacoraRepositorio $bitacora = null,
     ) {
-        $this->certificador ??= Fabrica::crear();
-        $this->documentos   ??= new DocumentoRepositorio();
-        $this->anulaciones  ??= new AnulacionRepositorio();
-        $this->bitacora     ??= new BitacoraRepositorio();
+        $this->certificador ??= Fabrica::paraEmpresa($empresa);
+        $this->documentos   ??= new DocumentoRepositorio($empresa->id());
+        $this->anulaciones  ??= new AnulacionRepositorio($empresa->id());
+        $this->bitacora     ??= new BitacoraRepositorio($empresa->id());
     }
 
     /** @return array{exito:bool,mensaje:string,uuid:string} */
@@ -113,7 +114,7 @@ final class AnulacionService
      */
     private function avisoDePlazo(string $fechaEmision): string
     {
-        $dias = (int) Config::get('reglas.dias_maximos_anulacion', 0);
+        $dias = $this->empresa->diasMaximosAnulacion();
 
         if ($dias <= 0) {
             return '';

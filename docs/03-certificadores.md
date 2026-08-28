@@ -39,11 +39,23 @@ Pregunte también:
 - ¿Cómo se manejan las anulaciones: mismo endpoint u otro?
 - ¿Qué versión de esquema de SAT soportan?
 
-## Configuración
+## Dónde se cargan las credenciales
 
-Todo se hace en `config/config.php`, sin tocar código.
+Desde la interfaz: **Empresas → editar la empresa → sección Certificador**.
+Se guardan **cifradas** (AES-256-GCM) en la base de datos con la clave de
+`app.clave_aplicacion`.
+
+Los campos del formulario son los mismos que se describen abajo. El bloque
+*"Ajustes adicionales en JSON"* sirve para cualquier opción del adaptador
+genérico que no tenga campo propio.
+
+`config/config.php` solo se usa para sembrar la **primera** empresa durante la
+instalación; después de eso, todo se administra desde la pantalla.
 
 ### Opción 1 — INFILE (adaptador incluido)
+
+En la pantalla: proveedor **INFILE**, y llene las URL y credenciales. En
+`config.php` (solo para la empresa inicial) equivale a:
 
 ```php
 'certificador' => [
@@ -81,7 +93,9 @@ Todo se hace en `config/config.php`, sin tocar código.
 ### Opción 2 — Cualquier otro certificador (adaptador REST genérico)
 
 Sirve para Digifact, Guatefacturas, Megaprint o cualquiera que exponga una API
-REST. Se declara la forma de la petición y el sistema la arma.
+REST. Se declara la forma de la petición y el sistema la arma. En la pantalla
+de la empresa, elija el proveedor **Otro certificador** y pegue esta estructura
+en *"Ajustes adicionales en JSON"*.
 
 ```php
 'certificador' => [
@@ -176,12 +190,26 @@ https://felpub.c.sat.gob.gt/verificador-web/publico/vistas/verificacionDte.jsf
 
 Si aparece ahí, la cadena completa está funcionando.
 
+## El código QR de la factura
+
+El QR que se imprime apunta, por omisión, al verificador público de SAT con el
+número de autorización. Cada certificador publica su propia URL de consulta:
+si el suyo le indica otra, cámbiela en `config/config.php`:
+
+```php
+'sat' => [
+    'plantilla_qr' => 'https://la-url-de-su-certificador/consulta?uuid={UUID}',
+],
+```
+
+Marcadores disponibles: `{UUID}`, `{NIT_EMISOR}`, `{NIT_RECEPTOR}`, `{MONTO}`,
+`{FECHA}`, `{SERIE}`, `{NUMERO}`.
+
 ## Cambiar de certificador
 
-Es solo cambiar la sección correspondiente en `config/config.php` y el valor de
-`'proveedor'`. Los documentos ya emitidos conservan el nombre del certificador
-que los certificó, que es lo correcto: cada DTE queda ligado a quien lo
-certificó.
+Es solo cambiar el proveedor y las credenciales de la empresa desde la
+pantalla. Los documentos ya emitidos conservan el nombre del certificador que los
+certificó, que es lo correcto: cada DTE queda ligado a quien lo certificó.
 
 ## Diagnóstico
 

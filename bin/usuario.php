@@ -2,10 +2,13 @@
 /**
  * Alta y cambio de contrasena de usuarios.
  *
- *   php bin/usuario.php crear   <usuario> "<nombre>" <clave> [admin|operador]
- *   php bin/usuario.php clave   <usuario> <clave>
+ *   php bin/usuario.php crear  <usuario> "<nombre>" <clave> [superadmin|admin|operador] [empresa_id]
+ *   php bin/usuario.php clave  <usuario> <clave>
  *   php bin/usuario.php listar
- *   php bin/usuario.php baja    <usuario>
+ *   php bin/usuario.php baja   <usuario>
+ *
+ * El rol 'superadmin' administra la plataforma y no pertenece a ninguna
+ * empresa. 'admin' y 'operador' requieren el id de su empresa.
  */
 declare(strict_types=1);
 
@@ -13,6 +16,7 @@ require dirname(__DIR__) . '/src/autoload.php';
 
 use Fel\Core\Config;
 use Fel\Core\Db;
+use Fel\Repositorio\UsuarioRepositorio;
 
 if (PHP_SAPI !== 'cli') {
     exit('Este script solo se ejecuta desde la linea de comandos.');
@@ -27,28 +31,22 @@ $pdo    = Db::conexion();
 switch ($accion) {
     case 'crear':
         [$usuario, $nombre, $clave] = [$argv[2] ?? '', $argv[3] ?? '', $argv[4] ?? ''];
-        $rol = $argv[5] ?? 'operador';
+        $rol       = $argv[5] ?? UsuarioRepositorio::OPERADOR;
+        $empresaId = isset($argv[6]) ? (int) $argv[6] : null;
 
         if ($usuario === '' || $clave === '') {
-            exit("Uso: php bin/usuario.php crear <usuario> \"<nombre>\" <clave> [admin|operador]\n");
+            exit("Uso: php bin/usuario.php crear <usuario> \"<nombre>\" <clave> [superadmin|admin|operador] [empresa_id]\n");
         }
         if (strlen($clave) < 10) {
             exit("La contrasena debe tener al menos 10 caracteres.\n");
         }
+        if ($rol !== UsuarioRepositorio::SUPERADMIN && ($empresaId === null || $empresaId <= 0)) {
+            exit("Los usuarios que no son superadmin necesitan el id de su empresa.\n");
+        }
 
-        $sentencia = $pdo->prepare(
-            'INSERT INTO fel_usuarios (usuario, clave_hash, nombre, rol, creado_en)
-             VALUES (:usuario, :hash, :nombre, :rol, :creado_en)'
-        );
-        $sentencia->execute([
-            'usuario'   => $usuario,
-            'hash'      => password_hash($clave, PASSWORD_BCRYPT, ['cost' => 12]),
-            'nombre'    => $nombre !== '' ? $nombre : $usuario,
-            'rol'       => in_array($rol, ['admin', 'operador'], true) ? $rol : 'operador',
-            'creado_en' => date('Y-m-d H:i:s'),
-        ]);
+        (new UsuarioRepositorio())->crear($usuario, $clave, $nombre, $rol, $empresaId);
 
-        echo "Usuario '{$usuario}' creado.\n";
+        echo "Usuario '{$usuario}' creado con rol {$rol}.\n";
         break;
 
     case 'clave':
@@ -58,13 +56,7 @@ switch ($accion) {
             exit("Uso: php bin/usuario.php clave <usuario> <clave de 10+ caracteres>\n");
         }
 
-        $sentencia = $pdo->prepare('UPDATE fel_usuarios SET clave_hash = :hash WHERE usuario = :usuario');
-        $sentencia->execute([
-            'hash'    => password_hash($clave, PASSWORD_BCRYPT, ['cost' => 12]),
-            'usuario' => $usuario,
-        ]);
-
-        echo $sentencia->rowCount() > 0
+        echo (new UsuarioRepositorio())->cambiarClave($usuario, $clave)
             ? "Contrasena actualizada.\n"
             : "No se encontro el usuario '{$usuario}'.\n";
         break;
@@ -77,13 +69,14 @@ switch ($accion) {
 
     case 'listar':
     default:
-        printf("%-4s %-20s %-30s %-10s %s\n", 'ID', 'USUARIO', 'NOMBRE', 'ROL', 'ACTIVO');
-        foreach ($pdo->query('SELECT * FROM fel_usuarios ORDER BY id') as $fila) {
+        printf("%-4s %-18s %-26s %-24s %-11s %s\n", 'ID', 'USUARIO', 'NOMBRE', 'EMPRESA', 'ROL', 'ACTIVO');
+        foreach ((new UsuarioRepositorio())->porEmpresa(null) as $fila) {
             printf(
-                "%-4d %-20s %-30s %-10s %s\n",
+                "%-4d %-18s %-26s %-24s %-11s %s\n",
                 $fila['id'],
                 $fila['usuario'],
-                mb_substr((string) $fila['nombre'], 0, 30),
+                mb_substr((string) $fila['nombre'], 0, 26),
+                mb_substr((string) ($fila['empresa'] ?? '— plataforma —'), 0, 24),
                 $fila['rol'],
                 $fila['activo'] ? 'si' : 'no'
             );

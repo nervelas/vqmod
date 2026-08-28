@@ -13,6 +13,8 @@ require dirname(__DIR__) . '/src/autoload.php';
 
 use Fel\Core\Config;
 use Fel\Core\Db;
+use Fel\Repositorio\EmpresaRepositorio;
+use Fel\Repositorio\UsuarioRepositorio;
 
 if (PHP_SAPI !== 'cli') {
     exit('Este script solo se ejecuta desde la linea de comandos.');
@@ -74,12 +76,12 @@ foreach (['almacen', 'xml', 'logs'] as $clave) {
     echo "   {$ruta}\n";
 }
 
-echo "\n4. Usuario administrador\n";
+echo "\n4. Administrador de la plataforma\n";
 
-$existentes = (int) $pdo->query('SELECT COUNT(*) FROM fel_usuarios')->fetchColumn();
+$usuarios = new UsuarioRepositorio();
 
-if ($existentes > 0) {
-    echo "   Ya existen {$existentes} usuario(s). Use bin/usuario.php para agregar otro.\n";
+if ($usuarios->total() > 0) {
+    echo "   Ya existen usuarios. Use bin/usuario.php para agregar otro.\n";
 } else {
     $usuario = leer('   Usuario (ej. admin): ', 'admin');
     $nombre  = leer('   Nombre completo: ', 'Administrador');
@@ -90,32 +92,61 @@ if ($existentes > 0) {
         $clave = leer('   Contrasena: ', '');
     }
 
-    $sentencia = $pdo->prepare(
-        'INSERT INTO fel_usuarios (usuario, clave_hash, nombre, rol, creado_en)
-         VALUES (:usuario, :hash, :nombre, :rol, :creado_en)'
-    );
-    $sentencia->execute([
-        'usuario'   => $usuario,
-        'hash'      => password_hash($clave, PASSWORD_BCRYPT, ['cost' => 12]),
-        'nombre'    => $nombre,
-        'rol'       => 'admin',
-        'creado_en' => date('Y-m-d H:i:s'),
-    ]);
+    $usuarios->crear($usuario, $clave, $nombre, UsuarioRepositorio::SUPERADMIN);
 
-    echo "   Usuario '{$usuario}' creado.\n";
+    echo "   Superadministrador '{$usuario}' creado.\n";
+    echo "   Con este usuario da de alta las empresas y sus usuarios.\n";
+}
+
+echo "\n5. Empresa inicial\n";
+
+$empresas = new EmpresaRepositorio();
+
+if ($empresas->listar() !== []) {
+    echo "   Ya hay empresas registradas.\n";
+} else {
+    $emisor = (array) Config::get('emisor', []);
+
+    if (($emisor['nit'] ?? '') !== '' && ($emisor['nombre'] ?? '') !== '') {
+        // Instalacion que venia de la version de un solo emisor: se crea la
+        // empresa a partir de config.php para no perder esa configuracion.
+        $empresaId = $empresas->guardar([
+            'nombre_interno'          => $emisor['nombre_comercial'] ?? $emisor['nombre'],
+            'nit'                     => $emisor['nit'],
+            'nombre_emisor'           => $emisor['nombre'],
+            'nombre_comercial'        => $emisor['nombre_comercial'] ?? $emisor['nombre'],
+            'afiliacion_iva'          => $emisor['afiliacion_iva'] ?? 'GEN',
+            'codigo_establecimiento'  => $emisor['codigo_establecimiento'] ?? '1',
+            'correo'                  => $emisor['correo'] ?? '',
+            'telefono'                => $emisor['telefono'] ?? '',
+            'direccion'               => $emisor['direccion'] ?? 'Ciudad',
+            'codigo_postal'           => $emisor['codigo_postal'] ?? '01001',
+            'municipio'               => $emisor['municipio'] ?? 'Guatemala',
+            'departamento'            => $emisor['departamento'] ?? 'Guatemala',
+            'pais'                    => $emisor['pais'] ?? 'GT',
+            'ambiente'                => (string) Config::get('ambiente', 'pruebas'),
+            'certificador_proveedor'  => (string) Config::get('certificador.proveedor', 'simulador'),
+            'certificador_nombre'     => (string) Config::get('certificador.nombre_visible', ''),
+            'certificador_nit'        => (string) Config::get('certificador.nit_visible', ''),
+            'limite_consumidor_final' => (float) Config::get('reglas.limite_consumidor_final', 2500),
+            'dias_maximos_anulacion'  => (int) Config::get('reglas.dias_maximos_anulacion', 30),
+        ], null, (array) Config::get('certificador.infile', []));
+
+        echo "   Empresa '", $emisor['nombre_comercial'] ?? $emisor['nombre'], "' creada desde config.php (id {$empresaId}).\n";
+        echo "   Revise y complete sus credenciales desde la pantalla Empresas.\n";
+    } else {
+        echo "   Sin datos de emisor en config.php. Cree la primera empresa desde\n";
+        echo "   la pantalla Empresas, ingresando como administrador de la plataforma.\n";
+    }
 }
 
 echo "\n", str_repeat('=', 50), "\n";
 echo "Instalacion completa.\n\n";
-echo "Certificador configurado: ", (string) Config::get('certificador.proveedor', 'simulador'), "\n";
-
-if ((string) Config::get('certificador.proveedor', 'simulador') === 'simulador') {
-    echo "\nATENCION: esta usando el certificador SIMULADO. Los documentos que\n";
-    echo "emita NO tienen validez fiscal. Para facturar de verdad contrate un\n";
-    echo "certificador autorizado por SAT y configurelo en config/config.php.\n";
-}
-
-echo "\nAbra la aplicacion apuntando su dominio a la carpeta public/.\n";
+echo "Abra la aplicacion apuntando su dominio a la carpeta public/.\n";
+echo "Ingrese como administrador de la plataforma y de alta a sus clientes\n";
+echo "desde la pantalla Empresas.\n\n";
+echo "ATENCION: mientras una empresa use el certificador SIMULADO, los\n";
+echo "documentos que emita NO tienen validez fiscal.\n";
 
 function leer(string $mensaje, string $porDefecto): string
 {

@@ -19,6 +19,39 @@ use Fel\Core\Logger;
  */
 final class InfileCertificador implements CertificadorInterface
 {
+    /**
+     * @param array<string,mixed> $config Credenciales y URL de esta empresa.
+     *                                    Si viene vacio se leen de config/config.php
+     *                                    (instalacion de un solo emisor).
+     */
+    public function __construct(private array $config = [])
+    {
+    }
+
+    /** Lee un ajuste de la empresa, o del config global si no lo trae. */
+    private function ajuste(string $clave, mixed $porDefecto = null): mixed
+    {
+        if (array_key_exists($clave, $this->config) && $this->config[$clave] !== '') {
+            return $this->config[$clave];
+        }
+
+        return Config::get('certificador.infile.' . $clave, $porDefecto);
+    }
+
+    private function ajusteRequerido(string $clave): string
+    {
+        $valor = $this->ajuste($clave);
+
+        if ($valor === null || $valor === '') {
+            throw new \RuntimeException(
+                "Falta la credencial '{$clave}' del certificador INFILE. "
+                . 'Complete los datos del certificador de la empresa.'
+            );
+        }
+
+        return (string) $valor;
+    }
+
     public function nombre(): string
     {
         return 'infile';
@@ -26,13 +59,13 @@ final class InfileCertificador implements CertificadorInterface
 
     public function firmar(string $xml, bool $esAnulacion = false): string
     {
-        $url = (string) Config::requerido('certificador.infile.url_firma');
+        $url = $this->ajusteRequerido('url_firma');
 
         $peticion = [
-            'llave'        => (string) Config::requerido('certificador.infile.llave_firma'),
+            'llave'        => $this->ajusteRequerido('llave_firma'),
             'archivo'      => base64_encode($xml),
-            'codigo'       => (string) Config::get('certificador.infile.codigo_firma', 'DTE'),
-            'alias'        => (string) Config::requerido('certificador.infile.alias_firma'),
+            'codigo'       => (string) $this->ajuste('codigo_firma', 'DTE'),
+            'alias'        => $this->ajusteRequerido('alias_firma'),
             'es_anulacion' => $esAnulacion ? 'S' : 'N',
         ];
 
@@ -69,7 +102,7 @@ final class InfileCertificador implements CertificadorInterface
     public function certificar(string $xmlFirmado, string $identificadorInterno): Resultado
     {
         return $this->enviar(
-            (string) Config::requerido('certificador.infile.url_certificacion'),
+            $this->ajusteRequerido('url_certificacion'),
             $xmlFirmado,
             $identificadorInterno
         );
@@ -77,11 +110,10 @@ final class InfileCertificador implements CertificadorInterface
 
     public function anular(string $xmlAnulacionFirmado, string $identificadorInterno): Resultado
     {
+        $url = (string) $this->ajuste('url_anulacion', '');
+
         return $this->enviar(
-            (string) Config::get(
-                'certificador.infile.url_anulacion',
-                (string) Config::requerido('certificador.infile.url_certificacion')
-            ),
+            $url !== '' ? $url : $this->ajusteRequerido('url_certificacion'),
             $xmlAnulacionFirmado,
             $identificadorInterno
         );
@@ -90,17 +122,14 @@ final class InfileCertificador implements CertificadorInterface
     private function enviar(string $url, string $xml, string $identificador): Resultado
     {
         /** @var array<string,string> $mapa */
-        $mapa = (array) Config::get('certificador.infile.cabeceras', [
-            'usuario'       => 'UsuarioApi',
-            'llave'         => 'LlaveApi',
-            'identificador' => 'Identificador',
-        ]);
+        $mapa = (array) $this->ajuste('cabeceras', []);
+        $mapa += ['usuario' => 'UsuarioApi', 'llave' => 'LlaveApi', 'identificador' => 'Identificador'];
 
         $cabeceras = [
-            'Content-Type'          => 'application/xml; charset=utf-8',
-            $mapa['usuario']        => (string) Config::requerido('certificador.infile.usuario_api'),
-            $mapa['llave']          => (string) Config::requerido('certificador.infile.llave_api'),
-            $mapa['identificador']  => $identificador,
+            'Content-Type'         => 'application/xml; charset=utf-8',
+            $mapa['usuario']       => $this->ajusteRequerido('usuario_api'),
+            $mapa['llave']         => $this->ajusteRequerido('llave_api'),
+            $mapa['identificador'] => $identificador,
         ];
 
         $respuesta = HttpClient::post($url, $xml, $cabeceras);

@@ -37,11 +37,18 @@ autorización**. Desde ahí puede imprimirlo, guardarlo como PDF o descargar el 
 
 Desde el detalle del documento:
 
-- **Representación gráfica** → la abre en el navegador.
+- **Hoja carta** → la factura completa, para correo o para archivar.
+- **Ticket 80 mm** → formato de rollo para impresora térmica de punto de venta.
 - **Imprimir / PDF** → abre el diálogo de impresión. En *Destino* elija
   "Guardar como PDF" para mandarlo por correo o WhatsApp.
 - **Descargar XML** → el XML certificado. Algunos clientes (sobre todo empresas
   grandes) lo piden para su contabilidad.
+
+Los dos formatos llevan el **código QR** con el número de autorización: el
+cliente lo escanea con el celular y verifica el documento.
+
+El formato que sale por omisión se define por empresa en sus ajustes; los dos
+enlaces están siempre disponibles.
 
 El correo del receptor viaja dentro del XML. La mayoría de certificadores envían
 el DTE por correo automáticamente — confirme con el suyo si lo hace, para no

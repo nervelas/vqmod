@@ -1,14 +1,25 @@
 <?php
-/** @var array<string,mixed> $resumen @var list<array<string,mixed>> $recientes
- *  @var list<array<string,mixed>> $pendientes @var string $certificador
- *  @var string $ambiente @var string $desde @var string $hasta */
+/** @var \Fel\Plataforma\Empresa $empresa @var array<string,mixed> $resumen
+ *  @var list<array<string,mixed>> $recientes @var list<array<string,mixed>> $pendientes
+ *  @var list<string> $problemas @var string $desde @var string $hasta */
 use Fel\Web\Sesion;
 use Fel\Web\Vista;
 ?>
 <div class="encabezado-pagina">
-  <h1>Panel</h1>
+  <h1><?= Vista::e($empresa->nombreComercial()) ?></h1>
   <a class="boton" href="index.php?r=nuevo">Emitir documento</a>
 </div>
+
+<?php if ($problemas !== []): ?>
+  <div class="mensaje error">
+    <strong>Esta empresa todavía no puede emitir documentos válidos:</strong>
+    <ul style="margin:6px 0 0 18px">
+      <?php foreach ($problemas as $problema): ?>
+        <li><?= Vista::e($problema) ?></li>
+      <?php endforeach; ?>
+    </ul>
+  </div>
+<?php endif; ?>
 
 <div class="rejilla k4" style="margin-bottom:18px">
   <div class="indicador">

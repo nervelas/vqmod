@@ -11,6 +11,13 @@ use Fel\Core\Db;
  */
 final class BitacoraRepositorio
 {
+    public function __construct(private int $empresaId)
+    {
+        if ($empresaId <= 0) {
+            throw new \InvalidArgumentException('La bitacora requiere una empresa valida.');
+        }
+    }
+
     public function registrar(
         ?int $documentoId,
         string $operacion,
@@ -19,11 +26,12 @@ final class BitacoraRepositorio
         string $respuesta = '',
     ): void {
         $sentencia = Db::conexion()->prepare(
-            'INSERT INTO fel_bitacora (documento_id, operacion, exito, mensaje, respuesta, creado_en)
-             VALUES (:documento_id, :operacion, :exito, :mensaje, :respuesta, :creado_en)'
+            'INSERT INTO fel_bitacora (empresa_id, documento_id, operacion, exito, mensaje, respuesta, creado_en)
+             VALUES (:empresa_id, :documento_id, :operacion, :exito, :mensaje, :respuesta, :creado_en)'
         );
 
         $sentencia->execute([
+            'empresa_id'   => $this->empresaId,
             'documento_id' => $documentoId,
             'operacion'    => $operacion,
             'exito'        => $exito ? 1 : 0,
@@ -37,9 +45,11 @@ final class BitacoraRepositorio
     public function porDocumento(int $documentoId): array
     {
         $sentencia = Db::conexion()->prepare(
-            'SELECT * FROM fel_bitacora WHERE documento_id = :id ORDER BY id DESC'
+            'SELECT * FROM fel_bitacora
+             WHERE documento_id = :id AND empresa_id = :empresa
+             ORDER BY id DESC'
         );
-        $sentencia->execute(['id' => $documentoId]);
+        $sentencia->execute(['id' => $documentoId, 'empresa' => $this->empresaId]);
 
         return $sentencia->fetchAll();
     }

@@ -74,21 +74,13 @@ Copie el archivo de ejemplo y edítelo con el Administrador de archivos:
 config/config.example.php  →  config/config.php
 ```
 
-Complete como mínimo:
+Este archivo solo lleva la configuración de **la instalación**. Los datos de
+cada empresa emisora (NIT, razón social, credenciales del certificador) se
+cargan después desde la pantalla **Empresas** y se guardan cifrados en la base.
+
+Complete como mínimo dos cosas:
 
 ```php
-'emisor' => [
-    'nit'                    => '12345679',      // su NIT, sin guion
-    'nombre'                 => 'MI EMPRESA, SOCIEDAD ANONIMA',
-    'nombre_comercial'       => 'MI EMPRESA',
-    'afiliacion_iva'         => 'GEN',           // GEN, PEQ, PEE, AGR, AGE, EXE
-    'codigo_establecimiento' => '1',             // el que le asignó SAT
-    'correo'                 => 'facturacion@miempresa.gt',
-    'direccion'              => '5a. Avenida 10-50 zona 1',
-    'municipio'              => 'Guatemala',
-    'departamento'           => 'Guatemala',
-],
-
 'db' => [
     'driver'  => 'mysql',
     'host'    => 'localhost',
@@ -96,22 +88,25 @@ Complete como mínimo:
     'usuario' => 'suusuario_felapp',
     'clave'   => 'la-contrasena-del-paso-1',
 ],
+
+'app' => [
+    'nombre'           => 'Facturación FEL',
+    'clave_aplicacion' => 'PEGUE-AQUI-LA-CLAVE-GENERADA',
+],
 ```
 
-> Los datos del emisor deben coincidir **exactamente** con su RTU en la Agencia
-> Virtual de SAT. Una coma o una tilde de diferencia hace que el certificador
-> rechace el documento.
-
-Deje `'certificador' => ['proveedor' => 'simulador']` por ahora. En el paso 7
-lo cambia por el real.
-
-Genere también una clave para la aplicación:
+Genere la clave de aplicación con:
 
 ```bash
 php -r "echo bin2hex(random_bytes(32));"
 ```
 
-y péguela en `'app' => ['clave_aplicacion' => '...']`.
+> **Guarde esa clave.** Con ella se cifran las credenciales de certificador de
+> todas sus empresas. Si la pierde, hay que volver a capturarlas una por una.
+> Respáldela junto con la base de datos.
+
+Si quiere que el instalador cree ya la primera empresa, llene también la sección
+`'emisor'`. Si prefiere darlas de alta desde la pantalla, déjela vacía.
 
 ## Paso 5 — Instalar las tablas
 
@@ -128,11 +123,11 @@ Le pedirá usuario, nombre y contraseña del administrador.
 
 1. cPanel → **phpMyAdmin** → seleccione su base de datos
 2. Pestaña **Importar** → suba `db/schema.sql` → *Continuar*
-3. Para crear el usuario administrador, ejecute en la pestaña **SQL**:
+3. Para crear el administrador de la plataforma, ejecute en la pestaña **SQL**:
 
 ```sql
-INSERT INTO fel_usuarios (usuario, clave_hash, nombre, rol, activo, creado_en)
-VALUES ('admin', 'PEGUE_AQUI_EL_HASH', 'Administrador', 'admin', 1, NOW());
+INSERT INTO fel_usuarios (empresa_id, usuario, clave_hash, nombre, rol, activo, creado_en)
+VALUES (NULL, 'admin', 'PEGUE_AQUI_EL_HASH', 'Administrador', 'superadmin', 1, NOW());
 ```
 
 El hash lo obtiene con **cPanel → Trabajos Cron** ejecutando una sola vez:
@@ -157,13 +152,24 @@ Desde el Administrador de archivos: clic derecho sobre `storage` → *Permisos*
 Verifique que `config/` y `storage/` **no** sean accesibles desde el navegador.
 Si abre `https://sudominio.gt/config/config.php` debe dar error 403.
 
-## Paso 7 — Conectar el certificador
+## Paso 7 — Dar de alta las empresas y su certificador
 
-Vea **[03 — Conectar su certificador](03-certificadores.md)**.
+Ingrese como administrador de la plataforma y vaya a **Empresas → Agregar
+empresa**. Ahí carga, por cada cliente:
 
-Hasta que no haga este paso, el sistema emite con el **simulador** y los
-documentos **no tienen validez fiscal** (el sistema se lo advierte con una
-cinta amarilla en cada pantalla).
+- Los datos del emisor, **idénticos a su RTU**.
+- Las credenciales de su certificador (se guardan cifradas).
+- El formato de impresión: hoja carta o ticket de 80 mm.
+- El color de marca y el logo.
+- El primer usuario de esa empresa.
+
+Detalle de la contratación y las credenciales:
+**[03 — Conectar el certificador](03-certificadores.md)**.
+Cómo ofrecerlo a sus clientes: **[06 — Vender el servicio](06-vender-el-servicio.md)**.
+
+Mientras una empresa siga con el certificador **simulador**, sus documentos
+**no tienen validez fiscal**, y el sistema lo advierte con una cinta amarilla
+en cada pantalla.
 
 ## Paso 8 — Programar el cron de contingencia
 
@@ -186,16 +192,29 @@ se cayó el internet o el certificador. **No lo omita.**
 
 ```bash
 cd ~/fel
-php tests/run.php          # deben pasar las 95 pruebas
-php bin/emitir_ejemplo.php # emite un documento de prueba
+php tests/run.php          # deben pasar las 138 pruebas
 ```
 
-Luego entre a `https://facturacion.suempresa.gt`, ingrese con el usuario
-administrador y emita una factura de prueba. Revise que:
+Luego entre a `https://facturacion.suempresa.gt`, ingrese como administrador de
+la plataforma, entre a una empresa y emita una factura de prueba. Revise que:
 
 - La representación gráfica muestra el número de autorización.
+- El código QR se lee con el celular.
+- El ticket de 80 mm sale bien si va a usar impresora térmica.
 - El XML se descarga bien.
 - El documento aparece en el listado como `CERTIFICADO`.
+
+## Actualizar desde la versión de un solo emisor
+
+Si ya tenía el sistema funcionando con un único emisor:
+
+1. **Respalde la base de datos** (cPanel → *Copias de seguridad*).
+2. Importe `db/migracion-002-multiempresa.sql` desde phpMyAdmin.
+3. Ejecute `php bin/migrar_multiempresa.php`.
+
+El script crea la empresa a partir de `config.php` y le asigna todos los
+documentos, clientes y productos existentes. Su usuario administrador pasa a
+ser administrador de la plataforma.
 
 ## Problemas frecuentes
 

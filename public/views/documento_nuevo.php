@@ -3,12 +3,14 @@
  *  @var array<string,string> $unidades @var array<string,string> $monedas
  *  @var list<array<string,mixed>> $clientes @var list<array<string,mixed>> $productos
  *  @var array<string,array{tipo:int,escenario:int,texto:string}> $frases
- *  @var array<string,mixed> $emisor */
+ *  @var \Fel\Plataforma\Empresa $empresa */
 use Fel\Dte\Frase;
 use Fel\Web\Vista;
 
+$afiliacion = (string) $empresa->valor('afiliacion_iva', 'GEN');
+
 $frasesSugeridas = [];
-foreach (Frase::sugeridasPara((string) ($emisor['afiliacion_iva'] ?? 'GEN')) as $sugerida) {
+foreach (Frase::sugeridasPara($afiliacion) as $sugerida) {
     foreach ($frases as $clave => $definicion) {
         if ($definicion['tipo'] === $sugerida->tipo && $definicion['escenario'] === $sugerida->escenario) {
             $frasesSugeridas[] = $clave;
@@ -157,7 +159,7 @@ foreach (Frase::sugeridasPara((string) ($emisor['afiliacion_iva'] ?? 'GEN')) as 
 <fieldset>
   <legend>Frases obligatorias</legend>
   <p style="font-size:12.5px;color:#5b6875;margin-top:0">
-    Se marcan las que corresponden a su régimen (<?= Vista::e($emisor['afiliacion_iva'] ?? 'GEN') ?>).
+    Se marcan las que corresponden a su régimen (<?= Vista::e($afiliacion) ?>).
     Consulte con su contador si su actividad exige alguna adicional.
   </p>
   <?php foreach ($frases as $clave => $frase): ?>

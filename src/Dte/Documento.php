@@ -25,6 +25,12 @@ final class Documento
     /** @var list<array{fecha:string,monto:float,numero:int}> Abonos de factura cambiaria. */
     public array $abonos = [];
 
+    /**
+     * Monto desde el que se avisa al facturar a Consumidor Final. Lo fija la
+     * empresa emisora; si es null se toma el valor global de configuracion.
+     */
+    public ?float $limiteConsumidorFinal = null;
+
     public function __construct(
         public string $tipo,
         public Emisor $emisor,
@@ -106,7 +112,8 @@ final class Documento
         }
 
         if ($this->receptor->esConsumidorFinal()) {
-            $limite = (float) \Fel\Core\Config::get('reglas.limite_consumidor_final', 2500.0);
+            $limite = $this->limiteConsumidorFinal
+                ?? (float) \Fel\Core\Config::get('reglas.limite_consumidor_final', 2500.0);
             $total  = Calculator::granTotal($this);
             if ($limite > 0 && $total > $limite && $this->moneda === 'GTQ') {
                 $errores[] = sprintf(

@@ -3,7 +3,7 @@
  * Emite un documento de ejemplo para comprobar que toda la cadena funciona:
  * validacion -> XML -> firma -> certificacion -> guardado.
  *
- *   php bin/emitir_ejemplo.php
+ *   php bin/emitir_ejemplo.php [empresa_id]
  *
  * Con el certificador 'simulador' no gasta folios ni toca la red.
  */
@@ -13,10 +13,10 @@ require dirname(__DIR__) . '/src/autoload.php';
 
 use Fel\Core\Config;
 use Fel\Dte\Documento;
-use Fel\Dte\Emisor;
 use Fel\Dte\Item;
 use Fel\Dte\Receptor;
 use Fel\Repositorio\DocumentoRepositorio;
+use Fel\Repositorio\EmpresaRepositorio;
 use Fel\Servicio\FacturacionService;
 
 if (PHP_SAPI !== 'cli') {
@@ -26,12 +26,29 @@ if (PHP_SAPI !== 'cli') {
 Config::cargar();
 date_default_timezone_set((string) Config::get('zona_horaria', 'America/Guatemala'));
 
-$proveedor = (string) Config::get('certificador.proveedor', 'simulador');
+$empresas = new EmpresaRepositorio();
+$listado  = $empresas->listar();
 
-echo "Certificador: {$proveedor}\n";
+if ($listado === []) {
+    exit("No hay empresas registradas. Cree una desde la pantalla Empresas.\n");
+}
 
-if ($proveedor !== 'simulador') {
-    echo "\nATENCION: va a emitir un documento REAL ante SAT con el certificador '{$proveedor}'.\n";
+$empresaId = isset($argv[1]) ? (int) $argv[1] : $listado[0]->id();
+$empresa   = $empresas->buscar($empresaId);
+
+if ($empresa === null) {
+    echo "No existe la empresa {$empresaId}. Empresas disponibles:\n";
+    foreach ($listado as $registro) {
+        printf("  %d  %s (NIT %s)\n", $registro->id(), $registro->nombreInterno(), $registro->nit());
+    }
+    exit(1);
+}
+
+printf("Empresa      : %s (NIT %s)\n", $empresa->nombreInterno(), $empresa->nit());
+printf("Certificador : %s (%s)\n", $empresa->proveedorCertificador(), $empresa->ambiente());
+
+if (!$empresa->esSimulador()) {
+    echo "\nATENCION: va a emitir un documento REAL ante SAT.\n";
     echo "Escriba EMITIR para continuar: ";
 
     if (trim((string) fgets(STDIN)) !== 'EMITIR') {
@@ -41,7 +58,7 @@ if ($proveedor !== 'simulador') {
 
 $documento = new Documento(
     tipo: 'FACT',
-    emisor: Emisor::desdeArray((array) Config::get('emisor', [])),
+    emisor: $empresa->emisor(),
     receptor: Receptor::consumidorFinal('Consumidor Final'),
 );
 
@@ -55,7 +72,7 @@ $documento->agregarItem(new Item(
 
 $documento->referenciaInterna = 'EJEMPLO-' . date('YmdHis');
 
-$resultado = (new FacturacionService())->emitir($documento, 'cli');
+$resultado = (new FacturacionService($empresa))->emitir($documento, 'cli');
 
 if (!$resultado->exito) {
     echo "\nNo se pudo emitir:\n";
@@ -66,11 +83,11 @@ if (!$resultado->exito) {
     exit(1);
 }
 
-$fila = (new DocumentoRepositorio())->buscar((int) $resultado->documentoId);
+$fila = (new DocumentoRepositorio($empresa->id()))->buscar((int) $resultado->documentoId);
 
 echo "\nDocumento emitido correctamente.\n";
-printf("  Id interno        : %d\n", (int) $resultado->documentoId);
+printf("  Id interno         : %d\n", (int) $resultado->documentoId);
 printf("  Numero autorizacion: %s\n", $resultado->uuid());
-printf("  Serie / Numero    : %s / %s\n", $fila['serie'], $fila['numero']);
-printf("  Gran total        : Q%s\n", number_format((float) $fila['gran_total'], 2));
-printf("  Estado            : %s\n", $fila['estado']);
+printf("  Serie / Numero     : %s / %s\n", $fila['serie'], $fila['numero']);
+printf("  Gran total         : Q%s\n", number_format((float) $fila['gran_total'], 2));
+printf("  Estado             : %s\n", $fila['estado']);

@@ -1,21 +1,26 @@
 <?php
 /** @var string $contenido @var string $titulo @var list<array{tipo:string,texto:string}> $mensajes */
 use Fel\Core\Config;
+use Fel\Web\Contexto;
 use Fel\Web\Sesion;
 use Fel\Web\Vista;
 
 $rutaActual = (string) ($_GET['r'] ?? 'panel');
-$ambiente   = (string) Config::get('ambiente', 'pruebas');
-$proveedor  = (string) Config::get('certificador.proveedor', 'simulador');
+$empresa    = Contexto::empresa();
 
-$menu = [
-    'panel'      => 'Panel',
-    'nuevo'      => 'Nuevo documento',
-    'documentos' => 'Documentos',
-    'clientes'   => 'Clientes',
-    'productos'  => 'Productos',
-    'ajustes'    => 'Ajustes',
-];
+$menu = [];
+if ($empresa !== null) {
+    $menu = [
+        'panel'      => 'Panel',
+        'nuevo'      => 'Nuevo documento',
+        'documentos' => 'Documentos',
+        'clientes'   => 'Clientes',
+        'productos'  => 'Productos',
+        'ajustes'    => 'Ajustes',
+    ];
+}
+
+$menuPlataforma = Sesion::esSuperadmin() ? ['empresas' => 'Empresas', 'usuarios' => 'Usuarios'] : [];
 ?>
 <!doctype html>
 <html lang="es">
@@ -33,8 +38,17 @@ $menu = [
     <?php foreach ($menu as $ruta => $etiqueta): ?>
       <a href="index.php?r=<?= $ruta ?>" class="<?= $rutaActual === $ruta ? 'activo' : '' ?>"><?= Vista::e($etiqueta) ?></a>
     <?php endforeach; ?>
+    <?php if ($menuPlataforma !== []): ?>
+      <span class="separador"></span>
+      <?php foreach ($menuPlataforma as $ruta => $etiqueta): ?>
+        <a href="index.php?r=<?= $ruta ?>" class="plataforma <?= $rutaActual === $ruta ? 'activo' : '' ?>"><?= Vista::e($etiqueta) ?></a>
+      <?php endforeach; ?>
+    <?php endif; ?>
   </nav>
   <div class="usuario">
+    <?php if ($empresa !== null): ?>
+      <span class="empresa" title="Empresa sobre la que está trabajando"><?= Vista::e($empresa->nombreComercial()) ?></span>
+    <?php endif; ?>
     <span><?= Vista::e(Sesion::usuario()['nombre'] ?? '') ?></span>
     <a href="index.php?r=salir">Salir</a>
   </div>
@@ -42,10 +56,10 @@ $menu = [
 
 <main class="contenedor">
 
-  <?php if ($ambiente !== 'produccion' || $proveedor === 'simulador'): ?>
+  <?php if ($empresa !== null && ($empresa->esSimulador() || $empresa->ambiente() !== 'produccion')): ?>
     <div class="cinta">
       <strong>Ambiente de pruebas.</strong>
-      Certificador: <?= Vista::e($proveedor) ?>.
+      Certificador: <?= Vista::e($empresa->proveedorCertificador()) ?>.
       Los documentos emitidos aquí <strong>no tienen validez fiscal</strong>.
     </div>
   <?php endif; ?>

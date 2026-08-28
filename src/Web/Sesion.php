@@ -61,11 +61,15 @@ final class Sesion
         session_regenerate_id(true);
 
         $_SESSION['usuario'] = [
-            'id'      => (int) $fila['id'],
-            'usuario' => (string) $fila['usuario'],
-            'nombre'  => (string) $fila['nombre'],
-            'rol'     => (string) $fila['rol'],
+            'id'         => (int) $fila['id'],
+            'usuario'    => (string) $fila['usuario'],
+            'nombre'     => (string) $fila['nombre'],
+            'rol'        => (string) $fila['rol'],
+            'empresa_id' => $fila['empresa_id'] === null ? null : (int) $fila['empresa_id'],
         ];
+
+        // El superadministrador elige empresa; los demas quedan fijos en la suya.
+        $_SESSION['empresa_activa'] = $_SESSION['usuario']['empresa_id'];
 
         return true;
     }
@@ -91,7 +95,36 @@ final class Sesion
 
     public static function esAdmin(): bool
     {
-        return (self::usuario()['rol'] ?? '') === 'admin';
+        return in_array(self::usuario()['rol'] ?? '', ['admin', 'superadmin'], true);
+    }
+
+    /** Administrador de la plataforma: ve y gestiona todas las empresas. */
+    public static function esSuperadmin(): bool
+    {
+        return (self::usuario()['rol'] ?? '') === 'superadmin';
+    }
+
+    /** Empresa sobre la que esta trabajando la sesion. */
+    public static function empresaActiva(): ?int
+    {
+        $empresa = $_SESSION['empresa_activa'] ?? null;
+
+        return $empresa === null ? null : (int) $empresa;
+    }
+
+    /**
+     * Cambia la empresa activa. Solo el superadministrador puede moverse entre
+     * empresas; a los demas se les ignora el cambio y quedan en la suya.
+     */
+    public static function usarEmpresa(?int $empresaId): void
+    {
+        if (!self::esSuperadmin()) {
+            $_SESSION['empresa_activa'] = self::usuario()['empresa_id'] ?? null;
+
+            return;
+        }
+
+        $_SESSION['empresa_activa'] = $empresaId;
     }
 
     public static function tokenCsrf(): string

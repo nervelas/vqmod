@@ -16,6 +16,7 @@ $r->get('/reglamento',             'PublicoControlador@reglamento');
 $r->cualquiera('/verificar',       'PublicoControlador@buscarVerificacion');
 $r->get('/verificar/{hash}',       'PublicoControlador@verificar');
 $r->get('/verificar/solvencia/{casa:\d+}/{codigo}', 'PublicoControlador@verificarSolvencia');
+$r->get('/instalar',              'PwaControlador@instalar');
 $r->get('/manifest.json',          'PwaControlador@manifest');
 $r->get('/sitemap.xml',            'PublicoControlador@sitemap');
 $r->get('/robots.txt',             'PublicoControlador@robots');

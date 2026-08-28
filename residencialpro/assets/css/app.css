@@ -1943,3 +1943,54 @@ picture { display: block; }
 /* En modo oscuro el distintivo de teja necesita su tono claro para separarse
    del fondo; el tono medio solo funciona sobre papel. */
 [data-modo="oscuro"] .chip.oro { color: var(--arcilla-3); }
+
+/* --- Página para instalar en el teléfono ---------------------------------- */
+.instalar-cab {
+  background: var(--petroleo-4); color: #fff;
+  padding: calc(96px + 6vw) 0 clamp(48px, 7vw, 82px);
+  text-align: center;
+}
+.instalar-cab .eyebrow-inst {
+  font-family: "IBM Plex Mono", monospace; font-size: .7rem; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--arcilla-3, #E8A87C); margin: 0 0 12px;
+}
+.instalar-cab h1 {
+  font-family: "Fraunces", serif; font-weight: 600;
+  font-size: clamp(2rem, 6vw, 3.1rem); line-height: 1.08; margin: 0 0 16px;
+  /* La regla general de los títulos los pinta oscuros: aquí el fondo también
+     lo es y el título quedaba ilegible. */
+  color: #fff;
+}
+.instalar-cab .bajada-inst {
+  max-width: 54ch; margin: 0 auto 26px; font-size: 1.02rem; line-height: 1.65;
+  color: rgba(255, 255, 255, .84);
+}
+.instalar-cab .btn { margin: 0 6px 10px; }
+
+.inst-rejilla {
+  display: grid; gap: clamp(26px, 4vw, 48px);
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+  align-items: start;
+}
+.inst-qr { text-align: center; }
+.qr-marco {
+  display: inline-block; padding: 18px; background: #fff;
+  border: 1px solid var(--linea); border-radius: var(--r-md); box-shadow: var(--s-2);
+}
+.qr-marco svg { display: block; width: min(240px, 62vw); height: auto; }
+.qr-pie { margin: 14px 0 4px; color: var(--texto-2); font-size: .92rem; }
+.qr-url {
+  font-family: "IBM Plex Mono", monospace; font-size: .82rem;
+  color: var(--texto-3); word-break: break-all; margin: 0;
+}
+
+.paso-grupo { margin-bottom: 26px; }
+.paso-grupo h2 {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 1.06rem; margin: 0 0 10px; color: var(--marca, #0E4C5A);
+}
+.paso-grupo.destacado {
+  border-left: 3px solid var(--arcilla); padding-left: 16px;
+}
+ol.pasos-inst { margin: 0; padding-left: 20px; }
+ol.pasos-inst li { padding: 4px 0; line-height: 1.55; }

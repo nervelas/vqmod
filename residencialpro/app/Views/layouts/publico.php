@@ -71,6 +71,7 @@ $iniciales = mb_strtoupper(mb_substr(preg_replace('/^(Residencial|Condominio)\s+
         <h3>Residentes</h3>
         <ul class="lista-limpia">
           <li><a href="<?= e(url('/acceso')) ?>">Portal del residente</a></li>
+          <li><a href="<?= e(url('/instalar')) ?>">Instalar en el teléfono</a></li>
           <li><a href="<?= e(url('/verificar')) ?>">Verificar un recibo</a></li>
           <li><a href="<?= e(url('/reglamento')) ?>">Reglamento interno</a></li>
           <li><a href="<?= e(url('/contacto')) ?>">Escribir a la administración</a></li>

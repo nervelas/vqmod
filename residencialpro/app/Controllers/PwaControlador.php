@@ -6,9 +6,25 @@ namespace App\Controllers;
 use App\Core\Ajustes;
 use App\Core\Controlador;
 use App\Core\Url;
+use Vendor\Qr\QrCode;
 
 final class PwaControlador extends Controlador
 {
+    /**
+     * Página para repartir a los vecinos: cómo dejar el sistema instalado en
+     * el teléfono. No hay APK ni tienda de aplicaciones —es una aplicación
+     * web instalable—, así que el enlace a compartir es esta página.
+     */
+    public function instalar(): void
+    {
+        $this->mostrar('publico/instalar', [
+            'tituloPagina' => 'Instalar en el teléfono',
+            'descripcion'  => 'Instale ' . Ajustes::get('nombre', 'el portal') . ' en su teléfono y entre con un toque.',
+            'enlace'       => Url::absoluta('/acceso'),
+            'qr'           => QrCode::svg(Url::absoluta('/acceso'), 6, 2, 'M', Ajustes::get('color_primario', '#0E4C5A')),
+        ], 'publico');
+    }
+
     /** Manifiesto de la aplicación instalable. */
     public function manifest(): void
     {

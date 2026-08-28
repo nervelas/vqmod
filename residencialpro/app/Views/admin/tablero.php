@@ -43,7 +43,7 @@ $gVisitas = [
 ];
 ?>
 
-<?php if ($kpi['comprobantes'] > 0): ?>
+<?php if ($kpi['comprobantes'] > 0 && esRol('admin', 'contabilidad')): ?>
   <div class="aviso-caja alerta mb-3">
     <?= ico('archivo', 20) ?>
     <div class="crecer">
@@ -232,7 +232,7 @@ $gVisitas = [
             <li class="item-lista">
               <span class="chip <?= $i['prioridad'] === 'alta' ? 'grave' : ($i['prioridad'] === 'media' ? 'aviso' : 'neutro') ?>"><?= e(ucfirst((string) $i['prioridad'])) ?></span>
               <div class="crecer">
-                <b><a href="<?= e(url('/admin/incidencias/' . (int) $i['id'])) ?>"><?= e(recortar((string) $i['titulo'], 44)) ?></a></b>
+                <b><?php if (esRol('admin', 'junta')): ?><a href="<?= e(url('/admin/incidencias/' . (int) $i['id'])) ?>"><?= e(recortar((string) $i['titulo'], 44)) ?></a><?php else: ?><?= e(recortar((string) $i['titulo'], 44)) ?><?php endif; ?></b>
                 <div class="meta"><?= e($i['casa'] ?? 'Área común') ?> · <?= e(hace((string) $i['creado_en'])) ?></div>
               </div>
             </li>

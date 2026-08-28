@@ -31,14 +31,7 @@ $modo = ($u['modo_oscuro'] ?? 0) ? 'oscuro' : 'claro';
 
 <nav class="nav-movil" aria-label="Menú rápido">
   <?php
-  $rapido = [
-      ['url' => '/admin',            'texto' => 'Tablero',  'icono' => 'panel', 'exacto' => true],
-      ['url' => '/admin/morosidad',  'texto' => 'Cobros',   'icono' => 'billetera'],
-      ['url' => '/admin/comprobantes', 'texto' => 'Revisar', 'icono' => 'archivo'],
-      ['url' => '/admin/visitas',    'texto' => 'Visitas',  'icono' => 'puerta'],
-      ['url' => '/admin/avisos',     'texto' => 'Avisos',   'icono' => 'megafono'],
-  ];
-  foreach ($rapido as $item): ?>
+  foreach (Menu::rapido() as $item): ?>
     <a href="<?= e(url($item['url'])) ?>" class="<?= Menu::esActivo($item) ? 'is-activo' : '' ?>">
       <?= ico($item['icono'], 21) ?><span><?= e($item['texto']) ?></span>
     </a>

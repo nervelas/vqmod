@@ -53,7 +53,7 @@ $iniciales = mb_strtoupper(mb_substr(preg_replace('/^(Residencial|Condominio)\s+
 <footer class="web-pie">
   <div class="contenedor">
     <div class="pie-rejilla">
-      <div style="grid-column:span 2;min-width:0">
+      <div class="pie-ancho">
         <h3>El residencial</h3>
         <p style="font-size:.9375rem;line-height:1.7;max-width:46ch;color:color-mix(in srgb,#fff 70%,transparent)">
           <?= e(recortar(Ajustes::get('descripcion', ''), 230)) ?>

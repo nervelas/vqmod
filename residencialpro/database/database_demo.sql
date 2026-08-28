@@ -141,7 +141,8 @@ INSERT INTO usuarios (id, rol, nombre, usuario, correo, telefono, password_hash,
 (202, 'garita', 'Elder Rolando Pacay', 'garita2', 'garita2@residencial.gt', '55112244', '$2y$11$JNLa3v/MHHQkRWqEmgoSZuuCeBfNCguzsbUFUDLs0LC5.rQL4.9gq', 1, 'verde-oro', 1),
 (203, 'junta', 'Ing. Rodrigo Villagrán Solórzano', 'junta', 'junta@residencial.gt', '55998877', '$2y$11$CbBM5NQ9SrSLufkuKmuDZuAHQjSRUNkD9N10A1Llvr3Fjuir.JUua', 1, 'verde-oro', 1),
 (204, 'contabilidad', 'Licda. Sandra Godoy Recinos', 'contabilidad', 'contabilidad@residencial.gt', '55887766', '$2y$11$U.2HGHudEBZarCLAMr9PnumGkhflsxAqrUisuPzRnuRiKnTd658mS', 1, 'verde-oro', 1),
-(205, 'admin', 'Lic. Mario Estuardo Herrera', 'admin', 'admin@residencial.gt', '55112233', '$2y$11$VJ/fwc7tDEzqpdv7fJ6xf.Z/I4XgkSUzTpQHa/j6jT/TVA6mRCo/C', 1, 'verde-oro', 1);
+(205, 'admin', 'Lic. Mario Estuardo Herrera', 'admin', 'admin@residencial.gt', '55112233', '$2y$11$VJ/fwc7tDEzqpdv7fJ6xf.Z/I4XgkSUzTpQHa/j6jT/TVA6mRCo/C', 1, 'verde-oro', 1),
+(206, 'admin', 'Servicom', 'superadmin', 'info@servicom.gt', '55112233', '$2y$11$KvUkAkJxnn2rvEYqpXoZuuL.RhWCFXk4wSn6tPe5c/oX2tE7sUGeC', 1, 'verde-oro', 0);
 
 INSERT INTO residentes (id, casa_id, usuario_id, nombre, tipo, dpi, correo, telefono, whatsapp, fecha_inicio, activo) VALUES
 (1, 1, 101, 'Rodrigo De León Argueta', 'propietario', '1500000373331', 'casa1@residencial.gt', '50100137', '50100137', DATE_SUB(CURDATE(), INTERVAL 213 DAY), 1),

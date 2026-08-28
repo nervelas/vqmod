@@ -34,8 +34,10 @@ final class Menu
                 ['url' => '/admin/cuotas',    'texto' => 'Cuotas y conceptos', 'icono' => 'billetera'],
                 ['url' => '/admin/cargos',    'texto' => 'Cargos emitidos',    'icono' => 'recibo'],
                 ['url' => '/admin/pagos',     'texto' => 'Pagos',              'icono' => 'tarjeta'],
-                ['url' => '/admin/comprobantes', 'texto' => 'Comprobantes', 'icono' => 'archivo',
-                 'pastilla' => $contadores['comprobantes'], 'rojo' => true],
+                in_array($rol, ['admin', 'contabilidad'], true)
+                    ? ['url' => '/admin/comprobantes', 'texto' => 'Comprobantes', 'icono' => 'archivo',
+                       'pastilla' => $contadores['comprobantes'], 'rojo' => true]
+                    : null,
                 ['url' => '/admin/morosidad', 'texto' => 'Morosidad',          'icono' => 'alerta'],
                 ['url' => '/admin/egresos',   'texto' => 'Egresos',            'icono' => 'moneda'],
                 ['url' => '/admin/presupuesto', 'texto' => 'Presupuesto',      'icono' => 'barras'],
@@ -72,6 +74,45 @@ final class Menu
         }
 
         return $m;
+    }
+
+    /**
+     * Accesos rápidos de la barra inferior en el teléfono.
+     *
+     * Los roles de cada destino son los mismos que exige su controlador: si
+     * aquí se ensanchan, el usuario toca el icono y recibe un 403.
+     */
+    public static function rapido(): array
+    {
+        $rol = Auth::rol();
+        $candidatos = [
+            ['url' => '/admin',            'texto' => 'Tablero',  'icono' => 'panel', 'exacto' => true,
+             'roles' => ['admin', 'junta', 'contabilidad']],
+            ['url' => '/admin/morosidad',  'texto' => 'Cobros',   'icono' => 'billetera',
+             'roles' => ['admin', 'junta', 'contabilidad']],
+            ['url' => '/admin/comprobantes', 'texto' => 'Revisar', 'icono' => 'archivo',
+             'roles' => ['admin', 'contabilidad']],
+            ['url' => '/admin/visitas',    'texto' => 'Visitas',  'icono' => 'puerta',
+             'roles' => ['admin', 'junta']],
+            ['url' => '/admin/avisos',     'texto' => 'Avisos',   'icono' => 'megafono',
+             'roles' => ['admin', 'junta']],
+            ['url' => '/admin/cargos',     'texto' => 'Cargos',   'icono' => 'recibo',
+             'roles' => ['admin', 'junta', 'contabilidad']],
+            ['url' => '/admin/informes',   'texto' => 'Informes', 'icono' => 'grafica',
+             'roles' => ['admin', 'junta', 'contabilidad']],
+        ];
+        $items = [];
+        foreach ($candidatos as $item) {
+            if (!in_array($rol, $item['roles'], true)) {
+                continue;
+            }
+            unset($item['roles']);
+            $items[] = $item;
+            if (count($items) === 5) {
+                break;
+            }
+        }
+        return $items;
     }
 
     public static function portal(): array

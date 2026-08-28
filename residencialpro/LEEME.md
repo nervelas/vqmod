@@ -82,7 +82,37 @@ Solo si cargó los datos de demostración. **Cámbielas o elimine esas cuentas a
 - El pie del sitio público lleva un pequeño crédito enlazado a deerflow.tech.
   Si no lo quiere, bórrelo de `app/Views/layouts/publico.php` (busque `class="firma"`).
 
-## 8. Notas
+## 8. Si no puede entrar
+
+El paquete incluye `diagnostico.php` en la raíz. Ábralo así:
+
+```
+https://SUDOMINIO/diagnostico.php?token=EL_TOKEN_DEL_CRON
+```
+
+El token está en `config/config.php`, en la línea `'cron' => ['token' => '...']`.
+La página le dice qué cuentas existen realmente en su base, si el acceso está
+bloqueado por intentos fallidos y cuáles fueron los últimos errores. Además
+permite **levantar el bloqueo** y **poner una contraseña nueva** a cualquier
+usuario, con lo que entra de inmediato.
+
+**Borre `diagnostico.php` del servidor en cuanto termine**: permite cambiar
+contraseñas y no tiene por qué quedarse ahí.
+
+## 9. Actualizar una instalación que ya está funcionando
+
+Suba el ZIP a la misma carpeta y descomprímalo sobrescribiendo. Es seguro:
+
+- **No toca** `config/config.php` (no viene en el paquete), así que conserva la
+  conexión a la base, la llave de la aplicación y el token del cron.
+- **No toca** la base de datos ni lo que haya en `uploads/`.
+- Reemplaza únicamente el código, los estilos, las imágenes del sitio y las
+  librerías.
+
+Después de descomprimir, recargue con **Ctrl + F5** para que el navegador tome
+los estilos nuevos.
+
+## 10. Notas
 
 - Las librerías de PDF, correo SMTP, Excel, códigos QR y gráficas son propias y van
   incluidas en `vendor/` y `assets/vendor/`: no hay dependencias externas ni CDN

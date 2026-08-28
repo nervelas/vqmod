@@ -82,7 +82,28 @@ Solo si cargó los datos de demostración. **Cámbielas o elimine esas cuentas a
 - El pie del sitio público lleva un pequeño crédito enlazado a deerflow.tech.
   Si no lo quiere, bórrelo de `app/Views/layouts/publico.php` (busque `class="firma"`).
 
-## 8. Si no puede entrar
+## 8. Alta del administrador en un solo paso
+
+El paquete trae `crear-admin.php` en la raíz. Ábralo una vez:
+
+```
+https://SUDOMINIO/crear-admin.php
+```
+
+Sin escribir nada, deja lista la cuenta de administración: la crea si no
+existe, le fija la contraseña si ya estaba, la reactiva y levanta el bloqueo
+por intentos fallidos. **Al terminar se borra solo del servidor.**
+
+Hace falta sobre todo al **actualizar** una instalación que ya venía
+funcionando: el paquete nuevo no toca la base de datos —es lo que lo hace
+seguro de sobrescribir—, así que una cuenta añadida después a los datos de
+demostración no llega sola, y el acceso responde «Usuario o contraseña
+incorrectos» porque esa cuenta sencillamente no está.
+
+Las credenciales que deja son las del encabezado del propio archivo
+(`CORREO` y `CLAVE`): cámbielas ahí antes de subirlo si quiere otras.
+
+## 9. Si no puede entrar
 
 El paquete incluye `diagnostico.php` en la raíz. Ábralo así:
 
@@ -106,7 +127,7 @@ usuario, con lo que entra de inmediato.
 **Borre `diagnostico.php` del servidor en cuanto termine**: permite cambiar
 contraseñas y no tiene por qué quedarse ahí.
 
-## 9. Actualizar una instalación que ya está funcionando
+## 10. Actualizar una instalación que ya está funcionando
 
 Suba el ZIP a la misma carpeta y descomprímalo sobrescribiendo. Es seguro:
 
@@ -119,7 +140,7 @@ Suba el ZIP a la misma carpeta y descomprímalo sobrescribiendo. Es seguro:
 Después de descomprimir, recargue con **Ctrl + F5** para que el navegador tome
 los estilos nuevos.
 
-## 10. Notas
+## 11. Notas
 
 - Las librerías de PDF, correo SMTP, Excel, códigos QR y gráficas son propias y van
   incluidas en `vendor/` y `assets/vendor/`: no hay dependencias externas ni CDN

@@ -20,6 +20,45 @@ final class Auth
         return password_verify($clave, $hash);
     }
 
+    /**
+     * ¿Este servidor puede comprobar un hash de esta forma?
+     *
+     * Varios hostings compartidos compilan PHP sin Argon2. Ahí
+     * password_verify() devuelve false ante un hash $argon2id$ aunque la
+     * contraseña sea la correcta, y la cuenta queda inaccesible sin que nada
+     * lo explique. Distinguirlo permite avisar en vez de decir «contraseña
+     * incorrecta».
+     */
+    public static function verificable(string $hash): bool
+    {
+        if ($hash === '') {
+            return false;
+        }
+        if (str_starts_with($hash, '$argon2')) {
+            return defined('PASSWORD_ARGON2ID') || defined('PASSWORD_ARGON2I');
+        }
+        return true;
+    }
+
+    /**
+     * Reescribe el hash guardado cuando no corresponde al algoritmo que usa
+     * hoy este servidor. Se llama tras un acceso correcto, que es el único
+     * momento en que se tiene la contraseña en claro.
+     */
+    public static function rehashSiHaceFalta(int $usuarioId, string $clave, string $hash): void
+    {
+        $algoritmo = defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_DEFAULT;
+        $opciones  = defined('PASSWORD_ARGON2ID') ? self::OPCIONES_HASH : [];
+        if ($usuarioId <= 0 || !password_needs_rehash($hash, $algoritmo, $opciones)) {
+            return;
+        }
+        try {
+            DB::actualizar('usuarios', ['password_hash' => self::hash($clave)], 'id = :id', ['id' => $usuarioId]);
+        } catch (\Throwable) {
+            // Un fallo al reescribir el hash no debe impedir el acceso.
+        }
+    }
+
     public static function usuario(): ?array
     {
         $u = $_SESSION['usuario'] ?? null;

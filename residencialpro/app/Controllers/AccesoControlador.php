@@ -43,14 +43,23 @@ final class AccesoControlador extends Controlador
             } elseif ($identificador === '' || $clave === '') {
                 $error = 'Ingrese su usuario y su contraseña.';
             } else {
-                $u = Usuario::porIdentificador($identificador);
-                if ($u === null || !Auth::verificar($clave, (string) $u['password_hash'])) {
+                $u    = Usuario::porIdentificador($identificador);
+                $hash = (string) ($u['password_hash'] ?? '');
+                if ($u !== null && !Auth::verificable($hash)) {
+                    // El servidor no puede comprobar hashes de esa forma
+                    // (PHP sin Argon2). No es culpa de quien escribe la
+                    // contraseña, así que no cuenta como intento fallido.
+                    Auditoria::registrar('acceso_incompatible', 'usuarios', (int) $u['id'], 'Hash no verificable en este servidor');
+                    $error = 'Este servidor no puede comprobar la contraseña guardada de esta cuenta. '
+                        . 'Abra diagnostico.php y use «Poner una contraseña nueva» para regenerarla.';
+                } elseif ($u === null || !Auth::verificar($clave, $hash)) {
                     LimiteIntentos::registrar($llave);
                     $restantes = self::MAX_INTENTOS - LimiteIntentos::contar($llave, self::BLOQUEO_MIN);
                     $error = 'Usuario o contraseña incorrectos.'
                         . ($restantes > 0 && $restantes <= 2 ? ' Le quedan ' . $restantes . ' intento(s).' : '');
                 } else {
                     LimiteIntentos::limpiar($llave);
+                    Auth::rehashSiHaceFalta((int) $u['id'], $clave, $hash);
                     if ((int) $u['dos_factores'] === 1 && !empty($u['correo'])) {
                         $this->enviarCodigo($u);
                         Sesion::set('_2fa_usuario', (int) $u['id']);

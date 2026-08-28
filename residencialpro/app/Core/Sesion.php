@@ -13,22 +13,24 @@ final class Sesion
             self::$iniciada = true;
             return;
         }
-        $ruta = RUTA_BASE . '/storage/tmp/sesiones';
-        if (!is_dir($ruta)) {
-            @mkdir($ruta, 0700, true);
-        }
-        if (is_dir($ruta) && is_writable($ruta)) {
-            session_save_path($ruta);
-        }
-        $https = Peticion::esHttps();
+        self::rutaDeGuardado();
+
         session_name('rpro_sid');
         session_set_cookie_params([
             'lifetime' => 0,
-            'path'     => Url::basePath() === '' ? '/' : Url::basePath() . '/',
+            // Siempre '/': una ruta más estrecha se pierde en cuanto el
+            // servidor reescribe la URI y deja al usuario sin sesión.
+            'path'     => '/',
             'domain'   => '',
-            'secure'   => $https,
+            // Sólo se marca Secure si la petición llegó de verdad por HTTPS.
+            // Marcarla sobre HTTP hace que el navegador descarte la cookie.
+            'secure'   => Peticion::esHttps(),
             'httponly' => true,
-            'samesite' => 'Strict',
+            // Lax y no Strict: con Strict el navegador no manda la cookie
+            // cuando se llega desde un enlace externo (WhatsApp, correo) y
+            // el usuario vuelve a caer en la pantalla de acceso. El CSRF
+            // sigue cubierto por el token de cada formulario.
+            'samesite' => 'Lax',
         ]);
         @ini_set('session.use_strict_mode', '1');
         @ini_set('session.gc_maxlifetime', '3600');
@@ -46,6 +48,29 @@ final class Sesion
             $_SESSION['_expirada'] = true;
         }
         $_SESSION['_actividad'] = time();
+    }
+
+    /**
+     * Deja la sesión en storage/tmp/sesiones sólo si ahí se puede escribir de
+     * verdad. Si no, se respeta la ruta del servidor: es preferible a quedarse
+     * con un directorio que PHP no puede usar y perder la sesión en cada
+     * petición (el usuario entra, lo redirige y aparece de nuevo el login).
+     */
+    private static function rutaDeGuardado(): void
+    {
+        $ruta = RUTA_BASE . '/storage/tmp/sesiones';
+        if (!is_dir($ruta)) {
+            @mkdir($ruta, 0700, true);
+        }
+        if (!is_dir($ruta) || !is_writable($ruta)) {
+            return;
+        }
+        $prueba = $ruta . '/.escritura';
+        if (@file_put_contents($prueba, '1') === false) {
+            return;
+        }
+        @unlink($prueba);
+        @session_save_path($ruta);
     }
 
     public static function get(string $clave, mixed $porDefecto = null): mixed

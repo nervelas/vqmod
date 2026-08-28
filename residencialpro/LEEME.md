@@ -90,7 +90,14 @@ El paquete incluye `diagnostico.php` en la raíz. Ábralo así:
 https://SUDOMINIO/diagnostico.php?token=EL_TOKEN_DEL_CRON
 ```
 
-El token está en `config/config.php`, en la línea `'cron' => ['token' => '...']`.
+Sirve cualquiera de estas dos llaves, las dos están en `config/config.php`:
+
+- el token del cron, en la línea `'cron' => ['token' => '...']`
+- o la contraseña de la base, en `'db' => [... 'clave' => '...']`
+
+La página informa además si las sesiones de PHP se están guardando bien y si
+este servidor puede comprobar las contraseñas ya guardadas: son las dos causas
+de que el acceso falle sin que la pantalla explique nada.
 La página le dice qué cuentas existen realmente en su base, si el acceso está
 bloqueado por intentos fallidos y cuáles fueron los últimos errores. Además
 permite **levantar el bloqueo** y **poner una contraseña nueva** a cualquier

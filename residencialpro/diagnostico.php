@@ -42,12 +42,20 @@ $cfg   = require $config;
 $token = (string) ($cfg['cron']['token'] ?? '');
 $dado  = (string) ($_GET['token'] ?? '');
 
-if ($token === '' || !hash_equals($token, $dado)) {
+// Se acepta el token del cron o, en su defecto, la contraseña de la base de
+// datos: ambos están en config/config.php y sólo los conoce quien tiene acceso
+// al hosting. Tener dos llaves evita quedarse fuera por no dar con una.
+$claveDb    = (string) ($cfg['db']['clave'] ?? '');
+$autorizado = ($token !== '' && hash_equals($token, $dado))
+           || ($claveDb !== '' && hash_equals($claveDb, $dado));
+
+if (!$autorizado) {
     http_response_code(403);
-    exit('<p style="font:15px system-ui;padding:40px">Token incorrecto.<br><br>'
-       . 'Ábralo así: <code>diagnostico.php?token=EL_TOKEN</code><br>'
-       . 'El token está en <code>config/config.php</code>, en la línea '
-       . "<code>'cron' =&gt; ['token' =&gt; '...']</code>.</p>");
+    exit('<p style="font:15px system-ui;padding:40px;max-width:640px;line-height:1.6">Llave incorrecta.<br><br>'
+       . 'Ábralo así: <code>diagnostico.php?token=LA_LLAVE</code><br><br>'
+       . 'Sirve cualquiera de las dos, y las dos están en <code>config/config.php</code>:<br>'
+       . "· el token del cron, en <code>'cron' =&gt; ['token' =&gt; '...']</code><br>"
+       . "· o la contraseña de la base, en <code>'db' =&gt; [... 'clave' =&gt; '...']</code></p>");
 }
 
 $d = $cfg['db'] ?? [];
@@ -135,6 +143,29 @@ fila('Escritura en uploads/', is_writable($raiz . '/uploads') ? 'sí' : 'NO', is
 $sesiones = $raiz . '/storage/tmp/sesiones';
 fila('Carpeta de sesiones', is_dir($sesiones) ? (is_writable($sesiones) ? 'escribible' : 'SIN PERMISO') : 'se creará sola',
      !is_dir($sesiones) || is_writable($sesiones));
+
+// Prueba de verdad: si la sesión no se guarda, el acceso «falla» sin motivo
+// aparente — el usuario entra bien y el sistema lo devuelve al login.
+$sesOk  = false;
+$sesMsg = 'no se pudo iniciar';
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    if (is_dir($sesiones) && is_writable($sesiones)) {
+        @session_save_path($sesiones);
+    }
+    if (@session_start()) {
+        $_SESSION['_prueba'] = 'ok';
+        $archivo = rtrim((string) session_save_path(), '/') . '/sess_' . session_id();
+        session_write_close();
+        $sesOk  = is_file($archivo) && is_readable($archivo);
+        $sesMsg = $sesOk
+            ? 'se escriben correctamente'
+            : 'NO SE ESCRIBEN — nadie podrá mantener la sesión iniciada';
+    }
+}
+fila('Sesiones de PHP', $sesMsg, $sesOk);
+fila('Ruta usada por las sesiones', (string) session_save_path() ?: '(la del servidor)', null);
+fila('Petición actual por HTTPS', !empty($_SERVER['HTTPS']) || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https' ? 'sí' : 'NO — la cookie de sesión se pierde si el sitio exige HTTPS',
+     !empty($_SERVER['HTTPS']) || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
 fila('Base de datos', $pdo !== null ? 'conectada (' . ($d['nombre'] ?? '') . ')' : 'SIN CONEXIÓN', $pdo !== null);
 ?>
 </table></div>
@@ -142,7 +173,24 @@ fila('Base de datos', $pdo !== null ? 'conectada (' . ($d['nombre'] ?? '') . ')'
 <?php if ($pdo !== null): ?>
 <h2>2. Cuentas que existen en su base</h2>
 <?php
-$us = $pdo->query('SELECT id, rol, nombre, usuario, correo, activo FROM usuarios ORDER BY FIELD(rol,"admin","junta","contabilidad","garita","residente"), id')->fetchAll(PDO::FETCH_ASSOC);
+$us = $pdo->query('SELECT id, rol, nombre, usuario, correo, activo, password_hash FROM usuarios ORDER BY FIELD(rol,"admin","junta","contabilidad","garita","residente"), id')->fetchAll(PDO::FETCH_ASSOC);
+
+/** ¿Puede este PHP comprobar un hash de esta forma? */
+$verificable = static function (string $h): bool {
+    if ($h === '') {
+        return false;
+    }
+    if (str_starts_with($h, '$argon2')) {
+        return defined('PASSWORD_ARGON2ID') || defined('PASSWORD_ARGON2I');
+    }
+    return true;
+};
+$incomprobables = 0;
+foreach ($us as $u) {
+    if (!$verificable((string) $u['password_hash'])) {
+        $incomprobables++;
+    }
+}
 $hayDemo = false;
 foreach ($us as $u) { if (str_ends_with((string) $u['correo'], '@residencial.gt')) { $hayDemo = true; break; } }
 ?>
@@ -153,8 +201,15 @@ foreach ($us as $u) { if (str_ends_with((string) $u['correo'], '@residencial.gt'
       ? 'Se detectaron cuentas de demostración: las credenciales del LEEME deberían servir.'
       : '<b>No hay cuentas de demostración.</b> Usted instaló sin marcar «Cargar datos de demostración», así que las únicas credenciales válidas son las que definió en el paso 3 del instalador.' ?>
   </p>
+  <?php if ($incomprobables > 0): ?>
+    <p style="background:#FAEAE7;border:1px solid #E4C4BF;border-radius:6px;padding:12px 14px">
+      <b><?= $incomprobables ?> cuenta(s) tienen la contraseña guardada con un algoritmo que este PHP no trae compilado.</b><br>
+      Por eso el acceso falla aunque la contraseña sea la correcta. Regenérelas abajo, en
+      «Poner una contraseña nueva»: el hash nuevo se guarda con un algoritmo que este servidor sí soporta.
+    </p>
+  <?php endif; ?>
   <table>
-    <thead><tr><th></th><th>Perfil</th><th>Usuario</th><th>Correo</th><th>Estado</th></tr></thead>
+    <thead><tr><th></th><th>Perfil</th><th>Usuario</th><th>Correo</th><th>Estado</th><th>Contraseña</th></tr></thead>
     <tbody>
       <?php foreach ($us as $u): ?>
         <tr>
@@ -163,6 +218,13 @@ foreach ($us as $u) { if (str_ends_with((string) $u['correo'], '@residencial.gt'
           <td><code><?= htmlspecialchars((string) $u['usuario']) ?></code></td>
           <td><code><?= htmlspecialchars((string) ($u['correo'] ?? '—')) ?></code></td>
           <td><?= $u['activo'] ? 'activa' : '<b style="color:#93251E">DESACTIVADA</b>' ?></td>
+          <td><?php
+            $h = (string) $u['password_hash'];
+            $alg = str_starts_with($h, '$argon2') ? 'argon2' : (str_starts_with($h, '$2y$') ? 'bcrypt' : 'otro');
+            echo $verificable($h)
+                ? htmlspecialchars($alg) . ' · comprobable'
+                : '<b style="color:#93251E">' . htmlspecialchars($alg) . ' · ESTE SERVIDOR NO PUEDE COMPROBARLA</b>';
+          ?></td>
         </tr>
       <?php endforeach; ?>
     </tbody>

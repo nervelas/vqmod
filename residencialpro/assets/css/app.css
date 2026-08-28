@@ -1788,6 +1788,18 @@ picture { display: block; }
   .mosaico .m-alto { grid-row: span 3; }
 }
 
+/* Varias pantallas fijan sus columnas en el atributo style —«1fr» más una
+   columna lateral de 320 a 400 px—. En un teléfono esa segunda columna se lleva
+   casi todo el ancho y la principal queda reducida a unos pocos píxeles, con la
+   tabla ilegible. Por debajo de 900 px se apilan; hace falta !important porque
+   compite contra un estilo en línea. */
+@media (max-width: 900px) {
+  .rejilla[style*="grid-template-columns"],
+  .rejilla-2[style*="grid-template-columns"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
 @media (max-width: 720px) {
   :root { --barra: 0px; }
   .barra {

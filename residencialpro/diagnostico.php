@@ -84,9 +84,26 @@ if ($pdo !== null && ($_GET['accion'] ?? '') === 'clave') {
             : password_hash($nueva, PASSWORD_DEFAULT);
         $st = $pdo->prepare('UPDATE usuarios SET password_hash = :h, activo = 1 WHERE usuario = :u OR correo = :u2');
         $st->execute(['h' => $hash, 'u' => $usuario, 'u2' => $usuario]);
-        $aviso = $st->rowCount() > 0
-            ? 'Contraseña actualizada para «' . $usuario . '». Ya puede entrar en /acceso.'
-            : 'No existe ninguna cuenta con usuario o correo «' . $usuario . '».';
+        if ($st->rowCount() > 0) {
+            $aviso = 'Contraseña actualizada para «' . $usuario . '». Ya puede entrar en /acceso.';
+        } else {
+            // La cuenta no existe. Es el caso de quien actualiza los archivos de
+            // una instalación que ya venía funcionando: el paquete nuevo no toca
+            // la base, así que un administrador añadido después no aparece por
+            // ningún lado. Aquí se crea, que es lo que hacía falta.
+            $esCorreo = filter_var($usuario, FILTER_VALIDATE_EMAIL) !== false;
+            $login    = $esCorreo ? strstr($usuario, '@', true) : $usuario;
+            $correo   = $esCorreo ? $usuario : '';
+            try {
+                $ins = $pdo->prepare('INSERT INTO usuarios (rol, nombre, usuario, correo, password_hash, activo, onboarding)
+                                      VALUES ("admin", :n, :u, :c, :h, 1, 1)');
+                $ins->execute(['n' => 'Administrador', 'u' => $login, 'c' => $correo, 'h' => $hash]);
+                $aviso = 'No existía ninguna cuenta con «' . $usuario . '», así que se creó como administrador. '
+                       . 'Entre en /acceso con ' . ($esCorreo ? $usuario . ' (o el usuario «' . $login . '»)' : $usuario) . '.';
+            } catch (Throwable $e) {
+                $aviso = 'No se pudo crear la cuenta «' . $usuario . '»: ' . $e->getMessage();
+            }
+        }
     }
 }
 if ($pdo !== null && ($_GET['accion'] ?? '') === 'desbloquear') {
@@ -247,7 +264,10 @@ try { $n = (int) $pdo->query('SELECT COUNT(*) FROM intentos_acceso WHERE creado_
 <h2>4. Poner una contraseña nueva</h2>
 <div class="caja">
   <p style="margin-top:0">Escriba el usuario o el correo de la cuenta y la contraseña que quiere usar
-     (mínimo 10 caracteres). Queda activa de inmediato.</p>
+     (mínimo 10 caracteres). Queda activa de inmediato.<br>
+     <b>Si esa cuenta no existe, se crea como administrador.</b> Es lo que hace falta cuando se
+     actualizan los archivos de una instalación que ya venía funcionando: el paquete nuevo no
+     toca la base de datos, así que un administrador añadido después no llega solo.</p>
   <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
     <input type="hidden" name="token" value="<?= htmlspecialchars($dado) ?>">
     <input type="hidden" name="accion" value="clave">

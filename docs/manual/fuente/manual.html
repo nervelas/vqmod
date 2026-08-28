@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Manual de uso y configuración — Facturación FEL</title>
+<style>
+@page { size: Letter; margin: 16mm 15mm 18mm; }
+*{box-sizing:border-box}
+body{margin:0;font:10pt/1.42 "Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#16202c;
+     -webkit-print-color-adjust:exact;print-color-adjust:exact}
+h1{font-size:20pt;margin:0 0 4pt;color:#0f5f8a;letter-spacing:-.01em}
+h2{font-size:13.5pt;margin:0 0 8pt;color:#0f5f8a;padding-bottom:5pt;border-bottom:2px solid #0f5f8a}
+h3{font-size:10.5pt;margin:11pt 0 4pt;color:#16202c}
+p{margin:0 0 6pt}
+ul,ol{margin:0 0 8pt;padding-left:17pt}
+li{margin-bottom:3.5pt}
+code{font-family:"Consolas","SFMono-Regular",monospace;font-size:9pt;background:#eef2f6;
+     padding:1px 4px;border-radius:3px;color:#0b3f5c}
+pre{background:#16202c;color:#e8eef4;padding:7pt 10pt;border-radius:4px;font-size:8pt;
+    line-height:1.4;overflow:hidden;margin:0 0 9pt;white-space:pre-wrap;word-break:break-word}
+pre .c{color:#8fa7b8}
+.pagina{page-break-after:always}
+.pagina:last-child{page-break-after:auto}
+figure{margin:0 0 8pt}
+figure img{width:100%;max-height:86mm;object-fit:contain;object-position:top;
+           border:1px solid #cdd6df;border-radius:4px;display:block}
+figure img.angosta{width:56%;margin:0 auto}
+figure img.alta{max-height:128mm}
+figure img.baja{max-height:62mm}
+figure img.ticket{width:52%;margin:0 auto}
+figcaption{font-size:8.5pt;color:#5b6875;margin-top:4pt;font-style:italic;text-align:center}
+.nota{background:#eef6fb;border-left:3px solid #0f5f8a;padding:7pt 10pt;margin:0 0 8pt;font-size:9pt}
+.alerta{background:#fdf3dc;border-left:3px solid #c8971a;padding:7pt 10pt;margin:0 0 8pt;font-size:9pt}
+.peligro{background:#fdeaec;border-left:3px solid #b32431;padding:7pt 10pt;margin:0 0 8pt;font-size:9pt}
+.nota strong,.alerta strong,.peligro strong{display:block;margin-bottom:2pt}
+table{width:100%;border-collapse:collapse;font-size:9pt;margin:0 0 9pt}
+th{background:#16202c;color:#fff;text-align:left;padding:4pt 7pt;font-size:8.5pt;
+   text-transform:uppercase;letter-spacing:.03em}
+td{padding:4pt 7pt;border-bottom:1px solid #e2e8ee;vertical-align:top}
+tr:nth-child(even) td{background:#f7f9fb}
+.pasos{counter-reset:paso;list-style:none;padding:0;margin:0 0 10pt}
+.pasos li{counter-increment:paso;position:relative;padding-left:23pt;margin-bottom:5.5pt}
+.pasos li::before{content:counter(paso);position:absolute;left:0;top:0;width:16pt;height:16pt;
+  background:#0f5f8a;color:#fff;border-radius:50%;text-align:center;line-height:16pt;
+  font-size:9pt;font-weight:700}
+.dos{display:flex;gap:12pt}
+.dos>div{flex:1}
+/* portada */
+.portada{height:232mm;display:flex;flex-direction:column;justify-content:center;text-align:center}
+.portada .marca{font-size:9pt;letter-spacing:.28em;text-transform:uppercase;color:#5b6875;margin-bottom:14pt}
+.portada h1{font-size:34pt;line-height:1.1;margin-bottom:8pt}
+.portada .sub{font-size:14pt;color:#3c4855;margin-bottom:26pt}
+.portada .linea{width:60pt;height:3px;background:#0f5f8a;margin:0 auto 26pt}
+.portada .pie{font-size:9.5pt;color:#5b6875;line-height:1.8}
+.indice{font-size:10pt}
+.indice div{display:flex;justify-content:space-between;padding:4pt 0;border-bottom:1px dotted #cdd6df}
+.indice span:first-child{font-weight:600}
+.encabezado{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10pt}
+.encabezado .num{font-size:26pt;font-weight:800;color:#dbe4ec;line-height:1}
+</style>
+</head>
+<body>
+
+<!-- ============================ PORTADA ============================ -->
+<section class="pagina portada">
+  <div class="marca">Manual de uso y configuración</div>
+  <h1>Sistema de<br>Facturación FEL</h1>
+  <div class="sub">Régimen de Factura Electrónica en Línea — Guatemala</div>
+  <div class="linea"></div>
+  <div class="pie">
+    Plataforma multi-empresa · PHP + MySQL · Hosting cPanel<br>
+    Emisión de DTE · Código QR · Ticket 80&nbsp;mm · Contingencia
+  </div>
+</section>
+
+<!-- ============================ ÍNDICE + CÓMO FUNCIONA ============================ -->
+<section class="pagina">
+  <div class="encabezado"><h2>Contenido</h2><span class="num">01</span></div>
+  <div class="indice">
+    <div><span>1. Cómo funciona FEL y qué se necesita</span><span>3</span></div>
+    <div><span>2. Instalación en cPanel</span><span>4</span></div>
+    <div><span>3. Primer ingreso y pantalla de Empresas</span><span>5</span></div>
+    <div><span>4. Dar de alta una empresa</span><span>6</span></div>
+    <div><span>5. El panel de trabajo</span><span>7</span></div>
+    <div><span>6. Clientes y productos</span><span>8</span></div>
+    <div><span>7. Emitir una factura</span><span>9</span></div>
+    <div><span>8. El documento emitido</span><span>10</span></div>
+    <div><span>9. Impresión: hoja carta y ticket</span><span>11</span></div>
+    <div><span>10. Anular y notas de crédito</span><span>12</span></div>
+    <div><span>11. Contingencia: facturar sin internet</span><span>13</span></div>
+    <div><span>12. Usuarios y ajustes</span><span>14</span></div>
+    <div><span>13. Cierre de mes y respaldos</span><span>15</span></div>
+    <div><span>14. Problemas frecuentes</span><span>16</span></div>
+  </div>
+
+  <h3 style="margin-top:22pt">Qué es este sistema</h3>
+  <p>Un sistema para emitir <strong>Documentos Tributarios Electrónicos (DTE)</strong> del régimen
+  FEL de la SAT de Guatemala. Arma el XML, lo manda a certificar, guarda el número de
+  autorización e imprime la factura con su código QR.</p>
+  <p>Es <strong>multi-empresa</strong>: una sola instalación atiende a varios contribuyentes.
+  Cada uno entra con su usuario y ve únicamente su empresa, sus clientes y sus facturas.</p>
+
+  <div class="alerta">
+    <strong>Antes de empezar</strong>
+    Este manual cubre el uso del sistema. No sustituye la asesoría de su contador: el régimen
+    tributario, las frases obligatorias y los montos aplicables dependen de cada contribuyente.
+  </div>
+</section>
+
+<!-- ============================ 1. CÓMO FUNCIONA ============================ -->
+<section class="pagina">
+  <div class="encabezado"><h2>1. Cómo funciona FEL y qué se necesita</h2><span class="num">02</span></div>
+
+  <p>El punto que hay que tener claro desde el principio:</p>
+
+  <div class="peligro">
+    <strong>En Guatemala nadie se conecta directo a la SAT para certificar facturas.</strong>
+    El régimen FEL exige pasar por un <strong>Certificador de Documentos Tributarios
+    Electrónicos</strong> autorizado por SAT (INFILE, Digifact, Guatefacturas, Megaprint,
+    Certifika…). Cada empresa contrata el suyo.
+  </div>
+
+  <h3>El circuito completo</h3>
+  <pre>  SU SISTEMA              CERTIFICADOR                    SAT
+  ──────────              ────────────                    ───
+  1. Arma el XML  ──────► 2. Firma con la llave del emisor
+     del DTE              3. Valida el contenido
+                          4. CERTIFICA: asigna serie, número
+                             y número de autorización (UUID) ──► 5. Registra
+  7. Guarda e imprime ◄── 6. Devuelve el XML certificado          el DTE
+     el DTE certificado</pre>
+
+  <p>Cuando alguien factura desde el portal gratuito de SAT, ese portal hace internamente lo
+  mismo. Al pasar a sistema propio, se contrata un certificador comercial: se paga por documento
+  y cuesta centavos.</p>
+
+  <h3>Qué necesita cada empresa antes de facturar</h3>
+  <table>
+    <tr><th style="width:34%">Requisito</th><th>Dónde se obtiene</th></tr>
+    <tr><td>Estar habilitado como emisor FEL</td><td>Agencia Virtual de SAT (lo hace el contribuyente o su contador)</td></tr>
+    <tr><td>Código de establecimiento</td><td>Lo asigna SAT al habilitar cada establecimiento</td></tr>
+    <tr><td>Contrato con un certificador</td><td>INFILE, Digifact, Guatefacturas, Megaprint, Certifika…</td></tr>
+    <tr><td>Credenciales de API</td><td>Se las entrega el certificador al contratar</td></tr>
+    <tr><td>Llave y alias de firma</td><td>También del certificador</td></tr>
+    <tr><td>RTU actualizado</td><td>Para copiar razón social y NIT <strong>exactamente</strong></td></tr>
+  </table>
+
+  <div class="alerta">
+    <strong>La causa número uno de rechazos</strong>
+    Que la razón social del sistema no coincida carácter por carácter con el RTU. Una coma o
+    una tilde de diferencia y el certificador rechaza el documento.
+  </div>
+
+  <h3>El IVA se desglosa hacia adentro</h3>
+  <p>En Guatemala el precio que se cobra al cliente <strong>ya incluye el IVA del 12&nbsp;%</strong>.
+  Por eso los precios se capturan tal como se venden y el sistema desglosa solo:</p>
+  <pre>Total de la línea = cantidad × precio unitario − descuento
+Base gravable     = Total ÷ 1.12
+IVA               = Total − Base gravable</pre>
+</section>
+
+<!-- ============================ 2. INSTALACIÓN ============================ -->
+<section class="pagina">
+  <div class="encabezado"><h2>2. Instalación en cPanel</h2><span class="num">03</span></div>
+
+  <p>Se hace una sola vez. Requiere PHP 8.1 o superior con las extensiones
+  <code>dom</code>, <code>curl</code>, <code>pdo_mysql</code>, <code>mbstring</code> y
+  <code>openssl</code>, y un certificado SSL activo en el dominio.</p>
+
+  <ol class="pasos">
+    <li><strong>Crear la base de datos.</strong> cPanel → <em>Bases de datos MySQL</em>. Cree la
+    base y un usuario, y asígnele <strong>todos los privilegios</strong>. Anote nombre, usuario
+    y contraseña.</li>
+
+    <li><strong>Subir los archivos</strong> a <code>/home/suusuario/fel/</code>, fuera de
+    <code>public_html</code>.</li>
+
+    <li><strong>Publicar solo <code>public/</code>.</strong> cPanel → <em>Dominios</em> → crear un
+    subdominio (por ejemplo <code>facturacion.suempresa.gt</code>) con raíz del documento en
+    <code>/home/suusuario/fel/public</code>.</li>
+
+    <li><strong>Configurar.</strong> Copie <code>config/config.example.php</code> a
+    <code>config/config.php</code> y complete dos secciones:</li>
+  </ol>
+
+<pre><span class="c">// config/config.php</span>
+'db'  => ['driver' => 'mysql', 'host' => 'localhost',
+          'nombre' => 'suusuario_fel', 'usuario' => 'suusuario_felapp',
+          'clave'  => 'la-contraseña-del-paso-1'],
+
+'app' => ['nombre' => 'Facturación FEL',
+          'clave_aplicacion' => 'PEGUE-AQUÍ-LA-CLAVE-GENERADA'],</pre>
+
+  <p>La clave de aplicación se genera con:</p>
+  <pre>php -r "echo bin2hex(random_bytes(32));"</pre>
+
+  <div class="peligro">
+    <strong>Guarde esa clave en un lugar seguro</strong>
+    Con ella se cifran las credenciales de certificador de todas las empresas. Si se pierde,
+    hay que volver a capturarlas una por una. Respáldela junto con la base de datos.
+  </div>
+
+  <ol class="pasos" start="5">
+    <li><strong>Instalar las tablas y el administrador.</strong> Desde la Terminal de cPanel:
+    <pre style="margin-top:5pt">cd ~/fel
+php bin/instalar.php</pre>
+    Le pedirá usuario, nombre y contraseña del administrador de la plataforma.</li>
+
+    <li><strong>Permisos.</strong> <code>storage/</code> debe ser escribible:
+    <code>chmod -R 770 ~/fel/storage</code>. Compruebe con <code>php tests/run.php</code>.</li>
+
+    <li><strong>Programar el cron de contingencia.</strong> cPanel → <em>Trabajos Cron</em> →
+    cada 10 minutos:
+    <pre style="margin-top:5pt">/usr/local/bin/php /home/suusuario/fel/bin/reintentar_pendientes.php \
+    &gt;&gt; /home/suusuario/fel/storage/logs/cron.log 2&gt;&amp;1</pre></li>
+  </ol>
+
+  <div class="alerta">
+    <strong>No omita el cron</strong>
+    Es lo que rescata los documentos que no se pudieron certificar por falta de internet.
+    Sin él, esos documentos se quedan esperando y nadie los reintenta.
+  </div>
+</section>
+
+<!-- ============================ 3. PRIMER INGRESO ============================ -->
+<section class="pagina">
+  <div class="encabezado"><h2>3. Primer ingreso y pantalla de Empresas</h2><span class="num">04</span></div>
+
+  <figure>
+    <img class="angosta" src="capturas/01-ingreso.png" alt="Pantalla de ingreso">
+    <figcaption>Pantalla de ingreso. Cada persona usa su propio usuario.</figcaption>
+  </figure>
+
+  <p>Al ingresar como <strong>administrador de la plataforma</strong> se abre directamente la
+  lista de empresas. Desde aquí se dan de alta los clientes y se entra a trabajar en cada uno.</p>
+
+  <figure>
+    <img src="capturas/02-empresas.png" alt="Pantalla de empresas">
+    <figcaption>Pantalla de Empresas: estado, certificador y consumo del mes de cada cliente.</figcaption>
+  </figure>
+
+  <h3>Qué muestra cada columna</h3>
+  <table>
+    <tr><th style="width:24%">Columna</th><th>Significa</th></tr>
+    <tr><td>Certificador</td><td>Con quién certifica esa empresa. <code>simulador</code> = pruebas, sin validez fiscal.</td></tr>
+    <tr><td>Ambiente</td><td><strong>pruebas</strong> o <strong>producción</strong>.</td></tr>
+    <tr><td>DTE del mes</td><td>Documentos certificados en el período. Si hay pendientes, aparecen debajo en ámbar.</td></tr>
+    <tr><td>Facturado</td><td>Monto certificado del período. Sirve para facturar el servicio.</td></tr>
+    <tr><td>Estado</td><td>Una empresa suspendida no puede emitir.</td></tr>
+  </table>
+
+</section>
+
+<!-- ============================ 4. ALTA DE EMPRESA ============================ -->
+<section class="pagina">
+  <div class="encabezado"><h2>4. Dar de alta una empresa</h2><span class="num">05</span></div>
+
+  <p><strong>Empresas → Agregar empresa.</strong> Toma unos 15 minutos si ya tiene los datos
+  del cliente.</p>
+
+  <figure>
+    <img src="capturas/03-empresa-form.png" alt="Formulario de empresa">
+    <figcaption>Formulario de la empresa: datos ante SAT, certificador, operación e imagen.</figcaption>
+  </figure>
+
+  <h3>Sección por sección</h3>
+  <table>
+    <tr><th style="width:28%">Sección</th><th>Qué llenar</th></tr>
+    <tr><td><strong>Identificación</strong></td><td>Nombre interno (cómo identifica usted al cliente), plan contratado y notas.</td></tr>
+    <tr><td><strong>Datos del emisor</strong></td><td>NIT sin guion, razón social y nombre comercial <strong>idénticos al RTU</strong>, afiliación de IVA, código de establecimiento y dirección.</td></tr>
+    <tr><td><strong>Certificador</strong></td><td>Proveedor, ambiente, nombre y NIT del certificador (se imprimen en la factura) y las credenciales.</td></tr>
+    <tr><td><strong>Operación e imagen</strong></td><td>Formato de impresión, color de marca, logo, límite de consumidor final y aviso de plazo de anulación.</td></tr>
+    <tr><td><strong>Primer usuario</strong></td><td>Usuario y contraseña con los que entrará el cliente (mínimo 10 caracteres).</td></tr>
+  </table>
+
+</section>
+
+<section class="pagina">
+  <div class="encabezado"><h2>4. Dar de alta una empresa <span style="font-size:10pt;color:#5b6875">(continuación)</span></h2><span class="num">05</span></div>
+
+  <figure>
+    <img src="capturas/03b-certificador.png" alt="Sección de certificador">
+    <figcaption>Sección Certificador: proveedor, ambiente y credenciales del certificador.</figcaption>
+  </figure>
+
+  <div class="nota">
+    <strong>Las credenciales se guardan cifradas</strong>
+    Se cifran con AES-256-GCM antes de tocar la base de datos. Si deja los campos vacíos al
+    editar, se conservan las que ya estaban.
+  </div>
+
+  <h3>Afiliación de IVA</h3>
+  <table>
+    <tr><th style="width:14%">Código</th><th>Régimen</th></tr>
+    <tr><td><code>GEN</code></td><td>General (contribuyente normal, desglosa IVA)</td></tr>
+    <tr><td><code>PEQ</code> / <code>PEE</code></td><td>Pequeño contribuyente / electrónico (no desglosa IVA)</td></tr>
+    <tr><td><code>AGR</code> / <code>AGE</code></td><td>Contribuyente agropecuario / electrónico</td></tr>
+    <tr><td><code>EXE</code></td><td>Exento de IVA</td></tr>
+  </table>
+  <p>El sistema ajusta solo el cálculo y las frases según lo que elija aquí.
+  <strong>Confírmelo con el contador del cliente.</strong></p>
+
+  <h3>Antes de pasar a producción</h3>
+  <ol class="pasos">
+    <li>Emita varios documentos con el certificador <code>simulador</code>: no gasta folios ni toca la red.</li>
+    <li>Cambie al certificador real con las <strong>URL de pruebas</strong> y emita una factura, una nota de crédito y una anulación.</li>
+    <li>Cambie a las URL de producción, ponga <strong>Ambiente: producción</strong> y emita <strong>una</strong> factura real de monto bajo.</li>
+    <li>Búsquela en el verificador público de SAT. Si aparece, la cadena completa funciona.</li>
+  </ol>
+</section>
+
+<!-- ============================ 5. PANEL ============================ -->
+<section class="pagina">
+  <div class="encabezado"><h2>5. El panel de trabajo</h2><span class="num">06</span></div>
+
+  <p>Desde el listado de empresas, el botón <strong>Entrar</strong> abre el panel de esa empresa.
+  El nombre de la empresa activa se ve siempre arriba a la derecha.</p>
+
+  <figure>
+    <img src="capturas/04-panel.png" alt="Panel de la empresa">
+    <figcaption>Panel: totales del mes, documentos en contingencia y últimos documentos.</figcaption>
+  </figure>
+
+  <h3>Los cuatro indicadores</h3>
+  <p>Corresponden al mes en curso y sirven para <strong>conciliar la declaración de IVA</strong>.
+  El dato oficial siempre es el que SAT tiene registrado; estos son para cuadrar.</p>
+
+  <h3>La cinta amarilla</h3>
+  <p>Mientras la empresa esté en pruebas o con el certificador simulado, aparece en todas las
+  pantallas. Los documentos emitidos así <strong>no tienen validez fiscal</strong> y salen
+  marcados como tal en la impresión. Desaparece al pasar a producción con un certificador real.</p>
+
+  <h3>Documentos en contingencia</h3>
+  <p>Si aparece esta sección, hay documentos que no se pudieron certificar. Se reintentan solos
+  con el cron; el botón <strong>Reintentar</strong> los fuerza en el momento. Ver el capítulo 11.</p>
+
+  <div class="nota">
+    <strong>Estados de un documento</strong>
+    <strong>PENDIENTE</strong> — guardado, esperando certificarse. Todavía no es válido.<br>
+    <strong>CERTIFICADO</strong> — tiene número de autorización de SAT. Es válido.<br>
+    <strong>RECHAZADO</strong> — el certificador rechazó el contenido. Corregir y emitir uno nuevo.<br>
+    <strong>ANULADO</strong> — se certificó y después se anuló ante SAT.
+  </div>
+</section>
+
+<!-- ============================ 6. CLIENTES Y PRODUCTOS ============================ -->
+<section class="pagina">
+  <div class="encabezado"><h2>6. Clientes y productos</h2><span class="num">07</span></div>
+
+  <p>Cargar estos dos catálogos es lo que hace que facturar tome segundos en vez de minutos.</p>
+
+  <figure>
+    <img src="capturas/10-clientes.png" alt="Pantalla de clientes">
+    <figcaption>Clientes. El NIT se valida con su dígito verificador al guardar.</figcaption>
+  </figure>
+
+  <h3>Tipos de identificación</h3>
+  <table>
+    <tr><th style="width:26%">Tipo</th><th>Cuándo usarlo</th></tr>
+    <tr><td>NIT (o CF)</td><td>Lo normal. <code>CF</code> para consumidor final. Se puede escribir con o sin guion.</td></tr>
+    <tr><td>CUI / DPI</td><td>Personas sin NIT. Se valida el dígito verificador de los 13 dígitos.</td></tr>
+    <tr><td>Extranjero</td><td>Pasaporte o identificación de otro país.</td></tr>
+  </table>
+
+  <figure style="margin-top:14pt">
+    <img src="capturas/11-productos.png" alt="Pantalla de productos">
+    <figcaption>Productos y servicios. El precio se captura con IVA incluido.</figcaption>
+  </figure>
+
+  <div class="alerta">
+    <strong>El precio va con IVA incluido</strong>
+    Tal como se le cobra al cliente. El sistema desglosa el impuesto solo. Marque
+    <em>Exento de IVA</em> únicamente si el producto realmente lo está: consúltelo con el contador.
+  </div>
+
+  <p>Clientes y productos se <strong>desactivan</strong> en lugar de borrarse, para no perder el
+  historial de los documentos que ya los usaron.</p>
+</section>
+
+<!-- ============================ 7. EMITIR ============================ -->
+<section class="pagina">
+  <div class="encabezado"><h2>7. Emitir una factura</h2><span class="num">08</span></div>
+
+  <figure>
+    <img style="max-height:78mm" src="capturas/05-nuevo-documento.png" alt="Formulario de emisión">
+    <figcaption>Nuevo documento. Los totales se calculan en pantalla mientras se captura.</figcaption>
+  </figure>
+
+  <ol class="pasos">
+    <li><strong>Tipo de DTE.</strong> <code>FACT</code> para la factura normal. Los tipos de
+    pequeño contribuyente y agropecuario no desglosan IVA, y el sistema lo avisa en pantalla.</li>
+
+    <li><strong>Receptor.</strong> Elija un cliente guardado y se llena todo solo, o captúrelo a
+    mano; para consumidor final deje <code>CF</code>. Si el dígito verificador del NIT está mal,
+    el sistema no deja emitir.</li>
+
+    <li><strong>Detalle.</strong> Una línea por producto: al elegirlo del catálogo se llenan
+    descripción, precio, unidad y tipo. El descuento va <strong>en quetzales</strong>.
+    <em>+ Agregar línea</em> añade renglones; la <strong>×</strong> los quita.</li>
+
+    <li><strong>Frases.</strong> Vienen marcadas las del régimen de la empresa. No las cambie
+    sin consultar con el contador.</li>
+
+    <li><strong>Certificar y emitir.</strong> En segundos aparece el documento con su número de
+    autorización.</li>
+  </ol>
+
+  <h3>Tipos de documento más usados</h3>
+  <table>
+    <tr><th style="width:16%">Código</th><th>Documento</th></tr>
+    <tr><td><code>FACT</code></td><td>Factura</td></tr>
+    <tr><td><code>FPEQ</code></td><td>Factura de pequeño contribuyente</td></tr>
+    <tr><td><code>FCAM</code></td><td>Factura cambiaria (con abonos)</td></tr>
+    <tr><td><code>NCRE</code></td><td>Nota de crédito (requiere referencia al documento origen)</td></tr>
+    <tr><td><code>NDEB</code></td><td>Nota de débito (requiere referencia)</td></tr>
+  </table>
+  <div class="nota">
+    <strong>Validaciones antes de gastar un folio</strong>
+    Revisa el NIT o CUI, que haya al menos una línea, que el descuento no supere el precio, que
+    las notas traigan su referencia, y avisa al pasar el monto de consumidor final. Todo eso
+    <strong>antes</strong> de enviar nada al certificador.
+  </div>
+</section>
+
+<!-- ============================ 8. DOCUMENTO EMITIDO ============================ -->
+<section class="pagina">
+  <div class="encabezado"><h2>8. El documento emitido</h2><span class="num">09</span></div>
+
+  <figure>
+    <img src="capturas/07-detalle.png" alt="Detalle del documento">
+    <figcaption>Detalle: autorización, receptor, líneas con IVA desglosado y bitácora.</figcaption>
+  </figure>
+
+  <h3>Qué hay en esta pantalla</h3>
+  <ul>
+    <li><strong>Número de autorización (UUID)</strong> — el identificador que asigna SAT. Es lo
+    que se consulta en el verificador.</li>
+    <li><strong>Serie y número</strong> — los asigna el certificador.</li>
+    <li><strong>Detalle con IVA desglosado</strong> — base gravable e impuesto por línea.</li>
+    <li><strong>Bitácora con el certificador</strong> — cada envío y cada respuesta. Cuando algo
+    falla, el mensaje exacto del certificador está aquí: ese es el texto que se le manda a su
+    soporte técnico.</li>
+  </ul>
+
+  <h3>Buscar documentos</h3>
+  <figure>
+    <img src="capturas/06-documentos.png" alt="Listado de documentos">
+    <figcaption>Listado con filtros por receptor, tipo, estado y rango de fechas.</figcaption>
+  </figure>
+</section>
+
+<!-- ============================ 9. IMPRESIÓN ============================ -->
+<section class="pagina">
+  <div class="encabezado"><h2>9. Impresión: hoja carta y ticket</h2><span class="num">10</span></div>
+
+  <p>Desde el detalle del documento hay tres botones: <strong>Hoja carta</strong>,
+  <strong>Ticket 80&nbsp;mm</strong> e <strong>Imprimir / PDF</strong>. Para enviar la factura por
+  correo o WhatsApp, use <em>Imprimir</em> y en <em>Destino</em> elija «Guardar como PDF».</p>
+
+  <div class="dos">
+    <div>
+      <figure>
+        <img class="alta" src="capturas/08-carta.png" alt="Factura en hoja carta">
+        <figcaption>Hoja carta, con el color y logo de la empresa.</figcaption>
+      </figure>
+    </div>
+    <div>
+      <figure>
+        <img class="alta" src="capturas/09-ticket.png" alt="Ticket de 80 mm">
+        <figcaption>Ticket de 80&nbsp;mm para impresora térmica.</figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <h3>El código QR</h3>
+  <p>Los dos formatos llevan el código QR con el número de autorización: el cliente lo escanea
+  con el celular y verifica el documento. Se genera dentro del sistema, sin depender de ningún
+  servicio externo.</p>
+
+  <h3>Lo que SAT exige que aparezca</h3>
+  <p>Ambos formatos lo incluyen: nombre y NIT del emisor, nombre comercial y dirección del
+  establecimiento, tipo de documento, número de autorización con serie y número, fecha y hora de
+  emisión y de certificación, identificación y nombre del receptor, detalle, moneda y total, las
+  frases del régimen, y el nombre y NIT del certificador.</p>
+
+  <div class="nota">
+    <strong>Cuál sale por omisión</strong>
+    Se define por empresa en su formulario: hoja carta para oficinas y servicios, ticket para
+    tiendas y restaurantes con impresora térmica. Los dos botones están siempre disponibles.
+  </div>
+</section>
+
+<!-- ============================ 10. ANULAR ============================ -->
+<section class="pagina">
+  <div class="encabezado"><h2>10. Anular y notas de crédito</h2><span class="num">11</span></div>
+
+  <p>Son cosas distintas y se confunden seguido.</p>
+
+  <table>
+    <tr><th style="width:26%"></th><th>Anulación</th><th>Nota de crédito</th></tr>
+    <tr><td><strong>Qué hace</strong></td><td>Deja el DTE sin efecto</td><td>Ajusta un documento ya declarado</td></tr>
+    <tr><td><strong>Cuándo</strong></td><td>Dentro del plazo que permite la normativa</td><td>Cuando la anulación ya no procede, o si la devolución es parcial</td></tr>
+    <tr><td><strong>Cómo</strong></td><td>Botón <em>Anular</em> en el detalle</td><td>Nuevo documento tipo <code>NCRE</code></td></tr>
+  </table>
+
+  <h3>Anular</h3>
+  <ol class="pasos">
+    <li>Abra el documento desde <strong>Documentos</strong>.</li>
+    <li>Baje a <strong>Anular documento</strong> y escriba un motivo real: «cliente canceló el
+    pedido», «error en el NIT del receptor». No ponga solo «error»: ese texto queda registrado
+    en SAT.</li>
+    <li>Confirme. La anulación se transmite y el documento queda marcado <strong>ANULADO</strong>,
+    con marca de agua en la impresión.</li>
+  </ol>
+
+  <div class="alerta">
+    <strong>Si el sistema avisa que pasó el plazo</strong>
+    No insista. Emita una nota de crédito. El aviso se configura por empresa en
+    <em>Aviso de plazo de anulación</em>; el sistema advierte pero no bloquea, porque la palabra
+    final la tiene SAT a través del certificador.
+  </div>
+
+  <h3>Emitir una nota de crédito</h3>
+  <ol class="pasos">
+    <li><strong>Nuevo documento</strong> → tipo <code>NCRE</code>.</li>
+    <li>El mismo receptor que la factura original.</li>
+    <li>En el detalle, lo que se está devolviendo o ajustando.</li>
+    <li>En <strong>Referencia al documento origen</strong> (obligatoria): número de autorización
+    de la factura original, fecha de emisión, serie, número y motivo del ajuste. Todos esos datos
+    están en el detalle de la factura original.</li>
+  </ol>
+</section>
+
+<!-- ============================ 11. CONTINGENCIA ============================ -->
+<section class="pagina">
+  <div class="encabezado"><h2>11. Contingencia: facturar sin internet</h2><span class="num">12</span></div>
+
+  <p>Si se cae el internet o el certificador, <strong>no pasa nada: siga facturando</strong>.</p>
+
+  <p>El documento se guarda con estado <strong>PENDIENTE</strong> y su XML ya armado. Cuando
+  vuelve la conexión, el cron lo certifica solo, <strong>reutilizando el mismo XML e
+  identificador</strong>, de modo que el certificador lo trata como el mismo documento y no se
+  duplican folios.</p>
+
+  <div class="alerta">
+    <strong>Mientras está PENDIENTE todavía no hay número de autorización</strong>
+    Si necesita entregarle algo al cliente en ese momento, avísele que se lo manda cuando se
+    certifique. La impresión sale marcada como no certificada.
+  </div>
+
+  <h3>Dos fallas que se ven parecidas y no lo son</h3>
+  <table>
+    <tr><th style="width:22%">Estado</th><th>Qué pasó</th><th>Qué hacer</th></tr>
+    <tr><td><strong>PENDIENTE</strong></td><td>Falló la comunicación</td><td>Nada: se reintenta solo. O <em>Reintentar</em> en el panel.</td></tr>
+    <tr><td><strong>RECHAZADO</strong></td><td>El certificador rechazó el contenido</td><td>Leer el error en el detalle, corregir y emitir uno nuevo. <strong>Reintentarlo solo repetiría el error.</strong></td></tr>
+  </table>
+
+  <h3>Vigilancia</h3>
+  <p>Revise el panel a diario. Si se acumulan pendientes en varias empresas, el problema es de
+  red o del certificador; si es en una sola, probablemente son sus credenciales.</p>
+
+  <p>El cron se puede correr a mano para ver qué pasa:</p>
+  <pre>php bin/reintentar_pendientes.php</pre>
+  <p>Recorre todas las empresas activas con las credenciales de cada una. El detalle técnico
+  queda en <code>storage/logs/</code>.</p>
+</section>
+
+<!-- ============================ 12. USUARIOS Y AJUSTES ============================ -->
+<section class="pagina">
+  <div class="encabezado"><h2>12. Usuarios y ajustes</h2><span class="num">13</span></div>
+
+  <figure>
+    <img class="baja" src="capturas/13-usuarios.png" alt="Pantalla de usuarios">
+    <figcaption>Usuarios de toda la plataforma, con su empresa y su rol.</figcaption>
+  </figure>
+
+  <p>Cada persona que facture debe tener <strong>su propio usuario</strong>: el sistema registra
+  quién emitió cada documento. Si el usuario ya existe, el formulario solo actualiza su
+  contraseña (mínimo 10 caracteres).</p>
+
+  <h3>Los tres roles</h3>
+  <table>
+    <tr><th style="width:30%">Rol</th><th>Qué puede hacer</th></tr>
+    <tr><td>Administrador de la plataforma</td><td>Ve todas las empresas, las da de alta, carga credenciales, crea usuarios y entra a trabajar en cualquiera.</td></tr>
+    <tr><td>Administrador de empresa</td><td>Solo su empresa: factura, gestiona clientes, productos y ve los ajustes.</td></tr>
+    <tr><td>Operador</td><td>Solo su empresa: factura y consulta.</td></tr>
+  </table>
+
+  <p>También desde la línea de comandos:</p>
+  <pre>php bin/usuario.php crear vendedor1 "Juan Pérez" claveLarga123 operador 1
+php bin/usuario.php clave vendedor1 otraClaveLarga456
+php bin/usuario.php listar</pre>
+
+  <figure style="margin-top:14pt">
+    <img class="baja" src="capturas/12-ajustes.png" alt="Pantalla de ajustes">
+    <figcaption>Ajustes: resumen de solo lectura de la empresa activa.</figcaption>
+  </figure>
+
+  <p>Es la pantalla donde el cliente confirma que sus datos ante SAT están bien. Si algo impide
+  emitir documentos válidos, aparece arriba en rojo.</p>
+</section>
+
+<!-- ============================ 13. CIERRE Y RESPALDOS ============================ -->
+<section class="pagina">
+  <div class="encabezado"><h2>13. Cierre de mes y respaldos</h2><span class="num">14</span></div>
+
+  <h3>Cierre de mes de cada empresa</h3>
+  <ol class="pasos">
+    <li>Entre a la empresa y revise los <strong>totales del panel</strong>: documentos, base
+    gravable, IVA y total facturado.</li>
+    <li>En <strong>Documentos</strong>, filtre por estado <code>PENDIENTE</code> y
+    <code>RECHAZADO</code>. Antes de declarar, esas dos listas deberían estar vacías.</li>
+    <li>Contraste los totales con lo que SAT tiene en la Agencia Virtual.</li>
+    <li>Entregue al contador los XML del mes: están en <code>storage/xml/AAAA/MM/</code>, o se
+    descargan uno por uno desde el listado.</li>
+  </ol>
+
+  <h3>Facturar el servicio</h3>
+  <p>La pantalla <strong>Empresas</strong> muestra el consumo del período por cliente:
+  documentos certificados y monto facturado. Eso es lo que necesita para emitirle su factura
+  mensual.</p>
+
+  <h3>Respaldos</h3>
+  <p>Los DTE hay que conservarlos durante el plazo de prescripción. El sistema los guarda por
+  partida doble: en la base de datos y como archivo en <code>storage/xml/</code>.</p>
+
+  <table>
+    <tr><th style="width:22%">Cada cuándo</th><th>Qué</th></tr>
+    <tr><td>Mensual</td><td>Descargar el respaldo de la base (cPanel → <em>Copias de seguridad</em>) y guardarlo fuera del servidor.</td></tr>
+    <tr><td>Mensual</td><td>Comprimir y descargar <code>storage/xml/</code>.</td></tr>
+    <tr><td>Trimestral</td><td><strong>Probar restaurar</strong> un respaldo.</td></tr>
+    <tr><td>Siempre</td><td>Tener a resguardo la <code>clave_aplicacion</code>.</td></tr>
+  </table>
+
+  <div class="peligro">
+    <strong>Un respaldo que nunca se restauró no es un respaldo</strong>
+    Pruébelo al menos una vez al año. Es la diferencia entre un susto y una pérdida.
+  </div>
+</section>
+
+<!-- ============================ 14. PROBLEMAS ============================ -->
+<section class="pagina">
+  <div class="encabezado"><h2>14. Problemas frecuentes</h2><span class="num">15</span></div>
+
+  <table>
+    <tr><th style="width:40%">Síntoma</th><th>Causa habitual</th></tr>
+    <tr><td>«No existe el archivo de configuración»</td><td>No copió <code>config.example.php</code> a <code>config.php</code>.</td></tr>
+    <tr><td>Error de conexión a la base</td><td>El usuario no está agregado a la base, o falta el prefijo de la cuenta cPanel.</td></tr>
+    <tr><td>Página en blanco</td><td>PHP menor a 8.1, o falta una extensión.</td></tr>
+    <tr><td>«No se pudo crear el directorio»</td><td>Permisos de <code>storage/</code>: póngalos en <code>770</code>.</td></tr>
+    <tr><td>No se guardan los XML en disco</td><td>Lo mismo que el anterior.</td></tr>
+    <tr><td>El cron no corre</td><td>Ruta de PHP incorrecta. Revísela en <em>Select PHP Version</em>.</td></tr>
+    <tr><td>El certificador rechaza todo</td><td>Los datos del emisor no coinciden con el RTU. Revise carácter por carácter.</td></tr>
+    <tr><td>«Faltan las credenciales del certificador»</td><td>La empresa está en producción sin credenciales cargadas.</td></tr>
+    <tr><td>«No se pudo descifrar»</td><td>Cambió la <code>clave_aplicacion</code>. Restaure la original o recapture las credenciales.</td></tr>
+    <tr><td>El NIT no lo acepta</td><td>El dígito verificador está mal. Confírmelo en la constancia del RTU.</td></tr>
+    <tr><td>Errores de TLS al certificar</td><td>No desactive la verificación: pida al hosting que actualice los certificados raíz.</td></tr>
+  </table>
+
+  <h3>Cuando algo falla, en este orden</h3>
+  <ol class="pasos">
+    <li>Abra el documento → <strong>Bitácora con el certificador</strong>. Ahí está el mensaje
+    exacto que devolvió.</li>
+    <li>Si habla de datos del emisor, compárelos con el RTU.</li>
+    <li>Si habla de frases o de un código de catálogo, es tema de configuración: consulte con el
+    contador.</li>
+    <li>Si es un error de conexión o un código interno del certificador, mándele ese texto tal
+    cual a su soporte técnico.</li>
+    <li>El detalle completo está en <code>storage/logs/fel-AAAA-MM.log</code>.</li>
+  </ol>
+
+  <h3>Referencia rápida de comandos</h3>
+  <pre>php bin/instalar.php                <span class="c"># instalar (una vez)</span>
+php bin/migrar_multiempresa.php     <span class="c"># migrar desde la versión de un solo emisor</span>
+php bin/usuario.php listar          <span class="c"># ver usuarios</span>
+php bin/emitir_ejemplo.php 1        <span class="c"># emitir un documento de prueba</span>
+php bin/reintentar_pendientes.php   <span class="c"># procesar contingencia (cron)</span>
+php tests/run.php                   <span class="c"># verificar la instalación</span></pre>
+
+  <h3>Documentación completa</h3>
+  <p>En la carpeta <code>docs/</code> del proyecto: cómo funciona FEL, instalación en cPanel,
+  conexión del certificador, lista de verificación de cumplimiento ante SAT, operación diaria y
+  guía para vender el servicio.</p>
+</section>
+
+</body>
+</html>

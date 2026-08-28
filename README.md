@@ -141,6 +141,11 @@ creada desde `config.php`.
 | [05 — Operación diaria](docs/05-operacion-diaria.md) | Emitir, anular, notas de crédito, contingencia, respaldos |
 | [06 — Vender el servicio](docs/06-vender-el-servicio.md) | Cómo dar de alta clientes, qué cobrar, cómo presentarlo |
 
+**[Manual de uso y configuración (PDF)](docs/manual/Manual-Facturacion-FEL.pdf)** — 17 páginas
+con capturas reales de cada pantalla: instalación, alta de empresas, emisión, impresión,
+anulaciones, contingencia y problemas frecuentes. Se puede entregar tal cual a los clientes.
+Para regenerarlo tras cambiar la interfaz, vea `docs/manual/fuente/`.
+
 ---
 
 ## Estructura

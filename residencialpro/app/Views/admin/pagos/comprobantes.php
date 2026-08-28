@@ -31,7 +31,9 @@
             </tbody>
           </table>
 
-          <?php if (!empty($p['comprobante'])): ?>
+          <?php $hayArchivo = !empty($p['comprobante'])
+                && is_file(RUTA_BASE . '/uploads/comprobantes/' . $p['comprobante']); ?>
+          <?php if ($hayArchivo): ?>
             <?php if ($ext === 'pdf'): ?>
               <a class="btn btn-claro btn-bloque mb-2" target="_blank" rel="noopener"
                  href="<?= e(url('/archivo/comprobantes/' . $p['comprobante'])) ?>"><?= ico('archivo', 17) ?> Abrir el comprobante (PDF)</a>
@@ -42,7 +44,11 @@
               </a>
             <?php endif; ?>
           <?php else: ?>
-            <div class="aviso-caja alerta mb-2"><?= ico('alerta', 18) ?><div>El residente no adjuntó imagen del comprobante.</div></div>
+            <div class="aviso-caja alerta mb-2"><?= ico('alerta', 18) ?>
+              <div><?= empty($p['comprobante'])
+                ? 'El residente no adjuntó imagen del comprobante.'
+                : 'El archivo del comprobante ya no está disponible en el servidor.' ?></div>
+            </div>
           <?php endif; ?>
 
           <form method="post" action="<?= e(url('/admin/comprobantes/' . (int) $p['id'] . '/aprobar')) ?>">

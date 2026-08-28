@@ -93,7 +93,7 @@
         <ul class="lista-limpia">
           <?php foreach ($avisos as $a): ?>
             <li class="item-lista">
-              <span style="color:var(--acento-3)"><?= ico($a['prioridad'] === 'urgente' ? 'alerta' : 'megafono', 20) ?></span>
+              <span style="color:var(--arcilla)"><?= ico($a['prioridad'] === 'urgente' ? 'alerta' : 'megafono', 20) ?></span>
               <div class="crecer">
                 <b><a href="<?= e(url('/portal/avisos/' . (int) $a['id'])) ?>"><?= e(recortar((string) $a['titulo'], 52)) ?></a></b>
                 <div class="meta"><?= e(hace((string) $a['publicar_en'])) ?></div>
@@ -122,7 +122,7 @@
             <li class="item-lista">
               <div class="crecer">
                 <b><?= e(recortar((string) $v['visitante'], 26)) ?></b>
-                <div class="meta">Código <b style="color:var(--acento-3)"><?= e($v['codigo']) ?></b></div>
+                <div class="meta">Código <b style="color:var(--arcilla)"><?= e($v['codigo']) ?></b></div>
               </div>
               <a class="btn btn-sm btn-fantasma" href="<?= e(url('/portal/visitas')) ?>" aria-label="Ver el código QR de <?= e($v['visitante']) ?>"><?= ico('qr', 15) ?></a>
             </li>
@@ -142,7 +142,7 @@
         <ul class="lista-limpia">
           <?php foreach ($reservas as $r): ?>
             <li class="item-lista">
-              <span style="color:var(--acento-3)"><?= ico('calendario', 20) ?></span>
+              <span style="color:var(--arcilla)"><?= ico('calendario', 20) ?></span>
               <div class="crecer">
                 <b><?= e($r['area']) ?></b>
                 <div class="meta"><?= e(fecha((string) $r['fecha'])) ?> · <?= e(hora((string) $r['hora_desde'])) ?></div>

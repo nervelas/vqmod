@@ -68,10 +68,26 @@ Solo si cargó los datos de demostración. **Cámbielas o elimine esas cuentas a
 | Garita | `garita1` | `Garita2026!` |
 | Residente | `casa12@residencial.gt` | `Casa2026!` |
 
-## 7. Notas
+## 7. Imagen del sitio
 
-- Las librerías de PDF, correo SMTP, Excel, códigos QR y gráficas son propias y van incluidas en
-  `vendor/` y `assets/vendor/`: no hay dependencias externas ni CDN que puedan fallar.
-- Las carpetas `config/`, `storage/`, `vendor/` y `app/` están bloqueadas por `.htaccess`.
-  No las mueva ni cambie sus permisos.
-- Respaldos manuales: **Ajustes → Notificaciones y respaldo**, o en **Respaldos** desde el menú de administración.
+- **Fotografías.** `assets/img/sitio/` trae fotografías de muestra, ya recortadas
+  y con una gradación común. **Sustitúyalas por las de su residencial** antes de
+  publicar, desde **Sitio público → Galería** y **→ Amenidades**. La primera imagen
+  de la galería reemplaza automáticamente la fotografía de portada.
+- **Temas.** En **Ajustes → Identidad** hay nueve paletas (Petróleo y Barro,
+  Pizarra y Cobre, Índigo y Arena, Bosque y Terracota, Borgoña y Lino, Basalto y
+  Ámbar, Oliva y Hueso, Tinta y Cobalto, Océano y Coral) y modo oscuro por usuario.
+- **Tipografías.** Fraunces, Archivo e IBM Plex Mono van incluidas localmente bajo
+  licencia SIL OFL; no se consulta ningún servicio externo.
+- El pie del sitio público lleva un pequeño crédito enlazado a deerflow.tech.
+  Si no lo quiere, bórrelo de `app/Views/layouts/publico.php` (busque `class="firma"`).
+
+## 8. Notas
+
+- Las librerías de PDF, correo SMTP, Excel, códigos QR y gráficas son propias y van
+  incluidas en `vendor/` y `assets/vendor/`: no hay dependencias externas ni CDN
+  que puedan fallar.
+- Las carpetas `config/`, `storage/`, `vendor/` y `app/` están bloqueadas por
+  `.htaccess`. No las mueva ni cambie sus permisos.
+- Respaldos manuales: **Ajustes → Notificaciones y respaldo**, o en **Respaldos**
+  desde el menú de administración.

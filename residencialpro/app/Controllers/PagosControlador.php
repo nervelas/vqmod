@@ -201,7 +201,7 @@ final class PagosControlador extends Controlador
                     '<p>Estimado(a) ' . e((string) $residente['nombre']) . ',</p>'
                     . '<p>Revisamos el comprobante que envió para la vivienda <strong>'
                     . e((string) $pago['casa']) . '</strong> y no pudimos aprobarlo por lo siguiente:</p>'
-                    . '<p style="background:#F8E4E4;padding:12px 14px;border-radius:10px;color:#8A2F2F">'
+                    . '<p style="background:#F8E4E4;padding:12px 14px;border-radius:10px;color:#93251E">'
                     . e($motivo) . '</p>'
                     . '<p>Puede volver a enviarlo desde su portal. Si tiene dudas, con gusto le ayudamos.</p>',
                     'Ir a mi portal',

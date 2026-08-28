@@ -131,7 +131,7 @@
         <ul class="lista-limpia">
           <?php foreach ($vehiculos as $v): ?>
             <li class="item-lista">
-              <span style="color:var(--acento-3)"><?= ico('carro', 20) ?></span>
+              <span style="color:var(--arcilla)"><?= ico('carro', 20) ?></span>
               <div class="crecer">
                 <b><?= e($v['placa']) ?></b>
                 <div class="meta"><?= e(trim($v['marca'] . ' ' . $v['linea'] . ' · ' . $v['color'])) ?></div>
@@ -140,7 +140,7 @@
           <?php endforeach; ?>
           <?php foreach ($mascotas as $m): ?>
             <li class="item-lista">
-              <span style="color:var(--acento-3)"><?= ico('mascota', 20) ?></span>
+              <span style="color:var(--arcilla)"><?= ico('mascota', 20) ?></span>
               <div class="crecer">
                 <b><?= e($m['nombre']) ?></b>
                 <div class="meta"><?= e(trim(($m['especie'] ?? '') . ' · ' . ($m['raza'] ?? ''), ' ·')) ?></div>
@@ -154,7 +154,7 @@
         <ul class="lista-limpia">
           <?php foreach ($empleados as $em): ?>
             <li class="item-lista">
-              <span style="color:var(--acento-3)"><?= ico('maletin', 20) ?></span>
+              <span style="color:var(--arcilla)"><?= ico('maletin', 20) ?></span>
               <div class="crecer">
                 <b><?= e($em['nombre']) ?></b>
                 <div class="meta"><?= e($em['puesto'] ?? '') ?> · <?= e(hora((string) $em['hora_desde'])) ?> a <?= e(hora((string) $em['hora_hasta'])) ?></div>

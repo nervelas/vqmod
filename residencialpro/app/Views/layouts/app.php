@@ -10,7 +10,7 @@ $tema = $u['tema'] ?? Ajustes::get('tema', 'verde-oro');
 $modo = ($u['modo_oscuro'] ?? 0) ? 'oscuro' : 'claro';
 ?><!DOCTYPE html>
 <html lang="es" data-tema="<?= e($tema) ?>" data-modo="<?= e($modo) ?>"
-      data-base="<?= e(Url::basePath()) ?>" data-color-marca="<?= e(Ajustes::get('color_primario', '#0F2E24')) ?>">
+      data-base="<?= e(Url::basePath()) ?>" data-color-marca="<?= e(Ajustes::get('color_primario', '#0E4C5A')) ?>">
 <head><?= Vista::parcial('partials/head', ['titulo' => $tituloPagina ?? 'Panel']) ?></head>
 <body>
 <a class="saltar-a" href="#contenido-principal">Ir al contenido</a>

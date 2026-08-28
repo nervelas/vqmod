@@ -134,7 +134,7 @@ final class EgresosControlador extends Controlador
             }
             $datos = [
                 'nombre' => $nombre,
-                'color'  => preg_match('/^#[0-9a-f]{6}$/i', Peticion::texto('color')) ? Peticion::texto('color') : '#C9A961',
+                'color'  => preg_match('/^#[0-9a-f]{6}$/i', Peticion::texto('color')) ? Peticion::texto('color') : '#B94E27',
                 'activo' => Peticion::bool('activo') ? 1 : 0,
             ];
             $id = Peticion::entero('id');

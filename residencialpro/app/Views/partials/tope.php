@@ -9,8 +9,8 @@ $modo     = ($u['modo_oscuro'] ?? 0) ? 'oscuro' : 'claro';
 <header class="tope">
   <button class="icono-btn" data-alternar-barra aria-label="Mostrar u ocultar el menú"><?= ico('menu', 21) ?></button>
   <div class="crecer">
+    <?php if (!empty($subtitulo)): ?><span class="lema"><?= e($subtitulo) ?></span><?php endif; ?>
     <h1><?= e($tituloPagina ?? 'Tablero') ?></h1>
-    <?php if (!empty($subtitulo)): ?><div class="sub"><?= e($subtitulo) ?></div><?php endif; ?>
   </div>
   <div class="tope-acciones">
     <?php if (!empty($accionesTope)): ?><?= $accionesTope ?><?php endif; ?>
@@ -36,7 +36,7 @@ $modo     = ($u['modo_oscuro'] ?? 0) ? 'oscuro' : 'claro';
 
     <div class="desplegable">
       <button class="icono-btn" data-desplegable="menu-usuario" aria-label="Menú de la cuenta" aria-haspopup="true">
-        <span class="avatar sm"><?= e(iniciales((string) ($u['nombre'] ?? ''))) ?></span>
+        <span class="avatar" style="width:30px;height:30px;font-size:.6875rem"><?= e(iniciales((string) ($u['nombre'] ?? ''))) ?></span>
       </button>
       <div class="desplegable-menu" id="menu-usuario">
         <div style="padding:10px 12px">

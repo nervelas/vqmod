@@ -121,8 +121,8 @@ final class UsuariosControlador extends Controlador
                             . e(Ajustes::get('nombre', '')) . '</strong> con el perfil <strong>'
                             . e(rolNombre($datos['rol'])) . '</strong>.</p>'
                             . '<table style="width:100%;border-collapse:collapse;margin:16px 0">'
-                            . '<tr><td style="padding:8px 0;color:#8A8F8B">Usuario</td><td style="padding:8px 0"><strong>' . e($login) . '</strong></td></tr>'
-                            . '<tr><td style="padding:8px 0;color:#8A8F8B">Contraseña</td><td style="padding:8px 0"><strong>' . e($clave) . '</strong></td></tr>'
+                            . '<tr><td style="padding:8px 0;color:#6E6A61">Usuario</td><td style="padding:8px 0"><strong>' . e($login) . '</strong></td></tr>'
+                            . '<tr><td style="padding:8px 0;color:#6E6A61">Contraseña</td><td style="padding:8px 0"><strong>' . e($clave) . '</strong></td></tr>'
                             . '</table>'
                             . '<p>Le recomendamos cambiarla al ingresar por primera vez.</p>',
                             'Ingresar',
@@ -176,8 +176,8 @@ final class UsuariosControlador extends Controlador
                     'moneda_simbolo' => Peticion::texto('moneda_simbolo', 'Q'),
                     'pais_codigo'    => Peticion::texto('pais_codigo', '502'),
                     'tema'           => Peticion::texto('tema', 'verde-oro'),
-                    'color_primario' => preg_match('/^#[0-9a-f]{6}$/i', Peticion::texto('color_primario')) ? Peticion::texto('color_primario') : '#0F2E24',
-                    'color_acento'   => preg_match('/^#[0-9a-f]{6}$/i', Peticion::texto('color_acento')) ? Peticion::texto('color_acento') : '#C9A961',
+                    'color_primario' => preg_match('/^#[0-9a-f]{6}$/i', Peticion::texto('color_primario')) ? Peticion::texto('color_primario') : '#0E4C5A',
+                    'color_acento'   => preg_match('/^#[0-9a-f]{6}$/i', Peticion::texto('color_acento')) ? Peticion::texto('color_acento') : '#B94E27',
                     'firma_nombre'   => Peticion::texto('firma_nombre'),
                     'firma_cargo'    => Peticion::texto('firma_cargo'),
                 ], 'general');
@@ -419,7 +419,7 @@ final class UsuariosControlador extends Controlador
         if ($img === false) {
             return;
         }
-        $fondo = Ajustes::get('color_primario', '#0F2E24');
+        $fondo = Ajustes::get('color_primario', '#0E4C5A');
         [$r, $g, $b] = [hexdec(substr($fondo, 1, 2)), hexdec(substr($fondo, 3, 2)), hexdec(substr($fondo, 5, 2))];
         $dir = RUTA_BASE . '/assets/img';
         foreach ([48, 72, 96, 128, 144, 152, 167, 180, 192, 256, 384, 512] as $t) {

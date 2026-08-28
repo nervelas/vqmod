@@ -1,6 +1,6 @@
 <section class="garita-panel">
   <h2><?= ico('escanear', 20) ?> Escanear código QR</h2>
-  <p style="color:rgba(233,238,233,.7);font-size:.9rem">
+  <p style="color:color-mix(in srgb, #fff 80%, transparent);font-size:.9rem">
     Apunte la cámara al código que le muestra el visitante. También puede escribir el código de 6 dígitos.
   </p>
 
@@ -39,7 +39,7 @@
       <?php if ($prereg !== null): ?>
         <p style="color:#fff;font-size:1.15rem;margin:12px 0 0">
           <b><?= e($prereg['visitante']) ?></b><br>
-          <span style="color:var(--acento-2)">Casa <?= e($casaPre['codigo'] ?? '') ?></span>
+          <span style="color:var(--arcilla-3)">Casa <?= e($casaPre['codigo'] ?? '') ?></span>
         </p>
         <?php if (!empty($casaPre) && (int) $casaPre['restringida'] === 1): ?>
           <p class="chip grave mt-2">Vivienda con restricción de servicios por mora</p>

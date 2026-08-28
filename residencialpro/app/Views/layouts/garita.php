@@ -8,7 +8,7 @@ use App\Core\Vista;
 $u = Auth::usuario();
 ?><!DOCTYPE html>
 <html lang="es" data-tema="<?= e(Ajustes::get('tema', 'verde-oro')) ?>" data-modo="claro"
-      data-base="<?= e(Url::basePath()) ?>" data-color-marca="<?= e(Ajustes::get('color_primario', '#0F2E24')) ?>">
+      data-base="<?= e(Url::basePath()) ?>" data-color-marca="<?= e(Ajustes::get('color_primario', '#0E4C5A')) ?>">
 <head><?= Vista::parcial('partials/head', ['titulo' => $tituloPagina ?? 'Garita']) ?></head>
 <body>
 <div class="garita">

@@ -70,7 +70,7 @@
           <ul class="lista-limpia">
             <?php foreach ($casas as $c): if ($c === null) { continue; } ?>
               <li class="item-lista">
-                <span style="color:var(--acento-3)"><?= ico('casa', 19) ?></span>
+                <span style="color:var(--arcilla)"><?= ico('casa', 19) ?></span>
                 <div class="crecer"><b><?= e($c['codigo']) ?></b><div class="meta"><?= e($c['fase'] ?? '') ?></div></div>
               </li>
             <?php endforeach; ?>

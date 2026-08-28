@@ -245,7 +245,9 @@ final class TableroControlador extends Controlador
                 $this->exito('¡Listo! Su residencial ya está configurado.', '/admin');
             }
 
-            if ($accion === 'omitir') {
+            // El botón de omitir lleva nombre propio: repetir «accion» en el
+            // mismo formulario es HTML inválido y depende del orden de envío.
+            if ($accion === 'omitir' || Peticion::texto('omitir') !== '') {
                 DB::actualizar('usuarios', ['onboarding' => 1], 'id = :id', ['id' => Auth::id()]);
                 $_SESSION['usuario']['onboarding'] = 1;
                 $this->redirigir('/admin');

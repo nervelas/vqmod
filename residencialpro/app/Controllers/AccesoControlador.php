@@ -224,7 +224,7 @@ final class AccesoControlador extends Controlador
             Correo::plantillaHtml(
                 'Código de verificación',
                 '<p>Su código de acceso de un solo uso es:</p>'
-                . '<p style="font-size:32px;font-weight:700;letter-spacing:8px;color:#0F2E24">' . $codigo . '</p>'
+                . '<p style="font-size:32px;font-weight:700;letter-spacing:8px;color:#0E4C5A">' . $codigo . '</p>'
                 . '<p>Vence en 10 minutos. Si no fue usted quien intentó ingresar, cambie su contraseña de inmediato.</p>'
             )
         );

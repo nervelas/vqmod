@@ -1,7 +1,7 @@
 <section class="garita-panel">
   <h2><?= ico('reloj', 20) ?> Turno actual</h2>
   <?php if ($turno === null): ?>
-    <p style="color:rgba(233,238,233,.7)">No hay un turno abierto en este momento.</p>
+    <p style="color:color-mix(in srgb, #fff 80%, transparent)">No hay un turno abierto en este momento.</p>
     <form method="post">
       <?= csrf() ?>
       <input type="hidden" name="accion" value="iniciar">
@@ -16,7 +16,7 @@
       </div>
       <span class="chip ok">Abierto</span>
     </div>
-    <p style="color:rgba(233,238,233,.7);font-size:.9rem">
+    <p style="color:color-mix(in srgb, #fff 80%, transparent);font-size:.9rem">
       Anote a continuación las novedades que debe conocer el siguiente guardia. Quedarán registradas de forma permanente.
     </p>
     <form method="post">
@@ -37,7 +37,7 @@
   <div class="garita-lista">
     <?php foreach ($anteriores as $t): ?>
       <div class="garita-item" style="align-items:flex-start">
-        <span style="color:var(--acento-2);margin-top:2px"><?= ico('usuario', 20) ?></span>
+        <span style="color:var(--arcilla-3);margin-top:2px"><?= ico('usuario', 20) ?></span>
         <div class="crecer">
           <b><?= e($t['guardia'] ?? '') ?></b>
           <small><?= e(fechahora((string) $t['inicio'])) ?> — <?= $t['fin'] ? e(fechahora((string) $t['fin'])) : 'en curso' ?></small>

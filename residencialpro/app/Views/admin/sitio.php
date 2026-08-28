@@ -93,7 +93,7 @@
           <ul class="lista-limpia mb-2">
             <?php foreach ($amenidades as $am): ?>
               <li class="item-lista" style="padding:9px 0">
-                <span style="color:var(--acento-3)"><?= ico((string) $am['icono'], 19) ?></span>
+                <span style="color:var(--arcilla)"><?= ico((string) $am['icono'], 19) ?></span>
                 <div class="crecer"><b style="font-size:.92rem"><?= e($am['titulo']) ?></b>
                   <div class="meta"><?= e(recortar((string) $am['detalle'], 44)) ?></div></div>
                 <button class="btn btn-sm btn-fantasma" type="button" aria-label="Editar amenidad"

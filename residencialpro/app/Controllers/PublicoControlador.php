@@ -24,7 +24,23 @@ final class PublicoControlador extends Controlador
             'amenidades'   => DB::todos('SELECT * FROM amenidades WHERE activo = 1 ORDER BY orden, id'),
             'galeria'      => DB::todos('SELECT * FROM galeria WHERE activo = 1 ORDER BY orden, id LIMIT 12'),
             'eventos'      => DB::todos('SELECT * FROM eventos WHERE publico = 1 AND inicio >= NOW() ORDER BY inicio LIMIT 3'),
+            'cifras'       => $this->cifrasPublicas(),
+            'conPortada'   => true,
         ], 'publico');
+    }
+
+    /**
+     * Cifras de portada. Son datos reales del residencial —nunca importes ni
+     * saldos— para que el visitante vea tamaño y actividad, no promesas.
+     */
+    private function cifrasPublicas(): array
+    {
+        return [
+            'viviendas'  => (int) DB::valor('SELECT COUNT(*) FROM casas'),
+            'residentes' => (int) DB::valor("SELECT COUNT(*) FROM residentes WHERE activo = 1"),
+            'amenidades' => (int) DB::valor('SELECT COUNT(*) FROM areas'),
+            'accesos'    => (int) DB::valor('SELECT COUNT(*) FROM visitas WHERE entrada >= DATE_SUB(NOW(), INTERVAL 30 DAY)'),
+        ];
     }
 
     public function contacto(): void
@@ -104,6 +120,24 @@ final class PublicoControlador extends Controlador
     }
 
     /** Verificación pública de un recibo por QR. */
+    /**
+     * Página de verificación: si no llega un código en la ruta, se pide.
+     * Es la puerta pública para comprobar que un recibo es auténtico.
+     */
+    public function buscarVerificacion(): void
+    {
+        $codigo = trim((string) \App\Core\Peticion::texto('codigo'));
+        if ($codigo !== '') {
+            $this->redirigir('/verificar/' . rawurlencode($codigo));
+        }
+        $this->mostrar('publico/verificar', [
+            'tituloPagina' => 'Verificar un recibo',
+            'pago'         => null,
+            'detalle'      => [],
+            'formulario'   => true,
+        ], 'publico');
+    }
+
     public function verificar(string $hash = ''): void
     {
         $pago = Pago::porVerificacion($hash);

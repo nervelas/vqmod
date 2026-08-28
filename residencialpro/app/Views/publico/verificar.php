@@ -1,6 +1,29 @@
-<section class="seccion">
+<section class="banda">
   <div class="contenedor-sm">
-    <?php if ($pago === null): ?>
+    <?php if (!empty($formulario)): ?>
+      <div class="seccion-tit centrada">
+        <span class="lema">Verificación</span>
+        <h1>Compruebe que un recibo es auténtico.</h1>
+        <p>Escriba el código impreso al pie del recibo, o escanee su código QR con la
+           cámara del teléfono. La respuesta viene directamente de la administración.</p>
+      </div>
+      <div class="tarjeta">
+        <div class="tarjeta-cuerpo">
+          <form method="post" class="fila envolver" style="gap:12px">
+            <?= csrf() ?>
+            <div class="campo crecer" style="margin:0">
+              <label for="codigo">Código de verificación</label>
+              <input type="text" id="codigo" name="codigo" required minlength="6" maxlength="64"
+                     autocomplete="off" spellcheck="false" placeholder="Por ejemplo, 1a76ac333be3e7df539ac6fa42863fc5">
+            </div>
+            <button class="btn btn-oro btn-lg" type="submit" style="align-self:flex-end">
+              <?= ico('buscar', 18) ?> Verificar
+            </button>
+          </form>
+          <p class="ayuda mt-2">El código aparece bajo el código QR de cada recibo en PDF.</p>
+        </div>
+      </div>
+    <?php elseif ($pago === null): ?>
       <div class="tarjeta">
         <div class="tarjeta-cuerpo centrado" style="padding:48px 24px">
           <div style="color:var(--grave)"><?= ico('equisCirculo', 46) ?></div>

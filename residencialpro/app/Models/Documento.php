@@ -15,8 +15,8 @@ use Vendor\Qr\QrCode;
  */
 final class Documento
 {
-    private static function verde(): string { return Ajustes::get('color_primario', '#0F2E24'); }
-    private static function oro(): string   { return Ajustes::get('color_acento', '#C9A961'); }
+    private static function verde(): string { return Ajustes::get('color_primario', '#0E4C5A'); }
+    private static function oro(): string   { return Ajustes::get('color_acento', '#B94E27'); }
 
     /** Documento base con encabezado y pie institucionales. */
     private static function base(string $titulo, string $subtitulo = '', string $formato = 'A4'): Pdf
@@ -71,7 +71,7 @@ final class Documento
             $d->colorTrazo('#DCD6C8');
             $d->linea(15, $y, $d->ancho() - 15, $y);
             $d->fuente('helvetica', '', 7);
-            $d->colorTexto('#8A8F8B');
+            $d->colorTexto('#6E6A61');
             $d->texto(15, $y + 4.5, Ajustes::get('nombre', 'ResidencialPro') . ' · Documento generado el ' . date('d/m/Y H:i'));
             $d->textoDerecha($d->ancho() - 15, $y + 4.5, 'Página ' . $d->paginas() . ' de ' . $d->totalPaginasAlias());
         });
@@ -85,7 +85,7 @@ final class Documento
         $pdf->colorRelleno('#F6F3EC');
         $pdf->rectRedondo(15, $y, $pdf->ancho() - 30, 22, 3, 'F');
         $pdf->fuente('helvetica', '', 7.5);
-        $pdf->colorTexto('#8A8F8B');
+        $pdf->colorTexto('#6E6A61');
         $pdf->texto(20, $y + 6.5, 'VIVIENDA');
         $pdf->texto(78, $y + 6.5, 'RESIDENTE');
         $pdf->texto(140, $y + 6.5, 'EMITIDO');
@@ -162,7 +162,7 @@ final class Documento
         $saldo = Casa::saldo((int) $pago['casa_id']);
         $pdf->saltar(2);
         $pdf->fuente('helvetica', 'B', 9.5);
-        $pdf->colorTexto($saldo > 0.009 ? '#8A2F2F' : '#2F6B4F');
+        $pdf->colorTexto($saldo > 0.009 ? '#93251E' : '#47713F');
         $pdf->parrafo($saldo > 0.009
             ? 'Saldo pendiente después de este pago: ' . q($saldo)
             : 'La vivienda se encuentra SOLVENTE a la fecha de emisión de este recibo.', 180, 5);
@@ -197,13 +197,13 @@ final class Documento
         if ($firma !== '' && is_file(RUTA_BASE . '/uploads/logos/' . basename($firma))) {
             $pdf->imagen(RUTA_BASE . '/uploads/logos/' . basename($firma), 125, $y - 14, 45);
         }
-        $pdf->colorTrazo('#8A8F8B');
+        $pdf->colorTrazo('#6E6A61');
         $pdf->linea(120, $y, 195, $y);
         $pdf->fuente('helvetica', 'B', 9);
         $pdf->colorTexto(self::verde());
         $pdf->textoCentrado(157.5, $y + 5, $nombre);
         $pdf->fuente('helvetica', '', 7.8);
-        $pdf->colorTexto('#8A8F8B');
+        $pdf->colorTexto('#6E6A61');
         $pdf->textoCentrado(157.5, $y + 9.5, $cargo);
     }
 
@@ -351,13 +351,13 @@ final class Documento
         $pdf->colorRelleno($saldo <= 0.009 ? '#EAF3EC' : '#F7ECEC');
         $pdf->rectRedondo(20, $y, 170, 20, 3, 'F');
         $pdf->fuente('helvetica', 'B', 12);
-        $pdf->colorTexto($saldo <= 0.009 ? '#2F6B4F' : '#8A2F2F');
+        $pdf->colorTexto($saldo <= 0.009 ? '#47713F' : '#93251E');
         $pdf->textoCentrado($pdf->ancho() / 2, $y + 13, $saldo <= 0.009 ? 'VIVIENDA SOLVENTE' : 'VIVIENDA CON SALDO PENDIENTE: ' . q($saldo));
         $pdf->setY($y + 30);
 
         $pdf->matriz(QrCode::matriz(Url::absoluta('/verificar/solvencia/' . $casaId . '/' . $codigo), 'M'), 20, $pdf->getY(), 26);
         $pdf->fuente('helvetica', '', 7.5);
-        $pdf->colorTexto('#8A8F8B');
+        $pdf->colorTexto('#6E6A61');
         $pdf->texto(50, $pdf->getY() + 10, 'Código de verificación: ' . $codigo);
         $pdf->texto(50, $pdf->getY() + 14.5, 'Validez: 30 días a partir de la fecha de emisión.');
 
@@ -412,7 +412,7 @@ final class Documento
         foreach ($cargos as $c) {
             $filas[] = [(string) $c['descripcion'], fecha((string) $c['fecha_vence']), q(Cuota::saldoCargo($c))];
         }
-        $pdf->tabla($cols, $filas, ['alto' => 6.8, 'cabecera' => '#8A2F2F']);
+        $pdf->tabla($cols, $filas, ['alto' => 6.8, 'cabecera' => '#93251E']);
 
         $pdf->saltar(6);
         $pdf->setX(15);
@@ -446,15 +446,15 @@ final class Documento
         $pdf->colorRelleno('#F6F3EC');
         $pdf->rectRedondo(15, $y, 180, 20, 3, 'F');
         $pdf->fuente('helvetica', '', 7.5);
-        $pdf->colorTexto('#8A8F8B');
+        $pdf->colorTexto('#6E6A61');
         $et = ['Por vencer' => 'corriente', '1-30 días' => 'd30', '31-60 días' => 'd60', '61-90 días' => 'd90', '+90 días' => 'd120', 'TOTAL' => 'total'];
         $x = 20;
         foreach ($et as $nombre => $clave) {
             $pdf->fuente('helvetica', '', 7.2);
-            $pdf->colorTexto('#8A8F8B');
+            $pdf->colorTexto('#6E6A61');
             $pdf->texto($x, $y + 7, mb_strtoupper($nombre));
             $pdf->fuente('helvetica', 'B', $clave === 'total' ? 11 : 9.5);
-            $pdf->colorTexto($clave === 'total' ? '#8A2F2F' : self::verde());
+            $pdf->colorTexto($clave === 'total' ? '#93251E' : self::verde());
             $pdf->texto($x, $y + 14, q((float) $resumen[$clave]));
             $x += 29;
         }
@@ -511,8 +511,8 @@ final class Documento
 
         $tarjetas = [
             ['Ingresos del mes', q($ingresos), self::verde()],
-            ['Egresos del mes', q($egresos), '#8A2F2F'],
-            ['Resultado', q($ingresos - $egresos), $ingresos - $egresos >= 0 ? '#2F6B4F' : '#8A2F2F'],
+            ['Egresos del mes', q($egresos), '#93251E'],
+            ['Resultado', q($ingresos - $egresos), $ingresos - $egresos >= 0 ? '#47713F' : '#93251E'],
         ];
         $x = 15;
         $y = $pdf->getY();
@@ -520,7 +520,7 @@ final class Documento
             $pdf->colorRelleno('#F6F3EC');
             $pdf->rectRedondo($x, $y, 57, 24, 3, 'F');
             $pdf->fuente('helvetica', '', 7.5);
-            $pdf->colorTexto('#8A8F8B');
+            $pdf->colorTexto('#6E6A61');
             $pdf->texto($x + 5, $y + 8, mb_strtoupper($titulo));
             $pdf->fuente('times', 'B', 15);
             $pdf->colorTexto($color);
@@ -655,7 +655,7 @@ final class Documento
         $pdf->parrafo('Participación: ' . $r['votos'] . ' viviendas · Quórum alcanzado: ' . $r['quorum'] . ' % (requerido ' . (float) $v['quorum'] . ' %)', 180, 6);
         $pdf->saltar(2);
         $pdf->fuente('helvetica', '', 9.5);
-        $pdf->colorTexto($r['quorum'] >= (float) $v['quorum'] ? '#2F6B4F' : '#8A2F2F');
+        $pdf->colorTexto($r['quorum'] >= (float) $v['quorum'] ? '#47713F' : '#93251E');
         $pdf->setX(15);
         $pdf->parrafo($r['quorum'] >= (float) $v['quorum']
             ? 'Se alcanzó el quórum reglamentario, por lo que la decisión adoptada es vinculante conforme al reglamento interno.'
@@ -682,7 +682,7 @@ final class Documento
         $pdf->matriz(QrCode::matriz(Visita::tokenQr($p), 'M'), ($pdf->ancho() - 70) / 2, $pdf->getY(), 70);
         $pdf->setY($pdf->getY() + 78);
         $pdf->fuente('helvetica', '', 9);
-        $pdf->colorTexto('#8A8F8B');
+        $pdf->colorTexto('#6E6A61');
         $pdf->textoCentrado($pdf->ancho() / 2, $pdf->getY(), 'CÓDIGO NUMÉRICO');
         $pdf->fuente('times', 'B', 30);
         $pdf->colorTexto(self::oro());

@@ -2,7 +2,7 @@
   <div class="fila envolver" style="gap:16px;font-size:.85rem">
     <span class="fila" style="gap:6px"><i style="width:12px;height:12px;border-radius:50%;background:var(--ok);display:block"></i> Solvente</span>
     <span class="fila" style="gap:6px"><i style="width:12px;height:12px;border-radius:50%;background:var(--grave);display:block"></i> Con saldo</span>
-    <span class="fila" style="gap:6px"><i style="width:12px;height:12px;border-radius:50%;background:var(--piedra);display:block"></i> Desocupada</span>
+    <span class="fila" style="gap:6px"><i style="width:12px;height:12px;border-radius:50%;background:var(--texto-3);display:block"></i> Desocupada</span>
   </div>
   <?php if (esRol('admin')): ?>
     <form method="post" enctype="multipart/form-data" class="fila" style="gap:8px">
@@ -24,7 +24,7 @@
       </div>
     <?php endif; ?>
 
-    <div class="mapa-caja" id="mapa" style="<?= $plano === '' ? 'min-height:520px;background:repeating-linear-gradient(45deg,var(--panel-2),var(--panel-2) 12px,var(--fondo-2) 12px,var(--fondo-2) 24px)' : '' ?>">
+    <div class="mapa-caja" id="mapa" style="<?= $plano === '' ? 'min-height:520px;background:repeating-linear-gradient(45deg,var(--lienzo-2),var(--lienzo-2) 12px,var(--cal-2) 12px,var(--cal-2) 24px)' : '' ?>">
       <?php if ($plano !== ''): ?>
         <img src="<?= e(subida($plano, 'casas')) ?>" alt="Plano del residencial">
       <?php endif; ?>

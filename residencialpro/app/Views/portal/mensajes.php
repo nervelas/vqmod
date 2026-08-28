@@ -46,7 +46,7 @@
       <ul class="lista-limpia">
         <?php foreach ($contactos as $c): ?>
           <li class="item-lista">
-            <span style="color:var(--acento-3)"><?= ico('telefono', 19) ?></span>
+            <span style="color:var(--arcilla)"><?= ico('telefono', 19) ?></span>
             <div class="crecer">
               <b><?= e($c['nombre']) ?></b>
               <div class="meta"><?= e($c['tipo'] ?? '') ?></div>

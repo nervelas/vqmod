@@ -276,8 +276,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'moneda_simbolo'  => 'Q',
                         'pais_codigo'     => '502',
                         'tema'            => (string) ($_POST['tema'] ?? 'verde-oro'),
-                        'color_primario'  => '#0F2E24',
-                        'color_acento'    => '#C9A961',
+                        'color_primario'  => '#0E4C5A',
+                        'color_acento'    => '#B94E27',
                         'mora_tipo'       => 'porcentaje',
                         'mora_valor'      => '2',
                         'mora_dias_gracia' => '0',
@@ -361,18 +361,18 @@ function cabecera(string $titulo, string $base): void
 <link rel="stylesheet" href="<?= esc($base) ?>/assets/css/fuentes-locales.css">
 <link rel="stylesheet" href="<?= esc($base) ?>/assets/css/app.css">
 <style>
-  body { background: linear-gradient(160deg,#0A2019,#0F2E24 60%,#164032); min-height:100dvh; }
+  body { background: linear-gradient(160deg,#0A2019,#0E4C5A 60%,#164032); min-height:100dvh; }
   .inst { width:min(880px, calc(100% - 32px)); margin:0 auto; padding:40px 0 60px; }
   .inst-marca { text-align:center; color:#E9EEE9; margin-bottom:26px; }
-  .inst-marca b { font-family:var(--f-titulo); font-size:2rem; color:var(--acento-2); display:block; }
+  .inst-marca b { font-family:var(--f-titulo); font-size:2rem; color:var(--arcilla-3); display:block; }
   .inst-marca span { font-size:.78rem; letter-spacing:.2em; text-transform:uppercase; color:rgba(233,238,233,.6); }
   .pasos { display:flex; gap:8px; justify-content:center; margin-bottom:26px; flex-wrap:wrap; }
   .paso-p { display:flex; align-items:center; gap:9px; padding:9px 16px; border-radius:var(--r-full);
             background:rgba(255,255,255,.07); color:rgba(233,238,233,.72); font-size:.83rem; font-weight:600; }
-  .paso-p.activo { background:var(--acento); color:#1F1B10; }
-  .paso-p.hecho { background:rgba(201,169,97,.22); color:var(--acento-2); }
+  .paso-p.activo { background:var(--arcilla); color:#1F1B10; }
+  .paso-p.hecho { background:rgba(201,169,97,.22); color:var(--arcilla-3); }
   .paso-p i { width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.18);font-style:normal;font-size:.75rem; }
-  .req { display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--borde); font-size:.9rem; }
+  .req { display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--linea); font-size:.9rem; }
   .req:last-child { border-bottom:0; }
   .req .est { margin-left:auto; }
 </style>
@@ -447,7 +447,7 @@ function pantallaFinal(array $datos, string $base): void
         <h3>Tarea programada (cron)</h3>
         <p class="texto-2" style="font-size:.9rem">En cPanel &rarr; <em>Trabajos cron</em>, agregue esta línea cada 15 minutos.
         Es lo que envía los recordatorios de cobro, aplica la mora y crea los respaldos.</p>
-        <pre style="background:var(--fondo-2);padding:14px;border-radius:var(--r-sm);overflow:auto;font-size:.8rem">*/15 * * * * curl -s "<?= esc($dominio . $base) ?>/cron/run.php?token=<?= esc($datos['cron']) ?>" &gt;/dev/null 2&gt;&amp;1</pre>
+        <pre style="background:var(--cal-2);padding:14px;border-radius:var(--r-sm);overflow:auto;font-size:.8rem">*/15 * * * * curl -s "<?= esc($dominio . $base) ?>/cron/run.php?token=<?= esc($datos['cron']) ?>" &gt;/dev/null 2&gt;&amp;1</pre>
 
         <?php if ($datos['push']): ?>
           <div class="aviso-caja info mt-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
@@ -601,15 +601,16 @@ foreach ($avisos as $av) {
             <div class="campo">
               <label for="tema">Tema visual</label>
               <select id="tema" name="tema">
-                <option value="verde-oro">Verde &amp; Oro</option>
-                <option value="negro-oro">Negro &amp; Oro</option>
-                <option value="azul-marino">Azul Marino</option>
-                <option value="grafito">Grafito</option>
-                <option value="borgona">Borgoña</option>
-                <option value="azul-real">Azul Real</option>
-                <option value="terracota">Terracota</option>
-                <option value="purpura">Púrpura</option>
-              </select>
+                <option value="verde-oro">Petróleo y Barro</option>
+                <option value="grafito">Pizarra y Cobre</option>
+                <option value="azul-marino">Índigo y Arena</option>
+                <option value="terracota">Bosque y Terracota</option>
+                <option value="borgona">Borgoña y Lino</option>
+                <option value="negro-oro">Basalto y Ámbar</option>
+                <option value="purpura">Oliva y Hueso</option>
+                <option value="azul-real">Tinta y Cobalto</option>
+                <option value="oceano">Océano y Coral</option>
+                </select>
               <span class="ayuda">Puede cambiarlo cuando quiera desde los ajustes.</span>
             </div>
           </div>

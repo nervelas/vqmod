@@ -2,7 +2,7 @@
  * ResidencialPro — Service Worker
  * Precarga del armazón, caché de recursos y modo sin conexión para la garita.
  */
-const VERSION = 'rpro-v1';
+const VERSION = 'rpro-v2';
 const CACHE_ESTATICO = VERSION + '-estatico';
 const CACHE_DATOS    = VERSION + '-datos';
 
@@ -13,6 +13,10 @@ const PRECARGA = [
   ruta('/'),
   ruta('/sin-conexion'),
   ruta('/assets/css/app.css'),
+  ruta('/assets/css/fuentes-locales.css'),
+  ruta('/assets/fonts/archivo-variable-latin.woff2'),
+  ruta('/assets/fonts/fraunces-variable-latin.woff2'),
+  ruta('/assets/fonts/plexmono-400-latin.woff2'),
   ruta('/assets/js/app.js'),
   ruta('/assets/js/garita.js'),
   ruta('/assets/vendor/grafica.js'),

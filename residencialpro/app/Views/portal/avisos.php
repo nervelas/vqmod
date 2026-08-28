@@ -6,7 +6,7 @@
     <?php endif; ?>
     <?php foreach ($avisos as $a): $leido = in_array((int) $a['id'], $leidos, true); ?>
       <article class="tarjeta <?= $leido ? '' : 'tarjeta-flota' ?>"
-               <?= $leido ? '' : 'style="border-left:4px solid var(--acento)"' ?>>
+               <?= $leido ? '' : 'style="border-left:4px solid var(--arcilla)"' ?>>
         <?php if (!empty($a['imagen'])): ?>
           <img src="<?= e(subida($a['imagen'], 'avisos')) ?>" alt="" style="width:100%;max-height:220px;object-fit:cover">
         <?php endif; ?>
@@ -38,7 +38,7 @@
           <?php foreach ($eventos as $ev): ?>
             <li class="item-lista">
               <div style="text-align:center;min-width:44px">
-                <div style="font-family:var(--f-titulo);font-size:1.4rem;color:var(--acento-3);line-height:1"><?= e(date('d', (int) strtotime((string) $ev['inicio']))) ?></div>
+                <div style="font-family:var(--f-titulo);font-size:1.4rem;color:var(--arcilla);line-height:1"><?= e(date('d', (int) strtotime((string) $ev['inicio']))) ?></div>
                 <div class="mayus" style="font-size:.62rem"><?= e(mb_substr(mesNombre((int) date('n', (int) strtotime((string) $ev['inicio']))), 0, 3)) ?></div>
               </div>
               <div class="crecer">

@@ -53,13 +53,13 @@
         <div class="fila envolver" style="gap:22px">
           <div>
             <div class="mayus">Monto</div>
-            <div style="font-family:var(--f-titulo);font-size:1.7rem;color:var(--marca)"><?= e(q((float) $c['monto'])) ?></div>
+            <div style="font-family:var(--f-titulo);font-size:1.7rem;color:var(--petroleo)"><?= e(q((float) $c['monto'])) ?></div>
             <div class="texto-3" style="font-size:.78rem"><?= e($calculo[$c['calculo']] ?? '') ?></div>
           </div>
           <?php if ($estimado > 0): ?>
             <div>
               <div class="mayus">Emisión estimada</div>
-              <div style="font-family:var(--f-titulo);font-size:1.7rem;color:var(--acento-3)"><?= e(q($estimado)) ?></div>
+              <div style="font-family:var(--f-titulo);font-size:1.7rem;color:var(--arcilla)"><?= e(q($estimado)) ?></div>
               <div class="texto-3" style="font-size:.78rem">por período</div>
             </div>
           <?php endif; ?>

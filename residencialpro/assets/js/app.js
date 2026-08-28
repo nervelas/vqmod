@@ -421,7 +421,87 @@
     act();
   }
 
-  /* --------------------------------------------------------- 10. ARRANQUE */
+
+  /* ------------------------------------------------- 11. SITIO PÚBLICO
+     Movimiento del sitio: la cabecera se asienta al desplazar, los bloques
+     aparecen una sola vez y las cifras cuentan hasta su valor. Todo se
+     desactiva si el sistema pide menos movimiento. */
+
+  const menosMovimiento = window.matchMedia
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    : false;
+
+  function iniciarCabeceraWeb() {
+    const tope = document.querySelector('[data-tope-web]');
+    if (!tope) return;
+    // En las páginas sin fotografía de portada la cabecera nace asentada:
+    // dejarla transparente pintaría texto blanco sobre papel.
+    const fijaSiempre = tope.hasAttribute('data-tope-fijo');
+    const revisar = () => tope.classList.toggle('fijo', fijaSiempre || window.scrollY > 24);
+    revisar();
+    window.addEventListener('scroll', revisar, { passive: true });
+
+    $$('[data-menu-web]').forEach((b) => {
+      b.addEventListener('click', () => {
+        const nav = document.getElementById('web-nav');
+        if (!nav) return;
+        const abierto = nav.classList.toggle('abierto');
+        b.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+        if (abierto) tope.classList.add('fijo'); else revisar();
+      });
+    });
+    $$('#web-nav a').forEach((a) => a.addEventListener('click', () => {
+      const nav = document.getElementById('web-nav');
+      if (nav) nav.classList.remove('abierto');
+      $$('[data-menu-web]').forEach((b) => b.setAttribute('aria-expanded', 'false'));
+    }));
+  }
+
+  function iniciarApariciones() {
+    const piezas = $$('[data-surge]');
+    if (!piezas.length) return;
+    if (menosMovimiento || !('IntersectionObserver' in window)) {
+      piezas.forEach((p) => p.classList.add('visible'));
+      return;
+    }
+    const obs = new IntersectionObserver((filas) => {
+      filas.forEach((f) => {
+        if (!f.isIntersecting) return;
+        f.target.classList.add('visible');
+        obs.unobserve(f.target);
+      });
+    }, { rootMargin: '0px 0px -12% 0px', threshold: 0.08 });
+    piezas.forEach((p) => obs.observe(p));
+  }
+
+  function iniciarContadores() {
+    const cifras = $$('[data-contador]');
+    if (!cifras.length) return;
+    const pintar = (el, v) => { el.textContent = new Intl.NumberFormat('es-GT').format(v); };
+    if (menosMovimiento || !('IntersectionObserver' in window)) {
+      cifras.forEach((el) => pintar(el, parseInt(el.dataset.contador, 10) || 0));
+      return;
+    }
+    const obs = new IntersectionObserver((filas) => {
+      filas.forEach((f) => {
+        if (!f.isIntersecting) return;
+        const el = f.target;
+        obs.unobserve(el);
+        const meta = parseInt(el.dataset.contador, 10) || 0;
+        const inicio = performance.now();
+        const dura = 900;
+        const paso = (ahora) => {
+          const t = Math.min(1, (ahora - inicio) / dura);
+          pintar(el, Math.round(meta * (1 - Math.pow(1 - t, 3))));
+          if (t < 1) requestAnimationFrame(paso);
+        };
+        requestAnimationFrame(paso);
+      });
+    }, { threshold: 0.4 });
+    cifras.forEach((el) => obs.observe(el));
+  }
+
+  /* --------------------------------------------------------- 12. ARRANQUE */
   document.addEventListener('DOMContentLoaded', () => {
     iniciarInterfaz();
     iniciarTema();
@@ -430,6 +510,9 @@
     iniciarReloj();
     iniciarConexion();
     registrarServicio();
+    iniciarCabeceraWeb();
+    iniciarApariciones();
+    iniciarContadores();
     $$('[data-abrir-notificaciones]').forEach((b) => b.addEventListener('click', cargarNotificaciones));
     $$('[data-activar-push]').forEach((b) => b.addEventListener('click', () => RP.activarPush()));
   });

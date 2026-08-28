@@ -57,20 +57,20 @@
     <div class="rejilla rejilla-3 mt-3">
       <?php if (Ajustes::get('telefono', '') !== ''): ?>
         <div class="tarjeta"><div class="tarjeta-cuerpo centrado">
-          <div style="color:var(--acento-3)"><?= ico('telefono', 24) ?></div>
+          <div style="color:var(--arcilla)"><?= ico('telefono', 24) ?></div>
           <div class="mayus mt-1">Teléfono</div>
           <b><?= e(Ajustes::get('telefono')) ?></b>
         </div></div>
       <?php endif; ?>
       <?php if (Ajustes::get('correo', '') !== ''): ?>
         <div class="tarjeta"><div class="tarjeta-cuerpo centrado">
-          <div style="color:var(--acento-3)"><?= ico('correo', 24) ?></div>
+          <div style="color:var(--arcilla)"><?= ico('correo', 24) ?></div>
           <div class="mayus mt-1">Correo</div>
           <b style="font-size:.9rem"><?= e(Ajustes::get('correo')) ?></b>
         </div></div>
       <?php endif; ?>
       <div class="tarjeta"><div class="tarjeta-cuerpo centrado">
-        <div style="color:var(--acento-3)"><?= ico('pin', 24) ?></div>
+        <div style="color:var(--arcilla)"><?= ico('pin', 24) ?></div>
         <div class="mayus mt-1">Dirección</div>
         <b style="font-size:.88rem"><?= e(recortar(Ajustes::get('direccion', 'Consulte con la administración'), 70)) ?></b>
       </div></div>

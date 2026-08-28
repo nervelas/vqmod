@@ -1,13 +1,14 @@
 <?php
 $temas = [
-  'verde-oro' => ['Verde & Oro', '#0F2E24', '#C9A961'],
-  'negro-oro' => ['Negro & Oro', '#15140F', '#C9A961'],
-  'azul-marino' => ['Azul Marino', '#0E2340', '#C6A664'],
-  'grafito' => ['Grafito', '#23262B', '#D2A24C'],
-  'borgona' => ['Borgoña', '#3A1220', '#C9A961'],
-  'azul-real' => ['Azul Real', '#10306B', '#D9B65F'],
-  'terracota' => ['Terracota', '#4A2216', '#D89A5C'],
-  'purpura' => ['Púrpura', '#2E1B45', '#C9A2E0'],
+  'verde-oro'   => ['Petróleo y Barro', '#0E4C5A', '#B94E27'],
+  'grafito'     => ['Pizarra y Cobre',  '#2E3A40', '#A9622A'],
+  'azul-marino' => ['Índigo y Arena',   '#263A63', '#A8681F'],
+  'terracota'   => ['Bosque y Terracota', '#24503C', '#B2502C'],
+  'borgona'     => ['Borgoña y Lino',   '#56202C', '#9A6118'],
+  'negro-oro'   => ['Basalto y Ámbar',  '#1F2224', '#9E6A12'],
+  'purpura'     => ['Oliva y Hueso',    '#3B4429', '#A55B24'],
+  'azul-real'   => ['Tinta y Cobalto',  '#17324D', '#A65A2E'],
+  'oceano'      => ['Océano y Coral',   '#14444F', '#B4453F'],
 ];
 $v = static fn(string $k, string $d = '') => (string) ($a[$k] ?? $d);
 $secciones = ['general' => 'Identidad', 'cobros' => 'Cobros y mora', 'mensajes' => 'Correo y WhatsApp', 'notificaciones' => 'Notificaciones y respaldo'];
@@ -82,7 +83,7 @@ $secciones = ['general' => 'Identidad', 'cobros' => 'Cobros y mora', 'mensajes' 
             <?php if ($v('logo') !== ''): ?>
               <img src="<?= e(subida($v('logo'), 'logos')) ?>" alt="Logotipo" style="max-height:110px;border-radius:var(--r-sm)">
             <?php else: ?>
-              <div class="escudo" style="width:96px;height:96px;margin:0 auto;border-radius:20px;display:grid;place-items:center;background:linear-gradient(135deg,var(--acento-2),var(--acento-3));color:#1F1B10">
+              <div class="escudo" style="width:96px;height:96px;margin:0 auto;border-radius:20px;display:grid;place-items:center;background:linear-gradient(135deg,var(--arcilla-3),var(--arcilla));color:#fff">
                 <?= ico('casa', 46) ?>
               </div>
             <?php endif; ?>
@@ -109,9 +110,9 @@ $secciones = ['general' => 'Identidad', 'cobros' => 'Cobros y mora', 'mensajes' 
             <input type="hidden" name="tema" id="tema-valor" value="<?= e($v('tema', 'verde-oro')) ?>">
             <div class="campos">
               <div class="campo"><label for="color_primario">Color principal</label>
-                <input type="color" id="color_primario" name="color_primario" value="<?= e($v('color_primario', '#0F2E24')) ?>"></div>
+                <input type="color" id="color_primario" name="color_primario" value="<?= e($v('color_primario', '#0E4C5A')) ?>"></div>
               <div class="campo"><label for="color_acento">Color de acento</label>
-                <input type="color" id="color_acento" name="color_acento" value="<?= e($v('color_acento', '#C9A961')) ?>"></div>
+                <input type="color" id="color_acento" name="color_acento" value="<?= e($v('color_acento', '#B94E27')) ?>"></div>
             </div>
             <span class="ayuda">Los colores se usan en los documentos PDF, los correos y la aplicación instalable.</span>
           </div>
@@ -312,7 +313,7 @@ $secciones = ['general' => 'Identidad', 'cobros' => 'Cobros y mora', 'mensajes' 
             Para que funcionen los recordatorios de cobro, la mora y los respaldos automáticos,
             configure esta línea en cPanel &rarr; <em>Trabajos cron</em>, cada 15 minutos:
           </p>
-          <pre class="desplaza" data-etiqueta="Línea de cron" style="background:var(--fondo-2);padding:13px;border-radius:var(--r-sm);overflow:auto;font-size:.78rem">*/15 * * * * curl -s "<?= e(\App\Core\Url::absoluta('/cron/run.php')) ?>?token=<?= e($cronToken) ?>" &gt;/dev/null 2&gt;&amp;1</pre>
+          <pre class="desplaza" data-etiqueta="Línea de cron" style="background:var(--cal-2);padding:13px;border-radius:var(--r-sm);overflow:auto;font-size:.78rem">*/15 * * * * curl -s "<?= e(\App\Core\Url::absoluta('/cron/run.php')) ?>?token=<?= e($cronToken) ?>" &gt;/dev/null 2&gt;&amp;1</pre>
           <button class="btn btn-claro btn-sm" type="button"
                   data-copiar='*/15 * * * * curl -s "<?= e(\App\Core\Url::absoluta('/cron/run.php')) ?>?token=<?= e($cronToken) ?>" >/dev/null 2>&1'>
             <?= ico('archivo', 15) ?> Copiar la línea

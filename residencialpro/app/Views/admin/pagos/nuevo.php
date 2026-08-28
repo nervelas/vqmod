@@ -66,7 +66,7 @@
       </div>
 
       <?php if ($casaId > 0): ?>
-        <div class="tarjeta-cab" style="border-top:1px solid var(--borde)">
+        <div class="tarjeta-cab" style="border-top:1px solid var(--linea)">
           <h3>Aplicación a los cargos pendientes</h3>
           <button class="btn btn-sm btn-claro" type="button" data-aplicar-saldo><?= ico('rayo', 15) ?> Aplicar automáticamente</button>
         </div>

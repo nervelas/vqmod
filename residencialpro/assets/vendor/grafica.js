@@ -115,7 +115,7 @@
       if (!sets.length || !etiquetas.length) { this._vacio(an, al); return; }
 
       const colorTexto = css('--texto-3', '#8A8F8B');
-      const colorRejilla = css('--borde', '#E3DDCE');
+      const colorRejilla = css('--linea', '#E3DDCE');
 
       let max = 0;
       sets.forEach(d => d.data.forEach(v => { if (+v > max) max = +v; }));
@@ -173,7 +173,7 @@
       const c = this.ctx;
       const n = etiquetas.length;
       sets.forEach((d) => {
-        const color = d.borderColor || css('--acento', '#C9A961');
+        const color = d.borderColor || css('--arcilla', '#C9A961');
         const puntos = d.data.map((v, i) => ({
           x: izq + (n === 1 ? w / 2 : w * i / (n - 1)),
           y: arr + h - (h * Math.max(0, +v) / tope) * this.progreso,
@@ -199,7 +199,7 @@
         c.setLineDash([]);
         puntos.forEach((p, i) => {
           const r = i === idxActivo ? 5 : 3;
-          c.fillStyle = css('--panel', '#fff');
+          c.fillStyle = css('--lienzo', '#fff');
           c.beginPath(); c.arc(p.x, p.y, r + 1.4, 0, Math.PI * 2); c.fill();
           c.fillStyle = color;
           c.beginPath(); c.arc(p.x, p.y, r, 0, Math.PI * 2); c.fill();
@@ -214,7 +214,7 @@
       const cuantos = sets.length;
       const anchoBarra = Math.max(5, (anchoGrupo * 0.62) / cuantos);
       sets.forEach((d, s) => {
-        const color = d.backgroundColor || css('--acento', '#C9A961');
+        const color = d.backgroundColor || css('--arcilla', '#C9A961');
         d.data.forEach((v, i) => {
           const alto = Math.max(0, (h * Math.max(0, +v) / tope) * this.progreso);
           const x = izq + anchoGrupo * i + anchoGrupo * 0.19 + anchoBarra * s;
@@ -248,14 +248,14 @@
       if (x + cajaW > an - 4) x -= cajaW + 24;
       const y = Math.max(4, Math.min(al - cajaH - 4, arr + 8));
 
-      c.fillStyle = css('--marca', '#0F2E24');
+      c.fillStyle = css('--petroleo', '#0F2E24');
       c.globalAlpha = .96;
       c.beginPath();
       if (c.roundRect) c.roundRect(x, y, cajaW, cajaH, 8); else c.rect(x, y, cajaW, cajaH);
       c.fill();
       c.globalAlpha = 1;
       c.textAlign = 'left';
-      c.fillStyle = css('--acento-2', '#E0C489');
+      c.fillStyle = css('--arcilla-3', '#E0C489');
       c.font = '600 11px Inter, system-ui, sans-serif';
       c.fillText(titulo, x + pad, y + 13);
       c.fillStyle = '#E9EEE9';
@@ -270,7 +270,7 @@
       c.textAlign = 'left';
       let x = 46;
       sets.forEach(d => {
-        const color = d.borderColor || d.backgroundColor || css('--acento', '#C9A961');
+        const color = d.borderColor || d.backgroundColor || css('--arcilla', '#C9A961');
         c.fillStyle = Array.isArray(color) ? color[0] : color;
         c.beginPath(); c.arc(x + 4, al - 6, 4, 0, Math.PI * 2); c.fill();
         c.fillStyle = css('--texto-3', '#8A8F8B');
@@ -294,7 +294,7 @@
       const radio = Math.max(30, Math.min(cx, cy) - 12);
       const interior = this.tipo === 'pie' ? 0 : radio * 0.62;
       let ang = -Math.PI / 2;
-      const colores = set.backgroundColor || [css('--acento', '#C9A961')];
+      const colores = set.backgroundColor || [css('--arcilla', '#C9A961')];
 
       set.data.forEach((v, i) => {
         const porcion = (Math.max(0, +v) / total) * Math.PI * 2 * this.progreso;
@@ -315,7 +315,7 @@
           c.fillStyle = css('--texto-3', '#8A8F8B');
           c.font = '10px Inter, system-ui, sans-serif';
           c.fillText(this.opciones.centro.etiqueta || '', cx, cy - 9);
-          c.fillStyle = css('--marca', '#0F2E24');
+          c.fillStyle = css('--petroleo', '#0F2E24');
           c.font = '600 17px Inter, system-ui, sans-serif';
           c.fillText(this.opciones.centro.valor || '', cx, cy + 10);
         }

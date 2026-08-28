@@ -13,6 +13,7 @@ $r = new Router();
 $r->get('/',                       'PublicoControlador@inicio');
 $r->cualquiera('/contacto',        'PublicoControlador@contacto');
 $r->get('/reglamento',             'PublicoControlador@reglamento');
+$r->cualquiera('/verificar',       'PublicoControlador@buscarVerificacion');
 $r->get('/verificar/{hash}',       'PublicoControlador@verificar');
 $r->get('/verificar/solvencia/{casa:\d+}/{codigo}', 'PublicoControlador@verificarSolvencia');
 $r->get('/manifest.json',          'PwaControlador@manifest');

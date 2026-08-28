@@ -1,25 +1,18 @@
 TIPOGRAFÍAS DEL SISTEMA
 =======================
 
-ResidencialPro incluye sus dos tipografías de forma local:
+ResidencialPro incluye sus tres tipografías de forma local, sin depender de
+Google Fonts ni de ningún servicio externo. Así el sitio se ve igual aunque
+el hosting no tenga salida a Internet y funciona sin conexión (PWA).
 
-  cormorant-garamond-variable-latin.woff2   (títulos)
-  inter-variable-latin.woff2                (interfaz y datos)
+  fraunces-variable-latin.woff2    Titulares. Serif variable con eje óptico:
+                                   a tamaño grande gana carácter y a tamaño
+                                   pequeño se mantiene legible.
+  archivo-variable-latin.woff2     Interfaz y lectura. Grotesca de trazo firme,
+                                   pensada para datos y formularios.
+  plexmono-400/500/600-latin.woff2 Etiquetas técnicas, códigos de vivienda y
+                                   cifras de tabla, siempre en ancho fijo.
 
-Son los archivos oficiales publicados por Google Fonts (subconjunto latino,
-formato variable) y se distribuyen bajo la SIL Open Font License 1.1.
-El texto completo de la licencia está en LICENCIA-FUENTES.txt.
-
-¿Por qué locales y no desde el CDN de Google?
-  · El sistema no depende de ningún servicio externo.
-  · Carga más rápido: no hay conexión adicional ni bloqueo de renderizado.
-  · La aplicación instalada (PWA) conserva su tipografía sin conexión.
-  · Evita transferir datos de los residentes a terceros.
-
-Si prefiere cargarlas desde Google Fonts, agregue en
-/app/Views/partials/head.php la línea:
-
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
-
-La política de seguridad de contenido (CSP) del sistema ya permite
-fonts.googleapis.com y fonts.gstatic.com.
+Todas son subconjuntos latinos (español completo) para que pesen poco.
+Si desea sustituirlas, reemplace los archivos y ajuste
+assets/css/fuentes-locales.css. Revise antes la licencia de la nueva familia.

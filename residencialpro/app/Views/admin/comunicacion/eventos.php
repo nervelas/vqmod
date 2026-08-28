@@ -10,7 +10,7 @@
             $pasado = strtotime((string) $ev['inicio']) < time(); ?>
             <li class="item-lista" style="<?= $pasado ? 'opacity:.6' : '' ?>">
               <div style="text-align:center;min-width:52px">
-                <div style="font-family:var(--f-titulo);font-size:1.6rem;color:var(--acento-3);line-height:1"><?= e(date('d', (int) strtotime((string) $ev['inicio']))) ?></div>
+                <div style="font-family:var(--f-titulo);font-size:1.6rem;color:var(--arcilla);line-height:1"><?= e(date('d', (int) strtotime((string) $ev['inicio']))) ?></div>
                 <div class="mayus" style="font-size:.62rem"><?= e(mb_substr(mesNombre((int) date('n', (int) strtotime((string) $ev['inicio']))), 0, 3)) ?> <?= e(date('y', (int) strtotime((string) $ev['inicio']))) ?></div>
               </div>
               <div class="crecer">

@@ -12,7 +12,7 @@ $modo = ($u['modo_oscuro'] ?? 0) ? 'oscuro' : 'claro';
 $sinLeer = $u ? Notificar::noLeidas((int) $u['id']) : 0;
 ?><!DOCTYPE html>
 <html lang="es" data-tema="<?= e($tema) ?>" data-modo="<?= e($modo) ?>"
-      data-base="<?= e(Url::basePath()) ?>" data-color-marca="<?= e(Ajustes::get('color_primario', '#0F2E24')) ?>">
+      data-base="<?= e(Url::basePath()) ?>" data-color-marca="<?= e(Ajustes::get('color_primario', '#0E4C5A')) ?>">
 <head><?= Vista::parcial('partials/head', ['titulo' => $tituloPagina ?? 'Portal del residente']) ?></head>
 <body>
 <a class="saltar-a" href="#contenido-principal">Ir al contenido</a>

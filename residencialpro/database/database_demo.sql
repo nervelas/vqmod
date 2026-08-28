@@ -1985,9 +1985,9 @@ INSERT INTO cuentas (id, nombre, tipo, banco, numero, saldo_inicial, activo) VAL
 (3, 'Fondo de reserva', 'banco', 'Banrural', '3-450-99887-6', 125000.00, 1);
 
 INSERT INTO categorias_egreso (id, nombre, color, activo) VALUES
-(1, 'Seguridad', '#0F2E24', 1),
+(1, 'Seguridad', '#0E4C5A', 1),
 (2, 'Jardinería y limpieza', '#2F6B4F', 1),
-(3, 'Energía eléctrica áreas comunes', '#C9A961', 1),
+(3, 'Energía eléctrica áreas comunes', '#B94E27', 1),
 (4, 'Agua y bombeo', '#1F5A7A', 1),
 (5, 'Mantenimiento y reparaciones', '#B4620F', 1),
 (6, 'Administración', '#8A8F8B', 1),

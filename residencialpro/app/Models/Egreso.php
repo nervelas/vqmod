@@ -118,7 +118,7 @@ final class Egreso
     public static function porCategoria(string $desde, string $hasta): array
     {
         return DB::todos(
-            'SELECT COALESCE(c.nombre,"Sin categoría") AS categoria, COALESCE(c.color,"#8A8F8B") AS color,
+            'SELECT COALESCE(c.nombre,"Sin categoría") AS categoria, COALESCE(c.color,"#6E6A61") AS color,
                     COALESCE(SUM(e.monto),0) AS total
              FROM egresos e
              LEFT JOIN categorias_egreso c ON c.id = e.categoria_id

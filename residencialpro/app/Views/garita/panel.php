@@ -2,7 +2,7 @@
   <div class="fila-entre">
     <div>
       <h2 style="margin-bottom:2px">Control de accesos</h2>
-      <p style="color:rgba(233,238,233,.7);margin:0">
+      <p style="color:color-mix(in srgb, #fff 80%, transparent);margin:0">
         <?= (int) $deHoy ?> ingreso(s) hoy · <?= count($adentro) ?> persona(s) dentro
         <?php if ($turno !== null): ?> · turno desde <?= e(hora((string) $turno['inicio'])) ?><?php endif; ?>
       </p>
@@ -13,20 +13,24 @@
   </div>
 
   <div class="garita-botones mt-3">
-    <a class="btn-garita oro" href="<?= e(url('/garita/ingreso')) ?>">
-      <?= ico('escanear', 42) ?> Escanear código<br>o registrar ingreso
+    <a class="btn-garita principal" href="<?= e(url('/garita/ingreso')) ?>">
+      <?= ico('escanear', 40) ?>
+      Escanear código
+      <span class="sub">o registrar ingreso</span>
     </a>
     <a class="btn-garita" href="<?= e(url('/garita/visitas')) ?>">
-      <?= ico('usuarios', 42) ?> Registrar salida
+      <?= ico('usuarios', 40) ?> Registrar salida
     </a>
     <a class="btn-garita" href="<?= e(url('/garita/directorio')) ?>">
-      <?= ico('telefono', 42) ?> Directorio de casas
+      <?= ico('telefono', 40) ?> Directorio de casas
     </a>
     <a class="btn-garita" href="<?= e(url('/garita/bitacora')) ?>">
-      <?= ico('libro', 42) ?> Anotar novedad
+      <?= ico('libro', 40) ?> Anotar novedad
     </a>
-    <button class="btn-garita rojo" type="button" data-panico>
-      <?= ico('sirena', 42) ?> EMERGENCIA
+    <button class="btn-garita peligro" type="button" data-panico>
+      <?= ico('sirena', 40) ?>
+      EMERGENCIA
+      <span class="sub">avisa a la administración</span>
     </button>
   </div>
 </section>
@@ -34,7 +38,7 @@
 <section class="garita-panel">
   <h2><?= ico('reloj', 20) ?> Dentro del residencial</h2>
   <?php if ($adentro === []): ?>
-    <p style="color:rgba(233,238,233,.6)">No hay visitas dentro en este momento.</p>
+    <p style="color:color-mix(in srgb, #fff 76%, transparent)">No hay visitas dentro en este momento.</p>
   <?php else: ?>
     <div class="garita-lista">
       <?php foreach (array_slice($adentro, 0, 12) as $v): ?>
@@ -42,8 +46,9 @@
           <span class="avatar"><?= e(iniciales((string) $v['visitante'])) ?></span>
           <div class="crecer">
             <b><?= e($v['visitante']) ?></b>
-            <small><?= e($v['casa'] ?? 'Sin destino') ?> · desde <?= e(hora((string) $v['entrada'])) ?><?= !empty($v['placa']) ? ' · ' . e($v['placa']) : '' ?></small>
+            <small><?= e($v['casa'] ?? 'Sin destino') ?> · desde <?= e(hora((string) $v['entrada'])) ?></small>
           </div>
+          <?php if (!empty($v['placa'])): ?><span class="placa"><?= e($v['placa']) ?></span><?php endif; ?>
           <form method="post" action="<?= e(url('/garita/salida/' . (int) $v['id'])) ?>">
             <?= csrf() ?>
             <button class="btn btn-sm btn-oro" type="submit"><?= ico('salir', 15) ?> Salida</button>
@@ -61,16 +66,16 @@
 <section class="garita-panel">
   <h2><?= ico('qr', 20) ?> Visitas autorizadas</h2>
   <?php if ($vigentes === []): ?>
-    <p style="color:rgba(233,238,233,.6)">No hay visitas pre-registradas vigentes.</p>
+    <p style="color:color-mix(in srgb, #fff 76%, transparent)">No hay visitas pre-registradas vigentes.</p>
   <?php else: ?>
     <div class="garita-lista">
       <?php foreach (array_slice($vigentes, 0, 12) as $p): ?>
         <div class="garita-item">
-          <span style="color:var(--acento-2)"><?= ico((int) $p['recurrente'] === 1 ? 'maletin' : 'usuario', 22) ?></span>
+          <span style="color:var(--arcilla-3)"><?= ico((int) $p['recurrente'] === 1 ? 'maletin' : 'usuario', 22) ?></span>
           <div class="crecer">
             <b><?= e($p['visitante']) ?></b>
             <small>
-              Casa <?= e($p['casa']) ?> · código <b style="color:var(--acento-2)"><?= e($p['codigo']) ?></b>
+              Casa <?= e($p['casa']) ?> · código <b style="color:var(--arcilla-3)"><?= e($p['codigo']) ?></b>
               <?php if ((int) $p['recurrente'] === 1): ?> · recurrente<?php endif; ?>
             </small>
           </div>

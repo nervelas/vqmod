@@ -2,7 +2,7 @@
 $colores = array_map(static fn($c) => (string) $c['color'], $porCategoria);
 $graf = ['type' => 'doughnut', 'data' => [
   'labels' => array_column($porCategoria, 'categoria'),
-  'datasets' => [['data' => array_map(static fn($c) => round((float) $c['total'], 2), $porCategoria), 'backgroundColor' => $colores ?: ['#C9A961']]],
+  'datasets' => [['data' => array_map(static fn($c) => round((float) $c['total'], 2), $porCategoria), 'backgroundColor' => $colores ?: ['#B94E27']]],
 ], 'options' => ['formato' => 'moneda', 'centro' => ['etiqueta' => 'Total del período', 'valor' => q($total)]]];
 ?>
 <section class="rejilla mb-3" style="grid-template-columns:minmax(0,1fr) minmax(0,330px)">
@@ -71,7 +71,7 @@ $graf = ['type' => 'doughnut', 'data' => [
               <td data-et="Descripción"><?= e($e['descripcion']) ?></td>
               <td data-et="Categoría">
                 <span class="chip neutro">
-                  <i class="punto-cat" style="background:<?= e($e['color'] ?? '#8A8F8B') ?>"></i>
+                  <i class="punto-cat" style="background:<?= e($e['color'] ?? '#6E6A61') ?>"></i>
                   <?= e($e['categoria'] ?? 'Sin categoría') ?>
                 </span>
               </td>

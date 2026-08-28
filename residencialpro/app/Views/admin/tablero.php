@@ -1,15 +1,15 @@
 <?php
 use App\Core\Ajustes;
 
-$acento  = Ajustes::get('color_acento', '#C9A961');
-$marca   = Ajustes::get('color_primario', '#0F2E24');
+$acento  = Ajustes::get('color_acento', '#B94E27');
+$marca   = Ajustes::get('color_primario', '#0E4C5A');
 $gSerie  = [
   'type' => 'line',
   'data' => [
     'labels' => array_column($serie, 'etiqueta'),
     'datasets' => [
       ['label' => 'Recaudado', 'data' => array_map(static fn($s) => round((float) $s['recaudado'], 2), $serie), 'borderColor' => $acento],
-      ['label' => 'Esperado',  'data' => array_map(static fn($s) => round((float) $s['esperado'], 2), $serie),  'borderColor' => '#8A8F8B', 'fill' => false, 'borderDash' => [5, 4]],
+      ['label' => 'Esperado',  'data' => array_map(static fn($s) => round((float) $s['esperado'], 2), $serie),  'borderColor' => '#6E6A61', 'fill' => false, 'borderDash' => [5, 4]],
     ],
   ],
   'options' => ['formato' => 'moneda'],
@@ -19,13 +19,13 @@ $gFlujo = [
   'data' => [
     'labels' => array_column($flujo, 'etiqueta'),
     'datasets' => [
-      ['label' => 'Ingresos', 'backgroundColor' => '#2F6B4F', 'data' => array_map(static fn($s) => round((float) $s['ingresos'], 2), $flujo)],
-      ['label' => 'Egresos',  'backgroundColor' => '#B4620F', 'data' => array_map(static fn($s) => round((float) $s['egresos'], 2), $flujo)],
+      ['label' => 'Ingresos', 'backgroundColor' => '#47713F', 'data' => array_map(static fn($s) => round((float) $s['ingresos'], 2), $flujo)],
+      ['label' => 'Egresos',  'backgroundColor' => '#B94E27', 'data' => array_map(static fn($s) => round((float) $s['egresos'], 2), $flujo)],
     ],
   ],
   'options' => ['formato' => 'moneda'],
 ];
-$colores = ['#0F2E24', '#C9A961', '#2F6B4F', '#B4620F', '#1F5A7A', '#8A2F2F', '#8A8F8B', '#5E4B8B'];
+$colores = ['#0E4C5A', '#B94E27', '#47713F', '#8B5D09', '#1D7A90', '#93251E', '#6E6A61', '#3B4429'];
 $gEgresos = [
   'type' => 'doughnut',
   'data' => [
@@ -54,39 +54,40 @@ $gVisitas = [
   </div>
 <?php endif; ?>
 
-<section class="rejilla rejilla-4 mb-3">
-  <article class="kpi">
+<section class="kpis mb-3">
+  <!-- La recaudación manda: es la cifra por la que se abre este tablero. -->
+  <article class="kpi mayor">
     <div class="kpi-et"><?= ico('billetera', 15) ?> Recaudación del mes</div>
     <div class="kpi-valor"><?= e(q($kpi['recaudado'])) ?></div>
-    <div class="kpi-nota <?= $kpi['efectividad'] >= 80 ? 'ok' : ($kpi['efectividad'] >= 50 ? '' : 'grave') ?>">
-      <?= e((string) $kpi['efectividad']) ?>% de lo esperado (<?= e(q($kpi['esperado'])) ?>)
+    <div class="kpi-nota">
+      <?= $kpi['efectividad'] >= 100 ? ico('subeTendencia', 15) : ico('bajaTendencia', 15) ?>
+      <?= e((string) $kpi['efectividad']) ?> % de lo esperado · meta <?= e(q($kpi['esperado'])) ?>
     </div>
-    <div class="progreso mt-1 <?= $kpi['efectividad'] >= 80 ? 'ok' : '' ?>">
-      <span style="width:<?= min(100, (float) $kpi['efectividad']) ?>%"></span>
+    <div class="progreso mt-1" style="background:color-mix(in srgb,#fff 18%,transparent)">
+      <span style="width:<?= min(100, (float) $kpi['efectividad']) ?>%;background:var(--arcilla-3)"></span>
     </div>
   </article>
 
-  <article class="kpi">
+  <article class="kpi <?= $kpi['casas_morosas'] > 0 ? 'grave' : 'ok' ?>">
     <div class="kpi-et"><?= ico('alerta', 15) ?> Cartera vencida</div>
     <div class="kpi-valor"><?= e(q($kpi['cartera'])) ?></div>
-    <div class="kpi-nota <?= $kpi['casas_morosas'] > 0 ? 'grave' : 'ok' ?>">
-      <?= (int) $kpi['casas_morosas'] ?> de <?= (int) $kpi['casas_total'] ?> viviendas · <?= e((string) $kpi['morosidad_pct']) ?>% de morosidad
+    <div class="kpi-nota">
+      <span class="chip <?= $kpi['casas_morosas'] > 0 ? 'grave' : 'ok' ?>"><?= e((string) $kpi['morosidad_pct']) ?> %</span>
+      <?= (int) $kpi['casas_morosas'] ?> de <?= (int) $kpi['casas_total'] ?> viviendas
     </div>
-    <div class="progreso mt-1 grave">
-      <span style="width:<?= min(100, (float) $kpi['morosidad_pct']) ?>%"></span>
-    </div>
+    <div class="progreso mt-1"><span style="width:<?= min(100, (float) $kpi['morosidad_pct']) ?>%;background:var(--grave)"></span></div>
   </article>
 
-  <article class="kpi">
+  <article class="kpi ok">
     <div class="kpi-et"><?= ico('moneda', 15) ?> Saldo en caja y bancos</div>
     <div class="kpi-valor"><?= e(q($kpi['saldo_bancos'])) ?></div>
-    <div class="kpi-nota">Egresos del mes: <?= e(q($kpi['egresos_mes'])) ?></div>
+    <div class="kpi-nota"><?= ico('bajaTendencia', 15) ?> Egresos del mes <?= e(q($kpi['egresos_mes'])) ?></div>
   </article>
 
-  <article class="kpi">
-    <div class="kpi-et"><?= ico('puerta', 15) ?> Visitas de hoy</div>
+  <article class="kpi oro">
+    <div class="kpi-et"><?= ico('puerta', 15) ?> Movimiento en garita</div>
     <div class="kpi-valor"><?= (int) $kpi['visitas_hoy'] ?></div>
-    <div class="kpi-nota"><?= (int) $kpi['adentro'] ?> persona(s) dentro del residencial</div>
+    <div class="kpi-nota"><span class="punto"></span> <?= (int) $kpi['adentro'] ?> persona(s) dentro ahora</div>
   </article>
 </section>
 
@@ -253,7 +254,7 @@ $gVisitas = [
         <ul class="lista-limpia">
           <?php foreach ($reservas as $r): ?>
             <li class="item-lista">
-              <span style="color:var(--acento-3)"><?= ico('calendario', 20) ?></span>
+              <span style="color:var(--arcilla)"><?= ico('calendario', 20) ?></span>
               <div class="crecer">
                 <b><?= e($r['area']) ?></b>
                 <div class="meta"><?= e($r['casa']) ?> · <?= e(fecha((string) $r['fecha'])) ?> <?= e(hora((string) $r['hora_desde'])) ?></div>

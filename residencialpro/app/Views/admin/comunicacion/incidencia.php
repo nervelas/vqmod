@@ -37,7 +37,7 @@
     </div>
 
     <?php if ($seguimiento !== []): ?>
-      <div class="tarjeta-cuerpo" style="border-top:1px solid var(--borde)">
+      <div class="tarjeta-cuerpo" style="border-top:1px solid var(--linea)">
         <h4>Seguimiento</h4>
         <div class="linea-tiempo">
           <?php foreach ($seguimiento as $s): ?>

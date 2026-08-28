@@ -17,9 +17,9 @@ $mensaje    = $mensaje ?? '';
 <link rel="stylesheet" href="<?= e(url('/assets/css/app.css')) ?>">
 </head>
 <body>
-<div style="min-height:100dvh;display:grid;place-items:center;padding:24px;background:linear-gradient(160deg,var(--marca-3),var(--marca))">
+<div style="min-height:100dvh;display:grid;place-items:center;padding:24px;background:linear-gradient(160deg,var(--petroleo-3),var(--petroleo))">
   <div style="text-align:center;max-width:520px;color:#E9EEE9">
-    <div style="font-family:var(--f-titulo);font-size:5.2rem;line-height:1;color:var(--acento-2);font-weight:600"><?= (int) $codigoHttp ?></div>
+    <div style="font-family:var(--f-titulo);font-size:5.2rem;line-height:1;color:var(--arcilla-3);font-weight:600"><?= (int) $codigoHttp ?></div>
     <h1 style="color:#fff;font-size:1.7rem;margin-top:10px"><?= e($titulo) ?></h1>
     <?php if ($mensaje !== ''): ?>
       <p style="color:rgba(233,238,233,.78)"><?= e($mensaje) ?></p>

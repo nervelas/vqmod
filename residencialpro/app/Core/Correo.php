@@ -105,8 +105,8 @@ final class Correo
     public static function plantillaHtml(string $titulo, string $contenidoHtml, string $botonTexto = '', string $botonUrl = ''): string
     {
         $nombre  = Ajustes::get('nombre', 'ResidencialPro');
-        $verde   = Ajustes::get('color_primario', '#0F2E24');
-        $oro     = Ajustes::get('color_acento', '#C9A961');
+        $verde   = Ajustes::get('color_primario', '#0E4C5A');
+        $oro     = Ajustes::get('color_acento', '#B94E27');
         $pie     = Ajustes::get('correo_pie', 'Este es un mensaje automático de la administración. Por favor no responda a este correo.');
         $tel     = Ajustes::get('telefono', '');
         $dir     = Ajustes::get('direccion', '');
@@ -129,12 +129,12 @@ final class Correo
             . '<div style="color:#D8E0D9;font-size:12px;margin-top:4px;">Administración del residencial</div>'
             . '</td></tr>'
             . '<tr><td style="padding:30px 32px 10px;">'
-            . '<h1 style="margin:0 0 14px;font-size:20px;color:#0F2E24;font-weight:700;">' . e($titulo) . '</h1>'
+            . '<h1 style="margin:0 0 14px;font-size:20px;color:#0E4C5A;font-weight:700;">' . e($titulo) . '</h1>'
             . '<div style="font-size:15px;line-height:1.65;color:#3A413A;">' . $contenidoHtml . '</div>'
             . '</td></tr>'
             . $boton
             . '<tr><td style="padding:18px 32px 26px;border-top:1px solid #EDE8DC;">'
-            . '<div style="font-size:12px;color:#8A8F8B;line-height:1.6;">' . e($pie)
+            . '<div style="font-size:12px;color:#6E6A61;line-height:1.6;">' . e($pie)
             . ($dir !== '' ? '<br>' . e($dir) : '')
             . ($tel !== '' ? ' &middot; Tel. ' . e($tel) : '')
             . '</div></td></tr>'

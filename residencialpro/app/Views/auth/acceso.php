@@ -4,32 +4,33 @@ use App\Core\Sesion;
 ?>
 <div class="acceso-pantalla">
   <section class="acceso-arte">
-    <div>
-      <div style="display:flex;align-items:center;gap:13px;margin-bottom:38px">
-        <?php $logo = Ajustes::get('logo', ''); if ($logo !== '' && is_file(RUTA_BASE . '/uploads/logos/' . $logo)): ?>
-          <img src="<?= e(subida($logo, 'logos')) ?>" alt="" width="46" height="46" style="border-radius:12px">
-        <?php else: ?>
-          <span class="escudo" style="width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,var(--acento-2),var(--acento-3));color:#1F1B10"><?= ico('casa', 24) ?></span>
-        <?php endif; ?>
-        <div>
-          <b style="font-family:var(--f-titulo);font-size:1.35rem;color:var(--acento-2);display:block;line-height:1.15"><?= e(Ajustes::get('nombre', 'ResidencialPro')) ?></b>
-          <span style="font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(233,238,233,.6)">Administración residencial</span>
-        </div>
-      </div>
-      <h1>Todo su residencial, en un solo lugar.</h1>
-      <p>Cuotas al día, visitas controladas, áreas comunes reservadas y comunicación directa con la administración.</p>
-      <div class="puntos">
-        <div><?= ico('billetera', 19) ?><span>Consulte y pague su cuota desde el celular, con recibo digital verificable.</span></div>
-        <div><?= ico('qr', 19) ?><span>Autorice a sus visitas con un código QR y entran en segundos.</span></div>
-        <div><?= ico('calendario', 19) ?><span>Reserve el salón, la piscina o la churrasquera sin llamadas.</span></div>
-        <div><?= ico('escudo', 19) ?><span>Información resguardada, con bitácora de cada operación sensible.</span></div>
-      </div>
+    <picture>
+      <source type="image/webp" srcset="<?= e(url('/assets/img/sitio/residencial-900.webp')) ?> 900w, <?= e(url('/assets/img/sitio/residencial.webp')) ?> 1600w" sizes="50vw">
+      <img src="<?= e(url('/assets/img/sitio/residencial.jpg')) ?>" alt="" width="1600" height="1067" decoding="async">
+    </picture>
+    <div class="pie">
+      <span class="lema" style="color:var(--arcilla-3);display:inline-flex;align-items:center;gap:10px;margin-bottom:14px">
+        Portal del residente
+      </span>
+      <h2>Todo su residencial, en un solo lugar.</h2>
+      <p>Consulte su estado de cuenta, reporte un pago, autorice visitas con código QR y
+         reserve las áreas comunes. Sin llamadas y sin papeles.</p>
     </div>
-    <p style="font-size:.78rem;color:rgba(233,238,233,.5);margin:0">© <?= date('Y') ?> <?= e(Ajustes::get('nombre', 'ResidencialPro')) ?></p>
   </section>
 
   <section class="acceso-forma">
-    <div class="caja">
+    <div>
+      <a class="web-marca" href="<?= e(url('/')) ?>" style="margin-bottom:34px;color:var(--texto)">
+        <span class="escudo">
+          <?php $logo = Ajustes::get('logo', ''); if ($logo !== '' && is_file(RUTA_BASE . '/uploads/logos/' . $logo)): ?>
+            <img src="<?= e(subida($logo, 'logos')) ?>" alt="" width="38" height="38">
+          <?php else: ?><?= ico('casa', 19) ?><?php endif; ?>
+        </span>
+        <span>
+          <span class="n"><?= e(Ajustes::get('nombre', 'ResidencialPro')) ?></span>
+          <span class="sub">Administración residencial</span>
+        </span>
+      </a>
       <h2 style="margin-bottom:6px">Bienvenido</h2>
       <p class="texto-3" style="font-size:.92rem">Ingrese con los datos que le entregó la administración.</p>
 

@@ -324,7 +324,7 @@ final class CuotasControlador extends Controlador
         $filas = '';
         foreach ($cargos as $c) {
             $filas .= '<tr><td style="padding:7px 0;border-bottom:1px solid #EDE8DC">' . e((string) $c['descripcion'])
-                . '<br><small style="color:#8A8F8B">Vence ' . e(fecha((string) $c['fecha_vence'])) . '</small></td>'
+                . '<br><small style="color:#6E6A61">Vence ' . e(fecha((string) $c['fecha_vence'])) . '</small></td>'
                 . '<td style="padding:7px 0;border-bottom:1px solid #EDE8DC;text-align:right;white-space:nowrap">'
                 . e(q(Cuota::saldoCargo($c))) . '</td></tr>';
         }
@@ -343,7 +343,7 @@ final class CuotasControlador extends Controlador
                 . '<p>Le compartimos el detalle del saldo de la vivienda <strong>' . e((string) $casa['codigo']) . '</strong>:</p>'
                 . '<table style="width:100%;border-collapse:collapse;font-size:14px">' . $filas
                 . '<tr><td style="padding:11px 0;font-weight:700">Total a pagar</td>'
-                . '<td style="padding:11px 0;text-align:right;font-weight:700;font-size:17px;color:#0F2E24">' . e(q($saldo)) . '</td></tr>'
+                . '<td style="padding:11px 0;text-align:right;font-weight:700;font-size:17px;color:#0E4C5A">' . e(q($saldo)) . '</td></tr>'
                 . '</table>'
                 . (Ajustes::get('cuenta_deposito', '') !== ''
                     ? '<p style="font-size:13px;color:#5B6259">Puede depositar o transferir a: ' . e(Ajustes::get('cuenta_deposito')) . '</p>'

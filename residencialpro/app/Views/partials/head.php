@@ -8,7 +8,7 @@ $u          = Auth::usuario();
 $tema       = $u['tema'] ?? Ajustes::get('tema', 'verde-oro');
 $modo       = ($u['modo_oscuro'] ?? 0) ? 'oscuro' : 'claro';
 $nombreCond = Ajustes::get('nombre', 'ResidencialPro');
-$colorMarca = Ajustes::get('color_primario', '#0F2E24');
+$colorMarca = Ajustes::get('color_primario', '#0E4C5A');
 $titulo     = $titulo ?? $nombreCond;
 $descripcion = $descripcion ?? Ajustes::get('descripcion', 'Administración integral del residencial: cuotas, visitas, áreas comunes y comunicación con los residentes.');
 $logo       = Ajustes::get('logo', '');
@@ -18,7 +18,7 @@ $logo       = Ajustes::get('logo', '');
 <title><?= e($titulo) ?><?= $titulo !== $nombreCond ? ' · ' . e($nombreCond) : '' ?></title>
 <meta name="description" content="<?= e(recortar($descripcion, 160)) ?>">
 <meta name="csrf-token" content="<?= e(csrf_token()) ?>">
-<meta name="theme-color" content="<?= e($modo === 'oscuro' ? '#101310' : $colorMarca) ?>">
+<meta name="theme-color" content="<?= e($modo === 'oscuro' ? '#0E1315' : $colorMarca) ?>">
 <meta name="color-scheme" content="light dark">
 <meta name="robots" content="<?= e($indexable ?? false ? 'index, follow' : 'noindex, nofollow') ?>">
 
@@ -40,11 +40,22 @@ $logo       = Ajustes::get('logo', '');
 <?php endif; ?>
 <meta name="twitter:card" content="summary_large_image">
 
+<?php if (!empty($precargarPortada)): ?>
+<link rel="preload" as="image" fetchpriority="high" type="image/webp"
+      href="<?= e(url('/assets/img/sitio/portada-900.webp')) ?>"
+      imagesrcset="<?= e(url('/assets/img/sitio/portada-700.webp')) ?> 700w, <?= e(url('/assets/img/sitio/portada-900.webp')) ?> 900w, <?= e(url('/assets/img/sitio/portada-1200.webp')) ?> 1200w, <?= e(url('/assets/img/sitio/portada.webp')) ?> 1800w"
+      imagesizes="100vw">
+<?php endif; ?>
+<?php if (!empty($precargarFuentes)): /* Solo en la primera visita pública: después las fuentes ya están en caché. */ ?>
+<link rel="preload" as="font" type="font/woff2" crossorigin href="<?= e(url('/assets/fonts/archivo-variable-latin.woff2')) ?>">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="<?= e(url('/assets/fonts/fraunces-variable-latin.woff2')) ?>">
+<?php endif; ?>
 <link rel="stylesheet" href="<?= e(url('/assets/css/fuentes-locales.css')) ?>">
 <link rel="stylesheet" href="<?= e(url('/assets/css/app.css')) ?>?v=<?= RPRO_VERSION ?>">
 <script<?= nonce() ?>>
   (function () {
     var r = document.documentElement;
+    r.className += (r.className ? ' ' : '') + 'js';
     try {
       var t = localStorage.getItem('rp_tema');
       var m = localStorage.getItem('rp_modo');

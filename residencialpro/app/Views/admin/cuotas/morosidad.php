@@ -1,5 +1,5 @@
 <?php use App\Core\Ajustes; use App\Core\Vista;
-$colores = ['#2F6B4F', '#A67A16', '#B4620F', '#8A2F2F', '#5E1616'];
+$colores = ['#47713F', '#8B5D09', '#B94E27', '#93251E', '#661813'];
 $graf = ['type' => 'doughnut', 'data' => [
   'labels' => ['Por vencer', '1-30 días', '31-60 días', '61-90 días', '+90 días'],
   'datasets' => [['data' => [
@@ -20,7 +20,7 @@ $tramos = ['' => 'Toda la cartera', 'd30' => '1 a 30 días', 'd60' => '31 a 60 d
           ['Por vencer', 'corriente', 'ok'], ['1-30 días', 'd30', 'aviso'],
           ['31-60 días', 'd60', 'alerta'], ['61-90 días', 'd90', 'grave'], ['+90 días', 'd120', 'critico'],
         ] as [$et, $k, $cl]): ?>
-          <div style="padding:12px 14px;border-radius:var(--r-sm);background:var(--panel-2);border:1px solid var(--borde)">
+          <div style="padding:12px 14px;border-radius:var(--r-sm);background:var(--lienzo-2);border:1px solid var(--linea)">
             <div class="mayus"><?= e($et) ?></div>
             <div class="num" style="font-size:1.2rem;font-weight:700;color:var(--<?= $cl === 'critico' ? 'critico' : ($cl === 'ok' ? 'ok' : ($cl === 'grave' ? 'grave' : ($cl === 'alerta' ? 'alerta' : 'aviso'))) ?>)">
               <?= e(q((float) $resumen[$k])) ?>

@@ -4,8 +4,8 @@ $totalEjec = array_sum(array_map(static fn($f) => (float) $f['ejecutado'], $fila
 $graf = ['type' => 'bar', 'data' => [
   'labels' => array_column($flujo, 'etiqueta'),
   'datasets' => [
-    ['label' => 'Ingresos', 'backgroundColor' => '#2F6B4F', 'data' => array_map(static fn($f) => round((float) $f['ingresos'], 2), $flujo)],
-    ['label' => 'Egresos', 'backgroundColor' => '#B4620F', 'data' => array_map(static fn($f) => round((float) $f['egresos'], 2), $flujo)],
+    ['label' => 'Ingresos', 'backgroundColor' => '#47713F', 'data' => array_map(static fn($f) => round((float) $f['ingresos'], 2), $flujo)],
+    ['label' => 'Egresos', 'backgroundColor' => '#B94E27', 'data' => array_map(static fn($f) => round((float) $f['egresos'], 2), $flujo)],
   ],
 ], 'options' => ['formato' => 'moneda']];
 ?>

@@ -5,7 +5,7 @@
     <div class="tarjeta-cuerpo compacto">
       <?php foreach ($pendientes as $r): ?>
         <div class="item-lista">
-          <span style="color:var(--acento-3)"><?= ico('calendario', 22) ?></span>
+          <span style="color:var(--arcilla)"><?= ico('calendario', 22) ?></span>
           <div class="crecer">
             <b><?= e($r['area']) ?> · <?= e(fecha((string) $r['fecha'])) ?></b>
             <div class="meta">

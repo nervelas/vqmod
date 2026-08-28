@@ -28,8 +28,8 @@
             <input type="hidden" name="votacion_id" value="<?= (int) $v['id'] ?>">
             <div class="columna" style="gap:8px">
               <?php foreach ($it['opciones'] as $o): ?>
-                <label class="marca-check" style="border:1.5px solid var(--borde);border-radius:var(--r-sm);padding:12px 14px">
-                  <input type="radio" name="opcion_id" value="<?= (int) $o['id'] ?>" required style="accent-color:var(--acento)">
+                <label class="marca-check" style="border:1.5px solid var(--linea);border-radius:var(--r-sm);padding:12px 14px">
+                  <input type="radio" name="opcion_id" value="<?= (int) $o['id'] ?>" required style="accent-color:var(--arcilla)">
                   <span><?= e($o['texto']) ?></span>
                 </label>
               <?php endforeach; ?>

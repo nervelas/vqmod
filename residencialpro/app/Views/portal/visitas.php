@@ -25,7 +25,7 @@ $otros   = array_values(array_filter($preregistros, static fn($p) => $p['estado'
   <div class="rejilla rejilla-3 mb-3">
     <?php foreach ($activos as $p): ?>
       <article class="tarjeta <?= $nuevo === (int) $p['id'] ? 'tarjeta-flota' : '' ?>"
-               <?= $nuevo === (int) $p['id'] ? 'style="border-color:var(--acento);box-shadow:var(--s-oro)"' : '' ?>>
+               <?= $nuevo === (int) $p['id'] ? 'style="border-color:var(--arcilla);box-shadow:var(--s-2)"' : '' ?>>
         <div class="tarjeta-cab">
           <div>
             <h3 style="margin:0;font-size:1rem"><?= e(recortar((string) $p['visitante'], 30)) ?></h3>

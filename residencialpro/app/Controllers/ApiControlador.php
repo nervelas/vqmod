@@ -256,7 +256,7 @@ final class ApiControlador extends Controlador
         $d = Peticion::json();
         $datos = [];
         if (isset($d['tema'])) {
-            $temas = ['verde-oro', 'negro-oro', 'azul-marino', 'grafito', 'borgona', 'azul-real', 'terracota', 'purpura'];
+            $temas = ['verde-oro', 'negro-oro', 'azul-marino', 'grafito', 'borgona', 'azul-real', 'terracota', 'purpura', 'oceano'];
             if (in_array((string) $d['tema'], $temas, true)) {
                 $datos['tema'] = (string) $d['tema'];
                 $_SESSION['usuario']['tema'] = $datos['tema'];

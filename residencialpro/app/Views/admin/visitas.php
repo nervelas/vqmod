@@ -1,7 +1,7 @@
 <?php use App\Core\Vista;
 $graf = ['type' => 'bar', 'data' => [
   'labels' => array_column($serie, 'etiqueta'),
-  'datasets' => [['label' => 'Ingresos', 'backgroundColor' => '#0F2E24', 'data' => array_column($serie, 'n')]],
+  'datasets' => [['label' => 'Ingresos', 'backgroundColor' => '#0E4C5A', 'data' => array_column($serie, 'n')]],
 ]];
 ?>
 <section class="rejilla mb-3" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr)) minmax(0,2fr)">

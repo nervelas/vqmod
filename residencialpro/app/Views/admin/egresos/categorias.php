@@ -30,7 +30,7 @@
         <div class="campo"><label for="cat-nombre">Nombre *</label>
           <input type="text" id="cat-nombre" name="nombre" required maxlength="120" placeholder="Seguridad"></div>
         <div class="campo"><label for="cat-color">Color en las gráficas</label>
-          <input type="color" id="cat-color" name="color" value="#C9A961"></div>
+          <input type="color" id="cat-color" name="color" value="#B94E27"></div>
         <label class="marca-check"><input type="checkbox" name="activo" value="1" checked id="cat-activo"><span>Categoría activa</span></label>
       </div>
       <div class="tarjeta-pie fila-fin">
@@ -45,7 +45,7 @@ document.querySelectorAll('[data-categoria]').forEach(function (b) {
     var c = JSON.parse(b.dataset.categoria);
     document.getElementById('cat-id').value = c.id;
     document.getElementById('cat-nombre').value = c.nombre || '';
-    document.getElementById('cat-color').value = c.color || '#C9A961';
+    document.getElementById('cat-color').value = c.color || '#B94E27';
     document.getElementById('cat-activo').checked = Number(c.activo) === 1;
   });
 });

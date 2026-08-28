@@ -3,13 +3,13 @@ $resultado = $ingresos - $egresos;
 $colores = array_map(static fn($c) => (string) $c['color'], $porCategoria);
 $gCat = ['type' => 'doughnut', 'data' => [
   'labels' => array_column($porCategoria, 'categoria'),
-  'datasets' => [['data' => array_map(static fn($c) => round((float) $c['total'], 2), $porCategoria), 'backgroundColor' => $colores ?: ['#C9A961']]],
+  'datasets' => [['data' => array_map(static fn($c) => round((float) $c['total'], 2), $porCategoria), 'backgroundColor' => $colores ?: ['#B94E27']]],
 ], 'options' => ['formato' => 'moneda', 'centro' => ['etiqueta' => 'Egresos', 'valor' => q($egresos)]]];
 $gFlujo = ['type' => 'line', 'data' => [
   'labels' => array_column($flujo, 'etiqueta'),
   'datasets' => [
-    ['label' => 'Ingresos', 'borderColor' => '#2F6B4F', 'data' => array_map(static fn($f) => round((float) $f['ingresos'], 2), $flujo)],
-    ['label' => 'Egresos', 'borderColor' => '#B4620F', 'fill' => false, 'data' => array_map(static fn($f) => round((float) $f['egresos'], 2), $flujo)],
+    ['label' => 'Ingresos', 'borderColor' => '#47713F', 'data' => array_map(static fn($f) => round((float) $f['ingresos'], 2), $flujo)],
+    ['label' => 'Egresos', 'borderColor' => '#B94E27', 'fill' => false, 'data' => array_map(static fn($f) => round((float) $f['egresos'], 2), $flujo)],
   ],
 ], 'options' => ['formato' => 'moneda']];
 ?>

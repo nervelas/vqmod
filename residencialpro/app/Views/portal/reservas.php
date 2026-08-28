@@ -51,7 +51,7 @@ $diasArea = $area !== null ? array_filter(array_map('trim', explode(',', (string
         </div>
         <div class="fila envolver texto-3" style="gap:16px;font-size:.8rem">
           <span class="fila" style="gap:6px"><i style="width:9px;height:9px;border-radius:50%;background:var(--grave);display:block"></i> Con reservas</span>
-          <span class="fila" style="gap:6px"><i style="width:9px;height:9px;border-radius:50%;background:var(--fondo-2);border:1px solid var(--borde);display:block"></i> No disponible</span>
+          <span class="fila" style="gap:6px"><i style="width:9px;height:9px;border-radius:50%;background:var(--cal-2);border:1px solid var(--linea);display:block"></i> No disponible</span>
         </div>
 
         <?php if ($ocupadas !== []): ?>
@@ -155,7 +155,7 @@ $diasArea = $area !== null ? array_filter(array_map('trim', explode(',', (string
       <ul class="lista-limpia">
         <?php foreach ($misReservas as $r): ?>
           <li class="item-lista">
-            <span style="color:var(--acento-3)"><?= ico('calendario', 20) ?></span>
+            <span style="color:var(--arcilla)"><?= ico('calendario', 20) ?></span>
             <div class="crecer">
               <b><?= e($r['area']) ?></b>
               <div class="meta">

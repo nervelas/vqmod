@@ -28,12 +28,12 @@
 <section class="garita-panel">
   <h2><?= ico('lista', 20) ?> Últimas anotaciones</h2>
   <?php if ($registros === []): ?>
-    <p style="color:rgba(233,238,233,.6)">La bitácora está vacía.</p>
+    <p style="color:color-mix(in srgb, #fff 76%, transparent)">La bitácora está vacía.</p>
   <?php else: ?>
     <div class="garita-lista" style="max-height:560px">
       <?php foreach ($registros as $r): ?>
         <div class="garita-item" style="align-items:flex-start">
-          <span style="color:var(--acento-2);margin-top:2px">
+          <span style="color:var(--arcilla-3);margin-top:2px">
             <?= ico($r['tipo'] === 'incidente' ? 'alerta' : ($r['tipo'] === 'ronda' ? 'escudo' : 'libro'), 20) ?>
           </span>
           <div class="crecer">

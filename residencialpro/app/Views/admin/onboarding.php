@@ -1,16 +1,16 @@
 <?php use App\Core\Ajustes; ?>
-<div style="min-height:100dvh;background:linear-gradient(160deg,var(--marca-3),var(--marca) 60%,var(--marca-2));padding:36px 16px">
+<div style="min-height:100dvh;background:linear-gradient(160deg,var(--petroleo-3),var(--petroleo) 60%,var(--petroleo-2));padding:36px 16px">
   <div class="contenedor-sm">
     <div class="centrado" style="color:#E9EEE9;margin-bottom:26px">
-      <div style="font-family:var(--f-titulo);font-size:2rem;color:var(--acento-2)">Bienvenido a ResidencialPro</div>
-      <p style="color:rgba(233,238,233,.7);margin:4px 0 0">Cuatro pasos y su residencial queda funcionando.</p>
+      <div style="font-family:var(--f-titulo);font-size:2rem;color:var(--arcilla-3)">Bienvenido a ResidencialPro</div>
+      <p style="color:color-mix(in srgb, #fff 80%, transparent);margin:4px 0 0">Cuatro pasos y su residencial queda funcionando.</p>
     </div>
 
     <div class="fila" style="justify-content:center;gap:8px;margin-bottom:24px;flex-wrap:wrap">
       <?php foreach ([1 => 'Condominio', 2 => 'Viviendas', 3 => 'Cuota mensual', 4 => 'Primer aviso'] as $n => $et): ?>
         <div style="display:flex;align-items:center;gap:8px;padding:8px 15px;border-radius:var(--r-full);font-size:.83rem;font-weight:600;
-             background:<?= $n === $paso ? 'var(--acento)' : ($n < $paso ? 'rgba(201,169,97,.22)' : 'rgba(255,255,255,.07)') ?>;
-             color:<?= $n === $paso ? '#1F1B10' : ($n < $paso ? 'var(--acento-2)' : 'rgba(233,238,233,.7)') ?>">
+             background:<?= $n === $paso ? 'var(--arcilla)' : ($n < $paso ? 'color-mix(in srgb, var(--arcilla-3) 26%, transparent)' : 'rgba(255,255,255,.07)') ?>;
+             color:<?= $n === $paso ? '#fff' : ($n < $paso ? 'var(--arcilla-3)' : 'color-mix(in srgb, #fff 80%, transparent)') ?>">
           <span style="width:21px;height:21px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.16);font-size:.74rem">
             <?= $n < $paso ? '✓' : $n ?>
           </span><?= e($et) ?>
@@ -38,7 +38,7 @@
             </div>
           </div>
           <div class="tarjeta-pie fila-entre">
-            <button class="btn btn-fantasma btn-sm" type="submit" name="accion" value="omitir">Omitir configuración</button>
+            <button class="btn btn-fantasma btn-sm" type="submit" name="omitir" value="1">Omitir configuración</button>
             <button class="btn btn-oro" type="submit"><?= ico('flechaDer', 17) ?> Continuar</button>
           </div>
         </form>
@@ -124,7 +124,7 @@ Quedamos atentos a cualquier consulta.
 La administración</textarea></div>
           </div>
           <div class="tarjeta-pie fila-entre">
-            <button class="btn btn-fantasma btn-sm" type="submit" name="accion" value="omitir">Terminar sin publicar</button>
+            <button class="btn btn-fantasma btn-sm" type="submit" name="omitir" value="1">Terminar sin publicar</button>
             <button class="btn btn-oro" type="submit"><?= ico('megafono', 17) ?> Publicar y terminar</button>
           </div>
         </form>

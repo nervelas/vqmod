@@ -13,7 +13,7 @@ final class PwaControlador extends Controlador
     public function manifest(): void
     {
         $nombre = Ajustes::get('nombre', 'ResidencialPro');
-        $color  = Ajustes::get('color_primario', '#0F2E24');
+        $color  = Ajustes::get('color_primario', '#0E4C5A');
         $base   = Url::basePath();
 
         $iconos = [];

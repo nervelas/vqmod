@@ -2,7 +2,7 @@
  * ResidencialPro — Service Worker
  * Precarga del armazón, caché de recursos y modo sin conexión para la garita.
  */
-const VERSION = 'rpro-v2';
+const VERSION = 'rpro-v3';
 const CACHE_ESTATICO = VERSION + '-estatico';
 const CACHE_DATOS    = VERSION + '-datos';
 

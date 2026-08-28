@@ -8,7 +8,7 @@ declare(strict_types=1);
 if (!defined('RUTA_BASE')) {
     define('RUTA_BASE', dirname(__DIR__));
 }
-define('RPRO_VERSION', '1.0.0');
+define('RPRO_VERSION', '1.0.1');
 
 // --- Errores: nunca visibles al usuario, siempre en el registro ---------
 error_reporting(E_ALL);

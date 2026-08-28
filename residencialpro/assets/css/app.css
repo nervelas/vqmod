@@ -1704,6 +1704,31 @@ picture { display: block; }
   .mosaico .m-chico { grid-column: span 6; grid-row: span 2; }
 }
 
+/* Velo tras la barra lateral abierta en el teléfono. El guion lo crea al
+   abrir el menú; sin estas reglas no se ve nada y el fondo queda pulsable. */
+.velo {
+  position: fixed; inset: 0; z-index: 89;
+  background: color-mix(in srgb, #0B1417 46%, transparent);
+  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+  animation: aparecer var(--t-rapido) both;
+}
+@keyframes aparecer { from { opacity: 0; } to { opacity: 1; } }
+
+/* Barra compacta a voluntad: el botón del tope en pantallas anchas. Repite el
+   mismo escalón que más abajo aplica la consulta de 1080 px por tamaño. */
+.app.compacta { --barra: 74px; }
+.app.compacta .barra-marca { padding: 20px 12px; justify-content: center; }
+.app.compacta .barra-marca .escudo { margin: 0; }
+.app.compacta .barra-marca .textos,
+.app.compacta .barra-usuario .textos,
+.app.compacta .nav-grupo { display: none; }
+.app.compacta .barra-nav { padding: 12px 10px; }
+.app.compacta .nav-enlace { justify-content: center; padding: 12px 0; }
+.app.compacta .nav-enlace span,
+.app.compacta .nav-enlace .chip { display: none; }
+.app.compacta .nav-enlace.is-activo::before { left: 6px; top: 10px; bottom: 10px; }
+.app.compacta .barra-usuario { justify-content: center; }
+
 @media (max-width: 1080px) {
   :root { --barra: 74px; }
   .barra-marca { padding: 20px 12px; justify-content: center; }
@@ -1770,7 +1795,7 @@ picture { display: block; }
     width: 264px;
     box-shadow: var(--s-4);
   }
-  .barra.abierta { transform: none; }
+  .barra.abierta { transform: none; z-index: 92; }
   .barra-marca { padding: 20px; justify-content: flex-start; }
   .barra-marca .textos, .barra-usuario .textos, .nav-grupo { display: block; }
   .nav-enlace { justify-content: flex-start; padding: 11px 12px; }

@@ -117,22 +117,45 @@
     const app = $('.app');
 
     // Alternar barra lateral
-    $$('[data-alternar-barra]').forEach((b) => b.addEventListener('click', () => {
-      if (window.innerWidth <= 980) {
-        app.classList.toggle('menu-abierto');
-        if (app.classList.contains('menu-abierto')) {
-          const velo = document.createElement('div');
-          velo.className = 'velo';
-          velo.addEventListener('click', () => { app.classList.remove('menu-abierto'); velo.remove(); });
-          app.appendChild(velo);
-        } else {
-          const v = $('.velo'); if (v) v.remove();
+    // El umbral es el mismo que usa la hoja de estilos para sacar la barra
+    // de la pantalla; con otro número el botón alterna una clase que no pinta
+    // nada y parece averiado.
+    const barraFuera = window.matchMedia('(max-width: 720px)');
+
+    const cerrarBarra = () => {
+      const barra = $('.barra');
+      if (barra) barra.classList.remove('abierta');
+      $$('[data-alternar-barra]').forEach((x) => x.setAttribute('aria-expanded', 'false'));
+      const v = $('.velo'); if (v) v.remove();
+    };
+
+    $$('[data-alternar-barra]').forEach((b) => {
+      b.setAttribute('aria-expanded', 'false');
+      b.addEventListener('click', () => {
+        const barra = $('.barra');
+        if (!barra) return;
+        if (barraFuera.matches) {
+          const abierta = barra.classList.toggle('abierta');
+          b.setAttribute('aria-expanded', abierta ? 'true' : 'false');
+          if (abierta) {
+            const velo = document.createElement('div');
+            velo.className = 'velo';
+            velo.addEventListener('click', cerrarBarra);
+            document.body.appendChild(velo);
+          } else {
+            const v = $('.velo'); if (v) v.remove();
+          }
+        } else if (app) {
+          app.classList.toggle('compacta');
+          try { localStorage.setItem('rp_barra', app.classList.contains('compacta') ? '1' : '0'); } catch (e) {}
         }
-      } else {
-        app.classList.toggle('compacta');
-        try { localStorage.setItem('rp_barra', app.classList.contains('compacta') ? '1' : '0'); } catch (e) {}
-      }
-    }));
+      });
+    });
+    // Al elegir un destino la barra se cierra sola; si no, tapa la página
+    // recién cargada en el teléfono.
+    $$('.barra a[href]').forEach((a) => a.addEventListener('click', cerrarBarra));
+    barraFuera.addEventListener('change', cerrarBarra);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarBarra(); });
     try {
       if (app && localStorage.getItem('rp_barra') === '1' && window.innerWidth > 980) app.classList.add('compacta');
     } catch (e) {}
@@ -142,15 +165,31 @@
       const menu = document.getElementById(disparador.dataset.desplegable);
       if (!menu) return;
       disparador.setAttribute('aria-expanded', 'false');
+      // La clase va en el envoltorio .desplegable: la hoja de estilos muestra
+      // el panel con «.desplegable.abierto .desplegable-menu». Ponerla en el
+      // panel no lo hace visible y el botón parece muerto.
+      const envoltorio = disparador.closest('.desplegable') || menu.parentElement;
       disparador.addEventListener('click', (e) => {
         e.stopPropagation();
-        const abierto = menu.classList.toggle('abierto');
+        const abierto = !envoltorio.classList.contains('abierto');
+        $$('.desplegable.abierto').forEach((d) => {
+          d.classList.remove('abierto');
+          const t = d.querySelector('[data-desplegable]');
+          if (t) t.setAttribute('aria-expanded', 'false');
+        });
+        envoltorio.classList.toggle('abierto', abierto);
         disparador.setAttribute('aria-expanded', abierto ? 'true' : 'false');
-        $$('.desplegable-menu.abierto').forEach((m) => { if (m !== menu) m.classList.remove('abierto'); });
         if (abierto && disparador.dataset.alAbrir === 'notificaciones') cargarNotificaciones();
       });
+      menu.addEventListener('click', (e) => e.stopPropagation());
     });
-    document.addEventListener('click', () => $$('.desplegable-menu.abierto').forEach((m) => m.classList.remove('abierto')));
+    const cerrarDesplegables = () => $$('.desplegable.abierto').forEach((d) => {
+      d.classList.remove('abierto');
+      const t = d.querySelector('[data-desplegable]');
+      if (t) t.setAttribute('aria-expanded', 'false');
+    });
+    document.addEventListener('click', cerrarDesplegables);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarDesplegables(); });
 
     // Confirmaciones en formularios sensibles
     $$('form[data-confirmar]').forEach((f) => {

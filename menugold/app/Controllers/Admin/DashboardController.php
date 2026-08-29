@@ -48,6 +48,7 @@ class DashboardController extends BaseController
                                      WHERE sc.restaurant_id = :r AND sc.status = 'open'
                                      ORDER BY sc.created_at", array('r' => $rid)),
             'setupDone' => $this->setupChecklist($rid),
+            'sinFoto'   => \MenuGold\Models\PhotoJob::cuantosFaltan($rid),
         ));
     }
 

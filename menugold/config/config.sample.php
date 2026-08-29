@@ -38,4 +38,11 @@ return array(
     'uploads' => array(
         'max_bytes' => 8388608,               // 8 MB por imagen
     ),
+    'photos' => array(
+        // Bancos de imágenes con licencia libre para la descarga automática.
+        // Solo hace falta cambiarlos si tu hosting usa una réplica interna
+        // o un proxy corporativo.
+        'commons_endpoint'   => '',           // vacío = commons.wikimedia.org
+        'openverse_endpoint' => '',           // vacío = api.openverse.org
+    ),
 );

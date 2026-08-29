@@ -9,14 +9,21 @@ final class Restaurant
     /** @var array<int,array> */
     private static $cache = array();
 
-    public static function find($id)
+    public static function find($id, $fresco = false)
     {
         $id = (int)$id;
         if ($id <= 0) { return null; }
-        if (!isset(self::$cache[$id])) {
+        if ($fresco || !isset(self::$cache[$id])) {
             self::$cache[$id] = DB::first('SELECT * FROM restaurants WHERE id = :id LIMIT 1', array('id' => $id));
         }
         return self::$cache[$id];
+    }
+
+    /** Olvida la copia en memoria tras modificar el restaurante. */
+    public static function forget($id = null)
+    {
+        if ($id === null) { self::$cache = array(); }
+        else { unset(self::$cache[(int)$id]); }
     }
 
     public static function findBySlug($slug)

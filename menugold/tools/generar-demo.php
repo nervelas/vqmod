@@ -89,6 +89,9 @@ $platillos = array(
   ),
 );
 
+$terminosFoto = array("roasted bone marrow", "grilled chorizo sausage", "grilled avocado", "ceviche", "croquettes", "sourdough bread", "ribeye steak", "new york strip steak", "picanha", "beef short ribs", "rack of lamb", "roast chicken", "grilled pork chop", "mixed grill barbecue platter", "grilled whole fish", "grilled octopus", "garlic shrimp", "seared tuna steak", "fish carpaccio", "roasted cauliflower", "grilled corn on the cob", "tomato salad", "roasted potatoes", "grilled eggplant", "tres leches cake", "creme caramel flan", "chocolate dessert plate", "ice cream scoop", "fried plantain", "negroni cocktail", "mezcal cocktail", "glass of rum", "glass of red wine", "cup of coffee", "hibiscus drink");
+$terminosFotoCafe = array("espresso coffee", "cortado coffee", "caffe latte", "cold brew coffee", "croissant", "banana bread", "pan dulce concha", "huevos rancheros", "avocado toast", "oatmeal bowl");
+
 $modificadores = array(
   'termino' => array('Término de la carne', 'Doneness', 'single', 1, 1, 1, array(
       array('Azul', 0), array('Rojo inglés', 0), array('Medio', 0), array('Tres cuartos', 0), array('Bien cocido', 0),
@@ -146,18 +149,6 @@ function limpiarUploads($rid)
     foreach ($it as $f) { $f->isDir() ? @rmdir($f->getPathname()) : @unlink($f->getPathname()); }
 }
 
-/** Crea una imagen ambiental y la mete por la canalización real de la app. */
-function ambiente($rid, $carpeta, $nombre, $seed, $ambiente, $w = 1600, $h = 1067, $densidad = 1.0)
-{
-    $im = mg_arte_ambiente($w, $h, $seed, array('ambiente' => $ambiente, 'densidad' => $densidad));
-    $tmp = sys_get_temp_dir() . '/mg-' . bin2hex(random_bytes(5)) . '.jpg';
-    imagejpeg($im, $tmp, 90);
-    imagedestroy($im);
-    $base = Image::storePath($tmp, $rid, $carpeta, 1600, $nombre . '.jpg');
-    @unlink($tmp);
-    return $base;
-}
-
 function logo($rid, $letras, $tinta)
 {
     $ttf = __DIR__ . '/fuentes/Fraunces.ttf';
@@ -189,42 +180,18 @@ echo "Limpiando imágenes anteriores…\n";
 limpiarUploads(1);
 limpiarUploads(2);
 
-echo "Generando imágenes de Brasa Negra…\n";
+// Las fotografías NO se generan ni se empaquetan: son fotografía real y las
+// descarga el propio sistema al instalarse (ver app/Models/PhotoJob.php).
+// Aquí solo se crean los logotipos, que son tipografía, no fotografía.
+echo "Generando logotipos…\n";
 $img = array();
 $img['logo1']  = logo(1, 'BN', '#D8B26E');
-$img['cover1'] = ambiente(1, 'marca', 'portada', 'bn-cover-11', 'brasa', 1600, 1000, 1.15);
-
-$catImg = array();
-foreach ($categorias as $i => $c) {
-    $catImg[$i] = ambiente(1, 'categorias', 'cat-' . ($i + 1), 'bn-cat-' . $i . '-5', $c[4][0], 1200, 800, 0.9);
-}
-
-$prodImg = array();
-$n = 0;
-foreach ($platillos as $ci => $lista) {
-    foreach ($lista as $pi => $p) {
-        $n++;
-        $mezcla = $categorias[$ci][4];
-        $prodImg[$ci . '-' . $pi] = ambiente(1, 'platillos', 'p-' . $n, 'bn-p-' . $n . '-13',
-            $mezcla[$pi % count($mezcla)], 1600, 1067, 0.8 + (($pi % 3) * 0.22));
-        echo "\r  platillos: $n/35   ";
-    }
-}
-echo "\n";
-
-echo "Generando imágenes de Café Central…\n";
+$img['cover1'] = '';
 $img['logo2']  = logo(2, 'CC', '#E0C08A');
-$img['cover2'] = ambiente(2, 'marca', 'portada', 'cc-cover-4', 'marfil', 1600, 1000, 0.9);
+$img['cover2'] = '';
+$catImg  = array_fill(0, 6, '');
+$prodImg = array();
 $cafeImg = array();
-$m = 0;
-foreach ($cafe as $ci => $c) {
-    foreach ($c[5] as $pi => $p) {
-        $m++;
-        $cafeImg[$ci . '-' . $pi] = ambiente(2, 'platillos', 'c-' . $m, 'cc-p-' . $m . '-7',
-            $c[4][$pi % count($c[4])], 1400, 933, 0.85);
-    }
-}
-echo "  productos Café Central: $m\n";
 
 /* ---------------------------------------------------------------
    Construcción del SQL
@@ -298,9 +265,10 @@ foreach ($platillos as $ci => $lista) {
     foreach ($lista as $pi => $p) {
         $pid++;
         $nombreAId[$p[0]] = $pid;
-        $sql[] = "INSERT INTO `products` (`id`,`restaurant_id`,`category_id`,`name`,`name_en`,`description`,`description_en`,`price`,`image`,`prep_minutes`,`tags`,`is_active`,`is_featured`,`sort`,`created_at`) VALUES ("
+        $sql[] = "INSERT INTO `products` (`id`,`restaurant_id`,`category_id`,`name`,`name_en`,`description`,`description_en`,`price`,`image`,`photo_query`,`prep_minutes`,`tags`,`is_active`,`is_featured`,`sort`,`created_at`) VALUES ("
             . $pid . ",1," . ($ci + 1) . "," . q($p[0]) . "," . q($p[1]) . "," . q($p[2]) . ",''," . number_format((float)$p[3], 2, '.', '') . ","
-            . q($prodImg[$ci . '-' . $pi]) . "," . (int)$p[5] . "," . q($p[4]) . ",1," . (int)$p[6] . "," . $pid . ",NOW());";
+            . "''," . q(isset($terminosFoto[$pid - 1]) ? $terminosFoto[$pid - 1] : '') . ","
+            . (int)$p[5] . "," . q($p[4]) . ",1," . (int)$p[6] . "," . $pid . ",NOW());";
         foreach ($p[7] as $clave) {
             if (!isset($gidMap[$clave])) { continue; }
             $sql[] = "INSERT INTO `product_modifier_groups` (`product_id`,`group_id`,`sort`) VALUES ($pid," . $gidMap[$clave] . ",0);";
@@ -381,9 +349,10 @@ foreach ($cafe as $c) {
     foreach ($c[5] as $pi => $p) {
         $pid2++;
         $key = ($ci2 - 1) . '-' . $pi;
-        $sql[] = "INSERT INTO `products` (`id`,`restaurant_id`,`category_id`,`name`,`name_en`,`description`,`price`,`image`,`prep_minutes`,`tags`,`is_active`,`is_featured`,`sort`,`created_at`) VALUES ("
+        $sql[] = "INSERT INTO `products` (`id`,`restaurant_id`,`category_id`,`name`,`name_en`,`description`,`price`,`image`,`photo_query`,`prep_minutes`,`tags`,`is_active`,`is_featured`,`sort`,`created_at`) VALUES ("
             . $pid2 . ",2," . $cid . "," . q($p[0]) . "," . q($p[1]) . "," . q($p[2]) . "," . number_format((float)$p[3], 2, '.', '') . ","
-            . q(isset($cafeImg[$key]) ? $cafeImg[$key] : '') . "," . (int)$p[5] . "," . q($p[4]) . ",1," . (int)$p[6] . "," . $pid2 . ",NOW());";
+            . "''," . q(isset($terminosFotoCafe[$pid2 - 101]) ? $terminosFotoCafe[$pid2 - 101] : '') . ","
+            . (int)$p[5] . "," . q($p[4]) . ",1," . (int)$p[6] . "," . $pid2 . ",NOW());";
     }
 }
 for ($i = 1; $i <= 6; $i++) {

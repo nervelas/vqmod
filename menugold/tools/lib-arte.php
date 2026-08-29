@@ -1,13 +1,14 @@
 <?php
 /**
- * MenúGold · imágenes ambientales de demostración.
+ * MenúGold · generación de logotipos para la demostración.
  *
- * Genera fondos cinematográficos (salón en penumbra, luces desenfocadas,
- * grano de película) para portadas y secciones cuando todavía no hay
- * fotografía real. NO intenta dibujar platillos: los platillos sin foto
- * usan el marcador tipográfico del propio diseño, que se ve intencional.
+ * Aquí NO se generan fotografías. Las fotos de los platillos son reales y las
+ * descarga el propio sistema de bancos con licencia libre (Wikimedia Commons y
+ * Openverse) al instalarse: ver app/Models/PhotoJob.php y
+ * tools/importar-fotos.php --descargar.
  *
- * Para fotografía real: tools/descargar-fotos.php (una sola orden).
+ * Lo único que se dibuja aquí es el monograma tipográfico del logotipo, que es
+ * tipografía, no fotografía.
  */
 
 function mg_rng($seed)
@@ -44,116 +45,6 @@ function mg_mix($a, $b, $t)
 function mg_blur($im, $veces)
 {
     for ($i = 0; $i < $veces; $i++) { imagefilter($im, IMG_FILTER_GAUSSIAN_BLUR); }
-}
-
-/** Ambientes disponibles, cada uno con su temperatura de color. */
-function mg_ambientes()
-{
-    return array(
-        'brasa'    => array('#1A0F07', '#C87A2E', '#F0C271'),
-        'noche'    => array('#0C0B09', '#8A6A3A', '#E8CE9C'),
-        'cobre'    => array('#150E09', '#B8632A', '#EBA45E'),
-        'verde'    => array('#0B120D', '#4E7A4A', '#A9CE8C'),
-        'vino'     => array('#140A0C', '#8C2F3C', '#E0A0A8'),
-        'marfil'   => array('#12100C', '#9C8355', '#F0E3C8'),
-        'humo'     => array('#0A0A0B', '#5C5A56', '#C9C4BA'),
-    );
-}
-
-/**
- * Fondo cinematográfico: degradado cálido + luces desenfocadas + grano.
- *
- * @param array $opts densidad (0.4–1.6), luz (posición 0–1), ambiente
- * @return resource|\GdImage
- */
-function mg_arte_ambiente($w, $h, $seed, array $opts = array())
-{
-    $ambientes = mg_ambientes();
-    $clave = isset($opts['ambiente']) && isset($ambientes[$opts['ambiente']]) ? $opts['ambiente'] : 'noche';
-    list($oscuro, $medio, $claro) = $ambientes[$clave];
-    $rand = mg_rng($seed);
-    $densidad = isset($opts['densidad']) ? (float)$opts['densidad'] : 1.0;
-
-    // Se compone pequeño y se amplía: el remuestreo da un desenfoque natural.
-    $sw = max(120, (int)($w / 5));
-    $sh = max(80, (int)($h / 5));
-    $small = imagecreatetruecolor($sw, $sh);
-    imagealphablending($small, true);
-
-    // Degradado radial cálido desde la fuente de luz.
-    $lx = $sw * (isset($opts['luz_x']) ? (float)$opts['luz_x'] : $rand(0.15, 0.5));
-    $ly = $sh * (isset($opts['luz_y']) ? (float)$opts['luz_y'] : $rand(0.05, 0.45));
-    $max = sqrt($sw * $sw + $sh * $sh);
-    for ($y = 0; $y < $sh; $y++) {
-        for ($x = 0; $x < $sw; $x++) {
-            $d = sqrt(($x - $lx) * ($x - $lx) + ($y - $ly) * ($y - $ly)) / $max;
-            $t = max(0.0, 1.0 - $d * 1.5);
-            imagesetpixel($small, $x, $y, mg_hex($small, mg_mix($oscuro, $medio, $t * $t * 0.9)));
-        }
-    }
-
-    // Luces desenfocadas: círculo sólido y una sola pasada de desenfoque
-    // (los anillos concéntricos aparecen si se dibuja capa sobre capa).
-    $n = (int)($rand(16, 26) * $densidad);
-    for ($i = 0; $i < $n; $i++) {
-        $x = $rand(-$sw * 0.1, $sw * 1.1);
-        $y = $rand(-$sh * 0.05, $sh * 0.85);
-        $r = $rand($sw * 0.012, $sw * 0.075);
-        $t = $rand(0.35, 1.0);
-        $c = mg_mix($medio, $claro, $t);
-        $alpha = (int)$rand(28, 78);
-        imagefilledellipse($small, (int)$x, (int)$y, (int)($r * 2), (int)($r * 2), mg_hex($small, $c, $alpha));
-    }
-
-    // Formas oscuras en primer plano (mesas, siluetas), muy suaves.
-    for ($i = 0; $i < 4; $i++) {
-        imagefilledellipse($small,
-            (int)$rand(-$sw * 0.1, $sw * 1.1),
-            (int)$rand($sh * 0.9, $sh * 1.25),
-            (int)$rand($sw * 0.3, $sw * 0.8),
-            (int)$rand($sh * 0.35, $sh * 0.7),
-            mg_hex($small, $oscuro, 34));
-    }
-
-    mg_blur($small, 3);
-
-    $im = imagecreatetruecolor($w, $h);
-    imagecopyresampled($im, $small, 0, 0, 0, 0, $w, $h, $sw, $sh);
-    imagedestroy($small);
-    mg_blur($im, 1);
-
-    mg_vineta($im, $w, $h, 0.95);
-    mg_grano($im, $w, $h, $rand, 0.22);
-    imagefilter($im, IMG_FILTER_CONTRAST, -4);
-    return $im;
-}
-
-/** Viñeta cinematográfica. */
-function mg_vineta($im, $w, $h, $fuerza = 0.9)
-{
-    $cx = $w / 2; $cy = $h / 2;
-    $max = sqrt($cx * $cx + $cy * $cy);
-    $paso = max(1, (int)round(min($w, $h) / 320));
-    for ($y = 0; $y < $h; $y += $paso) {
-        for ($x = 0; $x < $w; $x += $paso) {
-            $d = sqrt(($x - $cx) * ($x - $cx) + ($y - $cy) * ($y - $cy)) / $max;
-            $t = max(0.0, ($d - 0.40) / 0.60) * $fuerza;
-            if ($t <= 0.01) { continue; }
-            imagefilledrectangle($im, $x, $y, $x + $paso - 1, $y + $paso - 1,
-                imagecolorallocatealpha($im, 0, 0, 0, (int)max(0, 127 - $t * 116)));
-        }
-    }
-}
-
-/** Grano de película. */
-function mg_grano($im, $w, $h, $rand, $densidad = 0.2)
-{
-    $n = (int)($w * $h * $densidad / 100);
-    for ($i = 0; $i < $n; $i++) {
-        $v = (int)$rand(0, 255);
-        imagesetpixel($im, (int)$rand(0, $w), (int)$rand(0, $h),
-            imagecolorallocatealpha($im, $v, $v, $v, 114));
-    }
 }
 
 /**

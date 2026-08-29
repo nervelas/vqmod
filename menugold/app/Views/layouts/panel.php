@@ -25,6 +25,7 @@ $icon = function ($name) {
         'plus'    => '<path d="M9 3.5v11M3.5 9h11"/>',
         'building'=> '<path d="M3.5 15.5v-13h7v13M10.5 6.5h4v9M5.8 5.5h2.4M5.8 8.2h2.4M5.8 11h2.4"/>',
         'tag'     => '<path d="M8.5 2.5H15v6.5l-6 6-6.5-6.5 6-6Z"/><circle cx="11.8" cy="5.8" r="1"/>',
+        'image'   => '<rect x="2.5" y="3.5" width="13" height="11" rx="1.5"/><circle cx="6.2" cy="7.2" r="1.3"/><path d="m3 12 3.5-3.2 3 2.6L12.5 8l2.8 2.6"/>',
         'out'     => '<path d="M11 12.5v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-11a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M7.5 9h8M13 6.5 15.5 9 13 11.5"/>',
     );
     return '<svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
@@ -93,6 +94,7 @@ $role = Auth::role();
           <a class="side-link <?= $is('/panel/menu/promociones') ? 'is-on' : '' ?>" href="<?= e(mg_url('/panel/menu/promociones')) ?>"><?= $icon('tag') ?> Promociones</a>
           <a class="side-link <?= $is('/panel/menu/combos') ? 'is-on' : '' ?>" href="<?= e(mg_url('/panel/menu/combos')) ?>"><?= $icon('ticket') ?> Combos</a>
           <a class="side-link <?= $is('/panel/menu/importar') ? 'is-on' : '' ?>" href="<?= e(mg_url('/panel/menu/importar')) ?>"><?= $icon('orders') ?> Importar Excel</a>
+          <a class="side-link <?= $is('/panel/menu/fotos') ? 'is-on' : '' ?>" href="<?= e(mg_url('/panel/menu/fotos')) ?>"><?= $icon('image') ?> Fotografía</a>
         </div>
       <?php endif; ?>
 

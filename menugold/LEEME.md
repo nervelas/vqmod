@@ -53,15 +53,33 @@ en el formato que prefieras: **tarjeta de mesa** (se dobla y se para sola), **ta
 bolsillo** o **etiquetas adhesivas**. Salen con tu logo y tus colores, y el código va
 firmado: nadie puede fabricar el enlace de una mesa a mano.
 
-## 6. Fotografía
+## 6. Fotografía (importante: hazlo primero)
 
-La demostración trae imágenes ambientales generadas por el propio sistema. Sustitúyelas
-por tus fotos desde **Menú → cada platillo → Fotografía** (se recortan, comprimen a WebP
-en tres tamaños y se les quitan los metadatos solas), o importa una carpeta entera:
+El menú se instala **sin fotos a propósito**. Las fotos son reales y las descarga
+el propio sistema desde bancos con licencia libre (Wikimedia Commons y Openverse),
+usando tu conexión, no la nuestra. Entra al panel y ve a **Menú → Fotografía →
+Descargar fotografías**: tarda uno o dos minutos y deja los 35 platillos con foto.
+Guarda el autor y la licencia de cada imagen en *Créditos*, como exigen esas licencias.
+
+También desde la línea de comandos:
+
+```
+php tools/importar-fotos.php --descargar --restaurante=1
+```
+
+**¿Prefieres tus propias fotos?** Es lo mejor: son tus platillos de verdad.
+Súbelas desde cada platillo en el panel, o importa una carpeta entera —los nombres
+de archivo se emparejan solos con los platillos:
 
 ```
 php tools/importar-fotos.php --carpeta=/home/usuario/fotos --restaurante=1
 ```
+
+En los dos casos la imagen se recorta, se comprime a WebP en tres tamaños, se le
+quitan los metadatos y se genera el difuminado de carga.
+
+**Si el panel avisa de que no hay salida a internet:** tu hosting bloquea las
+conexiones salientes. Pide que las habiliten (HTTPS saliente) o sube las fotos a mano.
 
 ## 7. Credenciales de la demostración
 

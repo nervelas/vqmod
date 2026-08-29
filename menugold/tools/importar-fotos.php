@@ -32,6 +32,8 @@ Autoloader::addNamespace('MenuGold\\Core',   MG_APP . '/Core');
 Autoloader::addNamespace('MenuGold\\Models', MG_APP . '/Models');
 require MG_APP . '/Support/helpers.php';
 
+use MenuGold\Models\PhotoJob;
+
 use MenuGold\Core\Config;
 use MenuGold\Core\DB;
 use MenuGold\Core\Image;
@@ -171,11 +173,40 @@ elseif (!empty($args['lista'])) {
     }
 }
 
+/* ---- Modo automático: descarga fotografía real de bancos libres ---- */
+elseif (isset($args['descargar'])) {
+    if (!\MenuGold\Core\PhotoFetcher::hayInternet()) {
+        exit("Este servidor no puede salir a internet. Pide a tu hosting que permita\n"
+           . "conexiones salientes HTTPS, o usa --carpeta con tus propias fotos.\n");
+    }
+    $faltan = PhotoJob::cuantosFaltan($rid);
+    echo "Faltan $faltan imágenes. Descargando…\n";
+    $vueltas = 0;
+    while (PhotoJob::cuantosFaltan($rid) > 0 && $vueltas < 200) {
+        $vueltas++;
+        $res = PhotoJob::procesar($rid, 3);
+        foreach ($res['detalle'] as $d) {
+            echo ($d['ok'] ? '  ✓ ' : '  · ') . $d['que']
+               . ($d['ok'] ? '  — ' . $d['autor'] . ' · ' . $d['licencia'] : '  — sin resultado') . "\n";
+            $d['ok'] ? $ok++ : $fallos++;
+        }
+        if ($res['hechas'] === 0 && $res['fallidas'] === 0) { break; }
+        if ($res['hechas'] === 0 && $fallos > 12) {
+            echo "  Demasiadas búsquedas sin resultado; se detiene.\n";
+            break;
+        }
+    }
+}
+
 else {
     echo "Uso:\n";
+    echo "  php tools/importar-fotos.php --descargar [--restaurante=1]\n";
+    echo "      Descarga fotografía real de Wikimedia Commons y Openverse para\n";
+    echo "      los platillos que no tienen foto, y guarda autor y licencia.\n\n";
     echo "  php tools/importar-fotos.php --carpeta=/ruta/con/fotos [--restaurante=1] [--portada=portada.jpg] [--prueba]\n";
-    echo "  php tools/importar-fotos.php --lista=fotos.txt [--restaurante=1] [--prueba]\n\n";
-    echo "En el archivo de lista, una línea por foto:  DIRECCIÓN | Nombre del platillo\n";
+    echo "      Importa tus propias fotos emparejándolas por el nombre del archivo.\n\n";
+    echo "  php tools/importar-fotos.php --lista=fotos.txt [--restaurante=1] [--prueba]\n";
+    echo "      Una línea por foto:  DIRECCIÓN | Nombre del platillo\n";
     exit(1);
 }
 

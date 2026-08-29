@@ -203,7 +203,7 @@ window.MGP = {
 };
 </script>
 <!-- Sin defer: los scripts de cada vista usan window.MGPanel al cargarse -->
-<script src="<?= e(asset('js/panel.js')) ?>" nonce="<?= e(Security::nonce()) ?>"></script>
+<script src="<?= e(guion('panel')) ?>" nonce="<?= e(Security::nonce()) ?>"></script>
 <?= View::section('scripts') ?>
 <script nonce="<?= e(Security::nonce()) ?>">
 if ('serviceWorker' in navigator) {

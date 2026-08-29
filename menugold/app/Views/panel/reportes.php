@@ -151,7 +151,7 @@ View::start('acciones');
 </div>
 
 <?php View::start('scripts'); ?>
-<script src="<?= e(asset('vendor/chart.min.js')) ?>" nonce="<?= e(Security::nonce()) ?>"></script>
+<script src="<?= e(guion('chart')) ?>" nonce="<?= e(Security::nonce()) ?>"></script>
 <script nonce="<?= e(Security::nonce()) ?>">
 (function () {
   if (!window.Chart) return;

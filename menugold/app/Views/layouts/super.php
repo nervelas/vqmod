@@ -112,7 +112,7 @@ window.MGP = { base: <?= json_encode(App::baseUrl()) ?>, token: <?= json_encode(
                simbolo: 'Q', rol: 'superadmin' };
 </script>
 <!-- Sin defer: los scripts de cada vista usan window.MGPanel al cargarse -->
-<script src="<?= e(asset('js/panel.js')) ?>" nonce="<?= e(Security::nonce()) ?>"></script>
+<script src="<?= e(guion('panel')) ?>" nonce="<?= e(Security::nonce()) ?>"></script>
 <?= View::section('scripts') ?>
 </body>
 </html>

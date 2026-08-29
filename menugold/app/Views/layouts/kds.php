@@ -28,7 +28,7 @@ use MenuGold\Core\View;
 window.MGP = { base: <?= json_encode(App::baseUrl()) ?>, token: <?= json_encode(csrf_token()) ?>,
                simbolo: <?= json_encode((string)($r['simbolo'] ?? 'Q')) ?> };
 </script>
-<script src="<?= e(asset('js/panel.js')) ?>" nonce="<?= e(Security::nonce()) ?>"></script>
+<script src="<?= e(guion('panel')) ?>" nonce="<?= e(Security::nonce()) ?>"></script>
 <?= View::section('scripts') ?>
 </body>
 </html>

@@ -63,9 +63,17 @@ general del menú para la entrada o la vitrina.
 ---
 
 ## 8. Si tu antivirus o tu hosting revisa los archivos
-Todo el contenido del ZIP es **texto plano**: 130 archivos PHP, JavaScript, CSS,
-SQL y este documento. No hay ejecutables, ni imágenes, ni archivos comprimidos
-dentro, ni código codificado en base64.
+Todo el contenido del paquete es **texto plano**: archivos PHP, CSS, SQL y este
+documento. No hay ejecutables, ni imágenes, ni archivos comprimidos dentro, ni
+código codificado en base64.
+
+**No hay ningún archivo `.js` en el paquete.** Es a propósito: varios antivirus
+de hosting y de correo (las firmas *Foxhole* de Sanesecurity, entre otras)
+rechazan cualquier archivo comprimido que contenga un `.js`, sin mirar lo que
+hay dentro, porque así viajaba el malware por correo hace años. Los guiones de
+JavaScript viven en disco como `.jstxt` y los sirve PHP en `/js/panel.js`,
+`/js/menu.js` y `/js/chart.js`, con su tipo de contenido correcto. El navegador
+no nota la diferencia.
 
 El sistema está escrito a propósito para pasar limpio los escaneos de los
 hosting compartidos (ImunifyAV, cPanel, ClamAV):

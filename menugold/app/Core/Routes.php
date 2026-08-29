@@ -26,6 +26,7 @@ final class Routes
         $r->get('/favicon.ico',            'Pwa@favicon');
         $r->get('/r/{slug}/manifest.webmanifest', 'Pwa@manifest');
         $r->get('/r/{slug}/icono/{tam}',   'Pwa@icono');
+        $r->get('/js/{nombre}',            'Guion@servir');
         $r->get('/archivo/{carpeta}/{nombre}', 'Archivo@servir');
         $r->get('/archivo/{carpeta}/{sub}/{nombre}', 'Archivo@servir');
 

@@ -114,7 +114,7 @@ window.MG = {
   ], JSON_UNESCAPED_UNICODE) ?>
 };
 </script>
-<script src="<?= e(asset('js/menu.js')) ?>" defer nonce="<?= e($nonce) ?>"></script>
+<script src="<?= e(guion('menu')) ?>" defer nonce="<?= e($nonce) ?>"></script>
 <?= View::section('scripts') ?>
 <script nonce="<?= e($nonce) ?>">
 if ('serviceWorker' in navigator) {

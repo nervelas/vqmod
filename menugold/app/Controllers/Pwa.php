@@ -194,7 +194,7 @@ class Pwa extends Controller
     public function serviceWorker(): void
     {
         if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
-        $file = MG_ROOT . '/assets/js/sw-plantilla.js';
+        $file = MG_ROOT . '/assets/js/sw-plantilla.jstxt';
         $js = is_file($file) ? (string)file_get_contents($file) : '';
         $base = App::basePath() === '' ? '' : App::basePath();
         $version = (string)App::config('version', '1.0.0');

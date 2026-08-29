@@ -38,6 +38,19 @@ if (!function_exists('asset')) {
     }
 }
 
+if (!function_exists('guion')) {
+    /**
+     * URL de un guion de JavaScript. Los archivos estan en disco como .jstxt
+     * y los sirve el controlador Guion; el navegador ve /js/panel.js normal.
+     */
+    function guion(string $nombre): string
+    {
+        $file = MG_ROOT . '/assets/' . ($nombre === 'chart' ? 'vendor/chart.jstxt' : 'js/' . $nombre . '.jstxt');
+        $v = is_file($file) ? substr((string)filemtime($file), -6) : '1';
+        return App::url('js/' . $nombre . '.js') . '?v=' . $v;
+    }
+}
+
 if (!function_exists('uploaded')) {
     /** URL publica de un archivo subido a /storage/uploads. */
     function uploaded(?string $file, ?string $fallback = null): string

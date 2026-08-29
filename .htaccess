@@ -1,11 +1,23 @@
-# Bloquea el acceso web a la raiz del proyecto.
-# Solo public/ debe quedar expuesto. Si su hosting no permite apuntar el
-# dominio a public/, este archivo evita que se descarguen config/, src/ y storage/.
+# ============================================================================
+#  Sistema de Facturación FEL
+#  Este archivo hace que el sistema funcione sin importar dónde lo instale:
+#  manda todas las visitas a public/ y bloquea las carpetas internas.
+# ============================================================================
 
-<IfModule mod_authz_core.c>
-    Require all denied
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # 1. Las carpetas internas nunca se sirven por web.
+    RewriteRule ^(config|src|storage|db|bin|tests|docs)(/|$) - [F,L]
+
+    # 2. Si la ruta ya apunta a public/, se sirve tal cual (evita un bucle).
+    RewriteRule ^public/ - [L]
+
+    # 3. Todo lo demás se atiende desde public/.
+    RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
-<IfModule !mod_authz_core.c>
-    Order deny,allow
-    Deny from all
-</IfModule>
+
+# Si el hosting no tiene mod_rewrite, index.php de esta carpeta redirige
+# a public/ y el sistema funciona igual.

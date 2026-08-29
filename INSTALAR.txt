@@ -1,0 +1,156 @@
+===============================================================================
+  SISTEMA DE FACTURACION FEL - GUATEMALA
+  Instalacion
+===============================================================================
+
+  AHORA SE INSTALA DESDE EL NAVEGADOR. No necesita la Terminal.
+
+-------------------------------------------------------------------------------
+  PASO 1 - Crear la base de datos en cPanel
+-------------------------------------------------------------------------------
+
+  cPanel > Bases de datos MySQL
+
+  1. Crear nueva base de datos:  fel
+     (cPanel la nombrara  sucuenta_fel)
+
+  2. Crear usuario de MySQL:  felapp
+     (quedara  sucuenta_felapp)   Use una contrasena larga.
+
+  3. Agregar el usuario a la base de datos
+     Marque TODOS LOS PRIVILEGIOS.
+
+  Anote los tres datos. Los va a necesitar en el paso 3.
+
+-------------------------------------------------------------------------------
+  PASO 2 - Subir los archivos
+-------------------------------------------------------------------------------
+
+  Descomprima este ZIP en la carpeta donde vive su sitio (public_html, o la
+  carpeta a la que apunta su dominio o subdominio). Sobrescriba si pregunta.
+
+  Al terminar, en esa carpeta deben estar:
+
+      .htaccess    index.php    public/    src/    config/
+      db/    bin/    storage/    docs/    tests/
+
+  NO importa si la carpeta a la que apunta su dominio es la del sistema o la
+  carpeta public/ de adentro: funciona en los dos casos.
+
+-------------------------------------------------------------------------------
+  PASO 3 - Instalar desde el navegador
+-------------------------------------------------------------------------------
+
+  Abra en su navegador:
+
+      https://SU-DOMINIO/instalar.php
+
+  (si el dominio apunta a la carpeta public, entonces la direccion es la misma:
+   https://SU-DOMINIO/instalar.php )
+
+  El asistente le va a:
+
+      1. Revisar que el servidor cumpla los requisitos y decirle
+         exactamente que corregir en cPanel si falta algo.
+      2. Pedirle los datos de la base de datos del paso 1.
+      3. Pedirle el usuario y contrasena con los que usted va a entrar.
+      4. Crear las tablas y dejar el sistema listo.
+
+  ANTES DE EMPEZAR, de permisos de escritura a dos carpetas:
+
+      Administrador de archivos > clic derecho sobre la carpeta > Permisos
+
+          storage    ->  770   marcando "Aplicar recursivamente"
+          config     ->  770
+
+  Si no puede cambiar permisos, el asistente le mostrara el contenido del
+  archivo de configuracion para que lo cree a mano.
+
+-------------------------------------------------------------------------------
+  PASO 4 - Borrar el instalador
+-------------------------------------------------------------------------------
+
+  Cuando el asistente diga "Instalacion terminada", BORRE el archivo:
+
+      public/instalar.php
+
+  Administrador de archivos > clic derecho > Eliminar.
+
+-------------------------------------------------------------------------------
+  PASO 5 - Activar HTTPS
+-------------------------------------------------------------------------------
+
+  cPanel > SSL/TLS Status > Run AutoSSL     (Let's Encrypt, gratuito)
+
+  Cuando el candado ya aparezca en el navegador, edite el archivo
+
+      public/.htaccess
+
+  y quite las almohadillas (#) del bloque "FORZAR HTTPS" que esta al final.
+
+  El sistema maneja datos fiscales y contrasenas: no lo deje sin HTTPS.
+
+-------------------------------------------------------------------------------
+  PASO 6 - Programar el cron de contingencia
+-------------------------------------------------------------------------------
+
+  cPanel > Trabajos Cron > Agregar nuevo trabajo cron
+
+      Configuracion comun:  Cada 10 minutos
+      Comando (cambie la ruta por la suya):
+
+  /usr/local/bin/php /home/SUCUENTA/public_html/bin/reintentar_pendientes.php >> /home/SUCUENTA/public_html/storage/logs/cron.log 2>&1
+
+  La ruta real de PHP la ve en:  cPanel > Select PHP Version > Options
+
+  NO OMITA ESTE PASO. Es lo que recupera las facturas que no se pudieron
+  certificar porque se cayo el internet o el certificador.
+
+-------------------------------------------------------------------------------
+  PASO 7 - Dar de alta su primera empresa
+-------------------------------------------------------------------------------
+
+  1. Entre a  https://SU-DOMINIO/  con el usuario del paso 3.
+  2. Empresas > Agregar empresa.
+  3. Llene los datos del emisor EXACTAMENTE como aparecen en el RTU.
+     Una coma o una tilde de diferencia hace que el certificador rechace
+     los documentos.
+  4. Deje el certificador en "simulador" al principio: puede emitir todas
+     las facturas de prueba que quiera sin gastar folios ni tocar la red.
+  5. Cuando tenga las credenciales reales del certificador (INFILE,
+     Digifact, Guatefacturas, Megaprint...), cambielas en esa misma
+     pantalla y ponga Ambiente: produccion.
+
+  Mientras una empresa use el simulador o este en pruebas, el sistema muestra
+  una cinta amarilla y marca los documentos como SIN VALIDEZ FISCAL.
+
+===============================================================================
+  SI ALGO FALLA
+===============================================================================
+
+  Error 403 al abrir el sitio
+      Falta el archivo .htaccess de la raiz, o su hosting no permite
+      .htaccess. Apunte el dominio directamente a la carpeta  public .
+
+  Error 500
+      Su hosting no permite alguna directiva del .htaccess. Abra el
+      archivo .htaccess de la raiz y borre la linea  DirectoryIndex index.php
+
+  "No existe el archivo de configuracion"
+      No termino el paso 3. Abra  /instalar.php
+
+  Pagina en blanco
+      La version de PHP es menor a 8.1.
+      cPanel > Select PHP Version > elija 8.1 o superior
+
+  El asistente dice que no puede escribir
+      Permisos de las carpetas storage y config (paso 3)
+
+  No conecta a la base de datos
+      El usuario no esta agregado a la base, o falta el prefijo de su
+      cuenta de cPanel en el nombre (paso 1)
+
+===============================================================================
+  Manual completo con capturas de cada pantalla:
+      docs/manual/Manual-Facturacion-FEL.pdf
+===============================================================================

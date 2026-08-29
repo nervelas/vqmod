@@ -13,6 +13,7 @@ require dirname(__DIR__) . '/src/autoload.php';
 
 use Fel\Core\Config;
 use Fel\Core\Db;
+use Fel\Core\Esquema;
 use Fel\Repositorio\EmpresaRepositorio;
 use Fel\Repositorio\UsuarioRepositorio;
 
@@ -48,23 +49,13 @@ try {
 echo "   Conexion establecida.\n\n";
 echo "2. Creando tablas...\n";
 
-$sql = (string) file_get_contents($archivo);
-
-foreach (array_filter(array_map('trim', explode(';', $sql))) as $sentencia) {
-    if (str_starts_with($sentencia, '--') || $sentencia === '') {
-        continue;
-    }
-
-    try {
-        $pdo->exec($sentencia);
-    } catch (\Throwable $error) {
-        echo "   ERROR en: ", substr(preg_replace('/\s+/', ' ', $sentencia) ?? '', 0, 70), "...\n";
-        echo "   ", $error->getMessage(), "\n";
-        exit(1);
-    }
+try {
+    $aplicadas = Esquema::aplicar($pdo, $archivo);
+    echo "   Tablas listas ({$aplicadas} sentencias aplicadas).\n\n";
+} catch (\Throwable $error) {
+    echo "   ERROR: ", $error->getMessage(), "\n";
+    exit(1);
 }
-
-echo "   Tablas listas.\n\n";
 echo "3. Creando directorios de almacenamiento...\n";
 
 foreach (['almacen', 'xml', 'logs'] as $clave) {

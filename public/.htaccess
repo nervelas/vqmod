@@ -1,7 +1,9 @@
-# Solo esta carpeta debe ser accesible desde el navegador.
-# En cPanel apunte el dominio o subdominio directamente a public/.
+# ============================================================================
+#  Carpeta pública del sistema. Es la única que se sirve por web.
+# ============================================================================
 
 Options -Indexes
+DirectoryIndex index.php
 
 <IfModule mod_headers.c>
     Header always set X-Content-Type-Options "nosniff"
@@ -9,14 +11,29 @@ Options -Indexes
     Header always set Referrer-Policy "same-origin"
 </IfModule>
 
-# Fuerce HTTPS: la aplicacion maneja datos fiscales y llaves de acceso.
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteCond %{HTTPS} !=on
-    RewriteCond %{HTTP:X-Forwarded-Proto} !https
-    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-</IfModule>
+# ---------------------------------------------------------------------------
+#  FORZAR HTTPS
+#
+#  Viene DESACTIVADO para que el sistema abra aunque el dominio todavía no
+#  tenga certificado SSL. Actívelo (quite las almohadillas) en cuanto instale
+#  el certificado: el sistema maneja datos fiscales y contraseñas.
+#
+#  cPanel > SSL/TLS Status > Run AutoSSL   (Let's Encrypt es gratuito)
+# ---------------------------------------------------------------------------
+#<IfModule mod_rewrite.c>
+#    RewriteEngine On
+#    RewriteCond %{HTTPS} !=on
+#    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+#    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+#</IfModule>
 
-<FilesMatch "\.(sqlite|log|md|sql)$">
-    Require all denied
+# Nunca servir archivos internos que pudieran quedar aquí por error.
+<FilesMatch "\.(sqlite|log|sql|md)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
 </FilesMatch>

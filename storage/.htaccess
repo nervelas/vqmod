@@ -1,7 +1,4 @@
-# Bloquea el acceso web a la raiz del proyecto.
-# Solo public/ debe quedar expuesto. Si su hosting no permite apuntar el
-# dominio a public/, este archivo evita que se descarguen config/, src/ y storage/.
-
+# Esta carpeta nunca debe servirse por web.
 <IfModule mod_authz_core.c>
     Require all denied
 </IfModule>

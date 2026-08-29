@@ -15,6 +15,7 @@ use Fel\Certificador\RespuestaJson;
 use Fel\Certificador\SimuladorCertificador;
 use Fel\Core\Config;
 use Fel\Core\Db;
+use Fel\Core\Esquema;
 use Fel\Core\Money;
 use Fel\Core\Validator;
 use Fel\Dte\AnulacionXmlBuilder;
@@ -664,6 +665,44 @@ afirmar('Se cuentan los documentos de la empresa', $uso['documentos'] >= 1);
 afirmar('Se cuentan los certificados', $uso['certificados'] >= 1);
 $usoOtra = $empresas->uso($otraId, date('Y-m-01'), date('Y-m-d'));
 iguales('El uso de cada empresa es independiente', 1, $usoOtra['documentos']);
+
+// ------------------------------------------------- lectura del esquema SQL
+grupo('Lectura de los archivos de esquema');
+
+// Este bloque existe por un error real: al dividir el .sql por ';' y descartar
+// los fragmentos que empiezan con '--', se descartaba tambien la sentencia que
+// venia detras del comentario. En MySQL no se creaba NINGUNA tabla.
+foreach (['schema.sql' => 'MySQL', 'schema.sqlite.sql' => 'SQLite'] as $archivo => $motor) {
+    $sql        = (string) file_get_contents(__DIR__ . '/../db/' . $archivo);
+    $sentencias = Esquema::sentencias($sql);
+    $tablas     = array_filter($sentencias, static fn (string $s): bool => stripos($s, 'CREATE TABLE') !== false);
+
+    iguales("{$motor}: se leen las 8 tablas del esquema", 8, count($tablas));
+    afirmar("{$motor}: ninguna sentencia queda vacia",
+        array_filter($sentencias, static fn (string $s): bool => trim($s) === '') === []);
+    afirmar("{$motor}: no quedan comentarios sueltos al inicio de una sentencia",
+        array_filter($sentencias, static fn (string $s): bool => str_starts_with(trim($s), '--')) === []);
+
+    foreach (['fel_empresas', 'fel_documentos', 'fel_usuarios'] as $tabla) {
+        afirmar("{$motor}: se crea {$tabla}",
+            array_filter($tablas, static fn (string $s): bool => str_contains($s, $tabla)) !== []);
+    }
+}
+
+afirmar('Los comentarios de linea se eliminan, no la sentencia que los sigue',
+    Esquema::sentencias("-- comentario\nCREATE TABLE x (id INT);") === ['CREATE TABLE x (id INT)']);
+iguales('Un archivo solo de comentarios no produce sentencias',
+    [], Esquema::sentencias("-- uno\n-- dos\n"));
+
+// El esquema aplicado de verdad debe dejar las tablas utilizables.
+$pdoPrueba = new PDO('sqlite::memory:');
+$pdoPrueba->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$aplicadas = Esquema::aplicar($pdoPrueba, __DIR__ . '/../db/schema.sqlite.sql');
+afirmar('Se aplican todas las sentencias del esquema', $aplicadas >= 9);
+$tablasCreadas = $pdoPrueba->query(
+    "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name LIKE 'fel_%'"
+)->fetchColumn();
+iguales('Quedan creadas las 8 tablas', 8, (int) $tablasCreadas);
 
 // ---------------------------------------------------------------- cierre
 @unlink($archivoDb);

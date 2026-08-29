@@ -94,7 +94,6 @@ $role = Auth::role();
           <a class="side-link <?= $is('/panel/menu/promociones') ? 'is-on' : '' ?>" href="<?= e(mg_url('/panel/menu/promociones')) ?>"><?= $icon('tag') ?> Promociones</a>
           <a class="side-link <?= $is('/panel/menu/combos') ? 'is-on' : '' ?>" href="<?= e(mg_url('/panel/menu/combos')) ?>"><?= $icon('ticket') ?> Combos</a>
           <a class="side-link <?= $is('/panel/menu/importar') ? 'is-on' : '' ?>" href="<?= e(mg_url('/panel/menu/importar')) ?>"><?= $icon('orders') ?> Importar Excel</a>
-          <a class="side-link <?= $is('/panel/menu/fotos') ? 'is-on' : '' ?>" href="<?= e(mg_url('/panel/menu/fotos')) ?>"><?= $icon('image') ?> Fotografía</a>
         </div>
       <?php endif; ?>
 

@@ -277,23 +277,6 @@ $token = $_SESSION['csrf'];
         <div class="alert alert-success"><span>MenúGold quedó instalado. Ya puedes entrar a tu panel.</span></div>
         <p class="muted" style="font-size:var(--step--1)">Usuario del superadministrador: <b><?= htmlspecialchars($done['user'], ENT_QUOTES) ?></b></p>
 
-        <?php
-        $hayRed = false;
-        try { $hayRed = \MenuGold\Core\PhotoFetcher::hayInternet(); } catch (Throwable $e) {}
-        ?>
-        <div class="card" style="border-color:var(--gold);background:rgba(216,178,110,.06);margin-top:1.4rem">
-          <h3 style="font-family:var(--font-display);font-weight:400;font-size:1.15rem">Siguiente: las fotografías</h3>
-          <p class="muted" style="font-size:.86rem;margin-top:.4rem">
-            El menú se instaló sin fotos a propósito: se descargan reales, desde bancos con licencia libre,
-            en cuanto entres al panel. Ve a <b>Menú → Fotografía</b> y pulsa «Descargar fotografías».
-          </p>
-          <p style="font-size:.8rem;margin-top:.6rem;color:<?= $hayRed ? '#BFE6CD' : '#F2C3B2' ?>">
-            <?= $hayRed
-              ? '✓ Este servidor sí tiene salida a internet: la descarga funcionará.'
-              : '⚠ No se detectó salida a internet desde este servidor. Pide a tu hosting que permita conexiones salientes HTTPS, o sube tus propias fotos desde el panel.' ?>
-          </p>
-        </div>
-
         <p class="label mt-3">Tarea programada (cPanel → Cron Jobs, cada 10 minutos)</p>
         <div class="copy-box">
           <pre>*/10 * * * * curl -s "<?= htmlspecialchars(((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $basePath . '/cron/run.php?token=' . $done['cron'], ENT_QUOTES) ?>"</pre>

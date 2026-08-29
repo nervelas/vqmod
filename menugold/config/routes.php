@@ -66,8 +66,6 @@ $router->any('/panel/menu/combos',           'Admin/MenuController@combos');
 $router->post('/panel/menu/combo/{id:\d+}/eliminar',       'Admin/MenuController@deleteCombo');
 $router->any('/panel/menu/importar',         'Admin/MenuController@import');
 $router->get('/panel/menu/plantilla.xlsx',   'Admin/MenuController@importTemplate');
-$router->get('/panel/menu/fotos',            'Admin/MenuController@photos');
-$router->post('/panel/menu/fotos/lote',      'Admin/MenuController@photosBatch');
 
 $router->get('/panel/pedidos',                    'Admin/OrdersController@index');
 $router->get('/panel/pedidos/{id:\d+}',           'Admin/OrdersController@show');

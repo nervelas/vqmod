@@ -14,20 +14,6 @@ $pending = array_filter($setupDone, function ($v) { return !$v; });
 
 <?php $view->start('content') ?>
 
-<?php if (!empty($sinFoto)): ?>
-  <div class="card" style="border-color:var(--gold)">
-    <div class="row-between">
-      <div>
-        <h2 class="display" style="font-size:var(--step-1)">Faltan <?= (int)$sinFoto ?> fotografías</h2>
-        <p class="muted" style="font-size:var(--step--1);margin-top:.3rem">
-          La foto es lo que vende el platillo. Descárgalas de bancos con licencia libre en un clic, o sube las tuyas.
-        </p>
-      </div>
-      <a class="btn btn-sm" href="<?= e(mg_url('/panel/menu/fotos')) ?>">Conseguir fotografías</a>
-    </div>
-  </div>
-<?php endif; ?>
-
 <?php if ($pending): ?>
   <div class="card" style="border-color:var(--line)">
     <div class="row-between">

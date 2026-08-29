@@ -89,8 +89,10 @@ $platillos = array(
   ),
 );
 
-$terminosFoto = array("roasted bone marrow", "grilled chorizo sausage", "grilled avocado", "ceviche", "croquettes", "sourdough bread", "ribeye steak", "new york strip steak", "picanha", "beef short ribs", "rack of lamb", "roast chicken", "grilled pork chop", "mixed grill barbecue platter", "grilled whole fish", "grilled octopus", "garlic shrimp", "seared tuna steak", "fish carpaccio", "roasted cauliflower", "grilled corn on the cob", "tomato salad", "roasted potatoes", "grilled eggplant", "tres leches cake", "creme caramel flan", "chocolate dessert plate", "ice cream scoop", "fried plantain", "negroni cocktail", "mezcal cocktail", "glass of rum", "glass of red wine", "cup of coffee", "hibiscus drink");
-$terminosFotoCafe = array("espresso coffee", "cortado coffee", "caffe latte", "cold brew coffee", "croissant", "banana bread", "pan dulce concha", "huevos rancheros", "avocado toast", "oatmeal bowl");
+// Fotografía de cada platillo. Los archivos viven en tools/fotos/ y pasan por
+// la misma canalización de imagen del panel (WebP + JPG en tres tamaños).
+$fotos = array("tuetano", "chorizo", "aguacate", "ceviche", "croquetas", "pan", "ribeye", "newyork", "picanha", "costillas", "cordero", "pollo", "cerdo", "parrillada", "pescado", "pulpo", "camarones", "atun", "carpaccio", "coliflor", "elote", "tomate", "papas", "berenjena", "treslehes", "flan", "chocolate", "helado", "platano", "negroni", "mezcal", "ron", "vino", "cafe", "jamaica");
+$fotosCafe = array("espresso", "cortado", "latte", "coldbrew", "croissant", "bananabread", "concha", "rancheros", "tostada", "avena");
 
 $modificadores = array(
   'termino' => array('Término de la carne', 'Doneness', 'single', 1, 1, 1, array(
@@ -162,6 +164,17 @@ function logo($rid, $letras, $tinta)
     return $base;
 }
 
+/** Mete una fotografía de tools/fotos/ en la canalización de imágenes. */
+function foto($rid, $nombre, $carpeta = 'productos', $ancho = 1600)
+{
+    $ruta = __DIR__ . '/fotos/' . $nombre . '.jpg';
+    if (!is_file($ruta)) {
+        fwrite(STDERR, "  ! falta tools/fotos/$nombre.jpg\n");
+        return '';
+    }
+    return Image::storePath($ruta, $rid, $carpeta, $ancho, $nombre . '.jpg');
+}
+
 function q($v)
 {
     if ($v === null) { return 'NULL'; }
@@ -180,18 +193,20 @@ echo "Limpiando imágenes anteriores…\n";
 limpiarUploads(1);
 limpiarUploads(2);
 
-// Las fotografías NO se generan ni se empaquetan: son fotografía real y las
-// descarga el propio sistema al instalarse (ver app/Models/PhotoJob.php).
-// Aquí solo se crean los logotipos, que son tipografía, no fotografía.
 echo "Generando logotipos…\n";
 $img = array();
 $img['logo1']  = logo(1, 'BN', '#D8B26E');
-$img['cover1'] = '';
 $img['logo2']  = logo(2, 'CC', '#E0C08A');
-$img['cover2'] = '';
-$catImg  = array_fill(0, 6, '');
+
+echo "Procesando fotografía…\n";
+$img['cover1'] = foto(1, 'cover1', 'portada', 1600);
+$img['cover2'] = foto(2, 'cover2', 'portada', 1600);
+$catImg = array();
+for ($i = 1; $i <= 6; $i++) { $catImg[] = foto(1, 'cat' . $i, 'categorias', 960); }
 $prodImg = array();
+foreach ($fotos as $f)     { $prodImg[] = foto(1, $f); }
 $cafeImg = array();
+foreach ($fotosCafe as $f) { $cafeImg[] = foto(2, $f); }
 
 /* ---------------------------------------------------------------
    Construcción del SQL
@@ -201,10 +216,11 @@ $sql = array();
 $sql[] = "-- MenúGold · datos de demostración (Brasa Negra y Café Central).";
 $sql[] = "-- Generado el " . date('Y-m-d H:i') . ". Reinstalable: borra y recrea los ids 1 y 2.";
 $sql[] = "SET NAMES utf8mb4;";
-$sql[] = "SET FOREIGN_KEY_CHECKS = 0;";
+// Con las claves foráneas activas: al borrar los restaurantes se llevan en
+// cascada categorías, platillos, mesas, pedidos y todo lo demás. Así el
+// archivo se puede volver a importar cuantas veces haga falta.
+$sql[] = "DELETE FROM `users` WHERE `username` = 'admin@plataforma.gt';";
 $sql[] = "DELETE FROM `restaurants` WHERE `id` IN (1,2);";
-$sql[] = "DELETE FROM `users` WHERE `restaurant_id` IN (1,2) OR `username` = 'admin@plataforma.gt';";
-$sql[] = "SET FOREIGN_KEY_CHECKS = 1;";
 $sql[] = "";
 
 /* Superadministrador de la demostración */
@@ -265,9 +281,9 @@ foreach ($platillos as $ci => $lista) {
     foreach ($lista as $pi => $p) {
         $pid++;
         $nombreAId[$p[0]] = $pid;
-        $sql[] = "INSERT INTO `products` (`id`,`restaurant_id`,`category_id`,`name`,`name_en`,`description`,`description_en`,`price`,`image`,`photo_query`,`prep_minutes`,`tags`,`is_active`,`is_featured`,`sort`,`created_at`) VALUES ("
+        $sql[] = "INSERT INTO `products` (`id`,`restaurant_id`,`category_id`,`name`,`name_en`,`description`,`description_en`,`price`,`image`,`prep_minutes`,`tags`,`is_active`,`is_featured`,`sort`,`created_at`) VALUES ("
             . $pid . ",1," . ($ci + 1) . "," . q($p[0]) . "," . q($p[1]) . "," . q($p[2]) . ",''," . number_format((float)$p[3], 2, '.', '') . ","
-            . "''," . q(isset($terminosFoto[$pid - 1]) ? $terminosFoto[$pid - 1] : '') . ","
+            . q(isset($prodImg[$pid - 1]) ? $prodImg[$pid - 1] : '') . ","
             . (int)$p[5] . "," . q($p[4]) . ",1," . (int)$p[6] . "," . $pid . ",NOW());";
         foreach ($p[7] as $clave) {
             if (!isset($gidMap[$clave])) { continue; }
@@ -349,9 +365,9 @@ foreach ($cafe as $c) {
     foreach ($c[5] as $pi => $p) {
         $pid2++;
         $key = ($ci2 - 1) . '-' . $pi;
-        $sql[] = "INSERT INTO `products` (`id`,`restaurant_id`,`category_id`,`name`,`name_en`,`description`,`price`,`image`,`photo_query`,`prep_minutes`,`tags`,`is_active`,`is_featured`,`sort`,`created_at`) VALUES ("
+        $sql[] = "INSERT INTO `products` (`id`,`restaurant_id`,`category_id`,`name`,`name_en`,`description`,`price`,`image`,`prep_minutes`,`tags`,`is_active`,`is_featured`,`sort`,`created_at`) VALUES ("
             . $pid2 . ",2," . $cid . "," . q($p[0]) . "," . q($p[1]) . "," . q($p[2]) . "," . number_format((float)$p[3], 2, '.', '') . ","
-            . "''," . q(isset($terminosFotoCafe[$pid2 - 101]) ? $terminosFotoCafe[$pid2 - 101] : '') . ","
+            . q(isset($cafeImg[$pid2 - 101]) ? $cafeImg[$pid2 - 101] : '') . ","
             . (int)$p[5] . "," . q($p[4]) . ",1," . (int)$p[6] . "," . $pid2 . ",NOW());";
     }
 }

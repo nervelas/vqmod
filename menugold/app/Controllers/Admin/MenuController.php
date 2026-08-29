@@ -739,49 +739,6 @@ class MenuController extends BaseController
         ));
     }
 
-    /* ================= Fotografía real ================= */
-
-    /** Pantalla que descarga fotografía real para los platillos sin foto. */
-    public function photos()
-    {
-        $stop = $this->guard();
-        if ($stop) { return $stop; }
-
-        return $this->view('admin/menu/photos', array(
-            'faltan'   => \MenuGold\Models\PhotoJob::cuantosFaltan($this->rid()),
-            'total'    => (int)DB::value('SELECT COUNT(*) FROM products WHERE restaurant_id = :r AND is_active = 1', array('r' => $this->rid()), 0),
-            'creditos' => \MenuGold\Models\PhotoJob::creditos($this->rid()),
-        ));
-    }
-
-    /**
-     * Descarga un lote corto. La página la llama en bucle hasta terminar, así
-     * no se choca con el límite de tiempo de ejecución del hosting.
-     */
-    public function photosBatch()
-    {
-        $stop = $this->guard();
-        if ($stop) { return $stop; }
-        $bad = $this->guardCsrf();
-        if ($bad) { return $bad; }
-
-        @set_time_limit(120);
-        $cuantas = max(1, min(4, $this->request->int('cuantas', 3)));
-        $res = \MenuGold\Models\PhotoJob::procesar($this->rid(), $cuantas);
-
-        if ($res['hechas'] > 0) {
-            Audit::log('photos_downloaded', 'product', 0, array('hechas' => $res['hechas']));
-        }
-        // Si no se descargó nada en todo el lote, casi siempre es que el
-        // servidor no tiene salida a internet: conviene decirlo, no callarlo.
-        if ($res['hechas'] === 0 && $res['fallidas'] > 0) {
-            $res['aviso'] = \MenuGold\Core\PhotoFetcher::hayInternet()
-                ? 'No se encontró fotografía para esos platillos. Cambia el término de búsqueda o sube la foto a mano.'
-                : 'Este servidor no puede salir a internet. Pide a tu hosting que permita conexiones salientes HTTPS, o sube las fotos desde el panel.';
-        }
-        return $this->ok($res);
-    }
-
     /* ================= Auxiliares ================= */
 
     private function daysMask()

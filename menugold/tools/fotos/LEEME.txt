@@ -1,0 +1,9 @@
+Aquí viven las fotografías originales de la demostración (una por platillo,
+más las portadas y las categorías). No van dentro de menugold.zip para no
+duplicar peso: lo que el sitio sirve ya está procesado en /uploads.
+
+Solo hacen falta si quieres volver a generar los datos de demostración:
+
+    php tools/generar-demo.php
+
+Están en el repositorio del proyecto, en tools/fotos/.

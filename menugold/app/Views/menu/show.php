@@ -166,7 +166,7 @@ $logo = $r['logo'];
     <?php if ($r['address'] !== ''): ?>
       <p><?= e($r['address']) ?><?= $r['city'] !== '' ? ', ' . e($r['city']) : '' ?></p>
     <?php endif; ?>
-    <?php if ($r['phone'] !== ''): ?><p><a class="link-line" href="tel:<?= e(preg_replace('/\s+/', '', $r['phone'])) ?>"><?= e($r['phone']) ?></a></p><?php endif; ?>
+    <?php if ($r['phone'] !== ''): ?><p><a class="link-line" href="tel:<?= e(preg_replace('/\s+/', '', $r['phone'])) ?>"><?= str_replace(' ', '&nbsp;', e($r['phone'])) ?></a></p><?php endif; ?>
     <?php if ($r['map_url'] !== ''): ?><p style="margin-top:.6rem"><a class="link-line gold" href="<?= e($r['map_url']) ?>" target="_blank" rel="noopener">Cómo llegar</a></p><?php endif; ?>
     <p style="margin-top:1.4rem;font-size:11px">Menú digital por <a class="link-line" href="<?= e(mg_url('/')) ?>">MenúGold</a></p>
   </footer>

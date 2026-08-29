@@ -138,8 +138,6 @@ CREATE TABLE IF NOT EXISTS `products` (
   `prep_minutes`  SMALLINT UNSIGNED NOT NULL DEFAULT 15,
   `calories`      SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   `tags`          VARCHAR(160) NOT NULL DEFAULT '',
-  `photo_query`   VARCHAR(120) NOT NULL DEFAULT '',
-  `photo_tries`   TINYINT UNSIGNED NOT NULL DEFAULT 0,
   `is_active`     TINYINT(1) NOT NULL DEFAULT 1,
   `is_featured`   TINYINT(1) NOT NULL DEFAULT 0,
   `is_out_of_stock` TINYINT(1) NOT NULL DEFAULT 0,
@@ -460,24 +458,6 @@ CREATE TABLE IF NOT EXISTS `audit_log` (
   `created_at`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_audit_rest` (`restaurant_id`,`created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `photo_credits` (
-  `id`            INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `restaurant_id` INT UNSIGNED NOT NULL,
-  `image_base`    VARCHAR(200) NOT NULL,
-  `entity`        VARCHAR(40) NOT NULL DEFAULT 'product',
-  `entity_id`     INT UNSIGNED NOT NULL DEFAULT 0,
-  `title`         VARCHAR(255) NOT NULL DEFAULT '',
-  `author`        VARCHAR(255) NOT NULL DEFAULT '',
-  `license`       VARCHAR(120) NOT NULL DEFAULT '',
-  `source`        VARCHAR(80)  NOT NULL DEFAULT '',
-  `source_url`    VARCHAR(500) NOT NULL DEFAULT '',
-  `created_at`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `idx_credit_rest` (`restaurant_id`),
-  KEY `idx_credit_entity` (`entity`,`entity_id`),
-  CONSTRAINT `fk_credit_rest` FOREIGN KEY (`restaurant_id`) REFERENCES `restaurants`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `rate_limits` (

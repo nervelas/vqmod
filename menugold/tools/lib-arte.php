@@ -2,13 +2,9 @@
 /**
  * MenúGold · generación de logotipos para la demostración.
  *
- * Aquí NO se generan fotografías. Las fotos de los platillos son reales y las
- * descarga el propio sistema de bancos con licencia libre (Wikimedia Commons y
- * Openverse) al instalarse: ver app/Models/PhotoJob.php y
- * tools/importar-fotos.php --descargar.
- *
- * Lo único que se dibuja aquí es el monograma tipográfico del logotipo, que es
- * tipografía, no fotografía.
+ * Las fotografías de los platillos vienen ya hechas en tools/fotos/ y las
+ * incorpora tools/generar-demo.php. Lo único que se dibuja aquí es el
+ * monograma tipográfico del logotipo.
  */
 
 function mg_rng($seed)

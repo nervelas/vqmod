@@ -31,7 +31,7 @@ body.menu {
 .portada__velo {
   position: absolute; inset: 0;
   background:
-    linear-gradient(to top, var(--fondo) 2%, rgba(0,0,0,.72) 34%, rgba(0,0,0,.30) 68%, rgba(0,0,0,.42) 100%);
+    linear-gradient(to top, var(--fondo) 1%, rgba(0,0,0,.82) 30%, rgba(0,0,0,.52) 66%, rgba(0,0,0,.55) 100%);
 }
 
 .portada__contenido {
@@ -40,8 +40,23 @@ body.menu {
   padding: 28px 20px 22px;
   display: flex; flex-direction: column; align-items: center;
   text-align: center;
-  color: #F7F3EA;
+  color: #FFFDF7;
   animation: subir 620ms cubic-bezier(.16,.84,.44,1) both;
+
+  /* Aqui el texto va sobre la foto, siempre oscurecida. Los temas claros
+     tienen un dorado oscuro que sobre ese velo no se leeria, asi que dentro
+     de la portada cambiamos el acento por su version clara. Al ser variables
+     CSS, todo lo que hay debajo se corrige solo, en los ocho temas. */
+  --acento:        #EBD07A;
+  --acento-claro:  #F5E6B4;
+  --acento-texto:  #2A2317;   /* sobre el dorado claro, letra oscura */
+  --texto:         #FFFDF7;
+  --texto-suave:   #EFE9DC;
+  --texto-tenue:   #DED7C7;
+  --superficie:    rgba(255, 255, 255, .16);
+  --superficie-2:  rgba(255, 255, 255, .22);
+  --borde:         rgba(255, 255, 255, .30);
+  --borde-fuerte:  rgba(255, 255, 255, .46);
 }
 
 .portada__logo {
@@ -56,7 +71,7 @@ body.menu {
 .portada__logo--texto {
   display: grid; place-items: center;
   font-family: var(--fuente-titulo);
-  font-size: 34px; color: var(--acento);
+  font-size: 34px; color: var(--acento-legible, var(--acento));
   letter-spacing: 1px;
 }
 
@@ -66,17 +81,18 @@ body.menu {
   font-weight: 600;
   letter-spacing: .5px;
   margin: 0 0 6px;
-  text-shadow: 0 2px 18px rgba(0,0,0,.5);
+  text-shadow: 0 2px 16px rgba(0,0,0,.72);
 }
 .portada__eslogan {
-  font-size: 14px; letter-spacing: 2.6px; text-transform: uppercase;
-  color: var(--acento-claro); margin: 0 0 14px; font-weight: 500;
+  font-size: 13.5px; letter-spacing: 2.2px; text-transform: uppercase;
+  color: var(--acento-claro); margin: 0 0 14px; font-weight: 600;
+  text-shadow: 0 1px 10px rgba(0,0,0,.55);
 }
 
 .filete {
   display: flex; align-items: center; justify-content: center; gap: 10px;
   width: 100%; max-width: 220px; margin: 0 auto 14px;
-  color: var(--acento);
+  color: var(--acento-legible, var(--acento));
 }
 .filete::before, .filete::after {
   content: ''; height: 1px; flex: 1;
@@ -91,10 +107,11 @@ body.menu {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 14px;
   border-radius: var(--r-full);
-  background: rgba(255,255,255,.12);
+  background: rgba(255,255,255,.20);
   backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,.18);
-  font-size: 13px; font-weight: 500;
+  border: 1px solid rgba(255,255,255,.34);
+  font-size: 13px; font-weight: 600;
+  text-shadow: 0 1px 8px rgba(0,0,0,.5);
 }
 .pastilla svg { width: 14px; height: 14px; }
 .pastilla--abierto { background: rgba(79,169,124,.24); border-color: rgba(79,169,124,.5); color: #A8E6C3; }
@@ -172,7 +189,7 @@ body.menu {
   transition: border-color var(--transicion);
 }
 .campo-buscar input::placeholder { color: var(--texto-tenue); }
-.campo-buscar input:focus { border-color: var(--acento); outline: none; }
+.campo-buscar input:focus { border-color: var(--acento-legible, var(--acento)); outline: none; }
 .campo-buscar__limpiar {
   position: absolute; right: 8px;
   width: 30px; height: 30px; border-radius: 50%;
@@ -220,7 +237,7 @@ body.menu {
 }
 .platillo:hover, .platillo:focus-visible {
   transform: translateY(-3px);
-  border-color: var(--acento);
+  border-color: var(--acento-legible, var(--acento));
   box-shadow: var(--sombra);
 }
 .platillo:active { transform: translateY(-1px) scale(.995); }
@@ -265,7 +282,7 @@ body.menu {
 .platillo__pie { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 
 .precio {
-  font-size: 17px; font-weight: 700; color: var(--acento);
+  font-size: 17px; font-weight: 700; color: var(--acento-legible, var(--acento));
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .precio__antes {
@@ -355,7 +372,7 @@ body.menu {
   text-align: left;
   transition: transform var(--transicion), border-color var(--transicion);
 }
-.destacado:hover { transform: translateY(-3px); border-color: var(--acento); }
+.destacado:hover { transform: translateY(-3px); border-color: var(--acento-legible, var(--acento)); }
 .destacado__foto { height: 132px; background: var(--superficie-2); }
 .destacado__foto img { width: 100%; height: 100%; object-fit: cover; }
 .destacado__cuerpo { padding: 11px 13px 13px; }
@@ -448,7 +465,7 @@ body.menu {
   margin: 0 0 6px; line-height: 1.22;
 }
 .modal__desc { font-size: 14.5px; color: var(--texto-suave); line-height: 1.6; margin: 0 0 12px; }
-.modal__precio { font-size: 24px; font-weight: 700; color: var(--acento); margin-bottom: 4px; }
+.modal__precio { font-size: 24px; font-weight: 700; color: var(--acento-legible, var(--acento)); margin-bottom: 4px; }
 
 .dato-fila {
   display: flex; gap: 14px; flex-wrap: wrap;
@@ -463,7 +480,7 @@ body.menu {
 .grupo-mod__cab { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
 .grupo-mod__nombre { font-weight: 700; font-size: 15px; margin: 0; }
 .grupo-mod__regla { font-size: 11.5px; color: var(--texto-tenue); }
-.grupo-mod__regla--req { color: var(--acento); font-weight: 600; }
+.grupo-mod__regla--req { color: var(--acento-legible, var(--acento)); font-weight: 600; }
 
 .opcion {
   display: flex; align-items: center; gap: 12px;
@@ -489,10 +506,10 @@ body.menu {
 .opcion input:checked ~ .opcion__marca { background: var(--acento); border-color: var(--acento); }
 .opcion input:checked ~ .opcion__marca svg { opacity: 1; }
 .opcion:has(input:checked),
-.opcion.elegida { border-color: var(--acento); background: var(--superficie-3); }
+.opcion.elegida { border-color: var(--acento-legible, var(--acento)); background: var(--superficie-3); }
 .opcion input:focus-visible ~ .opcion__marca { outline: 3px solid var(--acento); outline-offset: 2px; }
 .opcion__nombre { flex: 1; font-size: 14.5px; }
-.opcion__precio { font-size: 13.5px; color: var(--acento); font-weight: 600; white-space: nowrap; }
+.opcion__precio { font-size: 13.5px; color: var(--acento-legible, var(--acento)); font-weight: 600; white-space: nowrap; }
 .opcion--agotada { opacity: .45; pointer-events: none; }
 
 .campo-notas {
@@ -503,7 +520,7 @@ body.menu {
   background: var(--superficie-2); color: var(--texto);
   font-size: 14px; resize: vertical;
 }
-.campo-notas:focus { border-color: var(--acento); outline: none; }
+.campo-notas:focus { border-color: var(--acento-legible, var(--acento)); outline: none; }
 
 .modal__pie {
   flex: 0 0 auto;
@@ -544,9 +561,9 @@ body.menu {
 .btn--oro { background: var(--acento); color: var(--acento-texto); box-shadow: 0 4px 16px rgba(0,0,0,.2); }
 .btn--oro:hover:not(:disabled) { background: var(--acento-claro); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,.26); }
 .btn--fantasma { background: var(--superficie-2); color: var(--texto); border-color: var(--borde); }
-.btn--fantasma:hover { border-color: var(--acento); color: var(--acento); }
+.btn--fantasma:hover { border-color: var(--acento-legible, var(--acento)); color: var(--acento-legible, var(--acento)); }
 .btn--linea { background: transparent; border-color: var(--borde-fuerte); color: var(--texto); }
-.btn--linea:hover { border-color: var(--acento); color: var(--acento); }
+.btn--linea:hover { border-color: var(--acento-legible, var(--acento)); color: var(--acento-legible, var(--acento)); }
 .btn--bloque { width: 100%; }
 .btn--wa { background: #25D366; color: #062d15; }
 .btn--wa:hover { background: #38e07a; }
@@ -578,7 +595,7 @@ body.menu {
 .globo {
   min-width: 27px; height: 27px; padding: 0 8px;
   border-radius: var(--r-full);
-  background: var(--acento-texto); color: var(--acento);
+  background: var(--acento-texto); color: var(--acento-legible, var(--acento));
   display: grid; place-items: center;
   font-size: 13.5px; font-weight: 800;
 }
@@ -599,7 +616,7 @@ body.menu {
   box-shadow: var(--sombra);
   transition: all var(--transicion);
 }
-.fab:hover { border-color: var(--acento); color: var(--acento); transform: scale(1.06); }
+.fab:hover { border-color: var(--acento-legible, var(--acento)); color: var(--acento-legible, var(--acento)); transform: scale(1.06); }
 .fab svg { width: 21px; height: 21px; }
 .fab--ok { background: var(--exito); color: #fff; border-color: var(--exito); }
 
@@ -658,7 +675,7 @@ body.menu {
   font-size: 19px; font-weight: 700; color: var(--texto);
   border-top: 1px solid var(--borde); margin-top: 7px; padding-top: 12px;
 }
-.resumen__fila--total .valor { color: var(--acento); }
+.resumen__fila--total .valor { color: var(--acento-legible, var(--acento)); }
 .resumen__fila--desc .valor { color: var(--exito); }
 
 .propinas { display: flex; gap: 7px; margin: 10px 0 4px; }
@@ -687,7 +704,7 @@ body.menu {
   transition: border-color var(--transicion);
 }
 .campo textarea { min-height: 82px; resize: vertical; }
-.campo input:focus, .campo select:focus, .campo textarea:focus { border-color: var(--acento); outline: none; }
+.campo input:focus, .campo select:focus, .campo textarea:focus { border-color: var(--acento-legible, var(--acento)); outline: none; }
 .campo input::placeholder, .campo textarea::placeholder { color: var(--texto-tenue); }
 .campo__ayuda { font-size: 12px; color: var(--texto-tenue); margin-top: 5px; }
 .campo__error { font-size: 12.5px; color: var(--peligro); margin-top: 5px; }
@@ -702,8 +719,8 @@ body.menu {
   border: 1px solid var(--borde); background: var(--superficie-2);
   text-align: left; transition: all var(--transicion);
 }
-.modo-btn[aria-pressed="true"] { border-color: var(--acento); background: var(--superficie-3); }
-.modo-btn svg { width: 22px; height: 22px; color: var(--acento); flex: 0 0 auto; }
+.modo-btn[aria-pressed="true"] { border-color: var(--acento-legible, var(--acento)); background: var(--superficie-3); }
+.modo-btn svg { width: 22px; height: 22px; color: var(--acento-legible, var(--acento)); flex: 0 0 auto; }
 .modo-btn strong { display: block; font-size: 14.5px; }
 .modo-btn small { color: var(--texto-tenue); font-size: 12.5px; }
 
@@ -711,7 +728,7 @@ body.menu {
 .seguimiento { max-width: 560px; margin: 0 auto; padding: 26px 18px 40px; }
 .seguimiento__codigo {
   text-align: center; font-family: var(--fuente-titulo);
-  font-size: 30px; color: var(--acento); margin: 0 0 4px;
+  font-size: 30px; color: var(--acento-legible, var(--acento)); margin: 0 0 4px;
 }
 .pasos { position: relative; margin: 30px 0 26px; padding-left: 42px; }
 .pasos::before {
@@ -738,7 +755,7 @@ body.menu {
   box-shadow: 0 0 0 6px rgba(212,175,55,.18);
   animation: latido 2.2s ease-in-out infinite;
 }
-.paso--actual .paso__titulo { color: var(--acento); font-weight: 700; }
+.paso--actual .paso__titulo { color: var(--acento-legible, var(--acento)); font-weight: 700; }
 
 .tarjeta {
   background: var(--superficie);
@@ -757,7 +774,7 @@ body.menu {
   color: var(--texto-tenue); transition: all var(--transicion);
 }
 .estrella svg { width: 32px; height: 32px; }
-.estrella.activa { color: var(--acento); transform: scale(1.1); }
+.estrella.activa { color: var(--acento-legible, var(--acento)); transform: scale(1.1); }
 .estrella.activa svg { fill: currentColor; }
 
 /* ===================================================== PIE */
@@ -767,7 +784,7 @@ body.menu {
   text-align: center; color: var(--texto-suave); font-size: 13.5px;
   background: var(--fondo-alt);
 }
-.pie-menu__logo { font-family: var(--fuente-titulo); font-size: 20px; color: var(--acento); margin-bottom: 8px; }
+.pie-menu__logo { font-family: var(--fuente-titulo); font-size: 20px; color: var(--acento-legible, var(--acento)); margin-bottom: 8px; }
 .pie-menu__redes { display: flex; gap: 10px; justify-content: center; margin: 14px 0; }
 .pie-menu__redes a {
   width: 42px; height: 42px; border-radius: 50%;
@@ -775,7 +792,7 @@ body.menu {
   border: 1px solid var(--borde); color: var(--texto-suave);
   transition: all var(--transicion);
 }
-.pie-menu__redes a:hover { border-color: var(--acento); color: var(--acento); }
+.pie-menu__redes a:hover { border-color: var(--acento-legible, var(--acento)); color: var(--acento-legible, var(--acento)); }
 .pie-menu__firma { font-size: 11.5px; color: var(--texto-tenue); margin-top: 16px; }
 
 /* Selector de idioma */

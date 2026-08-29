@@ -63,9 +63,9 @@ general del menú para la entrada o la vitrina.
 ---
 
 ## 8. Si tu antivirus o tu hosting revisa los archivos
-Todo el contenido del paquete es **texto plano**: archivos PHP, CSS, SQL y este
-documento. No hay ejecutables, ni imágenes, ni archivos comprimidos dentro, ni
-código codificado en base64.
+El paquete son archivos PHP, CSS, SQL, este documento y las **fotos de los
+platillos de demostración** en `/assets/demo` (JPEG normales). No hay
+ejecutables, ni archivos comprimidos dentro, ni código codificado en base64.
 
 **No hay ningún archivo `.js` en el paquete.** Es a propósito: varios antivirus
 de hosting y de correo (las firmas *Foxhole* de Sanesecurity, entre otras)

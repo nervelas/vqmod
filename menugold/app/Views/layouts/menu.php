@@ -14,6 +14,14 @@ $nonce  = Security::nonce();
 $tema   = (string)($r['tema'] ?? 'negro-oro');
 $tipo   = (string)($r['tipografia'] ?? 'clasica');
 $acento = (string)($r['color_primario'] ?? '#D4AF37');
+// El dueno elige su color libremente. Derivamos aqui la letra que va encima y
+// una version legible para cuando el color se usa como texto, de modo que
+// ningun color elegido deje el menu ilegible.
+$fondoSup = (string)($r['color_fondo'] ?? '#141414');
+$acentoTexto   = \MenuGold\Core\Color::textoSobre($acento);
+// 5.2 y no 4.5: el menu tiene zonas de fondo algo mas oscuras que la
+// tarjeta blanca, y el color debe seguir leyendose tambien ahi.
+$acentoLegible = \MenuGold\Core\Color::legibleSobre($acento, $fondoSup, 5.2);
 $titulo = trim((string)($r['seo_title'] ?? '')) ?: (($r['nombre'] ?? 'Menú') . ' · Menú digital');
 $desc   = trim((string)($r['seo_desc'] ?? '')) ?: mb_substr(trim(strip_tags((string)($r['descripcion'] ?? ''))) ?: ('Conoce el menú de ' . ($r['nombre'] ?? '') . ' y pide desde tu mesa.'), 0, 180);
 $og     = !empty($r['og_image']) ? uploaded((string)$r['og_image']) : (!empty($r['portada']) ? uploaded((string)$r['portada']) : '');
@@ -21,7 +29,7 @@ $urlMenu = Restaurant::urlMenu($r);
 $manifestUrl = !empty($r['slug']) ? url('r/' . $r['slug'] . '/manifest.webmanifest') : url('manifest.webmanifest');
 $iconoBase = !empty($r['slug']) ? 'r/' . $r['slug'] . '/icono/' : 'icono/';
 ?><!doctype html>
-<html lang="<?= e(Lang::current()) ?>" data-tema="<?= e($tema) ?>" data-tipografia="<?= e($tipo) ?>" style="--acento:<?= e($acento) ?>">
+<html lang="<?= e(Lang::current()) ?>" data-tema="<?= e($tema) ?>" data-tipografia="<?= e($tipo) ?>" style="--acento:<?= e($acento) ?>;--acento-texto:<?= e($acentoTexto) ?>;--acento-legible:<?= e($acentoLegible) ?>">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">

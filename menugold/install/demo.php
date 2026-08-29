@@ -26,10 +26,6 @@ use MenuGold\Core\Security;
 final class DemoSeeder
 {
     /** Paletas para las fotos generadas (fondo, acento). */
-    private const PALETAS = [
-        ['#2A1F16', '#D4AF37'], ['#1C2B24', '#C9A961'], ['#2B1A1E', '#D9AE63'],
-        ['#1A2233', '#D2B368'], ['#2E2119', '#C98A5A'], ['#232323', '#BFAF8C'],
-    ];
 
     public function run(bool $silencioso = false): array
     {
@@ -76,7 +72,7 @@ final class DemoSeeder
             'descripcion' => 'Una terraza con vista al volcán donde la cocina guatemalteca se sirve con técnica contemporánea. Producto local, fuego vivo y una carta que cambia con la estación.',
             'plan_id' => $planId, 'estado' => 'activo',
             'vence_el' => date('Y-m-d', strtotime('+11 months')),
-            'tema' => 'negro-oro', 'color_primario' => '#D4AF37', 'color_fondo' => '#141414',
+            'tema' => 'blanco-oro', 'color_primario' => '#8E7020', 'color_fondo' => '#FBF9F5',
             'tipografia' => 'clasica', 'moneda' => 'GTQ', 'simbolo' => 'Q',
             'impuesto_pct' => 12.00, 'impuesto_incluido' => 1,
             'propina_sugerida' => '[0,10,15,20]',
@@ -550,154 +546,41 @@ final class DemoSeeder
 
     // =================================================================
     /** Foto de demostración generada con GD: degradado elegante + inicial. */
+    /**
+     * Copia una foto incluida en el paquete a /storage/uploads/demo.
+     *
+     * Las fotos vienen ya hechas en /assets/demo: son fotografias cenitales
+     * de cada platillo, con su plato, su mesa y su luz. Antes se dibujaban
+     * aqui con GD y salian degradados con dos letras encima, que no le hacian
+     * justicia a la carta.
+     */
+    private function copiarFoto(string $base): string
+    {
+        $archivo = 'demo/' . $base . '.jpg';
+        $origen  = MG_ROOT . '/assets/demo/' . $base . '.jpg';
+        $destino = MG_ROOT . '/storage/uploads/' . $archivo;
+        if (is_file($destino)) return $archivo;
+        if (!is_file($origen)) return '';
+        $dir = dirname($destino);
+        if (!is_dir($dir)) @mkdir($dir, 0750, true);
+        if (!@copy($origen, $destino)) return '';
+        @chmod($destino, 0644);
+        return $archivo;
+    }
+
     private function foto(string $nombre, int $semilla): string
     {
-        if (!function_exists('imagecreatetruecolor')) return '';
-        $dir = MG_ROOT . '/storage/uploads/demo';
-        if (!is_dir($dir)) @mkdir($dir, 0750, true);
-        $archivo = 'demo/' . str_slug($nombre) . '.jpg';
-        $ruta = MG_ROOT . '/storage/uploads/' . $archivo;
-        if (is_file($ruta)) return $archivo;
-
-        $w = 800; $h = 600;
-        $img = imagecreatetruecolor($w, $h);
-        $pal = self::PALETAS[$semilla % count(self::PALETAS)];
-        [$r1, $g1, $b1] = $this->rgb($pal[0]);
-        [$r2, $g2, $b2] = $this->rgb($pal[1]);
-
-        // Degradado diagonal
-        for ($y = 0; $y < $h; $y++) {
-            $t = $y / $h;
-            $c = imagecolorallocate($img,
-                (int)round($r1 + ($r1 * 0.5) * $t),
-                (int)round($g1 + ($g1 * 0.5) * $t),
-                (int)round($b1 + ($b1 * 0.5) * $t));
-            imagefilledrectangle($img, 0, $y, $w, $y + 1, $c);
-        }
-        // Halo de luz
-        $halo = imagecolorallocatealpha($img, $r2, $g2, $b2, 108);
-        for ($i = 0; $i < 9; $i++) {
-            imagefilledellipse($img, (int)($w * 0.72), (int)($h * 0.28), 420 - $i * 32, 420 - $i * 32, $halo);
-        }
-        // Marco dorado
-        $oro = imagecolorallocate($img, $r2, $g2, $b2);
-        imagesetthickness($img, 3);
-        imagerectangle($img, 26, 26, $w - 27, $h - 27, $oro);
-        // Monograma central grande
-        $palabras = preg_split('/\\s+/u', trim($nombre)) ?: [];
-        $ini = '';
-        foreach ($palabras as $pal) {
-            if (mb_strlen($ini) >= 2) break;
-            $c = mb_substr($pal, 0, 1);
-            if (preg_match('/\\p{L}/u', $c) && mb_strlen($pal) > 2) $ini .= mb_strtoupper($c);
-        }
-        if ($ini === '') $ini = mb_strtoupper(mb_substr($nombre, 0, 1));
-        $ini = $this->ascii($ini);
-        $tmp = imagecreatetruecolor(imagefontwidth(5) * strlen($ini) + 4, imagefontheight(5) + 4);
-        imagefill($tmp, 0, 0, imagecolorallocate($tmp, $r1, $g1, $b1));
-        imagestring($tmp, 5, 2, 2, $ini, $oro);
-        $dw = (int)($w * 0.24 * strlen($ini)); $dh = (int)($h * 0.42);
-        imagecopyresampled($img, $tmp, (int)(($w - $dw) / 2), (int)(($h - $dh) / 2), 0, 0, $dw, $dh, imagesx($tmp), imagesy($tmp));
-        imagedestroy($tmp);
-
-        imagejpeg($img, $ruta, 82);
-        imagedestroy($img);
-        @chmod($ruta, 0644);
-        return $archivo;
+        return $this->copiarFoto(str_slug($nombre));
     }
 
-
-    /** Portada panorámica generada: degradado nocturno con luz dorada. */
     private function portada(string $slug, string $fondoHex, string $oroHex): string
     {
-        if (!function_exists('imagecreatetruecolor')) return '';
-        $archivo = 'demo/portada-' . $slug . '.jpg';
-        $ruta = MG_ROOT . '/storage/uploads/' . $archivo;
-        if (is_file($ruta)) return $archivo;
-        $dir = dirname($ruta);
-        if (!is_dir($dir)) @mkdir($dir, 0750, true);
-
-        $w = 1600; $h = 900;
-        $img = imagecreatetruecolor($w, $h);
-        [$r1, $g1, $b1] = $this->rgb($fondoHex);
-        [$r2, $g2, $b2] = $this->rgb($oroHex);
-
-        for ($y = 0; $y < $h; $y++) {
-            $t = $y / $h;
-            $c = imagecolorallocate($img,
-                (int)max(0, min(255, $r1 * (0.55 + 0.9 * $t))),
-                (int)max(0, min(255, $g1 * (0.55 + 0.9 * $t))),
-                (int)max(0, min(255, $b1 * (0.55 + 0.9 * $t))));
-            imagefilledrectangle($img, 0, $y, $w, $y + 1, $c);
-        }
-        // Luz cálida en la esquina superior derecha
-        $halo = imagecolorallocatealpha($img, $r2, $g2, $b2, 116);
-        for ($i = 0; $i < 14; $i++) {
-            imagefilledellipse($img, (int)($w * 0.76), (int)($h * 0.16), 1100 - $i * 62, 900 - $i * 52, $halo);
-        }
-        // Líneas finas de acento
-        $oro = imagecolorallocatealpha($img, $r2, $g2, $b2, 92);
-        imagesetthickness($img, 2);
-        for ($i = 0; $i < 5; $i++) {
-            imageline($img, 0, (int)($h * 0.72) + $i * 26, $w, (int)($h * 0.58) + $i * 26, $oro);
-        }
-        imagejpeg($img, $ruta, 84);
-        imagedestroy($img);
-        @chmod($ruta, 0644);
-        return $archivo;
+        return $this->copiarFoto('portada-' . $slug);
     }
 
-    /** Logo circular con el monograma del restaurante. */
     private function logo(string $slug, string $nombre, string $fondoHex, string $oroHex): string
     {
-        if (!function_exists('imagecreatetruecolor')) return '';
-        $archivo = 'demo/logo-' . $slug . '.jpg';
-        $ruta = MG_ROOT . '/storage/uploads/' . $archivo;
-        if (is_file($ruta)) return $archivo;
-        $dir = dirname($ruta);
-        if (!is_dir($dir)) @mkdir($dir, 0750, true);
-
-        $s = 512;
-        $img = imagecreatetruecolor($s, $s);
-        [$r1, $g1, $b1] = $this->rgb($fondoHex);
-        [$r2, $g2, $b2] = $this->rgb($oroHex);
-        imagefill($img, 0, 0, imagecolorallocate($img, $r1, $g1, $b1));
-        $oro = imagecolorallocate($img, $r2, $g2, $b2);
-        imagesetthickness($img, 8);
-        imageellipse($img, $s / 2, $s / 2, $s - 60, $s - 60, $oro);
-        imagesetthickness($img, 3);
-        imageellipse($img, $s / 2, $s / 2, $s - 92, $s - 92, $oro);
-
-        $palabras = preg_split('/\s+/u', trim($nombre)) ?: [];
-        $ini = '';
-        foreach ($palabras as $pal) {
-            if (mb_strlen($ini) >= 2) break;
-            $c = mb_substr($pal, 0, 1);
-            if (preg_match('/\p{L}/u', $c)) $ini .= mb_strtoupper($c);
-        }
-        $ini = $this->ascii($ini ?: 'M');
-        $tmp = imagecreatetruecolor(imagefontwidth(5) * mb_strlen($ini) + 4, imagefontheight(5) + 4);
-        imagefill($tmp, 0, 0, imagecolorallocate($tmp, $r1, $g1, $b1));
-        imagestring($tmp, 5, 2, 2, $ini, imagecolorallocate($tmp, $r2, $g2, $b2));
-        $dw = (int)($s * 0.44); $dh = (int)($s * 0.30);
-        imagecopyresampled($img, $tmp, (int)(($s - $dw) / 2), (int)(($s - $dh) / 2), 0, 0, $dw, $dh, imagesx($tmp), imagesy($tmp));
-        imagedestroy($tmp);
-
-        imagejpeg($img, $ruta, 88);
-        imagedestroy($img);
-        @chmod($ruta, 0644);
-        return $archivo;
-    }
-
-    private function rgb(string $hex): array
-    {
-        $hex = ltrim($hex, '#');
-        return [(int)hexdec(substr($hex,0,2)), (int)hexdec(substr($hex,2,2)), (int)hexdec(substr($hex,4,2))];
-    }
-
-    private function ascii(string $s): string
-    {
-        return (string)(@iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $s) ?: $s);
+        return $this->copiarFoto('logo-' . $slug);
     }
 
     // =================================================================

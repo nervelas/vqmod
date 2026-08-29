@@ -39,7 +39,16 @@ final class DB
                 PDO::ATTR_EMULATE_PREPARES   => false,
                 PDO::ATTR_STRINGIFY_FETCHES  => false,
                 PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$char} COLLATE {$char}_unicode_ci, "
-                    . "sql_mode='STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION'",
+                    . "sql_mode='STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION', "
+                    // La base debe marcar la misma hora que la aplicacion. Casi
+                    // todos los hosting tienen MySQL en UTC y el restaurante en
+                    // otra zona; si no se iguala aqui, NOW() y las fechas que
+                    // escribe PHP se separan varias horas y todo lo que compara
+                    // "de hoy" o "hace tanto tiempo" empieza a fallar callado.
+                    // Se manda el desfase en numeros (-06:00) y no el nombre de
+                    // la zona, porque las tablas de zonas horarias de MySQL no
+                    // suelen estar cargadas en hosting compartido.
+                    . "time_zone='" . self::desfaseHorario() . "'",
             ]);
         } catch (PDOException $e) {
             Logger::error('Conexion a base de datos fallida: ' . $e->getMessage());
@@ -49,6 +58,20 @@ final class DB
     }
 
     /** Permite al instalador inyectar una conexion ya validada. */
+    /** Desfase de la zona horaria de la aplicacion, en formato +HH:MM. */
+    private static function desfaseHorario(): string
+    {
+        try {
+            $tz = new \DateTimeZone(date_default_timezone_get());
+            $seg = $tz->getOffset(new \DateTime('now', $tz));
+        } catch (\Throwable $e) {
+            $seg = (int)date('Z');
+        }
+        $signo = $seg < 0 ? '-' : '+';
+        $seg = abs($seg);
+        return sprintf('%s%02d:%02d', $signo, intdiv($seg, 3600), intdiv($seg % 3600, 60));
+    }
+
     public static function setPdo(PDO $pdo): void { self::$pdo = $pdo; }
 
     public static function raw(string $sql, array $params = []): PDOStatement

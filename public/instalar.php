@@ -112,6 +112,41 @@ function contenidoConfig(array $datos): string
     return strtr($plantilla, $reemplazos);
 }
 
+/**
+ * Comprueba que quien pide recuperar el acceso conoce la contrasena de la base
+ * de datos. Quien la tiene ya podria leer config.php desde el hosting, asi que
+ * no se debilita nada; sirve para que no cualquiera toque los usuarios.
+ */
+function claveDeBaseCorrecta(string $intento): bool
+{
+    if ($intento === '') {
+        return false;
+    }
+
+    try {
+        require_once RAIZ . '/src/autoload.php';
+        \Fel\Core\Config::cargar(RUTA_CONFIG);
+        $guardada = (string) \Fel\Core\Config::get('db.clave', '');
+    } catch (\Throwable) {
+        return false;
+    }
+
+    return $guardada !== '' && hash_equals($guardada, $intento);
+}
+
+/** @return list<array<string,mixed>> */
+function usuariosRegistrados(): array
+{
+    try {
+        require_once RAIZ . '/src/autoload.php';
+        \Fel\Core\Config::cargar(RUTA_CONFIG);
+
+        return (new \Fel\Repositorio\UsuarioRepositorio())->porEmpresa(null);
+    } catch (\Throwable) {
+        return [];
+    }
+}
+
 // ----------------------------------------------------------------- acciones
 
 $paso     = (int) ($_GET['paso'] ?? 1);
@@ -123,7 +158,62 @@ if ($paso === 9 || yaInstalado()) {
     $paso = yaInstalado() ? 9 : $paso;
 }
 
-if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && $paso !== 9) {
+$accion         = (string) ($_POST['accion'] ?? '');
+$usuariosLista  = null;
+$claveVerificada = false;
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && str_starts_with($accion, 'recuperar')) {
+    $claveBase = (string) ($_POST['db_clave_actual'] ?? '');
+
+    if (!claveDeBaseCorrecta($claveBase)) {
+        $errores[] = 'La contraseña de la base de datos no coincide con la que tiene '
+                   . 'guardada config/config.php.';
+    } else {
+        $claveVerificada = true;
+
+        try {
+            require_once RAIZ . '/src/autoload.php';
+            \Fel\Core\Config::cargar(RUTA_CONFIG);
+            $repo = new \Fel\Repositorio\UsuarioRepositorio();
+
+            if ($accion === 'recuperar_clave') {
+                $quien = trim((string) ($_POST['usuario_destino'] ?? ''));
+                $nueva = (string) ($_POST['clave_nueva'] ?? '');
+
+                if (strlen($nueva) < 10) {
+                    $errores[] = 'La contraseña nueva debe tener al menos 10 caracteres.';
+                } elseif ($repo->cambiarClave($quien, $nueva)) {
+                    $avisos[] = "Contraseña de «{$quien}» actualizada. Ya puede entrar con ella.";
+                } else {
+                    $errores[] = "No se encontró el usuario «{$quien}».";
+                }
+            }
+
+            if ($accion === 'recuperar_crear') {
+                $nuevo  = trim((string) ($_POST['usuario_nuevo'] ?? ''));
+                $nombreN = trim((string) ($_POST['nombre_nuevo'] ?? ''));
+                $claveN = (string) ($_POST['clave_nueva_admin'] ?? '');
+
+                if ($nuevo === '' || strlen($claveN) < 10) {
+                    $errores[] = 'Indique el usuario y una contraseña de al menos 10 caracteres.';
+                } elseif ($repo->existe($nuevo)) {
+                    $errores[] = "Ya existe un usuario «{$nuevo}». Use el formulario de arriba "
+                               . 'para cambiarle la contraseña.';
+                } else {
+                    $repo->crear($nuevo, $claveN, $nombreN !== '' ? $nombreN : $nuevo,
+                                 \Fel\Repositorio\UsuarioRepositorio::SUPERADMIN);
+                    $avisos[] = "Administrador «{$nuevo}» creado. Ya puede entrar con él.";
+                }
+            }
+
+            $usuariosLista = $repo->porEmpresa(null);
+        } catch (\Throwable $error) {
+            $errores[] = 'No se pudo consultar los usuarios: ' . $error->getMessage();
+        }
+    }
+}
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && $accion === '' && $paso !== 9) {
     $datos = [
         'db_host'    => trim((string) ($_POST['db_host'] ?? 'localhost')),
         'db_nombre'  => trim((string) ($_POST['db_nombre'] ?? '')),
@@ -258,30 +348,118 @@ pre{background:#16202c;color:#e8eef4;padding:12px;border-radius:5px;font-size:11
 
 <?php if ($paso === 9): ?>
 
-  <h1>Instalación terminada</h1>
-  <p class="sub">El sistema ya está listo para usarse.</p>
+  <h1>El sistema ya está instalado</h1>
+  <p class="sub">Las tablas están creadas y hay al menos un usuario activo.</p>
 
-  <div class="msg oki">
-    Las tablas se crearon y el usuario administrador quedó activo.
-  </div>
+  <?php foreach ($errores as $e): ?>
+    <div class="msg err"><?= htmlspecialchars($e, ENT_QUOTES, 'UTF-8') ?></div>
+  <?php endforeach; ?>
+  <?php foreach ($avisos as $a): ?>
+    <div class="msg oki"><?= htmlspecialchars($a, ENT_QUOTES, 'UTF-8') ?></div>
+  <?php endforeach; ?>
 
-  <div class="msg avi">
-    <strong>Ahora borre este archivo:</strong> <code>public/instalar.php</code><br>
-    Desde el Administrador de archivos de cPanel, clic derecho → Eliminar.
+  <p style="margin:18px 0"><a class="boton" href="index.php">Entrar al sistema</a></p>
+
+  <h2>¿No puede entrar? Recupere el acceso</h2>
+  <p class="ayuda">
+    Escriba la <strong>contraseña de la base de datos</strong> (la misma que puso al instalar,
+    la que está en <code>config/config.php</code>). Con eso podrá ver los usuarios registrados,
+    cambiar una contraseña o crear otro administrador.
+  </p>
+
+  <?php if ($usuariosLista !== null && $claveVerificada): ?>
+    <h3 style="font-size:14px;margin:18px 0 8px">Usuarios registrados</h3>
+    <?php if ($usuariosLista === []): ?>
+      <div class="msg avi">No hay ningún usuario. Cree uno con el formulario de abajo.</div>
+    <?php else: ?>
+      <table style="width:100%;border-collapse:collapse;font-size:13.5px;margin-bottom:18px">
+        <tr style="background:#16202c;color:#fff">
+          <th style="text-align:left;padding:6px 9px">Usuario</th>
+          <th style="text-align:left;padding:6px 9px">Nombre</th>
+          <th style="text-align:left;padding:6px 9px">Empresa</th>
+          <th style="text-align:left;padding:6px 9px">Rol</th>
+          <th style="text-align:left;padding:6px 9px">Estado</th>
+        </tr>
+        <?php foreach ($usuariosLista as $u): ?>
+          <tr style="border-bottom:1px solid #eef1f4">
+            <td style="padding:6px 9px"><strong><?= htmlspecialchars((string) $u['usuario'], ENT_QUOTES, 'UTF-8') ?></strong></td>
+            <td style="padding:6px 9px"><?= htmlspecialchars((string) $u['nombre'], ENT_QUOTES, 'UTF-8') ?></td>
+            <td style="padding:6px 9px"><?= htmlspecialchars((string) ($u['empresa'] ?? '— plataforma —'), ENT_QUOTES, 'UTF-8') ?></td>
+            <td style="padding:6px 9px"><?= htmlspecialchars((string) $u['rol'], ENT_QUOTES, 'UTF-8') ?></td>
+            <td style="padding:6px 9px"><?= $u['activo'] ? 'activo' : 'inactivo' ?></td>
+          </tr>
+        <?php endforeach; ?>
+      </table>
+    <?php endif; ?>
+  <?php endif; ?>
+
+  <form method="post" action="instalar.php">
+    <input type="hidden" name="accion" value="recuperar_listar">
+    <div class="campo">
+      <label for="db_clave_actual">Contraseña de la base de datos</label>
+      <input id="db_clave_actual" name="db_clave_actual" type="password" required autocomplete="off">
+    </div>
+    <button class="boton" type="submit">Ver los usuarios registrados</button>
+  </form>
+
+  <?php if ($claveVerificada): ?>
+    <h3 style="font-size:14px;margin:24px 0 8px">Cambiar la contraseña de un usuario</h3>
+    <form method="post" action="instalar.php">
+      <input type="hidden" name="accion" value="recuperar_clave">
+      <input type="hidden" name="db_clave_actual"
+             value="<?= htmlspecialchars((string) ($_POST['db_clave_actual'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+      <div class="fila">
+        <div class="campo">
+          <label for="usuario_destino">Usuario</label>
+          <input id="usuario_destino" name="usuario_destino" required autocomplete="off">
+        </div>
+        <div class="campo">
+          <label for="clave_nueva">Contraseña nueva (mínimo 10)</label>
+          <input id="clave_nueva" name="clave_nueva" type="password" required minlength="10" autocomplete="new-password">
+        </div>
+      </div>
+      <button class="boton" type="submit">Cambiar la contraseña</button>
+    </form>
+
+    <h3 style="font-size:14px;margin:24px 0 8px">O crear otro administrador de la plataforma</h3>
+    <form method="post" action="instalar.php">
+      <input type="hidden" name="accion" value="recuperar_crear">
+      <input type="hidden" name="db_clave_actual"
+             value="<?= htmlspecialchars((string) ($_POST['db_clave_actual'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+      <div class="fila">
+        <div class="campo">
+          <label for="usuario_nuevo">Usuario</label>
+          <input id="usuario_nuevo" name="usuario_nuevo" required autocomplete="off">
+        </div>
+        <div class="campo">
+          <label for="nombre_nuevo">Nombre</label>
+          <input id="nombre_nuevo" name="nombre_nuevo">
+        </div>
+      </div>
+      <div class="campo">
+        <label for="clave_nueva_admin">Contraseña (mínimo 10)</label>
+        <input id="clave_nueva_admin" name="clave_nueva_admin" type="password" required minlength="10" autocomplete="new-password">
+      </div>
+      <button class="boton" type="submit">Crear administrador</button>
+    </form>
+  <?php endif; ?>
+
+  <div class="msg avi" style="margin-top:26px">
+    <strong>Cuando ya pueda entrar, borre este archivo:</strong> <code>public/instalar.php</code><br>
+    Administrador de archivos de cPanel → clic derecho → Eliminar.
   </div>
 
   <h2>Siguientes pasos</h2>
   <ol style="padding-left:20px;font-size:14px">
-    <li>Entre al sistema e ingrese con su usuario administrador.</li>
-    <li>Vaya a <strong>Empresas → Agregar empresa</strong> y cargue los datos del emisor,
-        copiados <strong>exactamente</strong> del RTU.</li>
+    <li>Entre con su usuario administrador de la plataforma.</li>
+    <li><strong>Empresas → Agregar empresa</strong>: cargue los datos del emisor copiados
+        <strong>exactamente</strong> del RTU, y en esa misma pantalla cree el usuario con
+        el que entrará esa empresa.</li>
     <li>Deje el certificador en <strong>simulador</strong> y emita facturas de prueba:
         no gasta folios ni toca la red.</li>
     <li>Programe el cron de contingencia (capítulo 11 del manual).</li>
     <li>Active HTTPS antes de facturar de verdad.</li>
   </ol>
-
-  <p style="margin-top:22px"><a class="boton" href="index.php">Entrar al sistema</a></p>
 
 <?php else: ?>
 

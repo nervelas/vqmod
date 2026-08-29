@@ -67,6 +67,47 @@
   archivo de configuracion para que lo cree a mano.
 
 -------------------------------------------------------------------------------
+  ¿SE OLVIDO DE SU USUARIO O CONTRASENA?
+-------------------------------------------------------------------------------
+
+  Vuelva a abrir  https://SU-DOMINIO/instalar.php
+
+  Si el sistema ya esta instalado, esa pagina le ofrece recuperar el acceso:
+  escriba la CONTRASENA DE LA BASE DE DATOS (la que puso al instalar, la que
+  esta guardada en config/config.php) y podra:
+
+      - ver la lista de usuarios registrados
+      - cambiarle la contrasena a cualquiera
+      - crear otro administrador de la plataforma
+
+  Por eso conviene borrar instalar.php cuando ya no lo necesite.
+
+-------------------------------------------------------------------------------
+  LOS USUARIOS DEL SISTEMA
+-------------------------------------------------------------------------------
+
+  Hay tres tipos:
+
+  ADMINISTRADOR DE LA PLATAFORMA  (el que creo usted al instalar)
+      Ve todas las empresas, las da de alta, carga las credenciales del
+      certificador y crea los usuarios de cada una. No pertenece a
+      ninguna empresa.
+
+  ADMINISTRADOR DE EMPRESA
+      Solo ve SU empresa. Factura, maneja clientes y productos, y ve los
+      ajustes. Se crea al dar de alta la empresa, o desde Usuarios.
+
+  OPERADOR
+      Solo ve SU empresa. Factura y consulta. Es el usuario de la
+      cajera o el vendedor.
+
+  Cada persona debe tener su propio usuario: el sistema guarda quien
+  emitio cada documento.
+
+  Para crear usuarios ya instalado:
+      Entre como administrador de la plataforma > menu Usuarios
+
+-------------------------------------------------------------------------------
   PASO 4 - Borrar el instalador
 -------------------------------------------------------------------------------
 

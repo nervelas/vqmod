@@ -23,7 +23,19 @@ qué falta antes de continuar.
 
 Si algo falla, el detalle queda en `storage/logs/`.
 
-## 3. Tarea programada (cron)
+## 3. Actualizar sobre una instalación que ya existe
+
+Si ya tenías MenúGold instalado y solo subiste el ZIP nuevo encima: **extraer
+archivos no toca la base de datos**. Los platillos siguen apuntando a las
+imágenes viejas y el menú se ve igual que antes.
+
+Entra a **Plataforma → Respaldos** y pulsa **Reinstalar datos de demostración**.
+Vuelve a cargar `database/database_demo.sql` con las fotografías del paquete y
+solo afecta a los restaurantes 1 y 2; tu cuenta y tus otros restaurantes no se
+tocan. Si no ves las fotos en el teléfono, cierra la pestaña y vuelve a abrirla:
+la app guardada en pantalla de inicio revalida sola al cambiar de versión.
+
+## 4. Tarea programada (cron)
 
 cPanel → **Cron Jobs** → cada 10 minutos. El instalador te muestra la línea exacta
 con tu token; tiene esta forma:
@@ -36,7 +48,7 @@ Cierra llamadas al mesero olvidadas, libera mesas, suspende planes vencidos, pur
 bitácora y crea un **respaldo semanal automático** (descargable desde *Plataforma →
 Respaldos*).
 
-## 4. Crear restaurantes
+## 5. Crear restaurantes
 
 En **Consola de la plataforma → Restaurantes → Nuevo**: nombre, dirección web, plan y
 el usuario del dueño. Su menú queda publicado en `https://TUDOMINIO/r/su-nombre`.
@@ -46,14 +58,14 @@ Desde ahí puedes *Entrar a su panel* para configurarlo tú mismo.
 apunta su *Document Root* a la **misma carpeta** `public_html`. No hay que tocar código:
 el sistema detecta solo el dominio, la carpeta y si hay HTTPS.
 
-## 5. Códigos QR de las mesas
+## 6. Códigos QR de las mesas
 
 Panel → **Mesas y QR**. Crea las mesas de una vez con *Generar varias* y descarga el PDF
 en el formato que prefieras: **tarjeta de mesa** (se dobla y se para sola), **tarjeta de
 bolsillo** o **etiquetas adhesivas**. Salen con tu logo y tus colores, y el código va
 firmado: nadie puede fabricar el enlace de una mesa a mano.
 
-## 6. Fotografía
+## 7. Fotografía
 
 La demostración ya viene **con fotografía en los 45 platillos, las portadas y las
 categorías**: son imágenes propias, incluidas en el paquete, no se descarga nada de
@@ -71,7 +83,7 @@ php tools/importar-fotos.php --carpeta=/home/usuario/fotos --restaurante=1
 En los dos casos la imagen se recorta, se comprime a WebP en tres tamaños, se le
 quitan los metadatos y se genera el difuminado de carga.
 
-## 7. Credenciales de la demostración
+## 8. Credenciales de la demostración
 
 | Quién | Usuario | Contraseña |
 |---|---|---|
@@ -85,7 +97,7 @@ Cocina y meseros también entran con su PIN en `/panel/pin`, pensado para la tab
 
 > **Cámbialas antes de salir a producción** en *Panel → Usuarios*.
 
-## 8. Rutas útiles
+## 9. Rutas útiles
 
 `/` sitio de venta · `/r/{restaurante}` menú · `/panel` panel del restaurante ·
 `/panel/cocina` pantalla de cocina · `/panel/mesero` salón · `/super` consola de la plataforma.

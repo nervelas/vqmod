@@ -37,6 +37,22 @@ $view->set('title', 'Respaldos');
       <button class="btn btn-block mt-2" type="submit">Crear respaldo</button>
     </form>
 
+    <?php if (is_file(MG_ROOT . '/database/database_demo.sql')): ?>
+    <form class="card" method="post" action="<?= e(mg_url('/super/reinstalar-demo')) ?>"
+          onsubmit="return confirm('Se borran y se vuelven a crear los restaurantes de demostración (1 y 2) con sus platillos, fotos y pedidos. Tus otros restaurantes no se tocan. ¿Continuar?')">
+      <?= Csrf::field() ?>
+      <div class="card-head"><h3>Reinstalar la demostración</h3></div>
+      <p class="muted" style="font-size:var(--step--1)">
+        Úsalo después de actualizar los archivos por encima de una instalación ya hecha:
+        los archivos nuevos entran solos, pero la base de datos se queda con las filas
+        viejas y el menú se sigue viendo igual. Esto vuelve a cargar
+        <code>database/database_demo.sql</code>, con las fotografías del paquete.
+        Solo afecta a los restaurantes 1 y 2.
+      </p>
+      <button class="btn btn-ghost btn-block mt-2" type="submit">Reinstalar datos de demostración</button>
+    </form>
+    <?php endif; ?>
+
     <div class="card">
       <div class="card-head"><h3>Respaldo automático</h3></div>
       <p class="muted" style="font-size:var(--step--1)">El cron semanal crea uno solo. Configúralo en cPanel:</p>

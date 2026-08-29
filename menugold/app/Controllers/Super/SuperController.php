@@ -10,6 +10,7 @@ use MenuGold\Core\Image;
 use MenuGold\Core\Response;
 use MenuGold\Core\Security;
 use MenuGold\Core\Session;
+use MenuGold\Core\SqlFile;
 use MenuGold\Core\Str;
 use MenuGold\Core\Validator;
 use MenuGold\Core\View;
@@ -437,6 +438,40 @@ class SuperController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $name . '"',
             'Content-Length'      => (string)filesize($path),
         ));
+    }
+
+    /**
+     * Vuelve a importar database/database_demo.sql.
+     *
+     * Hace falta cuando se actualiza el paquete por encima de una instalación
+     * ya hecha: los archivos nuevos entran, pero la base de datos se queda con
+     * las filas viejas (y por eso el menú sigue viéndose igual).
+     */
+    public function reinstallDemo()
+    {
+        $stop = $this->guard();
+        if ($stop) { return $stop; }
+        $bad = $this->guardCsrf();
+        if ($bad) { return $bad; }
+
+        $archivo = MG_ROOT . '/database/database_demo.sql';
+        // El archivo también recrea al superadministrador de la demostración,
+        // porque el instalador lo necesita. Aquí no: te cerraría la sesión y te
+        // cambiaría la contraseña por la de la demo. Esas dos sentencias se saltan.
+        $saltar = array(
+            '/^DELETE\s+FROM\s+`?users`?\s+WHERE/i',
+            '/^INSERT\s+INTO\s+`?users`?[\s\S]*\bsuperadmin\b/i',
+        );
+        try {
+            $antes = (int)DB::value("SELECT COUNT(*) FROM products WHERE restaurant_id IN (1,2) AND image <> ''", array(), 0);
+            SqlFile::run($archivo, $saltar);
+            $despues = (int)DB::value("SELECT COUNT(*) FROM products WHERE restaurant_id IN (1,2) AND image <> ''", array(), 0);
+            Audit::log('demo_reinstalled', 'system', 0, array('con_foto' => $despues));
+            Session::flash('success', 'Datos de demostración reinstalados: ' . $despues . ' platillos con fotografía (antes ' . $antes . ').');
+        } catch (\Throwable $e) {
+            Session::flash('error', 'No se pudo reinstalar la demostración: ' . $e->getMessage());
+        }
+        return $this->redirect('/super/respaldo');
     }
 
     public function audit()

@@ -96,7 +96,16 @@ class PwaController extends Controller
     public function serviceWorker()
     {
         $base = Url::basePath();
-        $version = MG_VERSION . '-' . substr(md5((string)@filemtime(MG_ROOT . '/assets/css/core.css')), 0, 6);
+        // Los estáticos se sirven desde la caché primero, así que la versión tiene
+        // que moverse en cuanto cambie CUALQUIERA de ellos: si solo mirara core.css,
+        // una actualización de menu.js se quedaría congelada en el teléfono.
+        $archivos = array(
+            'assets/css/core.css', 'assets/css/fonts.css', 'assets/css/menu.css',
+            'assets/js/motion.js', 'assets/js/menu.js',
+        );
+        $sello = '';
+        foreach ($archivos as $f) { $sello .= $f . ':' . (int)@filemtime(MG_ROOT . '/' . $f) . '|'; }
+        $version = MG_VERSION . '-' . substr(md5($sello), 0, 8);
         $precache = array(
             $base . '/assets/css/core.css',
             $base . '/assets/css/fonts.css',

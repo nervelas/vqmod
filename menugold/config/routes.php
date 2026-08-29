@@ -126,4 +126,5 @@ $router->any('/super/landing/testimonios',      'Super/SuperController@landingTe
 $router->get('/super/respaldo',                 'Super/SuperController@backups');
 $router->post('/super/respaldo/crear',          'Super/SuperController@createBackup');
 $router->get('/super/respaldo/descargar',       'Super/SuperController@downloadBackup');
+$router->post('/super/reinstalar-demo',         'Super/SuperController@reinstallDemo');
 $router->get('/super/bitacora',                 'Super/SuperController@audit');

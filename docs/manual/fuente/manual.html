@@ -163,7 +163,7 @@ IVA               = Total − Base gravable</pre>
 <section class="pagina">
   <div class="encabezado"><h2>2. Instalación en cPanel</h2><span class="num">03</span></div>
 
-  <p>Se hace una sola vez. Requiere PHP 8.1 o superior con las extensiones
+  <p>Se hace una sola vez. Requiere PHP 8.0 o superior con las extensiones
   <code>dom</code>, <code>curl</code>, <code>pdo_mysql</code>, <code>mbstring</code> y
   <code>openssl</code>, y un certificado SSL activo en el dominio.</p>
 
@@ -646,7 +646,7 @@ php bin/usuario.php listar</pre>
     <tr><th style="width:40%">Síntoma</th><th>Causa habitual</th></tr>
     <tr><td>«No existe el archivo de configuración»</td><td>No copió <code>config.example.php</code> a <code>config.php</code>.</td></tr>
     <tr><td>Error de conexión a la base</td><td>El usuario no está agregado a la base, o falta el prefijo de la cuenta cPanel.</td></tr>
-    <tr><td>Página en blanco</td><td>PHP menor a 8.1, o falta una extensión.</td></tr>
+    <tr><td>Página en blanco</td><td>PHP menor a 8.0, o falta una extensión.</td></tr>
     <tr><td>«No se pudo crear el directorio»</td><td>Permisos de <code>storage/</code>: póngalos en <code>770</code>.</td></tr>
     <tr><td>No se guardan los XML en disco</td><td>Lo mismo que el anterior.</td></tr>
     <tr><td>El cron no corre</td><td>Ruta de PHP incorrecta. Revísela en <em>Select PHP Version</em>.</td></tr>

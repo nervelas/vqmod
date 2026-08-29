@@ -66,7 +66,7 @@ const RUTAS_PLATAFORMA = [
 ];
 
 /** Rutas que funcionan sin empresa seleccionada. */
-const RUTAS_SIN_EMPRESA = ['ingresar', 'salir', ...RUTAS_PLATAFORMA];
+$rutasSinEmpresa = array_merge(['ingresar', 'salir'], RUTAS_PLATAFORMA);
 
 if (!in_array($ruta, RUTAS_PUBLICAS, true) && !Sesion::autenticado()) {
     redirigir('ingresar');
@@ -83,7 +83,7 @@ if (in_array($ruta, RUTAS_PLATAFORMA, true) && !Sesion::esSuperadmin()) {
     exit;
 }
 
-if (!in_array($ruta, RUTAS_SIN_EMPRESA, true) && !Contexto::hayEmpresa()) {
+if (!in_array($ruta, $rutasSinEmpresa, true) && !Contexto::hayEmpresa()) {
     if (Sesion::esSuperadmin()) {
         Flash::aviso('Elija la empresa sobre la que va a trabajar.');
         redirigir('empresas');
@@ -93,7 +93,8 @@ if (!in_array($ruta, RUTAS_SIN_EMPRESA, true) && !Contexto::hayEmpresa()) {
     redirigir('ingresar');
 }
 
-function redirigir(string $ruta, array $parametros = []): never
+/** Redirige y termina la peticion. */
+function redirigir(string $ruta, array $parametros = []): void
 {
     header('Location: index.php?' . http_build_query(array_merge(['r' => $ruta], $parametros)));
     exit;

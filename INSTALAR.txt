@@ -140,8 +140,8 @@
       No termino el paso 3. Abra  /instalar.php
 
   Pagina en blanco
-      La version de PHP es menor a 8.1.
-      cPanel > Select PHP Version > elija 8.1 o superior
+      La version de PHP es menor a 8.0.
+      cPanel > Select PHP Version > elija 8.0 o superior
 
   El asistente dice que no puede escribir
       Permisos de las carpetas storage y config (paso 3)

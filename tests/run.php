@@ -704,6 +704,23 @@ $tablasCreadas = $pdoPrueba->query(
 )->fetchColumn();
 iguales('Quedan creadas las 8 tablas', 8, (int) $tablasCreadas);
 
+// ------------------------------------------- compatibilidad con PHP 8.0
+grupo('Compatibilidad con PHP 8.0');
+
+// El sistema debe correr en hosting con PHP 8.0. Esta comprobacion evita que
+// se cuele sintaxis de versiones posteriores sin darse cuenta.
+$salidaCompat = [];
+$codigoCompat = 0;
+exec('php ' . escapeshellarg(__DIR__ . '/../bin/verificar_php.php') . ' 8.0 2>&1', $salidaCompat, $codigoCompat);
+$textoCompat = implode("\n", $salidaCompat);
+
+afirmar(
+    'No hay sintaxis ni funciones posteriores a PHP 8.0',
+    $codigoCompat === 0,
+    $textoCompat
+);
+afirmar('Ningun archivo tiene errores de sintaxis', !str_contains($textoCompat, 'ERRORES DE SINTAXIS'));
+
 // ---------------------------------------------------------------- cierre
 @unlink($archivoDb);
 

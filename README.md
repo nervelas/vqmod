@@ -10,7 +10,7 @@ Es **multi-empresa**: una sola instalación atiende a todos sus clientes. Cada
 uno entra con su usuario y ve únicamente su empresa, sus clientes y sus
 facturas. Pensado para venderse como servicio mensual.
 
-Corre en **hosting cPanel** con PHP 8.1+ y MySQL, **sin Composer ni
+Corre en **hosting cPanel** con PHP 8.0+ y MySQL, **sin Composer ni
 dependencias externas**.
 
 ---
@@ -194,7 +194,12 @@ de corrección, las ocho máscaras) y 230 códigos decodificados con ZXing.
 
 ## Requisitos
 
-- PHP 8.1 o superior con `dom`, `curl`, `pdo_mysql`, `mbstring`, `openssl`
+- **PHP 8.0 o superior** con `dom`, `curl`, `pdo_mysql`, `mbstring`, `openssl`
+
+  El código no usa nada posterior a PHP 8.0. Puede comprobarlo en cualquier
+  momento con `php bin/verificar_php.php 8.0`, que analiza todos los archivos
+  con el tokenizador de PHP y avisa si se coló sintaxis o alguna función de una
+  versión más nueva. La suite de pruebas lo ejecuta en cada corrida.
 - MySQL 5.7+ / MariaDB 10.3+
 - HTTPS en el dominio (obligatorio: se manejan datos fiscales y credenciales)
 - Cada empresa: contrato con un certificador autorizado y habilitación como

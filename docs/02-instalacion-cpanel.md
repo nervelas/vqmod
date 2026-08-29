@@ -7,7 +7,7 @@ con cPanel. Tiempo aproximado: 30 minutos.
 
 Confirme en cPanel:
 
-- **PHP 8.1 o superior** (cPanel → *Select PHP Version* / *MultiPHP Manager*)
+- **PHP 8.0 o superior** (cPanel → *Select PHP Version* / *MultiPHP Manager*)
 - Extensiones activas: `dom`, `curl`, `pdo_mysql`, `mbstring`, `openssl`
 - Un **certificado SSL** activo en el dominio (cPanel → *SSL/TLS Status*).
   Con Let's Encrypt gratuito es suficiente. **No opere sin HTTPS.**
@@ -222,7 +222,7 @@ ser administrador de la plataforma.
 |---|---|
 | "No existe el archivo de configuración" | No copió `config.example.php` a `config.php` |
 | Error de conexión a la base | El usuario no está agregado a la base, o falta el prefijo `suusuario_` |
-| Página en blanco | Versión de PHP menor a 8.1, o falta una extensión |
+| Página en blanco | Versión de PHP menor a 8.0, o falta una extensión |
 | "No se pudo crear el directorio" | Permisos de `storage/`: póngalos en `770` |
 | No se guardan los XML en disco | Igual que el anterior |
 | El cron no corre | Ruta de PHP incorrecta; revísela en *Select PHP Version* |

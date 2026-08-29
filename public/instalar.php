@@ -27,9 +27,9 @@ function requisitos(): array
 
     $version = PHP_VERSION;
     $lista[] = [
-        'ok'      => version_compare($version, '8.1.0', '>='),
-        'titulo'  => "PHP 8.1 o superior (tiene {$version})",
-        'detalle' => 'cPanel → Select PHP Version → elija 8.1, 8.2 o 8.3',
+        'ok'      => version_compare($version, '8.0.0', '>='),
+        'titulo'  => "PHP 8.0 o superior (tiene {$version})",
+        'detalle' => 'cPanel → Select PHP Version → elija 8.0 o superior',
         'critico' => true,
     ];
 

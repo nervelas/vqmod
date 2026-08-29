@@ -15,7 +15,7 @@
     <div class="authpage__box">
       <a class="brand" href="<?= e(url('/')) ?>" style="margin-bottom:34px">
         <span class="brand__mark" aria-hidden="true">CP</span>
-        <span><?= e($platformName ?? 'CotizaPro B2B') ?></span>
+        <span><?= e($appName ?? 'CotizaPro B2B') ?></span>
       </a>
       <?= \App\Core\View::partial('partials/flash', get_defined_vars()) ?>
       <?= $content ?>

@@ -45,14 +45,12 @@ $t0 = microtime(true);
 /* ------------------------------------------- 1 · recordatorios al vendedor */
 try {
     $n = 0;
-    $rows = DB::all(
+    $company = Company::get();
+    $rows = $company ? DB::all(
         'SELECT q.*, c.name AS company_name, c.email AS company_email, c.reminder_days_seller,
-                c.reminder_days_client, c.smtp_host, c.smtp_port, c.smtp_user, c.smtp_pass,
-                c.smtp_secure, c.smtp_from, c.smtp_from_name, c.currency_symbol, c.slug,
-                c.theme, c.color_accent, c.color_ink, c.color_paper,
                 u.email AS seller_email, u.name AS seller_name
          FROM quotes q
-         JOIN companies c ON c.id = q.company_id AND c.status IN ("activa","prueba")
+         JOIN company c ON c.id = 1
          LEFT JOIN users u ON u.id = q.user_id
          WHERE q.is_current = 1
            AND q.status IN ("nueva","elaboracion","enviada","negociacion")
@@ -60,10 +58,9 @@ try {
            AND DATEDIFF(NOW(), COALESCE(q.last_contact_at, q.created_at)) >= c.reminder_days_seller
            AND (q.reminder_sent_at IS NULL OR q.reminder_sent_at < DATE_SUB(NOW(), INTERVAL 3 DAY))
          LIMIT 120'
-    );
+    ) : [];
     foreach ($rows as $q) {
         $days = daysSince((string) ($q['last_contact_at'] ?: $q['created_at']));
-        $company = Company::find((int) $q['company_id']);
         $body = '<p>La cotización <strong>' . e($q['number']) . '</strong> de <strong>'
               . e($q['contact_company'] ?: $q['contact_name']) . '</strong> lleva <strong>' . $days
               . ' días</strong> sin seguimiento.</p><p>Monto: ' . e(money((float) $q['total'], (string) $q['currency_symbol'])) . '</p>';
@@ -74,7 +71,7 @@ try {
         }
         if ($q['user_id']) {
             Notification::push((int) $q['user_id'], 'La ' . $q['number'] . ' lleva ' . $days . ' días sin respuesta',
-                (string) ($q['contact_company'] ?: $q['contact_name']), '/panel/cotizaciones/' . $q['id'], 'recordatorio', (int) $q['company_id']);
+                (string) ($q['contact_company'] ?: $q['contact_name']), '/panel/cotizaciones/' . $q['id'], 'recordatorio');
         }
         DB::update('quotes', ['reminder_sent_at' => nowSql()], 'id = :id', ['id' => (int) $q['id']]);
         $n++;
@@ -88,10 +85,11 @@ try {
 /* --------------------------------------------- 2 · recordatorio al cliente */
 try {
     $n = 0;
-    $rows = DB::all(
+    $company = Company::get();
+    $rows = $company ? DB::all(
         'SELECT q.*, c.reminder_days_client
          FROM quotes q
-         JOIN companies c ON c.id = q.company_id AND c.status IN ("activa","prueba")
+         JOIN company c ON c.id = 1
          WHERE q.is_current = 1 AND q.status = "enviada"
            AND c.reminder_days_client > 0
            AND q.sent_at IS NOT NULL
@@ -99,9 +97,8 @@ try {
            AND q.client_reminder_sent_at IS NULL
            AND q.contact_email <> ""
          LIMIT 80'
-    );
+    ) : [];
     foreach ($rows as $q) {
-        $company = Company::find((int) $q['company_id']);
         $body = '<p>Estimado(a) ' . e($q['contact_name']) . ', le recordamos que su cotización <strong>'
               . e($q['number']) . '</strong> sigue vigente'
               . ($q['valid_until'] ? ' hasta el ' . e(fechaLarga((string) $q['valid_until'])) : '')
@@ -109,7 +106,7 @@ try {
         Mailer::send((string) $q['contact_email'], 'Su cotización ' . $q['number'] . ' sigue vigente',
             Mailer::template('Recordatorio de cotización', $body, $company, 'Ver mi cotización', Quote::trackUrl($q)), $company);
         DB::update('quotes', ['client_reminder_sent_at' => nowSql()], 'id = :id', ['id' => (int) $q['id']]);
-        Quote::event((int) $q['company_id'], (int) $q['id'], 'sistema', 'Recordatorio automático enviado al cliente');
+        Quote::event((int) $q['id'], 'sistema', 'Recordatorio automático enviado al cliente');
         $n++;
     }
     $log[] = "recordatorios_cliente={$n}";
@@ -126,14 +123,14 @@ try {
     if ((int) date('j') <= 3 && $lastReport !== $thisMonth) {
         $from = date('Y-m-01', strtotime('-1 month'));
         $to   = date('Y-m-t', strtotime('-1 month'));
-        foreach (DB::all('SELECT * FROM companies WHERE status IN ("activa","prueba")') as $c) {
-            $cid = (int) $c['id'];
+        $c = Company::get();
+        if ($c) {
             $stat = DB::one(
                 'SELECT COUNT(*) n, COALESCE(SUM(total),0) cotizado,
                         COALESCE(SUM(CASE WHEN status="aprobada" THEN won_amount ELSE 0 END),0) ganado,
                         SUM(status="aprobada") ganadas, SUM(status="perdida") perdidas
-                 FROM quotes WHERE company_id = ? AND is_current = 1 AND created_at BETWEEN ? AND ?',
-                [$cid, $from . ' 00:00:00', $to . ' 23:59:59']
+                 FROM quotes WHERE is_current = 1 AND created_at BETWEEN ? AND ?',
+                [$from . ' 00:00:00', $to . ' 23:59:59']
             ) ?: [];
             $cerradas = (int) ($stat['ganadas'] ?? 0) + (int) ($stat['perdidas'] ?? 0);
             $conv = $cerradas > 0 ? round((int) $stat['ganadas'] / $cerradas * 100, 1) : 0;
@@ -145,7 +142,7 @@ try {
                 . '<tr><td style="padding:6px 0;border-bottom:1px solid #E7E9E4">Monto ganado</td><td style="text-align:right;font-weight:600">' . e(money((float) ($stat['ganado'] ?? 0), $sym)) . '</td></tr>'
                 . '<tr><td style="padding:6px 0">Tasa de conversión</td><td style="text-align:right;font-weight:600">' . $conv . ' %</td></tr>'
                 . '</table>';
-            foreach (DB::all('SELECT email, name FROM users WHERE company_id = ? AND role = "admin" AND status = "activo"', [$cid]) as $adm) {
+            foreach (DB::all('SELECT email, name FROM users WHERE role = "admin" AND status = "activo"') as $adm) {
                 Mailer::send((string) $adm['email'], 'Informe mensual · ' . $c['name'],
                     Mailer::template('Informe de ' . fechaCorta($from), $body, $c, 'Ver los reportes', absUrl('/panel/reportes')), $c);
                 $n++;

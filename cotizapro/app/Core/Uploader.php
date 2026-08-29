@@ -16,9 +16,9 @@ final class Uploader
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/zip', 'application/octet-stream',
     ];
 
-    public static function baseDir(int $companyId, string $kind): string
+    public static function baseDir(string $kind): string
     {
-        $dir = STORAGE_PATH . '/uploads/e' . $companyId . '/' . preg_replace('/[^a-z0-9]/', '', $kind);
+        $dir = STORAGE_PATH . '/uploads/' . preg_replace('/[^a-z0-9]/', '', $kind);
         if (!is_dir($dir)) {
             @mkdir($dir, 0755, true);
         }
@@ -73,7 +73,7 @@ final class Uploader
      * Guarda una imagen validada y recomprimida.
      * @return array|null datos para product_images o null si es inválida
      */
-    public static function image(array $file, int $companyId, string $kind = 'productos', int $maxW = 1600, int $maxH = 1600, int $maxBytes = 8388608): ?array
+    public static function image(array $file, string $kind = 'productos', int $maxW = 1600, int $maxH = 1600, int $maxBytes = 8388608): ?array
     {
         if (!is_uploaded_file($file['tmp_name']) && !is_file($file['tmp_name'])) {
             return null;
@@ -87,7 +87,7 @@ final class Uploader
         if (@getimagesize($file['tmp_name']) === false) {
             return null;
         }
-        $dir  = self::baseDir($companyId, $kind);
+        $dir  = self::baseDir($kind);
         $name = self::randomName();
         $res  = Img::store($file['tmp_name'], $dir, $name, $maxW, $maxH);
         if (!$res) {
@@ -98,7 +98,7 @@ final class Uploader
     }
 
     /** Guarda un PDF validado. */
-    public static function pdf(array $file, int $companyId, string $kind = 'documentos', int $maxBytes = 15728640): ?array
+    public static function pdf(array $file, string $kind = 'documentos', int $maxBytes = 15728640): ?array
     {
         if ((int) $file['size'] > $maxBytes) {
             return null;
@@ -114,7 +114,7 @@ final class Uploader
         if ($head !== '%PDF-') {
             return null;
         }
-        $dir  = self::baseDir($companyId, $kind);
+        $dir  = self::baseDir($kind);
         $name = self::randomName() . '.pdf';
         if (!@move_uploaded_file($file['tmp_name'], $dir . '/' . $name) && !@copy($file['tmp_name'], $dir . '/' . $name)) {
             return null;
@@ -122,7 +122,7 @@ final class Uploader
         @chmod($dir . '/' . $name, 0644);
         return [
             'name' => mb_substr((string) $file['name'], 0, 160),
-            'path' => 'e' . $companyId . '/' . preg_replace('/[^a-z0-9]/', '', $kind) . '/' . $name,
+            'path' => preg_replace('/[^a-z0-9]/', '', $kind) . '/' . $name,
             'size' => (int) $file['size'],
         ];
     }

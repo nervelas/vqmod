@@ -14,11 +14,10 @@ final class DashboardController extends Controller
     public function index(array $params = []): void
     {
         [$u, $c] = $this->panel();
-        $cid  = (int) $c['id'];
         $mine = Auth::ownerFilter();
 
-        $w = 'q.company_id = ? AND q.is_current = 1';
-        $p = [$cid];
+        $w = 'q.is_current = 1';
+        $p = [];
         if ($mine) {
             $w .= ' AND q.user_id = ?';
             $p[] = $mine;
@@ -60,10 +59,9 @@ final class DashboardController extends Controller
 
         $topProducts = DB::all(
             'SELECT qi.code, qi.name, SUM(qi.qty) AS unidades, COUNT(DISTINCT qi.quote_id) AS veces
-             FROM quote_items qi JOIN quotes q ON q.id = qi.quote_id AND q.company_id = qi.company_id
-             WHERE qi.company_id = ? AND q.created_at >= DATE_SUB(NOW(), INTERVAL 180 DAY)
-             GROUP BY qi.code, qi.name ORDER BY veces DESC, unidades DESC LIMIT 8',
-            [$cid]
+             FROM quote_items qi JOIN quotes q ON q.id = qi.quote_id
+             WHERE q.created_at >= DATE_SUB(NOW(), INTERVAL 180 DAY)
+             GROUP BY qi.code, qi.name ORDER BY veces DESC, unidades DESC LIMIT 8'
         );
 
         $ranking = DB::all(
@@ -71,10 +69,9 @@ final class DashboardController extends Controller
                     COUNT(q.id) AS total,
                     SUM(q.status = "aprobada") AS ganadas,
                     COALESCE(SUM(q.won_amount),0) AS monto
-             FROM users u LEFT JOIN quotes q ON q.user_id = u.id AND q.company_id = u.company_id AND q.is_current = 1
-             WHERE u.company_id = ? AND u.role IN ("admin","vendedor") AND u.status = "activo"
-             GROUP BY u.id, u.name ORDER BY monto DESC, ganadas DESC',
-            [$cid]
+             FROM users u LEFT JOIN quotes q ON q.user_id = u.id AND q.is_current = 1
+             WHERE u.role IN ("admin","vendedor") AND u.status = "activo"
+             GROUP BY u.id, u.name ORDER BY monto DESC, ganadas DESC'
         );
 
         $stale = DB::all(
@@ -96,7 +93,7 @@ final class DashboardController extends Controller
             'topProducts' => $topProducts,
             'ranking' => $ranking,
             'stale'   => $stale,
-            'lostReasons' => DB::all("SELECT lost_reason, COUNT(*) n FROM quotes WHERE company_id = ? AND status = 'perdida' AND lost_reason IS NOT NULL GROUP BY lost_reason ORDER BY n DESC", [$cid]),
+            'lostReasons' => DB::all("SELECT lost_reason, COUNT(*) n FROM quotes WHERE status = 'perdida' AND lost_reason IS NOT NULL GROUP BY lost_reason ORDER BY n DESC"),
         ], 'layout/panel');
     }
 

@@ -1,4 +1,4 @@
-<?php $base = url('/e/' . $company['slug']); ?>
+<?php $base = rtrim(url('/'), '/'); ?>
 <div class="section blueprint">
   <div class="wrap-narrow">
     <div class="brackets" style="padding:clamp(30px,5vw,56px);background:var(--white);border:1px solid var(--line);border-radius:var(--r)">

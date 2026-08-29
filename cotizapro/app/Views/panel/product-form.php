@@ -3,7 +3,7 @@ $sym = (string) $company['currency_symbol'];
 $action = $p ? url('/panel/productos/' . $p['id']) : url('/panel/productos/nuevo');
 $v = static fn (string $k, mixed $d = ''): mixed => $p[$k] ?? old($k, $d);
 page('barActions', $p
-    ? '<a class="btn btn--ghost btn--sm" href="' . e(url('/e/' . $company['slug'] . '/producto/' . $p['slug'])) . '" target="_blank" rel="noopener">Ver en el sitio</a>'
+    ? '<a class="btn btn--ghost btn--sm" href="' . e(url('/producto/' . $p['slug'])) . '" target="_blank" rel="noopener">Ver en el sitio</a>'
     : '');
 ?>
 <form method="post" action="<?= e($action) ?>" enctype="multipart/form-data">

@@ -22,7 +22,7 @@ final class Mailer
     }
 
     /**
-     * Envía un correo usando el SMTP de la empresa o el de la plataforma.
+     * Envía un correo usando el SMTP de la empresa (o el del servidor).
      * @param array<int,array{0:string,1:string}> $attachments  [ruta, nombre]
      */
     public static function send(string $to, string $subject, string $html, ?array $company = null, array $attachments = [], string $replyTo = '', string $replyName = ''): bool
@@ -100,7 +100,7 @@ final class Mailer
             'pass'      => (string) ($s['smtp_pass'] ?? ''),
             'secure'    => (string) ($s['smtp_secure'] ?? 'tls'),
             'from'      => (string) ($s['smtp_from'] ?? ($company['email'] ?? 'no-reply@' . App::host())),
-            'from_name' => (string) ($s['smtp_from_name'] ?? ($company['name'] ?? 'CotizaPro')),
+            'from_name' => (string) ($s['smtp_from_name'] ?? ($company['name'] ?? \App\Models\Setting::get('app_name', 'CotizaPro'))),
         ];
     }
 
@@ -108,7 +108,6 @@ final class Mailer
     {
         try {
             DB::insert('email_log', [
-                'company_id' => $company['id'] ?? null,
                 'to_email'   => mb_substr($to, 0, 190),
                 'subject'    => mb_substr($subject, 0, 220),
                 'status'     => $status,
@@ -125,7 +124,7 @@ final class Mailer
     {
         $accent = $company ? \App\Models\Company::theme($company)['accent'] : '#E8590C';
         $ink    = '#1C1F22';
-        $name   = e($company['name'] ?? \App\Models\Setting::get('platform_name', 'CotizaPro B2B'));
+        $name   = e($company['name'] ?? \App\Models\Setting::get('app_name', 'CotizaPro B2B'));
         $cta = '';
         if ($ctaLabel !== '' && $ctaUrl !== '') {
             $cta = '<tr><td style="padding:8px 32px 32px">'

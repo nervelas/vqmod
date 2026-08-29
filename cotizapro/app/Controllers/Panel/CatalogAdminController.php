@@ -24,10 +24,9 @@ final class CatalogAdminController extends Controller
     public function products(array $params = []): void
     {
         [$u, $c] = $this->panel();
-        $cid = (int) $c['id'];
         [$page, $per, $offset] = Request::page(25);
         $active = Request::str('estado');
-        [$rows, $total] = Product::search($cid, [
+        [$rows, $total] = Product::search([
             'q'           => Request::str('q'),
             'category_id' => Request::int('categoria'),
             'brand_id'    => Request::int('marca'),
@@ -36,37 +35,28 @@ final class CatalogAdminController extends Controller
             'limit'       => $per,
             'offset'      => $offset,
         ]);
-        $usage  = Company::usage($cid);
-        $limits = Company::limits($cid);
         $this->view('panel/products', [
             'title'      => 'Catálogo de productos',
             'rows'       => $rows,
             'total'      => $total,
             'page'       => $page,
             'pages'      => (int) ceil($total / $per),
-            'categories' => Category::options($cid),
-            'brands'     => Brand::all($cid),
-            'usage'      => $usage,
-            'limits'     => $limits,
+            'categories' => Category::options(),
+            'brands'     => Brand::all(),
         ], 'layout/panel');
     }
 
     public function productForm(array $params = []): void
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN, Auth::ROLE_SELLER);
-        $cid = (int) $c['id'];
         $id  = (int) ($params['id'] ?? 0);
-        $p   = $id ? Product::find($cid, $id) : null;
+        $p   = $id ? Product::find($id) : null;
         if ($id && !$p) {
             ErrorHandler::render(404);
         }
 
         if (Request::isPost()) {
             Csrf::verify();
-            if (!$id && !Company::withinLimit($cid, 'products')) {
-                Flash::error('Alcanzó el límite de productos de su plan (' . Company::limits($cid)['products'] . '). Contacte al administrador de la plataforma.');
-                redirect('/panel/productos');
-            }
             $name = mb_substr(Request::str('name'), 0, 200);
             if ($name === '') {
                 Flash::error('El nombre del producto es obligatorio.');
@@ -75,10 +65,10 @@ final class CatalogAdminController extends Controller
             }
             $catId   = Request::int('category_id') ?: null;
             $brandId = Request::int('brand_id') ?: null;
-            if ($catId && !Category::find($cid, $catId)) {
+            if ($catId && !Category::find($catId)) {
                 $catId = null;
             }
-            if ($brandId && !Brand::find($cid, $brandId)) {
+            if ($brandId && !Brand::find($brandId)) {
                 $brandId = null;
             }
             $vis = Request::str('price_visibility');
@@ -87,12 +77,11 @@ final class CatalogAdminController extends Controller
             }
             $code = Request::str('code') ?: strtoupper(substr(slugify($name), 0, 12)) . '-' . random_int(100, 999);
             $data = [
-                'company_id'       => $cid,
                 'category_id'      => $catId,
                 'brand_id'         => $brandId,
-                'code'             => Product::uniqueCode($cid, $code, $id ?: null),
+                'code'             => Product::uniqueCode($code, $id ?: null),
                 'name'             => $name,
-                'slug'             => Product::uniqueSlug($cid, Request::str('slug') ?: $name, $id ?: null),
+                'slug'             => Product::uniqueSlug(Request::str('slug') ?: $name, $id ?: null),
                 'short_desc'       => mb_substr(Request::str('short_desc'), 0, 300) ?: null,
                 'description'      => mb_substr(Request::str('description'), 0, 12000) ?: null,
                 'application'      => mb_substr(Request::str('application'), 0, 255) ?: null,
@@ -111,54 +100,53 @@ final class CatalogAdminController extends Controller
             ];
             if ($id) {
                 $oldPrice = (float) $p['price'];
-                DB::update('products', $data, 'id = :id AND company_id = :c', ['id' => $id, 'c' => $cid]);
+                DB::update('products', $data, 'id = :id', ['id' => $id]);
                 if (abs($oldPrice - (float) $data['price']) > 0.001) {
-                    Audit::log('producto.precio', 'product', $id, ['de' => $oldPrice, 'a' => $data['price'], 'code' => $data['code']], $cid);
+                    Audit::log('producto.precio', 'product', $id, ['de' => $oldPrice, 'a' => $data['price'], 'code' => $data['code']]);
                 }
-                Audit::log('producto.editar', 'product', $id, ['code' => $data['code']], $cid);
+                Audit::log('producto.editar', 'product', $id, ['code' => $data['code']]);
             } else {
                 $data['created_at'] = nowSql();
                 $id = DB::insert('products', $data);
-                Audit::log('producto.crear', 'product', $id, ['code' => $data['code']], $cid);
+                Audit::log('producto.crear', 'product', $id, ['code' => $data['code']]);
             }
 
             // Atributos técnicos.
-            DB::delete('product_attributes', 'product_id = :p AND company_id = :c', ['p' => $id, 'c' => $cid]);
+            DB::delete('product_attributes', 'product_id = :p', ['p' => $id]);
             foreach (Request::arr('attr') as $aid => $val) {
                 $aid = (int) $aid;
                 $val = is_string($val) ? mb_substr(trim($val), 0, 190) : '';
-                if ($val === '' || !AttributeDef::find($cid, $aid)) {
+                if ($val === '' || !AttributeDef::find($aid)) {
                     continue;
                 }
-                DB::insert('product_attributes', ['company_id' => $cid, 'product_id' => $id, 'attribute_id' => $aid, 'value' => $val]);
+                DB::insert('product_attributes', ['product_id' => $id, 'attribute_id' => $aid, 'value' => $val]);
             }
 
             // Precios por lista de clientes.
             foreach (Request::arr('plist') as $plid => $val) {
                 $plid = (int) $plid;
                 $val  = (float) str_replace(',', '', (string) $val);
-                if (!DB::one('SELECT id FROM price_lists WHERE id = ? AND company_id = ? LIMIT 1', [$plid, $cid])) {
+                if (!DB::one('SELECT id FROM price_lists WHERE id = ? LIMIT 1', [$plid])) {
                     continue;
                 }
                 if ($val > 0) {
-                    DB::run('INSERT INTO product_prices (company_id, product_id, price_list_id, price) VALUES (?,?,?,?)
-                             ON DUPLICATE KEY UPDATE price = VALUES(price)', [$cid, $id, $plid, $val]);
+                    DB::run('INSERT INTO product_prices (product_id, price_list_id, price) VALUES (?,?,?)
+                             ON DUPLICATE KEY UPDATE price = VALUES(price)', [$id, $plid, $val]);
                 } else {
-                    DB::delete('product_prices', 'product_id = :p AND price_list_id = :l AND company_id = :c', ['p' => $id, 'l' => $plid, 'c' => $cid]);
+                    DB::delete('product_prices', 'product_id = :p AND price_list_id = :l', ['p' => $id, 'l' => $plid]);
                 }
             }
 
             // Imágenes (recomprimidas a WebP + JPG).
-            $sort = (int) DB::value('SELECT COALESCE(MAX(sort),0) FROM product_images WHERE product_id = ? AND company_id = ?', [$id, $cid], 0);
+            $sort = (int) DB::value('SELECT COALESCE(MAX(sort),0) FROM product_images WHERE product_id = ?', [$id], 0);
             $bad = 0;
             foreach (Uploader::files('images') as $f) {
-                $res = Uploader::image($f, $cid, 'productos');
+                $res = Uploader::image($f, 'productos');
                 if (!$res) {
                     $bad++;
                     continue;
                 }
                 DB::insert('product_images', [
-                    'company_id' => $cid,
                     'product_id' => $id,
                     'path'       => $res['path'],
                     'path_webp'  => $res['path_webp'],
@@ -172,13 +160,12 @@ final class CatalogAdminController extends Controller
             }
             // Documentos PDF (fichas técnicas).
             foreach (Uploader::files('documents') as $f) {
-                $res = Uploader::pdf($f, $cid, 'documentos');
+                $res = Uploader::pdf($f, 'documentos');
                 if (!$res) {
                     $bad++;
                     continue;
                 }
                 DB::insert('product_documents', [
-                    'company_id' => $cid,
                     'product_id' => $id,
                     'name'       => $res['name'],
                     'path'       => $res['path'],
@@ -196,15 +183,15 @@ final class CatalogAdminController extends Controller
         $this->view('panel/product-form', [
             'title'      => $p ? 'Editar producto' : 'Nuevo producto',
             'p'          => $p,
-            'categories' => Category::options($cid),
-            'brands'     => Brand::all($cid),
-            'attrs'      => AttributeDef::forCategory($cid, $p ? (int) $p['category_id'] : null),
-            'allAttrs'   => AttributeDef::all($cid),
-            'values'     => $p ? array_column(DB::all('SELECT attribute_id, value FROM product_attributes WHERE product_id = ? AND company_id = ?', [(int) $p['id'], $cid]), 'value', 'attribute_id') : [],
-            'images'     => $p ? Product::images($cid, (int) $p['id']) : [],
-            'documents'  => $p ? Product::documents($cid, (int) $p['id']) : [],
-            'priceLists' => DB::all('SELECT * FROM price_lists WHERE company_id = ? ORDER BY name', [$cid]),
-            'listPrices' => $p ? array_column(DB::all('SELECT price_list_id, price FROM product_prices WHERE product_id = ? AND company_id = ?', [(int) $p['id'], $cid]), 'price', 'price_list_id') : [],
+            'categories' => Category::options(),
+            'brands'     => Brand::all(),
+            'attrs'      => AttributeDef::forCategory($p ? (int) $p['category_id'] : null),
+            'allAttrs'   => AttributeDef::all(),
+            'values'     => $p ? array_column(DB::all('SELECT attribute_id, value FROM product_attributes WHERE product_id = ?', [(int) $p['id']]), 'value', 'attribute_id') : [],
+            'images'     => $p ? Product::images((int) $p['id']) : [],
+            'documents'  => $p ? Product::documents((int) $p['id']) : [],
+            'priceLists' => DB::all('SELECT * FROM price_lists ORDER BY name'),
+            'listPrices' => $p ? array_column(DB::all('SELECT price_list_id, price FROM product_prices WHERE product_id = ?', [(int) $p['id']]), 'price', 'price_list_id') : [],
         ], 'layout/panel');
     }
 
@@ -212,21 +199,20 @@ final class CatalogAdminController extends Controller
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN);
         $this->guardPost();
-        $cid = (int) $c['id'];
         $id = (int) $params['id'];
-        $p = Product::find($cid, $id);
+        $p = Product::find($id);
         if (!$p) {
             ErrorHandler::render(404);
         }
-        foreach (Product::images($cid, $id) as $img) {
+        foreach (Product::images($id) as $img) {
             Uploader::deleteImage($img);
         }
-        DB::delete('product_images', 'product_id = :p AND company_id = :c', ['p' => $id, 'c' => $cid]);
-        DB::delete('product_documents', 'product_id = :p AND company_id = :c', ['p' => $id, 'c' => $cid]);
-        DB::delete('product_attributes', 'product_id = :p AND company_id = :c', ['p' => $id, 'c' => $cid]);
-        DB::delete('product_prices', 'product_id = :p AND company_id = :c', ['p' => $id, 'c' => $cid]);
-        DB::delete('products', 'id = :id AND company_id = :c', ['id' => $id, 'c' => $cid]);
-        Audit::log('producto.eliminar', 'product', $id, ['code' => $p['code']], $cid);
+        DB::delete('product_images', 'product_id = :p', ['p' => $id]);
+        DB::delete('product_documents', 'product_id = :p', ['p' => $id]);
+        DB::delete('product_attributes', 'product_id = :p', ['p' => $id]);
+        DB::delete('product_prices', 'product_id = :p', ['p' => $id]);
+        DB::delete('products', 'id = :id', ['id' => $id]);
+        Audit::log('producto.eliminar', 'product', $id, ['code' => $p['code']]);
         Flash::ok('Producto eliminado.');
         redirect('/panel/productos');
     }
@@ -235,30 +221,25 @@ final class CatalogAdminController extends Controller
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN, Auth::ROLE_SELLER);
         $this->guardPost();
-        $cid = (int) $c['id'];
-        $p = Product::find($cid, (int) $params['id']);
+        $p = Product::find((int) $params['id']);
         if (!$p) {
             ErrorHandler::render(404);
-        }
-        if (!Company::withinLimit($cid, 'products')) {
-            Flash::error('Alcanzó el límite de productos de su plan.');
-            redirect('/panel/productos');
         }
         $new = $p;
         unset($new['id']);
         $new['name']       = mb_substr($p['name'] . ' (copia)', 0, 200);
-        $new['code']       = Product::uniqueCode($cid, $p['code'] . '-C');
-        $new['slug']       = Product::uniqueSlug($cid, $new['name']);
+        $new['code']       = Product::uniqueCode($p['code'] . '-C');
+        $new['slug']       = Product::uniqueSlug($new['name']);
         $new['active']     = 0;
         $new['views']      = 0;
         $new['quote_count'] = 0;
         $new['created_at'] = nowSql();
         $new['updated_at'] = nowSql();
         $newId = DB::insert('products', $new);
-        foreach (DB::all('SELECT * FROM product_attributes WHERE product_id = ? AND company_id = ?', [(int) $p['id'], $cid]) as $a) {
-            DB::insert('product_attributes', ['company_id' => $cid, 'product_id' => $newId, 'attribute_id' => (int) $a['attribute_id'], 'value' => (string) $a['value']]);
+        foreach (DB::all('SELECT * FROM product_attributes WHERE product_id = ?', [(int) $p['id']]) as $a) {
+            DB::insert('product_attributes', ['product_id' => $newId, 'attribute_id' => (int) $a['attribute_id'], 'value' => (string) $a['value']]);
         }
-        Audit::log('producto.duplicar', 'product', $newId, ['origen' => (int) $p['id']], $cid);
+        Audit::log('producto.duplicar', 'product', $newId, ['origen' => (int) $p['id']]);
         Flash::ok('Producto duplicado. Está inactivo hasta que lo revise.');
         redirect('/panel/productos/' . $newId);
     }
@@ -267,11 +248,10 @@ final class CatalogAdminController extends Controller
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN, Auth::ROLE_SELLER);
         $this->guardPost();
-        $cid = (int) $c['id'];
-        $img = DB::one('SELECT * FROM product_images WHERE id = ? AND company_id = ? LIMIT 1', [(int) $params['id'], $cid]);
+        $img = DB::one('SELECT * FROM product_images WHERE id = ? LIMIT 1', [(int) $params['id']]);
         if ($img) {
             Uploader::deleteImage($img);
-            DB::delete('product_images', 'id = :id AND company_id = :c', ['id' => (int) $img['id'], 'c' => $cid]);
+            DB::delete('product_images', 'id = :id', ['id' => (int) $img['id']]);
         }
         $this->back('/panel/productos');
     }
@@ -280,15 +260,14 @@ final class CatalogAdminController extends Controller
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN, Auth::ROLE_SELLER);
         $this->guardPost();
-        $cid = (int) $c['id'];
-        $d = DB::one('SELECT * FROM product_documents WHERE id = ? AND company_id = ? LIMIT 1', [(int) $params['id'], $cid]);
+        $d = DB::one('SELECT * FROM product_documents WHERE id = ? LIMIT 1', [(int) $params['id']]);
         if ($d) {
             $abs = STORAGE_PATH . '/uploads/' . $d['path'];
             $root = realpath(STORAGE_PATH . '/uploads');
             if (is_file($abs) && $root && str_starts_with((string) realpath($abs), $root)) {
                 @unlink($abs);
             }
-            DB::delete('product_documents', 'id = :id AND company_id = :c', ['id' => (int) $d['id'], 'c' => $cid]);
+            DB::delete('product_documents', 'id = :id', ['id' => (int) $d['id']]);
         }
         $this->back('/panel/productos');
     }
@@ -297,7 +276,6 @@ final class CatalogAdminController extends Controller
     public function categories(array $params = []): void
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN, Auth::ROLE_SELLER);
-        $cid = (int) $c['id'];
         if (Request::isPost()) {
             Csrf::verify();
             $id = Request::int('id');
@@ -307,14 +285,13 @@ final class CatalogAdminController extends Controller
                 redirect('/panel/categorias');
             }
             $parent = Request::int('parent_id') ?: null;
-            if ($parent && (!Category::find($cid, $parent) || $parent === $id)) {
+            if ($parent && (!Category::find($parent) || $parent === $id)) {
                 $parent = null;
             }
             $data = [
-                'company_id'  => $cid,
                 'parent_id'   => $parent,
                 'name'        => $name,
-                'slug'        => Category::uniqueSlug($cid, Request::str('slug') ?: $name, $id ?: null),
+                'slug'        => Category::uniqueSlug(Request::str('slug') ?: $name, $id ?: null),
                 'code'        => mb_substr(Request::str('code'), 0, 20) ?: null,
                 'description' => mb_substr(Request::str('description'), 0, 3000) ?: null,
                 'active'      => Request::bool('active') ? 1 : 0,
@@ -323,28 +300,28 @@ final class CatalogAdminController extends Controller
             ];
             $f = Uploader::files('image');
             if ($f) {
-                $res = Uploader::image($f[0], $cid, 'categorias', 1200, 900);
+                $res = Uploader::image($f[0], 'categorias', 1200, 900);
                 if ($res) {
                     $data['image'] = $res['path_webp'] ?: $res['path'];
                 }
             }
-            if ($id && Category::find($cid, $id)) {
-                DB::update('categories', $data, 'id = :id AND company_id = :c', ['id' => $id, 'c' => $cid]);
-                Audit::log('categoria.editar', 'category', $id, ['nombre' => $name], $cid);
+            if ($id && Category::find($id)) {
+                DB::update('categories', $data, 'id = :id', ['id' => $id]);
+                Audit::log('categoria.editar', 'category', $id, ['nombre' => $name]);
             } else {
                 $data['created_at'] = nowSql();
-                $data['sort'] = (int) DB::value('SELECT COALESCE(MAX(sort),0)+1 FROM categories WHERE company_id = ?', [$cid], 1);
+                $data['sort'] = (int) DB::value('SELECT COALESCE(MAX(sort),0)+1 FROM categories', [], 1);
                 $id = DB::insert('categories', $data);
-                Audit::log('categoria.crear', 'category', $id, ['nombre' => $name], $cid);
+                Audit::log('categoria.crear', 'category', $id, ['nombre' => $name]);
             }
             Flash::ok('Categoría guardada.');
             redirect('/panel/categorias');
         }
         $this->view('panel/categories', [
             'title' => 'Categorías',
-            'tree'  => Category::tree($cid),
-            'options' => Category::options($cid),
-            'edit'  => Request::int('editar') ? Category::find($cid, Request::int('editar')) : null,
+            'tree'  => Category::tree(),
+            'options' => Category::options(),
+            'edit'  => Request::int('editar') ? Category::find(Request::int('editar')) : null,
         ], 'layout/panel');
     }
 
@@ -352,19 +329,18 @@ final class CatalogAdminController extends Controller
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN, Auth::ROLE_SELLER);
         Csrf::verify();
-        $cid = (int) $c['id'];
         $order = Request::arr('order');
         $i = 0;
         foreach ($order as $entry) {
             $id     = (int) ($entry['id'] ?? 0);
             $parent = (int) ($entry['parent'] ?? 0) ?: null;
-            if (!$id || !Category::find($cid, $id)) {
+            if (!$id || !Category::find($id)) {
                 continue;
             }
-            if ($parent && (!Category::find($cid, $parent) || $parent === $id)) {
+            if ($parent && (!Category::find($parent) || $parent === $id)) {
                 $parent = null;
             }
-            DB::update('categories', ['sort' => $i++, 'parent_id' => $parent], 'id = :id AND company_id = :c', ['id' => $id, 'c' => $cid]);
+            DB::update('categories', ['sort' => $i++, 'parent_id' => $parent], 'id = :id', ['id' => $id]);
         }
         jsonOut(['ok' => true]);
     }
@@ -373,15 +349,14 @@ final class CatalogAdminController extends Controller
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN);
         $this->guardPost();
-        $cid = (int) $c['id'];
         $id = (int) $params['id'];
-        if (!Category::find($cid, $id)) {
+        if (!Category::find($id)) {
             ErrorHandler::render(404);
         }
-        DB::run('UPDATE products SET category_id = NULL WHERE category_id = ? AND company_id = ?', [$id, $cid]);
-        DB::run('UPDATE categories SET parent_id = NULL WHERE parent_id = ? AND company_id = ?', [$id, $cid]);
-        DB::delete('categories', 'id = :id AND company_id = :c', ['id' => $id, 'c' => $cid]);
-        Audit::log('categoria.eliminar', 'category', $id, [], $cid);
+        DB::run('UPDATE products SET category_id = NULL WHERE category_id = ?', [$id]);
+        DB::run('UPDATE categories SET parent_id = NULL WHERE parent_id = ?', [$id]);
+        DB::delete('categories', 'id = :id', ['id' => $id]);
+        Audit::log('categoria.eliminar', 'category', $id, []);
         Flash::ok('Categoría eliminada. Sus productos quedaron sin categoría.');
         redirect('/panel/categorias');
     }
@@ -390,7 +365,6 @@ final class CatalogAdminController extends Controller
     public function brands(array $params = []): void
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN, Auth::ROLE_SELLER);
-        $cid = (int) $c['id'];
         if (Request::isPost()) {
             Csrf::verify();
             $id = Request::int('id');
@@ -400,7 +374,6 @@ final class CatalogAdminController extends Controller
                 redirect('/panel/marcas');
             }
             $data = [
-                'company_id' => $cid,
                 'name'       => $name,
                 'slug'       => slugify($name),
                 'website'    => filter_var(Request::str('website'), FILTER_VALIDATE_URL) ? mb_substr(Request::str('website'), 0, 190) : null,
@@ -409,29 +382,29 @@ final class CatalogAdminController extends Controller
             ];
             $f = Uploader::files('logo');
             if ($f) {
-                $res = Uploader::image($f[0], $cid, 'marcas', 600, 400);
+                $res = Uploader::image($f[0], 'marcas', 600, 400);
                 if ($res) {
                     $data['logo'] = $res['path_webp'] ?: $res['path'];
                 }
             }
-            if ($id && Brand::find($cid, $id)) {
-                DB::update('brands', $data, 'id = :id AND company_id = :c', ['id' => $id, 'c' => $cid]);
+            if ($id && Brand::find($id)) {
+                DB::update('brands', $data, 'id = :id', ['id' => $id]);
             } else {
-                $exists = DB::one('SELECT id FROM brands WHERE company_id = ? AND slug = ? LIMIT 1', [$cid, $data['slug']]);
+                $exists = DB::one('SELECT id FROM brands WHERE slug = ? LIMIT 1', [$data['slug']]);
                 if ($exists) {
                     Flash::error('Ya existe una marca con ese nombre.');
                     redirect('/panel/marcas');
                 }
                 DB::insert('brands', $data);
             }
-            Audit::log('marca.guardar', 'brand', $id, ['nombre' => $name], $cid);
+            Audit::log('marca.guardar', 'brand', $id, ['nombre' => $name]);
             Flash::ok('Marca guardada.');
             redirect('/panel/marcas');
         }
         $this->view('panel/brands', [
             'title'  => 'Marcas que distribuye',
-            'brands' => Brand::all($cid),
-            'edit'   => Request::int('editar') ? Brand::find($cid, Request::int('editar')) : null,
+            'brands' => Brand::all(),
+            'edit'   => Request::int('editar') ? Brand::find(Request::int('editar')) : null,
         ], 'layout/panel');
     }
 
@@ -439,9 +412,8 @@ final class CatalogAdminController extends Controller
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN);
         $this->guardPost();
-        $cid = (int) $c['id'];
-        DB::run('UPDATE products SET brand_id = NULL WHERE brand_id = ? AND company_id = ?', [(int) $params['id'], $cid]);
-        DB::delete('brands', 'id = :id AND company_id = :c', ['id' => (int) $params['id'], 'c' => $cid]);
+        DB::run('UPDATE products SET brand_id = NULL WHERE brand_id = ?', [(int) $params['id']]);
+        DB::delete('brands', 'id = :id', ['id' => (int) $params['id']]);
         Flash::ok('Marca eliminada.');
         redirect('/panel/marcas');
     }
@@ -450,7 +422,6 @@ final class CatalogAdminController extends Controller
     public function attributes(array $params = []): void
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN, Auth::ROLE_SELLER);
-        $cid = (int) $c['id'];
         if (Request::isPost()) {
             Csrf::verify();
             $id = Request::int('id');
@@ -465,11 +436,10 @@ final class CatalogAdminController extends Controller
             }
             $opts = array_values(array_filter(array_map('trim', explode("\n", Request::str('options')))));
             $catId = Request::int('category_id') ?: null;
-            if ($catId && !Category::find($cid, $catId)) {
+            if ($catId && !Category::find($catId)) {
                 $catId = null;
             }
             $data = [
-                'company_id'  => $cid,
                 'category_id' => $catId,
                 'code'        => mb_substr(Request::str('code') ?: slugify($label, '_'), 0, 50),
                 'label'       => $label,
@@ -479,8 +449,8 @@ final class CatalogAdminController extends Controller
                 'filterable'  => Request::bool('filterable') ? 1 : 0,
                 'sort'        => Request::int('sort'),
             ];
-            if ($id && AttributeDef::find($cid, $id)) {
-                DB::update('attribute_defs', $data, 'id = :id AND company_id = :c', ['id' => $id, 'c' => $cid]);
+            if ($id && AttributeDef::find($id)) {
+                DB::update('attribute_defs', $data, 'id = :id', ['id' => $id]);
             } else {
                 DB::insert('attribute_defs', $data);
             }
@@ -489,9 +459,9 @@ final class CatalogAdminController extends Controller
         }
         $this->view('panel/attributes', [
             'title'   => 'Atributos técnicos',
-            'attrs'   => AttributeDef::all($cid),
-            'options' => Category::options($cid),
-            'edit'    => Request::int('editar') ? AttributeDef::find($cid, Request::int('editar')) : null,
+            'attrs'   => AttributeDef::all(),
+            'options' => Category::options(),
+            'edit'    => Request::int('editar') ? AttributeDef::find(Request::int('editar')) : null,
         ], 'layout/panel');
     }
 
@@ -499,9 +469,8 @@ final class CatalogAdminController extends Controller
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN);
         $this->guardPost();
-        $cid = (int) $c['id'];
-        DB::delete('product_attributes', 'attribute_id = :a AND company_id = :c', ['a' => (int) $params['id'], 'c' => $cid]);
-        DB::delete('attribute_defs', 'id = :id AND company_id = :c', ['id' => (int) $params['id'], 'c' => $cid]);
+        DB::delete('product_attributes', 'attribute_id = :a', ['a' => (int) $params['id']]);
+        DB::delete('attribute_defs', 'id = :id', ['id' => (int) $params['id']]);
         Flash::ok('Atributo eliminado.');
         redirect('/panel/atributos');
     }
@@ -510,7 +479,6 @@ final class CatalogAdminController extends Controller
     public function priceLists(array $params = []): void
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN);
-        $cid = (int) $c['id'];
         if (Request::isPost()) {
             Csrf::verify();
             $id = Request::int('id');
@@ -520,27 +488,26 @@ final class CatalogAdminController extends Controller
                 redirect('/panel/listas-precios');
             }
             $data = [
-                'company_id'   => $cid,
                 'name'         => $name,
                 'discount_pct' => max(0, min(90, Request::float('discount_pct'))),
                 'is_default'   => Request::bool('is_default') ? 1 : 0,
             ];
             if ($data['is_default']) {
-                DB::run('UPDATE price_lists SET is_default = 0 WHERE company_id = ?', [$cid]);
+                DB::run('UPDATE price_lists SET is_default = 0');
             }
-            if ($id && DB::one('SELECT id FROM price_lists WHERE id = ? AND company_id = ?', [$id, $cid])) {
-                DB::update('price_lists', $data, 'id = :id AND company_id = :c', ['id' => $id, 'c' => $cid]);
+            if ($id && DB::one('SELECT id FROM price_lists WHERE id = ?', [$id])) {
+                DB::update('price_lists', $data, 'id = :id', ['id' => $id]);
             } else {
                 DB::insert('price_lists', $data);
             }
-            Audit::log('lista_precios.guardar', 'price_list', $id, ['nombre' => $name], $cid);
+            Audit::log('lista_precios.guardar', 'price_list', $id, ['nombre' => $name]);
             Flash::ok('Lista de precios guardada.');
             redirect('/panel/listas-precios');
         }
         $this->view('panel/price-lists', [
             'title' => 'Listas de precios',
-            'lists' => DB::all('SELECT pl.*, (SELECT COUNT(*) FROM customers cu WHERE cu.price_list_id = pl.id) AS clientes FROM price_lists pl WHERE pl.company_id = ? ORDER BY pl.name', [$cid]),
-            'edit'  => Request::int('editar') ? DB::one('SELECT * FROM price_lists WHERE id = ? AND company_id = ?', [Request::int('editar'), $cid]) : null,
+            'lists' => DB::all('SELECT pl.*, (SELECT COUNT(*) FROM customers cu WHERE cu.price_list_id = pl.id) AS clientes FROM price_lists pl ORDER BY pl.name'),
+            'edit'  => Request::int('editar') ? DB::one('SELECT * FROM price_lists WHERE id = ?', [Request::int('editar')]) : null,
         ], 'layout/panel');
     }
 
@@ -548,10 +515,9 @@ final class CatalogAdminController extends Controller
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN);
         $this->guardPost();
-        $cid = (int) $c['id'];
-        DB::run('UPDATE customers SET price_list_id = NULL WHERE price_list_id = ? AND company_id = ?', [(int) $params['id'], $cid]);
-        DB::delete('product_prices', 'price_list_id = :l AND company_id = :c', ['l' => (int) $params['id'], 'c' => $cid]);
-        DB::delete('price_lists', 'id = :id AND company_id = :c', ['id' => (int) $params['id'], 'c' => $cid]);
+        DB::run('UPDATE customers SET price_list_id = NULL WHERE price_list_id = ?', [(int) $params['id']]);
+        DB::delete('product_prices', 'price_list_id = :l', ['l' => (int) $params['id']]);
+        DB::delete('price_lists', 'id = :id', ['id' => (int) $params['id']]);
         Flash::ok('Lista eliminada.');
         redirect('/panel/listas-precios');
     }

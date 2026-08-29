@@ -19,9 +19,8 @@ final class CustomerController extends Controller
     public function index(array $params = []): void
     {
         [$u, $c] = $this->panel();
-        $cid = (int) $c['id'];
         [$page, $per, $offset] = Request::page(25);
-        [$rows, $total] = Customer::search($cid, [
+        [$rows, $total] = Customer::search([
             'q'       => Request::str('q'),
             'user_id' => Auth::ownerFilter() ?: Request::int('vendedor'),
             'limit'   => $per,
@@ -33,16 +32,15 @@ final class CustomerController extends Controller
             'total'   => $total,
             'page'    => $page,
             'pages'   => (int) ceil($total / $per),
-            'sellers' => DB::all('SELECT id, name FROM users WHERE company_id = ? AND role IN ("admin","vendedor") ORDER BY name', [$cid]),
+            'sellers' => DB::all('SELECT id, name FROM users WHERE role IN ("admin","vendedor") ORDER BY name'),
         ], 'layout/panel');
     }
 
     public function form(array $params = []): void
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN, Auth::ROLE_SELLER);
-        $cid = (int) $c['id'];
         $id  = (int) ($params['id'] ?? 0);
-        $cu  = $id ? Customer::find($cid, $id) : null;
+        $cu  = $id ? Customer::find($id) : null;
         if ($id && !$cu) {
             ErrorHandler::render(404);
         }
@@ -62,16 +60,15 @@ final class CustomerController extends Controller
             if (Auth::isSeller()) {
                 $assigned = (int) $u['id'];
             }
-            if ($assigned && !DB::one('SELECT id FROM users WHERE id = ? AND company_id = ?', [$assigned, $cid])) {
+            if ($assigned && !DB::one('SELECT id FROM users WHERE id = ?', [$assigned])) {
                 $assigned = null;
             }
             $pl = Request::int('price_list_id') ?: null;
-            if ($pl && !DB::one('SELECT id FROM price_lists WHERE id = ? AND company_id = ?', [$pl, $cid])) {
+            if ($pl && !DB::one('SELECT id FROM price_lists WHERE id = ?', [$pl])) {
                 $pl = null;
             }
             $next = Request::str('next_followup');
             $data = [
-                'company_id'       => $cid,
                 'name'             => $name,
                 'legal_name'       => mb_substr(Request::str('legal_name'), 0, 200) ?: null,
                 'nit'              => mb_substr(Request::str('nit'), 0, 30) ?: null,
@@ -88,12 +85,12 @@ final class CustomerController extends Controller
                 'updated_at'       => nowSql(),
             ];
             if ($id) {
-                DB::update('customers', $data, 'id = :id AND company_id = :c', ['id' => $id, 'c' => $cid]);
-                Audit::log('cliente.editar', 'customer', $id, ['nombre' => $name], $cid);
+                DB::update('customers', $data, 'id = :id', ['id' => $id]);
+                Audit::log('cliente.editar', 'customer', $id, ['nombre' => $name]);
             } else {
                 $data['created_at'] = nowSql();
                 $id = DB::insert('customers', $data);
-                Audit::log('cliente.crear', 'customer', $id, ['nombre' => $name], $cid);
+                Audit::log('cliente.crear', 'customer', $id, ['nombre' => $name]);
             }
             Flash::ok('Cliente guardado.');
             redirect('/panel/clientes/' . $id);
@@ -102,10 +99,10 @@ final class CustomerController extends Controller
         $this->view('panel/customer-form', [
             'title'      => $cu ? $cu['name'] : 'Nuevo cliente',
             'cu'         => $cu,
-            'contacts'   => $cu ? Customer::contacts($cid, (int) $cu['id']) : [],
-            'quotes'     => $cu ? Customer::quotes($cid, (int) $cu['id']) : [],
-            'sellers'    => DB::all('SELECT id, name FROM users WHERE company_id = ? AND role IN ("admin","vendedor") AND status = "activo" ORDER BY name', [$cid]),
-            'priceLists' => DB::all('SELECT * FROM price_lists WHERE company_id = ? ORDER BY name', [$cid]),
+            'contacts'   => $cu ? Customer::contacts((int) $cu['id']) : [],
+            'quotes'     => $cu ? Customer::quotes((int) $cu['id']) : [],
+            'sellers'    => DB::all('SELECT id, name FROM users WHERE role IN ("admin","vendedor") AND status = "activo" ORDER BY name'),
+            'priceLists' => DB::all('SELECT * FROM price_lists ORDER BY name'),
         ], 'layout/panel');
     }
 
@@ -113,8 +110,7 @@ final class CustomerController extends Controller
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN, Auth::ROLE_SELLER);
         $this->guardPost();
-        $cid = (int) $c['id'];
-        $cu = Customer::find($cid, (int) $params['id']);
+        $cu = Customer::find((int) $params['id']);
         if (!$cu) {
             ErrorHandler::render(404);
         }
@@ -124,10 +120,9 @@ final class CustomerController extends Controller
             redirect('/panel/clientes/' . $cu['id']);
         }
         if (Request::bool('is_primary')) {
-            DB::run('UPDATE customer_contacts SET is_primary = 0 WHERE customer_id = ? AND company_id = ?', [(int) $cu['id'], $cid]);
+            DB::run('UPDATE customer_contacts SET is_primary = 0 WHERE customer_id = ?', [(int) $cu['id']]);
         }
         DB::insert('customer_contacts', [
-            'company_id'  => $cid,
             'customer_id' => (int) $cu['id'],
             'name'        => $name,
             'position'    => mb_substr(Request::str('position'), 0, 90) ?: null,
@@ -143,7 +138,7 @@ final class CustomerController extends Controller
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN, Auth::ROLE_SELLER);
         $this->guardPost();
-        DB::delete('customer_contacts', 'id = :id AND company_id = :c', ['id' => (int) $params['id'], 'c' => (int) $c['id']]);
+        DB::delete('customer_contacts', 'id = :id', ['id' => (int) $params['id']]);
         $this->back('/panel/clientes');
     }
 
@@ -151,12 +146,11 @@ final class CustomerController extends Controller
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN);
         $this->guardPost();
-        $cid = (int) $c['id'];
         $id = (int) $params['id'];
-        DB::run('UPDATE quotes SET customer_id = NULL WHERE customer_id = ? AND company_id = ?', [$id, $cid]);
-        DB::delete('customer_contacts', 'customer_id = :cu AND company_id = :c', ['cu' => $id, 'c' => $cid]);
-        DB::delete('customers', 'id = :id AND company_id = :c', ['id' => $id, 'c' => $cid]);
-        Audit::log('cliente.eliminar', 'customer', $id, [], $cid);
+        DB::run('UPDATE quotes SET customer_id = NULL WHERE customer_id = ?', [$id]);
+        DB::delete('customer_contacts', 'customer_id = :cu', ['cu' => $id]);
+        DB::delete('customers', 'id = :id', ['id' => $id]);
+        Audit::log('cliente.eliminar', 'customer', $id, []);
         Flash::ok('Cliente eliminado.');
         redirect('/panel/clientes');
     }
@@ -164,8 +158,7 @@ final class CustomerController extends Controller
     public function export(array $params = []): void
     {
         [$u, $c] = $this->panel();
-        $cid = (int) $c['id'];
-        [$rows] = Customer::search($cid, ['limit' => 5000, 'user_id' => Auth::ownerFilter()]);
+        [$rows] = Customer::search(['limit' => 5000, 'user_id' => Auth::ownerFilter()]);
         $data = [['Nombre', 'Razón social', 'NIT', 'Correo', 'Teléfono', 'Ciudad', 'Sector', 'Lista de precios', 'Vendedor', 'Cotizaciones', 'Monto ganado']];
         foreach ($rows as $r) {
             $data[] = [

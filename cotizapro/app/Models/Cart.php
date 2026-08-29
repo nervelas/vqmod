@@ -7,29 +7,26 @@ use App\Core\App;
 use App\Core\DB;
 
 /**
- * Carrito de COTIZACIÓN (no de compra) guardado en sesión, aislado por empresa.
+ * Carrito de COTIZACIÓN (no de compra) guardado en la sesión del visitante.
  */
 final class Cart
 {
-    private static function &bag(int $companyId): array
+    private static function &bag(): array
     {
         App::startSession();
         if (!isset($_SESSION['cart']) || !is_array($_SESSION['cart'])) {
             $_SESSION['cart'] = [];
         }
-        if (!isset($_SESSION['cart'][$companyId]) || !is_array($_SESSION['cart'][$companyId])) {
-            $_SESSION['cart'][$companyId] = [];
-        }
-        return $_SESSION['cart'][$companyId];
+        return $_SESSION['cart'];
     }
 
-    public static function add(int $companyId, int $productId, float $qty = 1, string $note = ''): bool
+    public static function add(int $productId, float $qty = 1, string $note = ''): bool
     {
-        $p = DB::one('SELECT id, min_qty FROM products WHERE id = ? AND company_id = ? AND active = 1 LIMIT 1', [$productId, $companyId]);
+        $p = DB::one('SELECT id, min_qty FROM products WHERE id = ? AND active = 1 LIMIT 1', [$productId]);
         if (!$p) {
             return false;
         }
-        $bag = &self::bag($companyId);
+        $bag = &self::bag();
         $qty = max(0.01, min(999999, $qty));
         if (isset($bag[$productId])) {
             $bag[$productId]['qty'] = min(999999, (float) $bag[$productId]['qty'] + $qty);
@@ -42,9 +39,9 @@ final class Cart
         return true;
     }
 
-    public static function setQty(int $companyId, int $productId, float $qty): void
+    public static function setQty(int $productId, float $qty): void
     {
-        $bag = &self::bag($companyId);
+        $bag = &self::bag();
         if (!isset($bag[$productId])) {
             return;
         }
@@ -55,40 +52,40 @@ final class Cart
         $bag[$productId]['qty'] = min(999999, $qty);
     }
 
-    public static function setNote(int $companyId, int $productId, string $note): void
+    public static function setNote(int $productId, string $note): void
     {
-        $bag = &self::bag($companyId);
+        $bag = &self::bag();
         if (isset($bag[$productId])) {
             $bag[$productId]['note'] = mb_substr($note, 0, 300);
         }
     }
 
-    public static function remove(int $companyId, int $productId): void
+    public static function remove(int $productId): void
     {
-        $bag = &self::bag($companyId);
+        $bag = &self::bag();
         unset($bag[$productId]);
     }
 
-    public static function clear(int $companyId): void
+    public static function clear(): void
     {
-        $bag = &self::bag($companyId);
+        $bag = &self::bag();
         $bag = [];
     }
 
-    public static function count(int $companyId): int
+    public static function count(): int
     {
-        return count(self::bag($companyId));
+        return count(self::bag());
     }
 
-    public static function raw(int $companyId): array
+    public static function raw(): array
     {
-        return self::bag($companyId);
+        return self::bag();
     }
 
     /** Líneas completas con datos frescos del catálogo. */
-    public static function lines(int $companyId): array
+    public static function lines(): array
     {
-        $bag = self::bag($companyId);
+        $bag = self::bag();
         if (!$bag) {
             return [];
         }
@@ -96,11 +93,11 @@ final class Cart
         $in  = implode(',', array_fill(0, count($ids), '?'));
         $rows = DB::all(
             "SELECT p.*, c.name AS category_name FROM products p
-             LEFT JOIN categories c ON c.id = p.category_id AND c.company_id = p.company_id
-             WHERE p.company_id = ? AND p.id IN ($in) AND p.active = 1",
-            array_merge([$companyId], $ids)
+             LEFT JOIN categories c ON c.id = p.category_id
+             WHERE p.id IN ($in) AND p.active = 1",
+            $ids
         );
-        $rows = Product::attachImages($companyId, $rows);
+        $rows = Product::attachImages($rows);
         $out = [];
         foreach ($rows as $r) {
             $id = (int) $r['id'];
@@ -112,7 +109,7 @@ final class Cart
         $live = array_map(static fn ($r) => (int) $r['id'], $rows);
         foreach ($ids as $id) {
             if (!in_array($id, $live, true)) {
-                self::remove($companyId, $id);
+                self::remove($id);
             }
         }
         return $out;

@@ -15,7 +15,6 @@ final class BoardController extends Controller
     public function index(array $params = []): void
     {
         [$u, $c] = $this->panel();
-        $cid = (int) $c['id'];
         $mine = Auth::ownerFilter();
         $userFilter = Request::int('vendedor');
         if ($mine) {
@@ -24,7 +23,7 @@ final class BoardController extends Controller
 
         $columns = [];
         foreach (array_keys(Quote::STATUSES) as $st) {
-            [$rows, $total] = Quote::search($cid, [
+            [$rows, $total] = Quote::search([
                 'status'  => [$st],
                 'user_id' => $userFilter,
                 'q'       => Request::str('q'),
@@ -41,7 +40,7 @@ final class BoardController extends Controller
         $this->view('panel/board', [
             'title'   => 'Tablero de cotizaciones',
             'columns' => $columns,
-            'sellers' => DB::all('SELECT id, name FROM users WHERE company_id = ? AND role IN ("admin","vendedor") AND status = "activo" ORDER BY name', [$cid]),
+            'sellers' => DB::all('SELECT id, name FROM users WHERE role IN ("admin","vendedor") AND status = "activo" ORDER BY name'),
             'userFilter' => $userFilter,
         ], 'layout/panel');
     }
@@ -51,11 +50,10 @@ final class BoardController extends Controller
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN, Auth::ROLE_SELLER);
         Csrf::verify();
-        $cid = (int) $c['id'];
         $id  = Request::int('id');
         $to  = Request::str('status');
 
-        $q = Quote::find($cid, $id);
+        $q = Quote::find($id);
         if (!$q) {
             jsonOut(['ok' => false, 'error' => 'Cotización no encontrada'], 404);
         }
@@ -68,26 +66,25 @@ final class BoardController extends Controller
         if ($to === 'perdida' && Request::str('lost_reason') === '') {
             jsonOut(['ok' => false, 'needReason' => true, 'reasons' => \App\Models\Company::LOST_REASONS]);
         }
-        Quote::setStatus($cid, $id, $to, [
+        Quote::setStatus($id, $to, [
             'lost_reason' => Request::str('lost_reason'),
             'lost_detail' => Request::str('lost_detail'),
         ]);
-        $fresh = Quote::find($cid, $id);
+        $fresh = Quote::find($id);
         jsonOut([
             'ok'    => true,
             'light' => Quote::trafficLight($fresh),
-            'totals' => $this->columnTotals($cid),
+            'totals' => $this->columnTotals(),
         ]);
     }
 
-    private function columnTotals(int $cid): array
+    private function columnTotals(): array
     {
         $out = [];
         $mine = Auth::ownerFilter();
         foreach (DB::all(
             'SELECT status, COUNT(*) n, COALESCE(SUM(total),0) monto FROM quotes
-             WHERE company_id = ? AND is_current = 1' . ($mine ? ' AND user_id = ' . (int) $mine : '') . ' GROUP BY status',
-            [$cid]
+             WHERE is_current = 1' . ($mine ? ' AND user_id = ' . (int) $mine : '') . ' GROUP BY status'
         ) as $r) {
             $out[$r['status']] = ['n' => (int) $r['n'], 'monto' => (float) $r['monto']];
         }

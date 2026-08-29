@@ -47,8 +47,8 @@ self.addEventListener('fetch', function (ev) {
   var url;
   try { url = new URL(req.url); } catch (e) { return; }
   if (url.origin !== self.location.origin) { return; }
-  // Nunca se cachea el panel, el superadmin ni las descargas.
-  if (/\/(panel|super|install|cron|c\/)/.test(url.pathname) && !isAsset(url)) {
+  // Nunca se cachea el panel ni las descargas.
+  if (/\/(panel|install|cron|c\/)/.test(url.pathname) && !isAsset(url)) {
     ev.respondWith(fetch(req).catch(function () { return caches.match(OFFLINE); }));
     return;
   }

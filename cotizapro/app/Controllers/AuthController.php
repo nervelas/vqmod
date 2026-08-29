@@ -14,7 +14,6 @@ use App\Core\RateLimit;
 use App\Core\Request;
 use App\Core\Security;
 use App\Models\Company;
-use App\Models\Setting;
 
 final class AuthController extends Controller
 {
@@ -24,7 +23,7 @@ final class AuthController extends Controller
     public function login(array $params = []): void
     {
         if (Auth::check()) {
-            redirect(Auth::isSuper() ? '/super' : '/panel');
+            redirect('/panel');
         }
         $error = '';
         if (Request::isPost()) {
@@ -50,30 +49,20 @@ final class AuthController extends Controller
                         DB::update('users', ['password' => Security::hashPassword($pass)], 'id = :id', ['id' => (int) $u['id']]);
                     }
                     RateLimit::clear('login_user', $ident);
-                    // Empresa suspendida o vencida: no se permite entrar al panel.
-                    if ($u['company_id']) {
-                        $c = Company::find((int) $u['company_id']);
-                        if (!Company::isLive($c)) {
-                            $error = 'La cuenta de su empresa está suspendida o venció. Contacte al administrador.';
-                            Audit::log('login.empresa_inactiva', 'user', (int) $u['id'], [], (int) $u['company_id']);
-                            $this->render($error);
-                            return;
-                        }
-                    }
-                    if ((int) $u['twofa_enabled'] === 1 && in_array($u['role'], ['admin', 'superadmin'], true)) {
+                    if ((int) $u['twofa_enabled'] === 1 && $u['role'] === 'admin') {
                         Auth::login($u, true);
                         $this->sendTwoFactor($u);
                         redirect('/verificar');
                     }
                     Auth::login($u);
-                    Audit::log('login.ok', 'user', (int) $u['id'], [], $u['company_id'] ? (int) $u['company_id'] : null);
+                    Audit::log('login.ok', 'user', (int) $u['id']);
                     App::startSession();
                     $to = (string) ($_SESSION['intended'] ?? '');
                     unset($_SESSION['intended']);
-                    if ($to !== '' && str_starts_with($to, '/panel') && $u['role'] !== 'superadmin') {
+                    if ($to !== '' && str_starts_with($to, '/panel')) {
                         redirect($to);
                     }
-                    redirect($u['role'] === 'superadmin' ? '/super' : '/panel');
+                    redirect('/panel');
                 }
                 $left = RateLimit::remaining('login_user', $ident, self::MAX_TRIES);
                 $error = 'Usuario o contraseña incorrectos.' . ($left > 0 && $left < 3 ? " Le quedan {$left} intento(s)." : '');
@@ -116,8 +105,8 @@ final class AuthController extends Controller
                     if ($u) {
                         RateLimit::clear('2fa', (string) $uid);
                         Auth::login($u);
-                        Audit::log('login.2fa', 'user', $uid, [], $u['company_id'] ? (int) $u['company_id'] : null);
-                        redirect($u['role'] === 'superadmin' ? '/super' : '/panel');
+                        Audit::log('login.2fa', 'user', $uid);
+                        redirect('/panel');
                     }
                 }
                 $error = 'El código no es válido o ya venció.';
@@ -135,7 +124,7 @@ final class AuthController extends Controller
             'expires_at' => date('Y-m-d H:i:s', time() + 900),
             'created_at' => nowSql(),
         ]);
-        $company = $u['company_id'] ? Company::find((int) $u['company_id']) : null;
+        $company = Company::get();
         $body = '<p>Su código de verificación es:</p>'
               . '<p style="font:700 30px/1 Helvetica,Arial,sans-serif;letter-spacing:.22em;margin:18px 0">' . e($code) . '</p>'
               . '<p>Vence en 15 minutos. Si no fue usted quien inició sesión, cambie su contraseña.</p>';
@@ -145,9 +134,8 @@ final class AuthController extends Controller
     public function logout(array $params = []): void
     {
         $id = Auth::id();
-        $cid = Auth::companyId();
         if ($id) {
-            Audit::log('logout', 'user', $id, [], $cid);
+            Audit::log('logout', 'user', $id);
         }
         Auth::logout();
         Flash::ok('Su sesión se cerró correctamente.');
@@ -177,12 +165,12 @@ final class AuthController extends Controller
                         'ip'         => App::ip(),
                         'created_at' => nowSql(),
                     ]);
-                    $company = $u['company_id'] ? Company::find((int) $u['company_id']) : null;
+                    $company = Company::get();
                     $link = absUrl('/restablecer/' . $token);
                     $body = '<p>Recibimos una solicitud para restablecer la contraseña de <strong>' . e($u['email']) . '</strong>.</p>'
                           . '<p>El enlace es de un solo uso y vence en 30 minutos.</p>';
                     Mailer::send($email, 'Restablecer su contraseña', Mailer::template('Restablecer contraseña', $body, $company, 'Crear nueva contraseña', $link), $company);
-                    Audit::log('password.solicitud', 'user', (int) $u['id'], [], $u['company_id'] ? (int) $u['company_id'] : null);
+                    Audit::log('password.solicitud', 'user', (int) $u['id']);
                 }
                 // Respuesta idéntica exista o no la cuenta (no revela usuarios).
                 $sent = true;

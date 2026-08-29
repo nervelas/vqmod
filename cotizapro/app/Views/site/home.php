@@ -1,5 +1,5 @@
 <?php
-$base = url('/e/' . $company['slug']);
+$base = rtrim(url('/'), '/');
 $hero = !empty($company['hero_image']) ? upload($company['hero_image']) : url('/assets/img/industry/hero-taller.jpg');
 $heroWebp = !empty($company['hero_image']) ? '' : url('/assets/img/industry/hero-taller.webp');
 page('preloadImage', $heroWebp !== ''

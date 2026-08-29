@@ -1,5 +1,5 @@
 <?php
-$base = url('/e/' . $company['slug']);
+$base = rtrim(url('/'), '/');
 $main = $images[0] ?? null;
 $mainSrc = $main ? upload($main['path_webp'] ?: $main['path']) : url('/assets/img/plates/sello-mecanico.svg');
 $sym = (string) $company['currency_symbol'];
@@ -10,7 +10,7 @@ $ld = [
     'sku'      => $p['code'],
     'description' => str_limit((string) ($p['short_desc'] ?: $p['description']), 300),
     'image'    => $main ? absUrl(parse_url(upload($main['path']), PHP_URL_PATH) ?: '') : absUrl('/assets/img/plates/sello-mecanico.svg'),
-    'url'      => absUrl('/e/' . $company['slug'] . '/producto/' . $p['slug']),
+    'url'      => absUrl('/producto/' . $p['slug']),
     'brand'    => ['@type' => 'Brand', 'name' => $p['brand_name'] ?: $company['name']],
     'category' => $p['category_name'] ?: 'Industrial',
 ];
@@ -30,15 +30,15 @@ if ($showPrice && (float) $p['price'] > 0) {
         'priceSpecification' => ['@type' => 'PriceSpecification', 'priceCurrency' => 'GTQ']];
 }
 $org = ['@context' => 'https://schema.org', '@type' => 'Organization', 'name' => $company['name'],
-    'url' => absUrl('/e/' . $company['slug']),
+    'url' => absUrl('/'),
     'telephone' => (string) $company['phone'], 'email' => (string) $company['email'],
     'address' => ['@type' => 'PostalAddress', 'streetAddress' => (string) $company['address'],
         'addressLocality' => (string) $company['city'], 'addressCountry' => (string) $company['country']]];
 $crumbLd = ['@context' => 'https://schema.org', '@type' => 'BreadcrumbList', 'itemListElement' => []];
 $pos = 1;
-$crumbLd['itemListElement'][] = ['@type' => 'ListItem', 'position' => $pos++, 'name' => 'Catálogo', 'item' => absUrl('/e/' . $company['slug'] . '/catalogo')];
+$crumbLd['itemListElement'][] = ['@type' => 'ListItem', 'position' => $pos++, 'name' => 'Catálogo', 'item' => absUrl('/catalogo')];
 foreach ($crumbs as $c) {
-    $crumbLd['itemListElement'][] = ['@type' => 'ListItem', 'position' => $pos++, 'name' => $c['name'], 'item' => absUrl('/e/' . $company['slug'] . '/categoria/' . $c['slug'])];
+    $crumbLd['itemListElement'][] = ['@type' => 'ListItem', 'position' => $pos++, 'name' => $c['name'], 'item' => absUrl('/categoria/' . $c['slug'])];
 }
 $crumbLd['itemListElement'][] = ['@type' => 'ListItem', 'position' => $pos, 'name' => $p['name'], 'item' => $ld['url']];
 ?>
@@ -47,7 +47,7 @@ $crumbLd['itemListElement'][] = ['@type' => 'ListItem', 'position' => $pos, 'nam
 <div class="section section--tight blueprint" style="padding-top:34px">
   <div class="wrap">
     <nav class="crumbs" aria-label="Ruta">
-      <a href="<?= e($base) ?>">Inicio</a><span aria-hidden="true">/</span>
+      <a href="<?= e(url("/")) ?>">Inicio</a><span aria-hidden="true">/</span>
       <a href="<?= e($base . '/catalogo') ?>">Catálogo</a>
       <?php foreach ($crumbs as $c): ?>
         <span aria-hidden="true">/</span><a href="<?= e($base . '/categoria/' . $c['slug']) ?>"><?= e($c['name']) ?></a>

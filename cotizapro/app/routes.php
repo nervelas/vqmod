@@ -4,7 +4,6 @@ declare(strict_types=1);
 /** @var \App\Core\Router $router */
 
 use App\Controllers\AuthController;
-use App\Controllers\LandingController;
 use App\Controllers\MediaController;
 use App\Controllers\Panel\BoardController;
 use App\Controllers\Panel\CatalogAdminController;
@@ -16,15 +15,8 @@ use App\Controllers\Panel\ReportController;
 use App\Controllers\Panel\SettingsController;
 use App\Controllers\Panel\UserController;
 use App\Controllers\SiteController;
-use App\Controllers\Super\CompanyAdminController;
-use App\Controllers\Super\PlatformController;
+use App\Controllers\SystemController;
 use App\Controllers\TrackController;
-
-// --------------------------------------------------------------- plataforma
-$router->get('/', [LandingController::class, 'home']);
-$router->get('/planes', [LandingController::class, 'plans']);
-$router->get('/demo', [LandingController::class, 'demo']);
-$router->post('/contacto', [LandingController::class, 'contact']);
 
 // ------------------------------------------------------------------ sesión
 $router->any('/entrar', [AuthController::class, 'login']);
@@ -34,18 +26,17 @@ $router->any('/recuperar', [AuthController::class, 'forgot']);
 $router->any('/restablecer/{token:[a-f0-9]+}', [AuthController::class, 'reset']);
 
 // ------------------------------------------------------- sitio de la empresa
-$router->get('/e/{slug:[a-z0-9\-]+}', [SiteController::class, 'home']);
-$router->get('/e/{slug:[a-z0-9\-]+}/catalogo', [SiteController::class, 'catalog']);
-$router->get('/e/{slug:[a-z0-9\-]+}/categoria/{cat:[a-z0-9\-]+}', [SiteController::class, 'catalog']);
-$router->get('/e/{slug:[a-z0-9\-]+}/producto/{prod:[a-z0-9\-]+}', [SiteController::class, 'product']);
-$router->get('/e/{slug:[a-z0-9\-]+}/nosotros', [SiteController::class, 'about']);
-$router->get('/e/{slug:[a-z0-9\-]+}/contacto', [SiteController::class, 'contact']);
-$router->any('/e/{slug:[a-z0-9\-]+}/cotizacion', [SiteController::class, 'cart']);
-$router->post('/e/{slug:[a-z0-9\-]+}/enviar', [SiteController::class, 'submit']);
-$router->get('/e/{slug:[a-z0-9\-]+}/recibida/{token:[a-f0-9]+}', [SiteController::class, 'received']);
-$router->get('/e/{slug:[a-z0-9\-]+}/sitemap.xml', [SiteController::class, 'sitemap']);
-$router->post('/e/{slug:[a-z0-9\-]+}/carrito', [SiteController::class, 'cartApi']);
-$router->get('/e/{slug:[a-z0-9\-]+}/sugerencias', [SiteController::class, 'suggest']);
+$router->get('/', [SiteController::class, 'home']);
+$router->get('/catalogo', [SiteController::class, 'catalog']);
+$router->get('/categoria/{cat:[a-z0-9\-]+}', [SiteController::class, 'catalog']);
+$router->get('/producto/{prod:[a-z0-9\-]+}', [SiteController::class, 'product']);
+$router->get('/nosotros', [SiteController::class, 'about']);
+$router->get('/contacto', [SiteController::class, 'contact']);
+$router->any('/cotizacion', [SiteController::class, 'cart']);
+$router->post('/enviar', [SiteController::class, 'submit']);
+$router->get('/recibida/{token:[a-f0-9]+}', [SiteController::class, 'received']);
+$router->post('/carrito', [SiteController::class, 'cartApi']);
+$router->get('/sugerencias', [SiteController::class, 'suggest']);
 
 // ------------------------------------------------ seguimiento público /c/{token}
 $router->get('/c/{token:[a-f0-9]+}', [TrackController::class, 'show']);
@@ -118,29 +109,15 @@ $router->get('/panel/importar/plantilla-clientes', [ImportController::class, 'te
 
 $router->any('/panel/ajustes', [SettingsController::class, 'index']);
 $router->get('/panel/bitacora', [SettingsController::class, 'audit']);
-
-// ------------------------------------------------------------- superadmin
-$router->get('/super', [PlatformController::class, 'dashboard']);
-$router->any('/super/ajustes', [PlatformController::class, 'settings']);
-$router->any('/super/landing', [PlatformController::class, 'landing']);
-$router->post('/super/landing/{id:\d+}/eliminar', [PlatformController::class, 'landingDelete']);
-$router->any('/super/planes', [PlatformController::class, 'plans']);
-$router->post('/super/planes/{id:\d+}/eliminar', [PlatformController::class, 'planDelete']);
-$router->get('/super/respaldos', [PlatformController::class, 'backups']);
-$router->post('/super/respaldos/crear', [PlatformController::class, 'backupCreate']);
-$router->get('/super/respaldos/descargar/{name:[A-Za-z0-9\.\-_]+}', [PlatformController::class, 'backupDownload']);
-$router->post('/super/respaldos/eliminar', [PlatformController::class, 'backupDelete']);
-$router->get('/super/bitacora', [PlatformController::class, 'audit']);
-$router->get('/super/empresas', [CompanyAdminController::class, 'index']);
-$router->any('/super/empresas/nueva', [CompanyAdminController::class, 'form']);
-$router->any('/super/empresas/{id:\d+}', [CompanyAdminController::class, 'form']);
-$router->post('/super/empresas/{id:\d+}/eliminar', [CompanyAdminController::class, 'destroy']);
-$router->get('/super/empresas/{id:\d+}/entrar', [CompanyAdminController::class, 'impersonate']);
+$router->get('/panel/respaldos', [SettingsController::class, 'backups']);
+$router->post('/panel/respaldos/crear', [SettingsController::class, 'backupCreate']);
+$router->get('/panel/respaldos/descargar/{name:[A-Za-z0-9\.\-_]+}', [SettingsController::class, 'backupDownload']);
+$router->post('/panel/respaldos/eliminar', [SettingsController::class, 'backupDelete']);
 
 // ------------------------------------------------------------- utilitarios
 $router->get('/media/{path:.+}', [MediaController::class, 'serve']);
-$router->get('/sitemap.xml', [LandingController::class, 'sitemap']);
-$router->get('/robots.txt', [LandingController::class, 'robots']);
-$router->get('/manifest.webmanifest', [LandingController::class, 'manifest']);
-$router->get('/sw.js', [LandingController::class, 'serviceWorker']);
-$router->get('/offline', [LandingController::class, 'offline']);
+$router->get('/sitemap.xml', [SystemController::class, 'sitemap']);
+$router->get('/robots.txt', [SystemController::class, 'robots']);
+$router->get('/manifest.webmanifest', [SystemController::class, 'manifest']);
+$router->get('/sw.js', [SystemController::class, 'serviceWorker']);
+$router->get('/offline', [SystemController::class, 'offline']);

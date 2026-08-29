@@ -2,7 +2,7 @@
 <div class="cols cols--sidebar">
   <div class="card">
     <div class="card__head"><span class="secnum">01/</span><h2>Respaldos disponibles</h2>
-      <span class="badge ml-auto"><?= e(\App\Controllers\Super\PlatformController::human($dirSize)) ?></span></div>
+      <span class="badge ml-auto"><?= e(\App\Controllers\Panel\SettingsController::human($dirSize)) ?></span></div>
     <div class="card__body card__body--flush tablescroll">
       <?php if (!$rows): ?>
         <p class="muted" style="padding:36px;text-align:center;margin:0">Aún no hay respaldos. Cree el primero a la derecha.</p>
@@ -16,10 +16,10 @@
                 <td class="small"><?= e($b['filename']) ?><?= !$b['exists'] ? ' <span class="badge badge--bad">archivo ausente</span>' : '' ?></td>
                 <td><span class="badge"><?= e(ucfirst((string) $b['kind'])) ?></span></td>
                 <td class="small"><?= e(fechaHora((string) $b['created_at'])) ?></td>
-                <td class="num nowrap"><?= e(\App\Controllers\Super\PlatformController::human((int) $b['size'])) ?></td>
+                <td class="num nowrap"><?= e(\App\Controllers\Panel\SettingsController::human((int) $b['size'])) ?></td>
                 <td class="nowrap">
                   <?php if ($b['exists']): ?>
-                    <a class="btn btn--ghost btn--xs" href="<?= e(url('/super/respaldos/descargar/' . rawurlencode((string) $b['filename']))) ?>">Descargar</a>
+                    <a class="btn btn--ghost btn--xs" href="<?= e(url('/panel/respaldos/descargar/' . rawurlencode((string) $b['filename']))) ?>">Descargar</a>
                   <?php endif; ?>
                   <button class="btn btn--ghost btn--xs" type="submit" form="delbk<?= e($b['id']) ?>">Eliminar</button>
                 </td>
@@ -32,11 +32,11 @@
   </div>
 
   <div class="stack">
-    <form class="card" method="post" action="<?= e(url('/super/respaldos/crear')) ?>">
+    <form class="card" method="post" action="<?= e(url('/panel/respaldos/crear')) ?>">
       <?= csrf_field() ?>
       <div class="card__head"><span class="secnum">02/</span><h2>Crear respaldo</h2></div>
       <div class="card__body">
-        <p class="small muted">Genera un volcado SQL completo (comprimido con gzip) de todas las empresas y sus datos.</p>
+        <p class="small muted">Genera un volcado SQL completo (comprimido con gzip) del catálogo, los clientes y todas las cotizaciones.</p>
         <button class="btn btn--accent btn--block" style="margin-top:14px" type="submit">Respaldar ahora</button>
       </div>
     </form>
@@ -50,7 +50,7 @@
   </div>
 </div>
 <?php foreach ($rows as $b): ?>
-  <form id="delbk<?= e($b['id']) ?>" method="post" action="<?= e(url('/super/respaldos/eliminar')) ?>" class="hide" data-confirm="¿Eliminar este respaldo?">
+  <form id="delbk<?= e($b['id']) ?>" method="post" action="<?= e(url('/panel/respaldos/eliminar')) ?>" class="hide" data-confirm="¿Eliminar este respaldo?">
     <?= csrf_field() ?><input type="hidden" name="name" value="<?= e($b['filename']) ?>">
   </form>
 <?php endforeach; ?>

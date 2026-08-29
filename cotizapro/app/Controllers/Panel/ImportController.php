@@ -54,7 +54,7 @@ final class ImportController extends Controller
         $this->view('panel/import', [
             'title'   => 'Importar catálogo',
             'fields'  => self::FIELDS,
-            'history' => DB::all('SELECT i.*, u.name AS user_name FROM imports i LEFT JOIN users u ON u.id = i.user_id WHERE i.company_id = ? ORDER BY i.id DESC LIMIT 10', [(int) $c['id']]),
+            'history' => DB::all('SELECT i.*, u.name AS user_name FROM imports i LEFT JOIN users u ON u.id = i.user_id ORDER BY i.id DESC LIMIT 10'),
             'step'    => 1,
         ], 'layout/panel');
     }
@@ -114,7 +114,6 @@ final class ImportController extends Controller
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN, Auth::ROLE_SELLER);
         $this->guardPost();
-        $cid = (int) $c['id'];
         App::startSession();
         $path = (string) ($_SESSION['import_file'] ?? '');
         $name = (string) ($_SESSION['import_name'] ?? 'archivo.csv');
@@ -140,7 +139,6 @@ final class ImportController extends Controller
         $ok = 0;
         $err = 0;
         $errors = [];
-        $limitLeft = self::remaining($cid);
 
         foreach ($rows as $n => $row) {
             $line = $n + 2;
@@ -153,15 +151,10 @@ final class ImportController extends Controller
             }
             $code = mb_substr($get('code'), 0, 55);
             try {
-                $existing = $code !== '' ? Product::byCode($cid, $code) : null;
+                $existing = $code !== '' ? Product::byCode($code) : null;
                 if ($existing && !$updateExisting) {
                     $err++;
                     $errors[] = ['fila' => $line, 'motivo' => 'El código ' . $code . ' ya existe (no se actualizó)'];
-                    continue;
-                }
-                if (!$existing && $limitLeft !== null && $limitLeft <= 0) {
-                    $err++;
-                    $errors[] = ['fila' => $line, 'motivo' => 'Se alcanzó el límite de productos del plan'];
                     continue;
                 }
                 $catId = null;
@@ -175,16 +168,15 @@ final class ImportController extends Controller
                         if ($part === '') {
                             continue;
                         }
-                        $catId = self::ensureCategory($cid, $part, $parentId);
+                        $catId = self::ensureCategory($part, $parentId);
                         $parentId = $catId;
                     }
                 }
-                $brandId = $get('brand') !== '' ? Brand::findOrCreate($cid, $get('brand')) : null;
+                $brandId = $get('brand') !== '' ? Brand::findOrCreate($get('brand')) : null;
                 $priceRaw = str_replace([',', ' ', 'Q', '$'], '', $get('price'));
                 $active = $get('active') !== '' ? self::truthy($get('active')) : ($defaultActive ? 1 : 0);
 
                 $data = [
-                    'company_id'  => $cid,
                     'category_id' => $catId,
                     'brand_id'    => $brandId,
                     'name'        => $pname,
@@ -199,15 +191,12 @@ final class ImportController extends Controller
                 ];
                 if ($existing) {
                     $pid = (int) $existing['id'];
-                    DB::update('products', $data, 'id = :id AND company_id = :c', ['id' => $pid, 'c' => $cid]);
+                    DB::update('products', $data, 'id = :id', ['id' => $pid]);
                 } else {
-                    $data['code']       = Product::uniqueCode($cid, $code !== '' ? $code : strtoupper(substr(slugify($pname), 0, 10)) . '-' . random_int(100, 999));
-                    $data['slug']       = Product::uniqueSlug($cid, $pname);
+                    $data['code']       = Product::uniqueCode($code !== '' ? $code : strtoupper(substr(slugify($pname), 0, 10)) . '-' . random_int(100, 999));
+                    $data['slug']       = Product::uniqueSlug($pname);
                     $data['created_at'] = nowSql();
                     $pid = DB::insert('products', $data);
-                    if ($limitLeft !== null) {
-                        $limitLeft--;
-                    }
                 }
                 // Atributos técnicos (hasta 3 pares nombre/valor).
                 for ($a = 1; $a <= 3; $a++) {
@@ -216,12 +205,12 @@ final class ImportController extends Controller
                     if ($an === '' || $av === '') {
                         continue;
                     }
-                    $aid = self::ensureAttribute($cid, $an, $catId);
+                    $aid = self::ensureAttribute($an, $catId);
                     $av = mb_substr(trim(explode(',', $av)[0]), 0, 190);
                     DB::run(
-                        'INSERT INTO product_attributes (company_id, product_id, attribute_id, value) VALUES (?,?,?,?)
+                        'INSERT INTO product_attributes (product_id, attribute_id, value) VALUES (?,?,?)
                          ON DUPLICATE KEY UPDATE value = VALUES(value)',
-                        [$cid, $pid, $aid, $av]
+                        [$pid, $aid, $av]
                     );
                 }
                 $ok++;
@@ -237,7 +226,6 @@ final class ImportController extends Controller
         }
 
         $importId = DB::insert('imports', [
-            'company_id' => $cid,
             'user_id'    => (int) $u['id'],
             'type'       => 'productos',
             'filename'   => $name,
@@ -247,7 +235,7 @@ final class ImportController extends Controller
             'report'     => json_encode(array_slice($errors, 0, 300), JSON_UNESCAPED_UNICODE),
             'created_at' => nowSql(),
         ]);
-        Audit::log('catalogo.importar', 'import', $importId, ['ok' => $ok, 'error' => $err, 'archivo' => $name], $cid);
+        Audit::log('catalogo.importar', 'import', $importId, ['ok' => $ok, 'error' => $err, 'archivo' => $name]);
         @unlink($path);
         unset($_SESSION['import_file'], $_SESSION['import_name']);
 
@@ -255,18 +243,9 @@ final class ImportController extends Controller
             'title'   => 'Importación finalizada',
             'fields'  => self::FIELDS,
             'result'  => ['ok' => $ok, 'err' => $err, 'total' => count($rows), 'errors' => $errors, 'file' => $name],
-            'history' => DB::all('SELECT i.*, u.name AS user_name FROM imports i LEFT JOIN users u ON u.id = i.user_id WHERE i.company_id = ? ORDER BY i.id DESC LIMIT 10', [$cid]),
+            'history' => DB::all('SELECT i.*, u.name AS user_name FROM imports i LEFT JOIN users u ON u.id = i.user_id ORDER BY i.id DESC LIMIT 10'),
             'step'    => 3,
         ], 'layout/panel');
-    }
-
-    private static function remaining(int $cid): ?int
-    {
-        $lim = Company::limits($cid)['products'];
-        if ($lim <= 0) {
-            return null;
-        }
-        return max(0, $lim - Company::usage($cid)['products']);
     }
 
     private static function truthy(string $v): int
@@ -275,39 +254,37 @@ final class ImportController extends Controller
         return in_array($v, ['1', 'si', 'sí', 'yes', 'true', 'publicado', 'published', 'instock', 'in stock', 'activo'], true) ? 1 : 0;
     }
 
-    private static function ensureCategory(int $cid, string $name, ?int $parentId): int
+    private static function ensureCategory(string $name, ?int $parentId): int
     {
-        $slug = Category::uniqueSlug($cid, $name);
-        $row = DB::one('SELECT id FROM categories WHERE company_id = ? AND name = ? AND (parent_id <=> ?) LIMIT 1', [$cid, mb_substr($name, 0, 140), $parentId]);
+        $slug = Category::uniqueSlug($name);
+        $row = DB::one('SELECT id FROM categories WHERE name = ? AND (parent_id <=> ?) LIMIT 1', [mb_substr($name, 0, 140), $parentId]);
         if ($row) {
             return (int) $row['id'];
         }
         return DB::insert('categories', [
-            'company_id' => $cid,
             'parent_id'  => $parentId,
             'name'       => mb_substr($name, 0, 140),
             'slug'       => $slug,
             'active'     => 1,
-            'sort'       => (int) DB::value('SELECT COALESCE(MAX(sort),0)+1 FROM categories WHERE company_id = ?', [$cid], 1),
+            'sort'       => (int) DB::value('SELECT COALESCE(MAX(sort),0)+1 FROM categories', [], 1),
             'created_at' => nowSql(),
         ]);
     }
 
-    private static function ensureAttribute(int $cid, string $label, ?int $catId): int
+    private static function ensureAttribute(string $label, ?int $catId): int
     {
         $code = mb_substr(slugify($label, '_'), 0, 50);
-        $row = DB::one('SELECT id FROM attribute_defs WHERE company_id = ? AND code = ? LIMIT 1', [$cid, $code]);
+        $row = DB::one('SELECT id FROM attribute_defs WHERE code = ? LIMIT 1', [$code]);
         if ($row) {
             return (int) $row['id'];
         }
         return DB::insert('attribute_defs', [
-            'company_id'  => $cid,
             'category_id' => null,
             'code'        => $code,
             'label'       => mb_substr($label, 0, 90),
             'type'        => 'texto',
             'filterable'  => 1,
-            'sort'        => (int) DB::value('SELECT COALESCE(MAX(sort),0)+1 FROM attribute_defs WHERE company_id = ?', [$cid], 1),
+            'sort'        => (int) DB::value('SELECT COALESCE(MAX(sort),0)+1 FROM attribute_defs', [], 1),
         ]);
     }
 

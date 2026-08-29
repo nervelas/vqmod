@@ -30,7 +30,7 @@ final class Quote
         'perdida'     => ['n' => 4, 'label' => 'Cerrada'],
     ];
 
-    public static function find(int $companyId, int $id): ?array
+    public static function find(int $id): ?array
     {
         return DB::one(
             'SELECT q.*, u.name AS seller_name, u.email AS seller_email, u.phone AS seller_phone,
@@ -38,9 +38,9 @@ final class Quote
                     cu.name AS customer_name, cu.nit AS customer_nit, cu.price_list_id
              FROM quotes q
              LEFT JOIN users u ON u.id = q.user_id
-             LEFT JOIN customers cu ON cu.id = q.customer_id AND cu.company_id = q.company_id
-             WHERE q.id = ? AND q.company_id = ? LIMIT 1',
-            [$id, $companyId]
+             LEFT JOIN customers cu ON cu.id = q.customer_id
+             WHERE q.id = ? LIMIT 1',
+            [$id]
         );
     }
 
@@ -57,24 +57,24 @@ final class Quote
         );
     }
 
-    public static function items(int $companyId, int $quoteId): array
+    public static function items(int $quoteId): array
     {
-        return DB::all('SELECT * FROM quote_items WHERE quote_id = ? AND company_id = ? ORDER BY sort, id', [$quoteId, $companyId]);
+        return DB::all('SELECT * FROM quote_items WHERE quote_id = ? ORDER BY sort, id', [$quoteId]);
     }
 
-    public static function events(int $companyId, int $quoteId): array
+    public static function events(int $quoteId): array
     {
-        return DB::all('SELECT * FROM quote_events WHERE quote_id = ? AND company_id = ? ORDER BY created_at DESC, id DESC', [$quoteId, $companyId]);
+        return DB::all('SELECT * FROM quote_events WHERE quote_id = ? ORDER BY created_at DESC, id DESC', [$quoteId]);
     }
 
-    /** Numeración correlativa por empresa y año: COT-2026-0001 */
-    public static function nextNumber(int $companyId): array
+    /** Numeración correlativa por año: COT-2026-0001 */
+    public static function nextNumber(): array
     {
         DB::begin();
         try {
-            $c = DB::one('SELECT quote_prefix, quote_next, quote_year, quote_pad FROM companies WHERE id = ? FOR UPDATE', [$companyId]);
+            $c = DB::one('SELECT quote_prefix, quote_next, quote_year, quote_pad FROM company WHERE id = ? FOR UPDATE', [Company::ID]);
             if (!$c) {
-                throw new \RuntimeException('Empresa inexistente');
+                throw new \RuntimeException('La empresa no está configurada');
             }
             $year = (int) date('Y');
             $seq  = (int) $c['quote_next'];
@@ -83,7 +83,8 @@ final class Quote
             }
             $pad    = max(3, (int) $c['quote_pad']);
             $number = sprintf('%s-%d-%s', $c['quote_prefix'], $year, str_pad((string) $seq, $pad, '0', STR_PAD_LEFT));
-            DB::update('companies', ['quote_next' => $seq + 1, 'quote_year' => $year], 'id = :id', ['id' => $companyId]);
+            DB::update('company', ['quote_next' => $seq + 1, 'quote_year' => $year], 'id = :id', ['id' => Company::ID]);
+            Company::forget();
             DB::commit();
             return ['number' => $number, 'seq' => $seq, 'year' => $year];
         } catch (\Throwable $e) {
@@ -104,13 +105,13 @@ final class Quote
      * Recalcula SIEMPRE en servidor: líneas, descuentos, impuesto y total.
      * No confía en ningún importe enviado por el navegador.
      */
-    public static function recalc(int $companyId, int $quoteId): array
+    public static function recalc(int $quoteId): array
     {
-        $q = DB::one('SELECT * FROM quotes WHERE id = ? AND company_id = ? LIMIT 1', [$quoteId, $companyId]);
+        $q = DB::one('SELECT * FROM quotes WHERE id = ? LIMIT 1', [$quoteId]);
         if (!$q) {
             throw new \RuntimeException('Cotización inexistente');
         }
-        $items = self::items($companyId, $quoteId);
+        $items = self::items($quoteId);
         $subtotal = 0.0;
         foreach ($items as $it) {
             $qty  = max(0.0, (float) $it['qty']);
@@ -118,7 +119,7 @@ final class Quote
             $dpct = min(100.0, max(0.0, (float) $it['discount_pct']));
             $line = round($qty * $unit * (1 - $dpct / 100), 2);
             if (abs($line - (float) $it['line_total']) > 0.001) {
-                DB::update('quote_items', ['line_total' => $line], 'id = :id AND company_id = :c', ['id' => (int) $it['id'], 'c' => $companyId]);
+                DB::update('quote_items', ['line_total' => $line], 'id = :id', ['id' => (int) $it['id']]);
             }
             $subtotal += $line;
         }
@@ -142,15 +143,14 @@ final class Quote
             'tax_amount'      => $tax,
             'total'           => $total,
             'updated_at'      => nowSql(),
-        ], 'id = :id AND company_id = :c', ['id' => $quoteId, 'c' => $companyId]);
+        ], 'id = :id', ['id' => $quoteId]);
 
         return compact('subtotal', 'discountAmount', 'base', 'tax', 'total');
     }
 
-    public static function event(int $companyId, int $quoteId, string $type, string $title, string $body = '', ?string $actor = null): int
+    public static function event(int $quoteId, string $type, string $title, string $body = '', ?string $actor = null): int
     {
         return DB::insert('quote_events', [
-            'company_id' => $companyId,
             'quote_id'   => $quoteId,
             'user_id'    => Auth::id() ?: null,
             'actor'      => $actor ?? (Auth::user()['name'] ?? 'Sistema'),
@@ -162,12 +162,12 @@ final class Quote
     }
 
     /** Cambia de estado registrando bitácora y marcas de tiempo. */
-    public static function setStatus(int $companyId, int $quoteId, string $status, array $extra = [], ?string $actor = null): bool
+    public static function setStatus(int $quoteId, string $status, array $extra = [], ?string $actor = null): bool
     {
         if (!isset(self::STATUSES[$status])) {
             return false;
         }
-        $q = DB::one('SELECT status, total, number FROM quotes WHERE id = ? AND company_id = ? LIMIT 1', [$quoteId, $companyId]);
+        $q = DB::one('SELECT status, total, number, sent_at FROM quotes WHERE id = ? LIMIT 1', [$quoteId]);
         if (!$q) {
             return false;
         }
@@ -189,18 +189,17 @@ final class Quote
         if ($status === 'enviada' && empty($q['sent_at'])) {
             $data['sent_at'] = nowSql();
         }
-        DB::update('quotes', $data, 'id = :id AND company_id = :c', ['id' => $quoteId, 'c' => $companyId]);
+        DB::update('quotes', $data, 'id = :id', ['id' => $quoteId]);
 
         $labels = self::STATUSES;
         self::event(
-            $companyId,
             $quoteId,
             'estado',
             'Estado: ' . $labels[$old]['short'] . ' → ' . $labels[$status]['short'],
             (string) ($extra['note'] ?? ''),
             $actor
         );
-        Audit::log('cotizacion.estado', 'quote', $quoteId, ['de' => $old, 'a' => $status, 'numero' => $q['number']], $companyId);
+        Audit::log('cotizacion.estado', 'quote', $quoteId, ['de' => $old, 'a' => $status, 'numero' => $q['number']]);
         return true;
     }
 
@@ -208,10 +207,10 @@ final class Quote
      * Listado con filtros para tabla y Kanban.
      * @return array{0:array<int,array<string,mixed>>,1:int}
      */
-    public static function search(int $companyId, array $f = []): array
+    public static function search(array $f = []): array
     {
-        $where  = ['q.company_id = ?', 'q.is_current = 1'];
-        $params = [$companyId];
+        $where  = ['q.is_current = 1'];
+        $params = [];
 
         if (!empty($f['status'])) {
             $st = (array) $f['status'];
@@ -280,18 +279,18 @@ final class Quote
     }
 
     /** Crea la versión siguiente (v2, v3…) copiando líneas y condiciones. */
-    public static function newVersion(int $companyId, int $quoteId): ?int
+    public static function newVersion(int $quoteId): ?int
     {
-        $q = self::find($companyId, $quoteId);
+        $q = self::find($quoteId);
         if (!$q) {
             return null;
         }
         $rootId = (int) ($q['parent_id'] ?: $q['id']);
-        $maxV = (int) DB::value('SELECT MAX(version) FROM quotes WHERE company_id = ? AND (id = ? OR parent_id = ?)', [$companyId, $rootId, $rootId], 1);
+        $maxV = (int) DB::value('SELECT MAX(version) FROM quotes WHERE id = ? OR parent_id = ?', [$rootId, $rootId], 1);
 
         DB::begin();
         try {
-            DB::run('UPDATE quotes SET is_current = 0 WHERE company_id = ? AND (id = ? OR parent_id = ?)', [$companyId, $rootId, $rootId]);
+            DB::run('UPDATE quotes SET is_current = 0 WHERE id = ? OR parent_id = ?', [$rootId, $rootId]);
             $new = $q;
             unset($new['id'], $new['seller_name'], $new['seller_email'], $new['seller_phone'], $new['seller_position'], $new['seller_whatsapp'], $new['customer_name'], $new['customer_nit'], $new['price_list_id']);
             $new['parent_id']   = $rootId;
@@ -310,14 +309,14 @@ final class Quote
             $new['number']      = preg_replace('/ v\d+$/', '', (string) $q['number']) . ' v' . ($maxV + 1);
             $newId = DB::insert('quotes', $new);
 
-            foreach (self::items($companyId, $quoteId) as $it) {
+            foreach (self::items($quoteId) as $it) {
                 unset($it['id']);
                 $it['quote_id'] = $newId;
                 DB::insert('quote_items', $it);
             }
-            self::event($companyId, $newId, 'sistema', 'Versión ' . ($maxV + 1) . ' creada a partir de ' . $q['number']);
+            self::event($newId, 'sistema', 'Versión ' . ($maxV + 1) . ' creada a partir de ' . $q['number']);
             DB::commit();
-            Audit::log('cotizacion.version', 'quote', $newId, ['origen' => $quoteId], $companyId);
+            Audit::log('cotizacion.version', 'quote', $newId, ['origen' => $quoteId]);
             return $newId;
         } catch (\Throwable $e) {
             DB::rollback();
@@ -326,13 +325,13 @@ final class Quote
     }
 
     /** Copia completa como cotización nueva e independiente. */
-    public static function duplicate(int $companyId, int $quoteId, ?int $userId = null): ?int
+    public static function duplicate(int $quoteId, ?int $userId = null): ?int
     {
-        $q = self::find($companyId, $quoteId);
+        $q = self::find($quoteId);
         if (!$q) {
             return null;
         }
-        $num = self::nextNumber($companyId);
+        $num = self::nextNumber();
         DB::begin();
         try {
             $new = $q;
@@ -359,14 +358,14 @@ final class Quote
             $new['updated_at']  = nowSql();
             $new['last_contact_at'] = nowSql();
             $newId = DB::insert('quotes', $new);
-            foreach (self::items($companyId, $quoteId) as $it) {
+            foreach (self::items($quoteId) as $it) {
                 unset($it['id']);
                 $it['quote_id'] = $newId;
                 DB::insert('quote_items', $it);
             }
-            self::event($companyId, $newId, 'sistema', 'Duplicada desde ' . $q['number']);
+            self::event($newId, 'sistema', 'Duplicada desde ' . $q['number']);
             DB::commit();
-            Audit::log('cotizacion.duplicar', 'quote', $newId, ['origen' => $quoteId], $companyId);
+            Audit::log('cotizacion.duplicar', 'quote', $newId, ['origen' => $quoteId]);
             return $newId;
         } catch (\Throwable $e) {
             DB::rollback();
@@ -374,13 +373,13 @@ final class Quote
         }
     }
 
-    public static function versions(int $companyId, array $q): array
+    public static function versions(array $q): array
     {
         $rootId = (int) ($q['parent_id'] ?: $q['id']);
         return DB::all(
             'SELECT id, number, version, status, total, created_at, is_current FROM quotes
-             WHERE company_id = ? AND (id = ? OR parent_id = ?) ORDER BY version',
-            [$companyId, $rootId, $rootId]
+             WHERE id = ? OR parent_id = ? ORDER BY version',
+            [$rootId, $rootId]
         );
     }
 

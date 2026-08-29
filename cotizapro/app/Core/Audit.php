@@ -5,11 +5,10 @@ namespace App\Core;
 
 final class Audit
 {
-    public static function log(string $action, string $entity = '', int $entityId = 0, array $details = [], ?int $companyId = null): void
+    public static function log(string $action, string $entity = '', int $entityId = 0, array $details = []): void
     {
         try {
             DB::insert('audit_log', [
-                'company_id' => $companyId ?? Auth::companyId(),
                 'user_id'    => Auth::id() ?: null,
                 'user_name'  => Auth::user()['name'] ?? 'sistema',
                 'action'     => mb_substr($action, 0, 80),

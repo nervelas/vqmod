@@ -6,7 +6,7 @@
 <a class="skip" href="#contenido">Saltar al contenido</a>
 <header class="topbar">
   <div class="wrap topbar__in">
-    <a class="brand" href="<?= e(url('/e/' . $company['slug'])) ?>">
+    <a class="brand" href="<?= e(url('/')) ?>">
       <?php if (!empty($company['logo'])): ?>
         <img src="<?= e(upload($company['logo'])) ?>" alt="<?= e($company['name']) ?>" width="140" height="34">
       <?php else: ?>
@@ -15,7 +15,7 @@
       <?php endif; ?>
     </a>
     <nav class="nav" aria-label="Principal" style="margin-left:auto">
-      <a href="<?= e(url('/e/' . $company['slug'] . '/catalogo')) ?>">Catálogo</a>
+      <a href="<?= e(url('/catalogo')) ?>">Catálogo</a>
       <?php if ($company['whatsapp']): ?>
         <a class="btn btn--ghost btn--sm" href="https://wa.me/<?= e($company['whatsapp']) ?>" target="_blank" rel="noopener">WhatsApp</a>
       <?php endif; ?>

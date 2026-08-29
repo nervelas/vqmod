@@ -83,7 +83,7 @@ final class ReportPdf
                 [90, 40, 49.4], $ink, $steel, $accent);
         }
 
-        $dir = STORAGE_PATH . '/uploads/e' . (int) $company['id'] . '/reportes';
+        $dir = STORAGE_PATH . '/uploads/reportes';
         if (!is_dir($dir)) {
             @mkdir($dir, 0755, true);
         }

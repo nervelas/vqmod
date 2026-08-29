@@ -1,8 +1,8 @@
-<?php $base = url('/e/' . $company['slug']); $sym = (string) $company['currency_symbol']; ?>
+<?php $base = rtrim(url('/'), '/'); $sym = (string) $company['currency_symbol']; ?>
 <div class="section section--tight blueprint" style="padding-top:34px">
   <div class="wrap">
     <nav class="crumbs" aria-label="Ruta">
-      <a href="<?= e($base) ?>">Inicio</a><span aria-hidden="true">/</span><span>Solicitud de cotización</span>
+      <a href="<?= e(url("/")) ?>">Inicio</a><span aria-hidden="true">/</span><span>Solicitud de cotización</span>
     </nav>
     <div class="section__head" style="margin-bottom:26px">
       <div>

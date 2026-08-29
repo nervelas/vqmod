@@ -8,7 +8,6 @@ final class Auth
     private static ?array $user = null;
     private static bool $loaded = false;
 
-    public const ROLE_SUPER  = 'superadmin';
     public const ROLE_ADMIN  = 'admin';
     public const ROLE_SELLER = 'vendedor';
     public const ROLE_VIEWER = 'visor';
@@ -29,14 +28,7 @@ final class Auth
             self::logout();
             return self::$user = null;
         }
-        $u = DB::one(
-            'SELECT u.*, c.slug AS company_slug, c.name AS company_name, c.status AS company_status,
-                    c.expires_at AS company_expires
-             FROM users u
-             LEFT JOIN companies c ON c.id = u.company_id
-             WHERE u.id = ? AND u.status = "activo" LIMIT 1',
-            [$id]
-        );
+        $u = DB::one('SELECT * FROM users WHERE id = ? AND status = "activo" LIMIT 1', [$id]);
         if (!$u) {
             self::logout();
             return self::$user = null;
@@ -49,12 +41,6 @@ final class Auth
         return (int) (self::user()['id'] ?? 0);
     }
 
-    public static function companyId(): ?int
-    {
-        $c = self::user()['company_id'] ?? null;
-        return $c ? (int) $c : null;
-    }
-
     public static function role(): string
     {
         return (string) (self::user()['role'] ?? '');
@@ -63,11 +49,6 @@ final class Auth
     public static function check(): bool
     {
         return self::user() !== null;
-    }
-
-    public static function isSuper(): bool
-    {
-        return self::role() === self::ROLE_SUPER;
     }
 
     public static function isAdmin(): bool
@@ -85,7 +66,7 @@ final class Auth
         return self::role() === self::ROLE_VIEWER;
     }
 
-    /** ¿Puede escribir (crear/editar/borrar) en el panel de empresa? */
+    /** ¿Puede escribir (crear/editar/borrar) en el panel? */
     public static function canWrite(): bool
     {
         return in_array(self::role(), [self::ROLE_ADMIN, self::ROLE_SELLER], true);
@@ -142,40 +123,10 @@ final class Auth
         return $u;
     }
 
-    /** Exige panel de empresa activo (y no vencido). */
-    public static function requireCompany(): array
-    {
-        $u = self::require();
-        if ($u['role'] === self::ROLE_SUPER) {
-            redirect('/super');
-        }
-        if (!$u['company_id']) {
-            self::logout();
-            redirect('/entrar');
-        }
-        if ($u['company_status'] !== 'activa') {
-            ErrorHandler::render(403);
-        }
-        if (!empty($u['company_expires']) && strtotime((string) $u['company_expires']) < strtotime('today')) {
-            Flash::error('La suscripción de la empresa venció. Contacte al administrador de la plataforma.');
-            ErrorHandler::render(402);
-        }
-        return $u;
-    }
-
-    public static function requireSuper(): array
-    {
-        $u = self::require();
-        if ($u['role'] !== self::ROLE_SUPER) {
-            ErrorHandler::render(403);
-        }
-        return $u;
-    }
-
-    /** Exige uno de los roles indicados dentro del panel de empresa. */
+    /** Exige uno de los roles indicados dentro del panel. */
     public static function requireRole(string ...$roles): array
     {
-        $u = self::requireCompany();
+        $u = self::require();
         if (!in_array($u['role'], $roles, true)) {
             if (Request::isAjax()) {
                 jsonOut(['ok' => false, 'error' => 'No tiene permisos para esta acción.'], 403);

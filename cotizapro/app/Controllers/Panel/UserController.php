@@ -20,22 +20,13 @@ final class UserController extends Controller
     public function index(array $params = []): void
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN);
-        $cid = (int) $c['id'];
         if (Request::isPost()) {
             Csrf::verify();
-            if (!Company::withinLimit($cid, 'users')) {
-                Flash::error('Alcanzó el límite de usuarios de su plan (' . Company::limits($cid)['users'] . ').');
-                redirect('/panel/usuarios');
-            }
-            $this->store(0, $cid, $c);
+            $this->store(0, $c);
         }
-        $usage  = Company::usage($cid);
-        $limits = Company::limits($cid);
         $this->view('panel/users', [
             'title' => 'Vendedores y usuarios',
-            'rows'  => DB::all('SELECT * FROM users WHERE company_id = ? ORDER BY FIELD(role,"admin","vendedor","visor"), name', [$cid]),
-            'usage' => $usage,
-            'limits' => $limits,
+            'rows'  => DB::all('SELECT * FROM users ORDER BY FIELD(role,"admin","vendedor","visor"), name'),
             'assignMode' => (string) $c['assign_mode'],
         ], 'layout/panel');
     }
@@ -43,20 +34,19 @@ final class UserController extends Controller
     public function form(array $params): void
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN);
-        $cid = (int) $c['id'];
         $id  = (int) $params['id'];
-        $row = DB::one('SELECT * FROM users WHERE id = ? AND company_id = ? LIMIT 1', [$id, $cid]);
+        $row = DB::one('SELECT * FROM users WHERE id = ? LIMIT 1', [$id]);
         if (!$row) {
             ErrorHandler::render(404);
         }
         if (Request::isPost()) {
             Csrf::verify();
-            $this->store($id, $cid, $c);
+            $this->store($id, $c);
         }
         $this->view('panel/user-form', ['title' => $row['name'], 'row' => $row], 'layout/panel');
     }
 
-    private function store(int $id, int $cid, array $c): never
+    private function store(int $id, array $c): never
     {
         $name  = mb_substr(Request::str('name'), 0, 120);
         $email = Request::email('email');
@@ -83,7 +73,6 @@ final class UserController extends Controller
             }
         }
         $data = [
-            'company_id'     => $cid,
             'name'           => $name,
             'email'          => $email,
             'username'       => $username,
@@ -106,7 +95,7 @@ final class UserController extends Controller
         }
         $f = Uploader::files('avatar');
         if ($f) {
-            $res = Uploader::image($f[0], $cid, 'usuarios', 400, 400);
+            $res = Uploader::image($f[0], 'usuarios', 400, 400);
             if ($res) {
                 $data['avatar'] = $res['path_webp'] ?: $res['path'];
             }
@@ -114,14 +103,14 @@ final class UserController extends Controller
         if ($id) {
             // Nunca dejar la empresa sin administrador activo.
             if ($role !== Auth::ROLE_ADMIN || $data['status'] !== 'activo') {
-                $admins = (int) DB::value('SELECT COUNT(*) FROM users WHERE company_id = ? AND role = "admin" AND status = "activo" AND id <> ?', [$cid, $id], 0);
+                $admins = (int) DB::value('SELECT COUNT(*) FROM users WHERE role = "admin" AND status = "activo" AND id <> ?', [$id], 0);
                 if ($admins === 0) {
                     Flash::error('Debe existir al menos un administrador activo en la empresa.');
                     redirect('/panel/usuarios/' . $id);
                 }
             }
-            DB::update('users', $data, 'id = :id AND company_id = :c', ['id' => $id, 'c' => $cid]);
-            Audit::log('usuario.editar', 'user', $id, ['email' => $email, 'rol' => $role], $cid);
+            DB::update('users', $data, 'id = :id', ['id' => $id]);
+            Audit::log('usuario.editar', 'user', $id, ['email' => $email, 'rol' => $role]);
         } else {
             if ($pass === '') {
                 Flash::error('Asigne una contraseña al nuevo usuario.');
@@ -129,7 +118,7 @@ final class UserController extends Controller
             }
             $data['created_at'] = nowSql();
             $id = DB::insert('users', $data);
-            Audit::log('usuario.crear', 'user', $id, ['email' => $email, 'rol' => $role], $cid);
+            Audit::log('usuario.crear', 'user', $id, ['email' => $email, 'rol' => $role]);
         }
         Flash::ok('Usuario guardado.');
         redirect('/panel/usuarios');
@@ -139,25 +128,24 @@ final class UserController extends Controller
     {
         [$u, $c] = $this->panel(Auth::ROLE_ADMIN);
         $this->guardPost();
-        $cid = (int) $c['id'];
         $id  = (int) $params['id'];
         if ($id === (int) $u['id']) {
             Flash::error('No puede eliminar su propio usuario.');
             redirect('/panel/usuarios');
         }
-        $row = DB::one('SELECT * FROM users WHERE id = ? AND company_id = ? LIMIT 1', [$id, $cid]);
+        $row = DB::one('SELECT * FROM users WHERE id = ? LIMIT 1', [$id]);
         if (!$row) {
             ErrorHandler::render(404);
         }
-        $admins = (int) DB::value('SELECT COUNT(*) FROM users WHERE company_id = ? AND role = "admin" AND status = "activo" AND id <> ?', [$cid, $id], 0);
+        $admins = (int) DB::value('SELECT COUNT(*) FROM users WHERE role = "admin" AND status = "activo" AND id <> ?', [$id], 0);
         if ($row['role'] === 'admin' && $admins === 0) {
             Flash::error('Debe quedar al menos un administrador activo.');
             redirect('/panel/usuarios');
         }
-        DB::run('UPDATE quotes SET user_id = NULL WHERE user_id = ? AND company_id = ?', [$id, $cid]);
-        DB::run('UPDATE customers SET assigned_user_id = NULL WHERE assigned_user_id = ? AND company_id = ?', [$id, $cid]);
-        DB::delete('users', 'id = :id AND company_id = :c', ['id' => $id, 'c' => $cid]);
-        Audit::log('usuario.eliminar', 'user', $id, ['email' => $row['email']], $cid);
+        DB::run('UPDATE quotes SET user_id = NULL WHERE user_id = ?', [$id]);
+        DB::run('UPDATE customers SET assigned_user_id = NULL WHERE assigned_user_id = ?', [$id]);
+        DB::delete('users', 'id = :id', ['id' => $id]);
+        Audit::log('usuario.eliminar', 'user', $id, ['email' => $row['email']]);
         Flash::ok('Usuario eliminado.');
         redirect('/panel/usuarios');
     }
@@ -165,7 +153,6 @@ final class UserController extends Controller
     public function profile(array $params = []): void
     {
         [$u, $c] = $this->panel();
-        $cid = (int) $c['id'];
         if (Request::isPost()) {
             Csrf::verify();
             $data = [
@@ -190,13 +177,13 @@ final class UserController extends Controller
             }
             $f = Uploader::files('avatar');
             if ($f) {
-                $res = Uploader::image($f[0], $cid, 'usuarios', 400, 400);
+                $res = Uploader::image($f[0], 'usuarios', 400, 400);
                 if ($res) {
                     $data['avatar'] = $res['path_webp'] ?: $res['path'];
                 }
             }
             DB::update('users', $data, 'id = :id', ['id' => (int) $u['id']]);
-            Audit::log('perfil.actualizar', 'user', (int) $u['id'], [], $cid);
+            Audit::log('perfil.actualizar', 'user', (int) $u['id'], []);
             Flash::ok('Perfil actualizado.');
             redirect('/panel/perfil');
         }

@@ -1,4 +1,4 @@
-<?php $base = url('/e/' . $company['slug']); $wa = preg_replace('/\D/', '', (string) $company['whatsapp']) ?: ''; ?>
+<?php $base = rtrim(url('/'), '/'); $wa = preg_replace('/\D/', '', (string) $company['whatsapp']) ?: ''; ?>
 <section class="section blueprint" style="padding-top:60px">
   <div class="wrap">
     <div class="grid12" style="align-items:start">

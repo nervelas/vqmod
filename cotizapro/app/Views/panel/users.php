@@ -1,12 +1,10 @@
 <?php
-$lim = (int) ($limits['users'] ?? 0);
-$use = (int) ($usage['users'] ?? 0);
 $roles = ['admin' => 'Administrador', 'vendedor' => 'Vendedor', 'visor' => 'Visor (solo reportes)'];
 ?>
 <div class="cols cols--sidebar">
   <div class="card">
     <div class="card__head"><span class="secnum">01/</span><h2>Equipo</h2>
-      <span class="badge ml-auto"><?= e($use) ?><?= $lim > 0 ? ' / ' . e($lim) : '' ?> usuarios</span></div>
+      <span class="badge ml-auto"><?= e(count($rows)) ?> usuarios</span></div>
     <div class="card__body card__body--flush tablescroll">
       <table class="datatable" style="border:0;border-radius:0">
         <caption class="sr-only">Usuarios de la empresa</caption>
@@ -40,9 +38,6 @@ $roles = ['admin' => 'Administrador', 'vendedor' => 'Vendedor', 'visor' => 'Viso
     <?= csrf_field() ?>
     <div class="card__head"><span class="secnum">02/</span><h2>Nuevo usuario</h2></div>
     <div class="card__body">
-      <?php if ($lim > 0 && $use >= $lim): ?>
-        <div class="alert alert--warn"><span aria-hidden="true">△</span><span>Alcanzó el límite de <?= e($lim) ?> usuarios de su plan.</span></div>
-      <?php endif; ?>
       <div class="field"><label for="name">Nombre *</label><input class="input" id="name" name="name" maxlength="120" required></div>
       <div class="field"><label for="email">Correo *</label><input class="input" id="email" name="email" type="email" maxlength="150" required></div>
       <div class="field"><label for="username">Usuario (opcional)</label><input class="input" id="username" name="username" maxlength="60" placeholder="vendedor1"></div>

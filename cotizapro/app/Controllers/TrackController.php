@@ -28,8 +28,8 @@ final class TrackController extends Controller
         if (!$q) {
             ErrorHandler::render(404);
         }
-        $c = Company::find((int) $q['company_id']);
-        if (!$c || !Company::isLive($c)) {
+        $c = Company::get();
+        if (!$c) {
             ErrorHandler::render(404);
         }
         $this->company = $c;
@@ -42,18 +42,18 @@ final class TrackController extends Controller
     {
         [$q, $c] = $this->load($params);
         if (empty($q['viewed_at']) && in_array($q['status'], ['enviada', 'negociacion'], true)) {
-            DB::update('quotes', ['viewed_at' => nowSql()], 'id = :id AND company_id = :c', ['id' => (int) $q['id'], 'c' => (int) $c['id']]);
-            Quote::event((int) $c['id'], (int) $q['id'], 'cliente', 'El cliente abrió el enlace de seguimiento', '', (string) $q['contact_name']);
+            DB::update('quotes', ['viewed_at' => nowSql()], 'id = :id', ['id' => (int) $q['id']]);
+            Quote::event((int) $q['id'], 'cliente', 'El cliente abrió el enlace de seguimiento', '', (string) $q['contact_name']);
             $q['viewed_at'] = nowSql();
         }
         $this->view('site/track', [
             'title'     => 'Cotización ' . $q['number'],
             'q'         => $q,
-            'items'     => Quote::items((int) $c['id'], (int) $q['id']),
+            'items'     => Quote::items((int) $q['id']),
             'events'    => DB::all(
-                'SELECT * FROM quote_events WHERE quote_id = ? AND company_id = ? AND type IN ("estado","cliente","correo","pdf")
+                'SELECT * FROM quote_events WHERE quote_id = ? AND type IN ("estado","cliente","correo","pdf")
                  ORDER BY created_at DESC, id DESC LIMIT 30',
-                [(int) $q['id'], (int) $c['id']]
+                [(int) $q['id']]
             ),
             'hasPdf'    => $q['pdf_path'] && is_file(STORAGE_PATH . '/uploads/' . $q['pdf_path']),
             'noindex'   => true,
@@ -90,9 +90,9 @@ final class TrackController extends Controller
             redirect('/c/' . $q['track_token']);
         }
         $who = mb_substr(Request::str('name'), 0, 120) ?: (string) $q['contact_name'];
-        Quote::setStatus((int) $c['id'], (int) $q['id'], 'aprobada', ['note' => 'Aprobada por el cliente desde el enlace de seguimiento.'], $who);
-        Quote::event((int) $c['id'], (int) $q['id'], 'cliente', 'El cliente APROBÓ la cotización', 'Aprobada por: ' . $who . ' · IP ' . App::ip(), $who);
-        Audit::log('cotizacion.aprobada_cliente', 'quote', (int) $q['id'], ['por' => $who], (int) $c['id']);
+        Quote::setStatus((int) $q['id'], 'aprobada', ['note' => 'Aprobada por el cliente desde el enlace de seguimiento.'], $who);
+        Quote::event((int) $q['id'], 'cliente', 'El cliente APROBÓ la cotización', 'Aprobada por: ' . $who . ' · IP ' . App::ip(), $who);
+        Audit::log('cotizacion.aprobada_cliente', 'quote', (int) $q['id'], ['por' => $who]);
         $this->notifyCompany($c, $q, 'Cotización ' . $q['number'] . ' APROBADA por el cliente',
             '<p><strong>' . e($who) . '</strong> aprobó la cotización <strong>' . e($q['number']) . '</strong> por ' . e(money((float) $q['total'], (string) $q['currency_symbol'])) . '.</p>');
         Flash::ok('¡Gracias! Registramos su aprobación y su asesor fue notificado.');
@@ -114,11 +114,11 @@ final class TrackController extends Controller
         }
         $who = mb_substr(Request::str('name'), 0, 120) ?: (string) $q['contact_name'];
         if (in_array($q['status'], ['enviada'], true)) {
-            Quote::setStatus((int) $c['id'], (int) $q['id'], 'negociacion', ['note' => 'El cliente solicitó cambios.'], $who);
+            Quote::setStatus((int) $q['id'], 'negociacion', ['note' => 'El cliente solicitó cambios.'], $who);
         }
-        Quote::event((int) $c['id'], (int) $q['id'], 'cliente', 'El cliente solicitó cambios', $comment, $who);
-        DB::update('quotes', ['last_contact_at' => nowSql()], 'id = :id AND company_id = :c', ['id' => (int) $q['id'], 'c' => (int) $c['id']]);
-        Audit::log('cotizacion.cambios_cliente', 'quote', (int) $q['id'], [], (int) $c['id']);
+        Quote::event((int) $q['id'], 'cliente', 'El cliente solicitó cambios', $comment, $who);
+        DB::update('quotes', ['last_contact_at' => nowSql()], 'id = :id', ['id' => (int) $q['id']]);
+        Audit::log('cotizacion.cambios_cliente', 'quote', (int) $q['id'], []);
         $this->notifyCompany($c, $q, 'El cliente pide cambios en ' . $q['number'],
             '<p><strong>' . e($who) . '</strong> solicitó cambios en <strong>' . e($q['number']) . '</strong>:</p><blockquote style="margin:12px 0;padding:10px 14px;border-left:3px solid #E8590C;background:#F5F6F4">' . nl2br(e($comment)) . '</blockquote>');
         Flash::ok('Enviamos su comentario al asesor. Le responderemos a la brevedad.');
@@ -138,9 +138,9 @@ final class TrackController extends Controller
         }
         $targets = $q['user_id']
             ? [['id' => (int) $q['user_id']]]
-            : DB::all('SELECT id FROM users WHERE company_id = ? AND role = "admin" AND status = "activo"', [(int) $c['id']]);
+            : DB::all('SELECT id FROM users WHERE role = "admin" AND status = "activo"');
         foreach ($targets as $t) {
-            Notification::push((int) $t['id'], $subject, (string) ($q['contact_company'] ?: $q['contact_name']), '/panel/cotizaciones/' . $q['id'], 'cliente', (int) $c['id']);
+            Notification::push((int) $t['id'], $subject, (string) ($q['contact_company'] ?: $q['contact_name']), '/panel/cotizaciones/' . $q['id'], 'cliente');
         }
     }
 }

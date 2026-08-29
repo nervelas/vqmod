@@ -363,7 +363,7 @@ final class Pdf
             $pdf->Cell(62, 3.6, (string) $quote['seller_email'], 0, 2, 'L');
         }
 
-        $dir = STORAGE_PATH . '/uploads/e' . (int) $company['id'] . '/cotizaciones';
+        $dir = STORAGE_PATH . '/uploads/cotizaciones';
         if (!is_dir($dir)) {
             @mkdir($dir, 0755, true);
         }

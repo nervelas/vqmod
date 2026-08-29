@@ -7,10 +7,9 @@ use App\Core\DB;
 
 final class Notification
 {
-    public static function push(int $userId, string $title, string $body = '', string $link = '', string $type = 'info', ?int $companyId = null): void
+    public static function push(int $userId, string $title, string $body = '', string $link = '', string $type = 'info'): void
     {
         DB::insert('notifications', [
-            'company_id' => $companyId,
             'user_id'    => $userId,
             'type'       => mb_substr($type, 0, 40),
             'title'      => mb_substr($title, 0, 190),

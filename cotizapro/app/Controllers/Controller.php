@@ -23,21 +23,16 @@ abstract class Controller
     {
         View::share('flash', Flash::pull());
         View::share('nonce', Security::nonce());
-        View::share('platformName', Setting::get('platform_name', 'CotizaPro B2B'));
+        View::share('appName', Setting::get('app_name', 'CotizaPro B2B'));
         View::share('auth', Auth::user());
     }
 
-    /** Resuelve la empresa por slug de URL o por dominio propio. */
-    protected function tenant(array $params): array
+    /** Datos de la empresa para el sitio público. */
+    protected function site(): array
     {
-        $slug = (string) ($params['slug'] ?? '');
-        $c = $slug !== '' ? Company::bySlug($slug) : Company::byDomain(App::host());
+        $c = Company::get();
         if (!$c) {
             ErrorHandler::render(404);
-        }
-        if (!Company::isLive($c)) {
-            View::render('site/suspendida', ['company' => $c], 'layout/blank');
-            exit;
         }
         $this->company = $c;
         View::share('company', $c);
@@ -45,11 +40,11 @@ abstract class Controller
         return $c;
     }
 
-    /** Contexto del panel de empresa: sesión, empresa y notificaciones. */
+    /** Contexto del panel: sesión, empresa y notificaciones. */
     protected function panel(string ...$roles): array
     {
-        $u = $roles ? Auth::requireRole(...$roles) : Auth::requireCompany();
-        $c = Company::find((int) $u['company_id']);
+        $u = $roles ? Auth::requireRole(...$roles) : Auth::require();
+        $c = Company::get();
         if (!$c) {
             Auth::logout();
             redirect('/entrar');
@@ -61,15 +56,6 @@ abstract class Controller
         View::share('notifCount', Notification::countUnread((int) $u['id']));
         View::share('notifs', Notification::unread((int) $u['id']));
         return [$u, $c];
-    }
-
-    protected function super(): array
-    {
-        $u = Auth::requireSuper();
-        View::share('auth', $u);
-        View::share('notifCount', Notification::countUnread((int) $u['id']));
-        View::share('notifs', Notification::unread((int) $u['id']));
-        return $u;
     }
 
     protected function guardPost(): void

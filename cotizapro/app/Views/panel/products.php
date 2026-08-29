@@ -2,19 +2,7 @@
 $sym = (string) $company['currency_symbol'];
 page('barActions', '<a class="btn btn--ghost btn--sm" href="' . e(url('/panel/importar')) . '">Importar</a>'
     . '<a class="btn btn--accent btn--sm" href="' . e(url('/panel/productos/nuevo')) . '">Nuevo producto</a>');
-$lim = (int) ($limits['products'] ?? 0);
-$use = (int) ($usage['products'] ?? 0);
-$pct = $lim > 0 ? min(100, (int) round($use / $lim * 100)) : 0;
 ?>
-<?php if ($lim > 0): ?>
-  <div class="card" style="margin-bottom:20px">
-    <div class="card__body" style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
-      <span class="label" style="margin:0">Uso del plan</span>
-      <span class="progressbar<?= $pct >= 100 ? ' is-full' : '' ?>" style="flex:1;min-width:180px"><i style="width:<?= e($pct) ?>%"></i></span>
-      <span class="small"><strong><?= e(number_format($use)) ?></strong> de <?= e(number_format($lim)) ?> productos</span>
-    </div>
-  </div>
-<?php endif; ?>
 
 <form class="filterbar" method="get" action="<?= e(url('/panel/productos')) ?>">
   <div class="field" style="min-width:240px"><label for="pq">Buscar</label>
@@ -69,7 +57,7 @@ $pct = $lim > 0 ? min(100, (int) round($use / $lim * 100)) : 0;
               <td><span class="badge<?= $p['active'] ? ' badge--ok' : '' ?>"><?= $p['active'] ? 'Activo' : 'Oculto' ?></span></td>
               <td class="nowrap">
                 <a class="btn btn--ghost btn--xs" href="<?= e(url('/panel/productos/' . $p['id'])) ?>">Editar</a>
-                <a class="btn btn--ghost btn--xs" href="<?= e(url('/e/' . $company['slug'] . '/producto/' . $p['slug'])) ?>" target="_blank" rel="noopener">Ver</a>
+                <a class="btn btn--ghost btn--xs" href="<?= e(url('/producto/' . $p['slug'])) ?>" target="_blank" rel="noopener">Ver</a>
               </td>
             </tr>
           <?php endforeach; ?>

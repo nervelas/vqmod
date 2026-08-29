@@ -1,5 +1,5 @@
 <?php
-$base = url('/e/' . $company['slug']);
+$base = rtrim(url('/'), '/');
 $qs = static function (array $over = []) use ($filters, $attrFilters, $view): string {
     $p = array_filter([
         'q'      => $filters['q'],
@@ -22,7 +22,7 @@ $catUrl = $category ? $base . '/categoria/' . $category['slug'] : $base . '/cata
 <div class="section section--tight blueprint" style="padding-top:34px">
   <div class="wrap">
     <nav class="crumbs" aria-label="Ruta">
-      <a href="<?= e($base) ?>">Inicio</a><span aria-hidden="true">/</span>
+      <a href="<?= e(url("/")) ?>">Inicio</a><span aria-hidden="true">/</span>
       <a href="<?= e($base . '/catalogo') ?>">Catálogo</a>
       <?php foreach ($crumbs as $c): ?>
         <span aria-hidden="true">/</span><a href="<?= e($base . '/categoria/' . $c['slug']) ?>"><?= e($c['name']) ?></a>

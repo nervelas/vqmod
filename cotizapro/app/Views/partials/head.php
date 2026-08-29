@@ -2,7 +2,7 @@
 /** @var array|null $company */
 /** @var string|null $title */
 $theme  = $theme ?? ['accent' => '#E8590C', 'ink' => '#1C1F22', 'paper' => '#F5F6F4'];
-$pTitle = $title ?? ($platformName ?? 'CotizaPro B2B');
+$pTitle = $title ?? ($appName ?? 'CotizaPro B2B');
 $desc   = $description ?? 'Catálogo técnico, cotizador en línea y seguimiento de cotizaciones.';
 $ogImg  = $ogImage ?? (isset($company['og_image']) && $company['og_image'] ? upload($company['og_image']) : (isset($company['hero_image']) && $company['hero_image'] ? upload($company['hero_image']) : absUrl('/assets/img/industry/og-default.jpg')));
 $noindex = $noindex ?? false;
@@ -14,7 +14,7 @@ $noindex = $noindex ?? false;
 <?php if ($noindex): ?><meta name="robots" content="noindex, nofollow"><?php else: ?><meta name="robots" content="index, follow, max-image-preview:large"><?php endif; ?>
 <link rel="canonical" href="<?= e(absUrl(\App\Core\Request::path())) ?>">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="<?= e($company['name'] ?? ($platformName ?? 'CotizaPro B2B')) ?>">
+<meta property="og:site_name" content="<?= e($company['name'] ?? ($appName ?? 'CotizaPro B2B')) ?>">
 <meta property="og:title" content="<?= e($pTitle) ?>">
 <meta property="og:description" content="<?= e(str_limit($desc, 158)) ?>">
 <meta property="og:url" content="<?= e(absUrl(\App\Core\Request::path())) ?>">
@@ -26,7 +26,7 @@ $noindex = $noindex ?? false;
 <meta name="format-detection" content="telephone=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="<?= e(mb_substr((string) ($company['name'] ?? ($platformName ?? 'CotizaPro')), 0, 14)) ?>">
+<meta name="apple-mobile-web-app-title" content="<?= e(mb_substr((string) ($company['name'] ?? ($appName ?? 'CotizaPro')), 0, 14)) ?>">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="<?= e(url('/manifest.webmanifest')) ?>">
 <link rel="apple-touch-icon" href="<?= e(url('/assets/img/icons/icon-192.png')) ?>">

@@ -25,39 +25,36 @@ use App\Models\Quote;
 
 final class SiteController extends Controller
 {
-    public function home(array $params): void
+    public function home(array $params = []): void
     {
-        $c   = $this->tenant($params);
-        $cid = (int) $c['id'];
+        $c = $this->site();
 
-        [$featured] = Product::search($cid, ['only_active' => 1, 'featured' => 1, 'limit' => 8]);
+        [$featured] = Product::search(['only_active' => 1, 'featured' => 1, 'limit' => 8]);
         if (count($featured) < 4) {
-            [$featured] = Product::search($cid, ['only_active' => 1, 'sort' => 'cotizados', 'limit' => 8]);
+            [$featured] = Product::search(['only_active' => 1, 'sort' => 'cotizados', 'limit' => 8]);
         }
-        [$mostQuoted] = Product::search($cid, ['only_active' => 1, 'sort' => 'cotizados', 'limit' => 6]);
+        [$mostQuoted] = Product::search(['only_active' => 1, 'sort' => 'cotizados', 'limit' => 6]);
 
-        $cats = array_values(array_filter(Category::tree($cid, true), static fn ($x) => true));
         $this->view('site/home', [
             'title'       => $c['seo_title'] ?: ($c['name'] . ' — Catálogo técnico y cotizador en línea'),
             'description' => $c['seo_description'] ?: str_limit((string) ($c['tagline'] ?: $c['about']), 155),
-            'categories'  => array_slice($cats, 0, 6),
+            'categories'  => array_slice(Category::tree(true), 0, 6),
             'featured'    => $featured,
             'mostQuoted'  => $mostQuoted,
-            'brands'      => Brand::all($cid, true),
-            'productTotal' => (int) DB::value('SELECT COUNT(*) FROM products WHERE company_id = ? AND active = 1', [$cid], 0),
-            'quoteTotal'  => (int) DB::value('SELECT COUNT(*) FROM quotes WHERE company_id = ?', [$cid], 0),
-            'cartCount'   => Cart::count($cid),
+            'brands'      => Brand::all(true),
+            'productTotal' => (int) DB::value('SELECT COUNT(*) FROM products WHERE active = 1', [], 0),
+            'quoteTotal'  => (int) DB::value('SELECT COUNT(*) FROM quotes', [], 0),
+            'cartCount'   => Cart::count(),
         ], 'layout/site');
     }
 
-    public function catalog(array $params): void
+    public function catalog(array $params = []): void
     {
-        $c   = $this->tenant($params);
-        $cid = (int) $c['id'];
+        $c = $this->site();
 
         $cat = null;
         if (!empty($params['cat'])) {
-            $cat = Category::bySlug($cid, (string) $params['cat']);
+            $cat = Category::bySlug((string) $params['cat']);
             if (!$cat || !$cat['active']) {
                 ErrorHandler::render(404);
             }
@@ -79,78 +76,76 @@ final class SiteController extends Controller
             'limit'       => $per,
             'offset'      => $offset,
         ];
-        [$rows, $total] = Product::search($cid, $filters);
+        [$rows, $total] = Product::search($filters);
 
         $this->view('site/catalog', [
             'title'       => ($cat ? $cat['name'] . ' — ' : 'Catálogo técnico — ') . $c['name'],
             'description' => $cat ? str_limit((string) ($cat['seo_description'] ?: $cat['description']), 155) : 'Catálogo completo de ' . $c['name'] . '. Busque por código, nombre o medida y solicite su cotización en línea.',
             'category'    => $cat,
-            'crumbs'      => $cat ? Category::breadcrumb($cid, (int) $cat['id']) : [],
-            'tree'        => Category::tree($cid, true),
+            'crumbs'      => $cat ? Category::breadcrumb((int) $cat['id']) : [],
+            'tree'        => Category::tree(true),
             'products'    => $rows,
             'total'       => $total,
             'page'        => $page,
             'pages'       => (int) ceil($total / $per),
-            'facets'      => AttributeDef::facets($cid, $cat ? (int) $cat['id'] : null),
-            'brands'      => Brand::all($cid, true),
+            'facets'      => AttributeDef::facets($cat ? (int) $cat['id'] : null),
+            'brands'      => Brand::all(true),
             'view'        => Request::str('vista') === 'lista' ? 'lista' : 'cuadricula',
             'filters'     => $filters,
             'attrFilters' => $attrFilters,
-            'cartCount'   => Cart::count($cid),
+            'cartCount'   => Cart::count(),
         ], 'layout/site');
     }
 
     public function product(array $params): void
     {
-        $c   = $this->tenant($params);
-        $cid = (int) $c['id'];
-        $p = Product::bySlug($cid, (string) $params['prod']);
+        $c = $this->site();
+        $p = Product::bySlug((string) $params['prod']);
         if (!$p || !$p['active']) {
             ErrorHandler::render(404);
         }
-        DB::run('UPDATE products SET views = views + 1 WHERE id = ? AND company_id = ?', [(int) $p['id'], $cid]);
+        DB::run('UPDATE products SET views = views + 1 WHERE id = ?', [(int) $p['id']]);
 
         $this->view('site/product', [
             'title'       => $p['seo_title'] ?: ($p['name'] . ' · ' . $p['code'] . ' — ' . $c['name']),
             'description' => $p['seo_description'] ?: str_limit((string) ($p['short_desc'] ?: $p['description']), 155),
             'p'           => $p,
-            'images'      => Product::images($cid, (int) $p['id']),
-            'attributes'  => Product::attributes($cid, (int) $p['id']),
-            'documents'   => Product::documents($cid, (int) $p['id']),
-            'related'     => Product::related($cid, $p, 4),
-            'crumbs'      => $p['category_id'] ? Category::breadcrumb($cid, (int) $p['category_id']) : [],
+            'images'      => Product::images((int) $p['id']),
+            'attributes'  => Product::attributes((int) $p['id']),
+            'documents'   => Product::documents((int) $p['id']),
+            'related'     => Product::related($p, 4),
+            'crumbs'      => $p['category_id'] ? Category::breadcrumb((int) $p['category_id']) : [],
             'showPrice'   => Product::priceVisible($c, $p),
-            'cartCount'   => Cart::count($cid),
+            'cartCount'   => Cart::count(),
         ], 'layout/site');
     }
 
-    public function about(array $params): void
+    public function about(array $params = []): void
     {
-        $c = $this->tenant($params);
+        $c = $this->site();
         $this->view('site/about', [
             'title'       => 'Quiénes somos — ' . $c['name'],
             'description' => str_limit((string) ($c['about'] ?: $c['tagline']), 155),
-            'brands'      => Brand::all((int) $c['id'], true),
-            'cartCount'   => Cart::count((int) $c['id']),
+            'brands'      => Brand::all(true),
+            'cartCount'   => Cart::count(),
         ], 'layout/site');
     }
 
-    public function contact(array $params): void
+    public function contact(array $params = []): void
     {
-        $c = $this->tenant($params);
+        $c = $this->site();
         $this->view('site/contact', [
             'title'       => 'Contacto — ' . $c['name'],
             'description' => 'Escríbanos o solicite su cotización. ' . $c['name'] . '.',
-            'cartCount'   => Cart::count((int) $c['id']),
+            'cartCount'   => Cart::count(),
         ], 'layout/site');
     }
 
     // ------------------------------------------------------- carrito de cotización
-    public function cart(array $params): void
+    public function cart(array $params = []): void
     {
-        $c   = $this->tenant($params);
-        $cid = (int) $c['id'];
-        $lines = Cart::lines($cid);
+        $c = $this->site();
+        $lines = Cart::lines();
         $this->view('site/cart', [
             'title'       => 'Su solicitud de cotización — ' . $c['name'],
             'description' => 'Revise su lista y envíe la solicitud de cotización.',
@@ -162,85 +157,83 @@ final class SiteController extends Controller
     }
 
     /** API del carrito (AJAX, con token CSRF). */
-    public function cartApi(array $params): void
+    public function cartApi(array $params = []): void
     {
-        $c = $this->tenant($params);
-        $cid = (int) $c['id'];
+        $this->site();
         Csrf::verify();
         $action = Request::str('action');
         $pid    = Request::int('id');
         $ok = true;
         switch ($action) {
             case 'add':
-                $ok = Cart::add($cid, $pid, max(0.01, Request::float('qty', 1)), Request::str('note'));
+                $ok = Cart::add($pid, max(0.01, Request::float('qty', 1)), Request::str('note'));
                 if ($ok) {
-                    DB::run('UPDATE products SET quote_count = quote_count + 1 WHERE id = ? AND company_id = ?', [$pid, $cid]);
+                    DB::run('UPDATE products SET quote_count = quote_count + 1 WHERE id = ?', [$pid]);
                 }
                 break;
             case 'qty':
-                Cart::setQty($cid, $pid, Request::float('qty', 1));
+                Cart::setQty($pid, Request::float('qty', 1));
                 break;
             case 'note':
-                Cart::setNote($cid, $pid, Request::str('note'));
+                Cart::setNote($pid, Request::str('note'));
                 break;
             case 'remove':
-                Cart::remove($cid, $pid);
+                Cart::remove($pid);
                 break;
             case 'clear':
-                Cart::clear($cid);
+                Cart::clear();
                 break;
             default:
                 jsonOut(['ok' => false, 'error' => 'Acción no reconocida'], 400);
         }
-        jsonOut(['ok' => $ok, 'count' => Cart::count($cid)]);
+        jsonOut(['ok' => $ok, 'count' => Cart::count()]);
     }
 
     /** Sugerencias del buscador (código, nombre o medida). */
-    public function suggest(array $params): void
+    public function suggest(array $params = []): void
     {
-        $c = $this->tenant($params);
+        $this->site();
         $q = Request::str('q');
         if (mb_strlen($q) < 2) {
             jsonOut(['ok' => true, 'items' => []]);
         }
-        [$rows] = Product::search((int) $c['id'], ['only_active' => 1, 'q' => $q, 'limit' => 8]);
+        [$rows] = Product::search(['only_active' => 1, 'q' => $q, 'limit' => 8]);
         $items = [];
         foreach ($rows as $r) {
             $items[] = [
                 'code' => $r['code'],
                 'name' => $r['name'],
                 'cat'  => $r['category_name'],
-                'url'  => url('/e/' . $c['slug'] . '/producto/' . $r['slug']),
+                'url'  => url('/producto/' . $r['slug']),
             ];
         }
         jsonOut(['ok' => true, 'items' => $items]);
     }
 
     /** Recibe la solicitud pública y crea la cotización en estado "nueva". */
-    public function submit(array $params): void
+    public function submit(array $params = []): void
     {
-        $c   = $this->tenant($params);
-        $cid = (int) $c['id'];
+        $c = $this->site();
         $this->guardPost();
 
         if (!RateLimit::hit('quote_ip', App::ip(), 6, 3600)) {
             Flash::error('Recibimos varias solicitudes desde su conexión. Intente de nuevo en una hora o llámenos.');
-            redirect('/e/' . $c['slug'] . '/cotizacion');
+            redirect('/cotizacion');
         }
         if (!Captcha::check(Request::str('captcha'), Request::str('captcha_stamp'))) {
             Flash::error('La respuesta de verificación no es correcta.');
             Flash::keep($_POST);
-            redirect('/e/' . $c['slug'] . '/cotizacion');
+            redirect('/cotizacion');
         }
         // Trampa anti-robot: campo oculto que un humano nunca llena.
         if (Request::str('website') !== '') {
-            redirect('/e/' . $c['slug'] . '/cotizacion');
+            redirect('/cotizacion');
         }
 
-        $lines = Cart::lines($cid);
+        $lines = Cart::lines();
         if (!$lines) {
             Flash::error('Su lista está vacía. Agregue al menos un producto.');
-            redirect('/e/' . $c['slug'] . '/catalogo');
+            redirect('/catalogo');
         }
 
         $name  = mb_substr(Request::str('name'), 0, 140);
@@ -259,21 +252,20 @@ final class SiteController extends Controller
         if ($v->fails()) {
             Flash::error($v->first());
             Flash::keep($_POST);
-            redirect('/e/' . $c['slug'] . '/cotizacion');
+            redirect('/cotizacion');
         }
 
-        $seller = Company::nextSeller($cid);
-        $num    = Quote::nextNumber($cid);
+        $seller = Company::nextSeller();
+        $num    = Quote::nextNumber();
         $token  = Quote::newToken();
 
         DB::begin();
         try {
-            $customerId = Customer::findOrCreate($cid, [
+            $customerId = Customer::findOrCreate([
                 'name' => $name, 'company' => $co, 'nit' => $nit, 'email' => $email, 'phone' => $phone,
             ], $seller);
 
             $quoteId = DB::insert('quotes', [
-                'company_id'      => $cid,
                 'number'          => $num['number'],
                 'folio_seq'       => $num['seq'],
                 'folio_year'      => $num['year'],
@@ -304,11 +296,10 @@ final class SiteController extends Controller
             $sort = 0;
             foreach ($lines as $l) {
                 $specs = [];
-                foreach (Product::attributes($cid, (int) $l['id']) as $a) {
+                foreach (Product::attributes((int) $l['id']) as $a) {
                     $specs[] = $a['label'] . ': ' . $a['value'] . ($a['unit'] ? ' ' . $a['unit'] : '');
                 }
                 DB::insert('quote_items', [
-                    'company_id' => $cid,
                     'quote_id'   => $quoteId,
                     'product_id' => (int) $l['id'],
                     'code'       => (string) $l['code'],
@@ -320,7 +311,7 @@ final class SiteController extends Controller
                     'unit_price' => (float) $l['price'],
                     'sort'       => $sort++,
                 ]);
-                DB::run('UPDATE products SET quote_count = quote_count + 1 WHERE id = ? AND company_id = ?', [(int) $l['id'], $cid]);
+                DB::run('UPDATE products SET quote_count = quote_count + 1 WHERE id = ?', [(int) $l['id']]);
             }
             DB::commit();
         } catch (\Throwable $e) {
@@ -328,16 +319,16 @@ final class SiteController extends Controller
             throw $e;
         }
 
-        Quote::recalc($cid, $quoteId);
-        Quote::event($cid, $quoteId, 'cliente', 'Solicitud recibida desde el sitio web', $msg, $name);
-        Audit::log('cotizacion.solicitud_web', 'quote', $quoteId, ['numero' => $num['number']], $cid);
-        Cart::clear($cid);
+        Quote::recalc($quoteId);
+        Quote::event($quoteId, 'cliente', 'Solicitud recibida desde el sitio web', $msg, $name);
+        Audit::log('cotizacion.solicitud_web', 'quote', $quoteId, ['numero' => $num['number']]);
+        Cart::clear();
 
-        $q = Quote::find($cid, $quoteId);
-        $items = Quote::items($cid, $quoteId);
+        $q = Quote::find($quoteId);
+        $items = Quote::items($quoteId);
         $this->notifyNewRequest($c, $q, $items, $seller);
 
-        redirect('/e/' . $c['slug'] . '/recibida/' . $token);
+        redirect('/recibida/' . $token);
     }
 
     private function notifyNewRequest(array $c, array $q, array $items, ?int $sellerId): void
@@ -377,49 +368,27 @@ final class SiteController extends Controller
             if ($seller && $seller['email'] && $seller['email'] !== $to) {
                 Mailer::send((string) $seller['email'], 'Se le asignó la solicitud ' . $q['number'], Mailer::template('Solicitud asignada', $internal, $c, 'Abrir en el panel', absUrl('/panel/cotizaciones/' . $q['id'])), $c);
             }
-            Notification::push($sellerId, 'Nueva solicitud ' . $q['number'], (string) ($q['contact_company'] ?: $q['contact_name']), '/panel/cotizaciones/' . $q['id'], 'cotizacion', (int) $c['id']);
+            Notification::push($sellerId, 'Nueva solicitud ' . $q['number'], (string) ($q['contact_company'] ?: $q['contact_name']), '/panel/cotizaciones/' . $q['id'], 'cotizacion');
         } else {
-            foreach (DB::all('SELECT id FROM users WHERE company_id = ? AND role = "admin" AND status = "activo"', [(int) $c['id']]) as $a) {
-                Notification::push((int) $a['id'], 'Nueva solicitud ' . $q['number'], (string) ($q['contact_company'] ?: $q['contact_name']), '/panel/cotizaciones/' . $q['id'], 'cotizacion', (int) $c['id']);
+            foreach (DB::all('SELECT id FROM users WHERE role = "admin" AND status = "activo"') as $a) {
+                Notification::push((int) $a['id'], 'Nueva solicitud ' . $q['number'], (string) ($q['contact_company'] ?: $q['contact_name']), '/panel/cotizaciones/' . $q['id'], 'cotizacion');
             }
         }
     }
 
     public function received(array $params): void
     {
-        $c = $this->tenant($params);
+        $this->site();
         $q = Quote::byToken((string) $params['token']);
-        if (!$q || (int) $q['company_id'] !== (int) $c['id']) {
+        if (!$q) {
             ErrorHandler::render(404);
         }
         $this->view('site/received', [
             'title'     => 'Solicitud ' . $q['number'] . ' recibida',
             'q'         => $q,
-            'items'     => Quote::items((int) $c['id'], (int) $q['id']),
+            'items'     => Quote::items((int) $q['id']),
             'cartCount' => 0,
             'noindex'   => true,
         ], 'layout/site');
-    }
-
-    // ------------------------------------------------------------------ SEO
-    public function sitemap(array $params): void
-    {
-        $c = $this->tenant($params);
-        $cid = (int) $c['id'];
-        header('Content-Type: application/xml; charset=utf-8');
-        $base = '/e/' . $c['slug'];
-        $out = '<?xml version="1.0" encoding="UTF-8"?>' . "\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
-        $out .= LandingController::urlNode(absUrl($base), date('Y-m-d'), '1.0');
-        $out .= LandingController::urlNode(absUrl($base . '/catalogo'), date('Y-m-d'), '0.9');
-        $out .= LandingController::urlNode(absUrl($base . '/nosotros'), date('Y-m-d'), '0.5');
-        $out .= LandingController::urlNode(absUrl($base . '/contacto'), date('Y-m-d'), '0.5');
-        foreach (DB::all('SELECT slug FROM categories WHERE company_id = ? AND active = 1', [$cid]) as $r) {
-            $out .= LandingController::urlNode(absUrl($base . '/categoria/' . $r['slug']), date('Y-m-d'), '0.7');
-        }
-        foreach (DB::all('SELECT slug, updated_at FROM products WHERE company_id = ? AND active = 1 LIMIT 5000', [$cid]) as $r) {
-            $out .= LandingController::urlNode(absUrl($base . '/producto/' . $r['slug']), substr((string) ($r['updated_at'] ?: nowSql()), 0, 10), '0.6');
-        }
-        echo $out . '</urlset>';
-        exit;
     }
 }

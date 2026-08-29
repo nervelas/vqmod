@@ -5,8 +5,8 @@ declare(strict_types=1);
  *
  *   php tools/seed-demo.php <base_de_datos_temporal>
  *
- * Crea dos empresas ("Industrial Pérez, S.A." y "Uniformes Roca") con
- * catálogo, clientes, vendedores y cotizaciones en todos los estados.
+ * Crea la empresa de demostración "Industrial Pérez, S.A." con catálogo,
+ * clientes, vendedores y cotizaciones en todos los estados del tablero.
  */
 
 require __DIR__ . '/../app/bootstrap.php';
@@ -44,12 +44,12 @@ $ins = static function (string $table, array $data) use ($pdo): int {
 $d = static fn (int $daysAgo, int $h = 9, int $m = 15): string => date('Y-m-d H:i:s', strtotime("-{$daysAgo} days " . sprintf('%02d:%02d:00', $h, $m)));
 
 /* =====================================================================
-   EMPRESA 1 · Industrial Pérez, S.A.
+   EMPRESA · Industrial Pérez, S.A.
    ===================================================================== */
-$c1 = $ins('companies', [
-    'slug' => 'industrial-perez', 'name' => 'Industrial Pérez', 'legal_name' => 'Industrial Pérez, Sociedad Anónima',
-    'nit' => '2458961-4', 'plan_id' => null, 'status' => 'activa', 'expires_at' => date('Y-m-d', strtotime('+11 months')),
-    'domain' => null, 'logo' => null, 'hero_image' => null, 'og_image' => null,
+$c1 = 1;
+$ins('company', [
+    'id' => 1, 'name' => 'Industrial Pérez', 'legal_name' => 'Industrial Pérez, Sociedad Anónima',
+    'nit' => '2458961-4', 'logo' => null, 'hero_image' => null, 'og_image' => null,
     'theme' => 'acero', 'color_accent' => '#E8590C', 'color_ink' => '#1C1F22', 'color_paper' => '#F5F6F4',
     'tagline' => 'Sellos, empaques y repuestos industriales con respaldo técnico',
     'about' => "Desde 1998 abastecemos a la industria guatemalteca de sellos mecánicos, empaques, teflón y hules técnicos. Trabajamos con inventario en Guatemala y con fabricación bajo plano cuando la pieza ya no existe en el mercado.\n\nNuestro equipo técnico levanta la medida en planta, propone el material correcto para su proceso y entrega con el respaldo de las marcas que distribuimos.",
@@ -67,34 +67,34 @@ $c1 = $ins('companies', [
     'created_at' => $d(720), 'updated_at' => $d(2),
 ]);
 
-$u1 = $ins('users', ['company_id' => $c1, 'name' => 'Roberto Pérez Molina', 'email' => 'admin@industrialperez.gt',
+$u1 = $ins('users', ['name' => 'Roberto Pérez Molina', 'email' => 'admin@industrialperez.gt',
     'username' => 'rperez', 'password' => Security::hashPassword('Perez2026!'), 'role' => 'admin',
     'phone' => '2245-8800', 'whatsapp' => '50255480011', 'position' => 'Gerente general',
     'status' => 'activo', 'receives_leads' => 1, 'created_at' => $d(720), 'last_login_at' => $d(1, 8, 12), 'last_login_ip' => '181.174.10.22']);
-$v1 = $ins('users', ['company_id' => $c1, 'name' => 'Ana Lucía Ramírez', 'email' => 'aramirez@industrialperez.gt',
+$v1 = $ins('users', ['name' => 'Ana Lucía Ramírez', 'email' => 'aramirez@industrialperez.gt',
     'username' => 'vendedor1', 'password' => Security::hashPassword('Venta2026!'), 'role' => 'vendedor',
     'phone' => '2245-8801', 'whatsapp' => '50255480012', 'position' => 'Asesora técnica · sellos y empaques',
     'status' => 'activo', 'receives_leads' => 1, 'created_at' => $d(640), 'last_login_at' => $d(0, 7, 55), 'last_login_ip' => '181.174.10.23']);
-$v2 = $ins('users', ['company_id' => $c1, 'name' => 'Marco Tulio Say', 'email' => 'msay@industrialperez.gt',
+$v2 = $ins('users', ['name' => 'Marco Tulio Say', 'email' => 'msay@industrialperez.gt',
     'username' => 'vendedor2', 'password' => Security::hashPassword('Venta2026!'), 'role' => 'vendedor',
     'phone' => '2245-8802', 'whatsapp' => '50255480013', 'position' => 'Asesor técnico · transmisión',
     'status' => 'activo', 'receives_leads' => 1, 'created_at' => $d(520), 'last_login_at' => $d(1, 16, 40), 'last_login_ip' => '181.174.10.24']);
-$v3 = $ins('users', ['company_id' => $c1, 'name' => 'Karla Estrada', 'email' => 'kestrada@industrialperez.gt',
+$v3 = $ins('users', ['name' => 'Karla Estrada', 'email' => 'kestrada@industrialperez.gt',
     'username' => 'vendedor3', 'password' => Security::hashPassword('Venta2026!'), 'role' => 'vendedor',
     'phone' => '2245-8803', 'whatsapp' => '50255480014', 'position' => 'Asesora técnica · hules y plásticos',
     'status' => 'activo', 'receives_leads' => 1, 'created_at' => $d(300), 'last_login_at' => $d(2, 11, 5), 'last_login_ip' => '181.174.10.25']);
-$vis = $ins('users', ['company_id' => $c1, 'name' => 'Sofía Contreras', 'email' => 'scontreras@industrialperez.gt',
+$vis = $ins('users', ['name' => 'Sofía Contreras', 'email' => 'scontreras@industrialperez.gt',
     'username' => 'visor1', 'password' => Security::hashPassword('Visor2026!'), 'role' => 'visor',
     'position' => 'Contabilidad', 'status' => 'activo', 'receives_leads' => 0, 'created_at' => $d(200)]);
 $sellers = [$v1, $v2, $v3];
 
-$pl1 = $ins('price_lists', ['company_id' => $c1, 'name' => 'Precio de lista', 'discount_pct' => 0, 'is_default' => 1]);
-$pl2 = $ins('price_lists', ['company_id' => $c1, 'name' => 'Mayorista', 'discount_pct' => 12, 'is_default' => 0]);
-$pl3 = $ins('price_lists', ['company_id' => $c1, 'name' => 'Distribuidor', 'discount_pct' => 22, 'is_default' => 0]);
+$pl1 = $ins('price_lists', ['name' => 'Precio de lista', 'discount_pct' => 0, 'is_default' => 1]);
+$pl2 = $ins('price_lists', ['name' => 'Mayorista', 'discount_pct' => 12, 'is_default' => 0]);
+$pl3 = $ins('price_lists', ['name' => 'Distribuidor', 'discount_pct' => 22, 'is_default' => 0]);
 
 $brands = [];
 foreach ([['Chesterton', 1], ['Garlock', 2], ['John Crane', 3], ['SKF', 4], ['Parker', 5], ['Gates', 6], ['Teadit', 7]] as [$bn, $so]) {
-    $brands[$bn] = $ins('brands', ['company_id' => $c1, 'name' => $bn, 'slug' => slugify($bn), 'sort' => $so, 'active' => 1]);
+    $brands[$bn] = $ins('brands', ['name' => $bn, 'slug' => slugify($bn), 'sort' => $so, 'active' => 1]);
 }
 
 $cats = [];
@@ -107,14 +107,14 @@ $catData = [
     ['Válvulas y mangueras', 'VM', 'Válvulas de compuerta y bola, mangueras industriales, acoples y lubricación.'],
 ];
 foreach ($catData as $i => [$cn, $code, $desc]) {
-    $cats[$code] = $ins('categories', ['company_id' => $c1, 'parent_id' => null, 'name' => $cn, 'slug' => slugify($cn),
+    $cats[$code] = $ins('categories', ['parent_id' => null, 'name' => $cn, 'slug' => slugify($cn),
         'code' => $code, 'description' => $desc, 'image' => null, 'sort' => $i + 1, 'active' => 1,
         'seo_title' => $cn . ' — Industrial Pérez', 'seo_description' => $desc, 'created_at' => $d(700)]);
 }
 // Subcategorías
 $sub = [];
 foreach ([['SM', 'Tipo fuelle'], ['SM', 'De cartucho'], ['EM', 'Espirometálicos'], ['HU', 'O-rings']] as $i => [$parent, $name]) {
-    $sub[$name] = $ins('categories', ['company_id' => $c1, 'parent_id' => $cats[$parent], 'name' => $name, 'slug' => slugify($name),
+    $sub[$name] = $ins('categories', ['parent_id' => $cats[$parent], 'name' => $name, 'slug' => slugify($name),
         'sort' => 10 + $i, 'active' => 1, 'created_at' => $d(690)]);
 }
 
@@ -128,7 +128,7 @@ $attrData = [
     ['aplicacion', 'Aplicación', 'lista', '', ['Agua y efluentes', 'Químicos', 'Alimentos y bebidas', 'Vapor', 'Aceites y combustibles', 'Azúcar y melaza', 'Minería'], 6],
 ];
 foreach ($attrData as [$code, $label, $type, $unit, $opts, $sort]) {
-    $attrs[$code] = $ins('attribute_defs', ['company_id' => $c1, 'category_id' => null, 'code' => $code, 'label' => $label,
+    $attrs[$code] = $ins('attribute_defs', ['category_id' => null, 'code' => $code, 'label' => $label,
         'type' => $type, 'unit' => $unit ?: null, 'options' => $opts ? json_encode($opts, JSON_UNESCAPED_UNICODE) : null,
         'filterable' => 1, 'sort' => $sort]);
 }
@@ -191,7 +191,7 @@ foreach ($P as $i => $row) {
     [$code, $name, $cat, $subName, $brand, $unit, $price, $plate, $short, $pattrs] = $row;
     $catId = $subName !== null ? $sub[$subName] : $cats[$cat];
     $pid = $ins('products', [
-        'company_id' => $c1, 'category_id' => $catId, 'brand_id' => $brand ? $brands[$brand] : null,
+        'category_id' => $catId, 'brand_id' => $brand ? $brands[$brand] : null,
         'code' => $code, 'name' => $name, 'slug' => slugify($name . '-' . $code),
         'short_desc' => $short,
         'description' => $short . " Contamos con existencia en Guatemala y equivalencias de las principales marcas. Si necesita una medida distinta, la fabricamos bajo plano o a partir de su muestra.",
@@ -207,21 +207,21 @@ foreach ($P as $i => $row) {
         'created_at' => $d(mt_rand(120, 700)), 'updated_at' => $d(mt_rand(1, 90)),
     ]);
     $prodIds[$code] = $pid;
-    $ins('product_images', ['company_id' => $c1, 'product_id' => $pid, 'path' => 'assets:img/plates/' . $plate . '.svg',
+    $ins('product_images', ['product_id' => $pid, 'path' => 'assets:img/plates/' . $plate . '.svg',
         'path_webp' => null, 'path_thumb' => 'assets:img/plates/' . $plate . '.svg', 'width' => 900, 'height' => 675,
         'alt' => $name, 'sort' => 1]);
     foreach ($pattrs as $ac => $av) {
         if (!isset($attrs[$ac])) {
             continue;
         }
-        $ins('product_attributes', ['company_id' => $c1, 'product_id' => $pid, 'attribute_id' => $attrs[$ac], 'value' => (string) $av]);
+        $ins('product_attributes', ['product_id' => $pid, 'attribute_id' => $attrs[$ac], 'value' => (string) $av]);
     }
     if ($price > 0 && $i % 4 === 0) {
-        $ins('product_prices', ['company_id' => $c1, 'product_id' => $pid, 'price_list_id' => $pl3, 'price' => round($price * 0.74, 2)]);
+        $ins('product_prices', ['product_id' => $pid, 'price_list_id' => $pl3, 'price' => round($price * 0.74, 2)]);
     }
 }
-$ins('product_documents', ['company_id' => $c1, 'product_id' => $prodIds['SM-CAR-050'], 'name' => 'Ficha técnica · sello de cartucho simple.pdf',
+$ins('product_documents', ['product_id' => $prodIds['SM-CAR-050'], 'name' => 'Ficha técnica · sello de cartucho simple.pdf',
     'path' => 'assets:img/plates/sello-cartucho.svg', 'size' => 184320, 'created_at' => $d(120)]);
 
-echo "Empresa 1: " . count($prodIds) . " productos\n";
+echo 'Catálogo: ' . count($prodIds) . " productos\n";
 require __DIR__ . '/seed-demo-2.php';

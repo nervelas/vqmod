@@ -30,6 +30,7 @@ $nav = [
         ['/panel/usuarios', 'Usuarios y roles', 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 20a6 6 0 0 1 12 0M15 20h6a5 5 0 0 0-4-4.9'],
         ['/panel/ajustes', 'Configuración', 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm8-3a8 8 0 0 1-.1 1.2l2 1.6-2 3.4-2.4-1a8 8 0 0 1-2 1.2L15 21H9l-.5-2.6a8 8 0 0 1-2-1.2l-2.4 1-2-3.4 2-1.6a8 8 0 0 1 0-2.4l-2-1.6 2-3.4 2.4 1a8 8 0 0 1 2-1.2L9 3h6l.5 2.6a8 8 0 0 1 2 1.2l2.4-1 2 3.4-2 1.6c.07.4.1.8.1 1.2Z'],
         ['/panel/bitacora', 'Bitácora', 'M6 3h9l4 4v14H6V3Zm3 7h8M9 14h8M9 18h5'],
+        ['/panel/respaldos', 'Respaldos', 'M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3Zm0 5c0 1.7 3.6 3 8 3s8-1.3 8-3M4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7'],
     ]],
 ];
 ?>
@@ -54,7 +55,7 @@ $nav = [
         <?php foreach ($items as [$href, $label, $d]):
             $active = $href === '/panel' ? $path === '/panel' : str_starts_with($path, $href);
             if (($auth['role'] ?? '') === 'visor' && !in_array($href, ['/panel', '/panel/cotizaciones', '/panel/clientes', '/panel/productos', '/panel/reportes'], true)) { continue; }
-            if (($auth['role'] ?? '') === 'vendedor' && in_array($href, ['/panel/usuarios', '/panel/ajustes', '/panel/bitacora', '/panel/listas-precios'], true)) { continue; }
+            if (($auth['role'] ?? '') === 'vendedor' && in_array($href, ['/panel/usuarios', '/panel/ajustes', '/panel/bitacora', '/panel/respaldos', '/panel/listas-precios'], true)) { continue; }
         ?>
           <a href="<?= e(url($href)) ?>"<?= $active ? ' aria-current="page"' : '' ?>>
             <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="<?= e($d) ?>"/></svg>
@@ -64,7 +65,7 @@ $nav = [
       <?php endforeach; ?>
     </nav>
     <div class="side__foot">
-      <a href="<?= e(url('/e/' . $company['slug'])) ?>" target="_blank" rel="noopener">Ver mi sitio público ↗</a>
+      <a href="<?= e(url('/')) ?>" target="_blank" rel="noopener">Ver mi sitio público ↗</a>
       <a href="<?= e(url('/panel/perfil')) ?>"><?= e($auth['name'] ?? '') ?> · <?= e($auth['role'] ?? '') ?></a>
       <a href="<?= e(url('/salir')) ?>">Cerrar sesión</a>
     </div>

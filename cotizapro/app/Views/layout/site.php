@@ -1,6 +1,6 @@
 <?php
 /** Sitio público de la empresa. */
-$base = url('/e/' . $company['slug']);
+$base = rtrim(url('/'), '/');
 $path = \App\Core\Request::path();
 $is = static fn (string $suffix): bool => str_ends_with($path, $suffix);
 $jsConfig = ['cartUrl' => $base . '/carrito'];
@@ -15,7 +15,7 @@ $cartCount = (int) ($cartCount ?? 0);
 
 <header class="topbar">
   <div class="wrap topbar__in">
-    <a class="brand" href="<?= e($base) ?>">
+    <a class="brand" href="<?= e(url("/")) ?>">
       <?php if (!empty($company['logo'])): ?>
         <img src="<?= e(upload($company['logo'])) ?>" alt="<?= e($company['name']) ?>" width="140" height="34">
       <?php else: ?>
@@ -41,7 +41,7 @@ $cartCount = (int) ($cartCount ?? 0);
   <div class="wrap">
     <div class="footer__grid">
       <div>
-        <a class="brand" href="<?= e($base) ?>">
+        <a class="brand" href="<?= e(url("/")) ?>">
           <span class="brand__mark" aria-hidden="true"><?= e(mb_strtoupper(mb_substr($company['name'], 0, 2))) ?></span>
           <span><?= e($company['name']) ?></span>
         </a>
@@ -79,7 +79,7 @@ $cartCount = (int) ($cartCount ?? 0);
     </div>
     <div class="footer__bottom">
       <span>© <?= date('Y') ?> <?= e($company['legal_name'] ?: $company['name']) ?><?= $company['nit'] ? ' · NIT ' . e($company['nit']) : '' ?></span>
-      <span>Cotizador en línea por <?= e($platformName ?? 'CotizaPro B2B') ?></span>
+      <span>Cotizador en línea por <?= e($appName ?? 'CotizaPro B2B') ?></span>
     </div>
   </div>
 </footer>

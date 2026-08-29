@@ -69,14 +69,18 @@ if (Request::isPost() && !$installed) {
             $errors[] = 'Se perdieron los datos de conexión. Repita el paso 2.';
             $step = 2;
         } else {
-            $adminName  = mb_substr(Request::str('admin_name'), 0, 120) ?: 'Superadministrador';
+            $companyName = mb_substr(Request::str('company_name'), 0, 140);
+            $adminName  = mb_substr(Request::str('admin_name'), 0, 120) ?: 'Administrador';
             $adminEmail = Request::email('admin_email');
             $adminPass  = Request::raw('admin_pass');
             $siteUrl    = rtrim(Request::str('site_url'), '/');
             $withDemo   = Request::bool('demo');
 
+            if ($companyName === '') {
+                $errors[] = 'Escriba el nombre de su empresa.';
+            }
             if ($adminEmail === '') {
-                $errors[] = 'Escriba un correo válido para el superadministrador.';
+                $errors[] = 'Escriba un correo válido para el administrador.';
             }
             if (!Security::passwordOk($adminPass)) {
                 $errors[] = 'La contraseña debe tener 8+ caracteres, con mayúsculas, minúsculas y números.';
@@ -107,16 +111,16 @@ if (Request::isPost() && !$installed) {
                     }
                     @chmod($configFile, 0640);
 
-                    // Datos base y demostración (antes del superadministrador).
-                    seedBase($pdo);
+                    // Datos de demostración (antes de la empresa y el administrador).
                     if ($withDemo && is_file(BASE_PATH . '/database/database_demo.sql')) {
                         runSql($pdo, (string) file_get_contents(BASE_PATH . '/database/database_demo.sql'));
                     }
+                    seedBase($pdo, $companyName, $adminEmail);
 
-                    // Superadministrador
+                    // Administrador de la empresa
                     $hash = Security::hashPassword($adminPass);
-                    $st = $pdo->prepare('INSERT INTO users (company_id,name,email,password,role,status,created_at) VALUES (NULL,?,?,?,"superadmin","activo",NOW())
-                                         ON DUPLICATE KEY UPDATE password = VALUES(password), role = "superadmin", status = "activo"');
+                    $st = $pdo->prepare('INSERT INTO users (name,email,password,role,status,created_at) VALUES (?,?,?,"admin","activo",NOW())
+                                         ON DUPLICATE KEY UPDATE name = VALUES(name), password = VALUES(password), role = "admin", status = "activo"');
                     $st->execute([$adminName, $adminEmail, $hash]);
 
                     @file_put_contents($lock, 'Instalado el ' . date('c') . "\n");
@@ -147,32 +151,35 @@ function runSql(PDO $pdo, string $sql): void
     }
 }
 
-/** Planes y textos por defecto de la plataforma. */
-function seedBase(PDO $pdo): void
+/** Crea (o completa) la fila única de la empresa y los ajustes del sistema. */
+function seedBase(PDO $pdo, string $companyName, string $adminEmail): void
 {
-    $n = (int) $pdo->query('SELECT COUNT(*) FROM plans')->fetchColumn();
-    if ($n === 0) {
-        $plans = [
-            ['basico', 'Básico', 'Para empezar a cotizar en línea', 295, 2950, 200, 2, 150, 0, 1,
-                ['Catálogo con 200 productos', 'Cotizador en línea', 'PDF con su marca', '2 usuarios', 'Seguimiento por enlace']],
-            ['pro', 'Pro', 'El plan de la mayoría', 545, 5450, 1500, 6, 600, 1, 2,
-                ['Catálogo con 1,500 productos', 'Kanban de cotizaciones', 'Listas de precios por cliente', '6 usuarios', 'Importador de WooCommerce', 'Reportes y exportación']],
-            ['premium', 'Premium', 'Catálogo grande y varios vendedores', 895, 8950, 0, 0, 0, 0, 3,
-                ['Productos ilimitados', 'Usuarios ilimitados', 'Dominio propio', 'Recordatorios automáticos', 'Respaldos y auditoría', 'Soporte prioritario']],
-        ];
-        $st = $pdo->prepare('INSERT INTO plans (code,name,tagline,price_month,price_year,max_products,max_users,max_quotes_month,highlight,sort,features,active,created_at)
-                             VALUES (?,?,?,?,?,?,?,?,?,?,?,1,NOW())');
-        foreach ($plans as $p) {
-            $st->execute([$p[0], $p[1], $p[2], $p[3], $p[4], $p[5], $p[6], $p[7], $p[8], $p[9], json_encode($p[10], JSON_UNESCAPED_UNICODE)]);
-        }
+    $exists = (int) $pdo->query('SELECT COUNT(*) FROM company')->fetchColumn() > 0;
+    if ($exists) {
+        // Los datos demo ya crearon la empresa: solo se renombra si el instalador trae otro nombre.
+        $st = $pdo->prepare('UPDATE company SET name = ?, updated_at = NOW() WHERE id = 1');
+        $st->execute([$companyName]);
+    } else {
+        $st = $pdo->prepare(
+            'INSERT INTO company (id,name,legal_name,email,theme,color_accent,color_ink,color_paper,
+                                  currency_symbol,tax_rate,tax_label,price_visibility,quote_prefix,quote_next,
+                                  quote_year,quote_pad,validity_days,tagline,about,created_at,updated_at)
+             VALUES (1,?,?,?,"acero","#E8590C","#1C1F22","#F5F6F4","Q",12.000,"IVA","oculto","COT",1,?,4,15,?,?,NOW(),NOW())'
+        );
+        $st->execute([
+            $companyName,
+            $companyName,
+            $adminEmail,
+            (int) date('Y'),
+            'Catálogo técnico y cotizaciones en línea',
+            'Escriba aquí la historia de ' . $companyName . ' desde Configuración → Identidad.',
+        ]);
     }
+    $pdo->exec('INSERT INTO price_lists (name, discount_pct, is_default)
+                SELECT "General", 0, 1 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM price_lists)');
+
     $sets = [
-        'platform_name'    => 'CotizaPro B2B',
-        'platform_tagline' => 'Catálogo, cotizador y seguimiento para empresas que venden por cotización.',
-        'whatsapp_message' => 'Hola, me interesa el sistema de catálogo y cotizaciones. ¿Me comparten información?',
-        'landing_hero_kicker' => 'Catálogo · Cotizador · Seguimiento',
-        'landing_hero_title'  => 'Su catálogo|cotiza solo.|Usted cierra.',
-        'landing_hero_sub'    => 'El sistema para empresas que no venden con tarjeta: catálogo técnico en línea, cotizador para el cliente y un tablero donde ninguna cotización se pierde.',
+        'app_name' => 'CotizaPro B2B',
     ];
     $st = $pdo->prepare('INSERT INTO settings (`key`,`value`) VALUES (?,?) ON DUPLICATE KEY UPDATE `value` = `value`');
     foreach ($sets as $k => $v) {

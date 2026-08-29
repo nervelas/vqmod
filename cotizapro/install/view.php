@@ -40,7 +40,7 @@
         <div class="alert alert--ok"><span aria-hidden="true">✓</span><span>Elimine la carpeta <code>/install</code> del servidor cuando termine de revisar.</span></div>
         <div class="stack-sm" style="margin-top:20px">
           <a class="btn btn--accent btn--block" href="<?= e(url('/entrar')) ?>">Entrar al sistema</a>
-          <a class="btn btn--ghost btn--block" href="<?= e(url('/')) ?>">Ver la landing</a>
+          <a class="btn btn--ghost btn--block" href="<?= e(url('/')) ?>">Ver el sitio</a>
         </div>
         <p class="hint" style="margin-top:18px">Recuerde configurar la tarea cron: el comando exacto está en <strong>Superadmin → Ajustes</strong>.</p>
 
@@ -97,13 +97,15 @@
           </form>
 
         <?php else: ?>
-          <h1>Su cuenta de superadministrador</h1>
-          <p class="sub">Con esta cuenta creará y administrará las empresas de la plataforma.</p>
+          <h1>Su empresa y su cuenta</h1>
+          <p class="sub">Estos datos crean el sitio público y su acceso de administrador. Podrá cambiarlo todo después.</p>
           <form method="post" action="<?= e(url('/install/?paso=3')) ?>">
             <input type="hidden" name="_token" value="<?= e($token) ?>">
             <input type="hidden" name="accion" value="instalar">
-            <div class="field"><label for="admin_name">Nombre</label>
-              <input class="input" id="admin_name" name="admin_name" maxlength="120" value="Superadministrador"></div>
+            <div class="field"><label for="company_name">Nombre de la empresa *</label>
+              <input class="input" id="company_name" name="company_name" maxlength="140" required placeholder="Industrial Pérez, S.A."></div>
+            <div class="field"><label for="admin_name">Su nombre</label>
+              <input class="input" id="admin_name" name="admin_name" maxlength="120" value="Administrador"></div>
             <div class="field"><label for="admin_email">Correo *</label>
               <input class="input" id="admin_email" name="admin_email" type="email" required placeholder="admin@sudominio.gt"></div>
             <div class="field"><label for="admin_pass">Contraseña *</label>
@@ -113,7 +115,7 @@
               <input class="input" id="site_url" name="site_url" value="<?= e($guessUrl) ?>">
               <p class="hint">Se usa en los enlaces de los correos y del PDF.</p></div>
             <label class="check"><input type="checkbox" name="demo" value="1" checked>
-              <span>Instalar los datos de demostración (dos empresas con catálogo y cotizaciones)</span></label>
+              <span>Instalar los datos de demostración (catálogo, clientes y cotizaciones de ejemplo)</span></label>
             <button class="btn btn--accent btn--block" type="submit">Instalar ahora <span class="arw" aria-hidden="true">&rarr;</span></button>
             <p class="center small" style="margin-top:14px"><a class="linkarrow" href="<?= e(url('/install/?paso=2')) ?>">Volver a la base de datos</a></p>
           </form>

@@ -1,6 +1,6 @@
 <?php
 /** Ficha de producto para cuadrícula. @var array $p */
-$base  = url('/e/' . $company['slug']);
+$base = rtrim(url('/'), '/');
 $img   = $p['image'] ?? null;
 $src   = $img ? upload($img['path_thumb'] ?: $img['path']) : url('/assets/img/plates/sello-mecanico.svg');
 $alt   = $img && $img['alt'] ? $img['alt'] : $p['name'];

@@ -1,5 +1,5 @@
 /* =======================================================================
-   Panel de empresa y superadmin — mismo lenguaje técnico, claro y preciso.
+   Panel de la empresa — mismo lenguaje técnico, claro y preciso.
    ======================================================================= */
 
 .app{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:100vh}

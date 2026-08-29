@@ -10,9 +10,11 @@
             <div class="field"><label for="name">Nombre comercial *</label><input class="input" id="name" name="name" maxlength="140" required value="<?= e($c['name']) ?>"></div>
             <div class="field"><label for="legal_name">Razón social</label><input class="input" id="legal_name" name="legal_name" maxlength="180" value="<?= e($c['legal_name']) ?>"></div>
           </div>
-          <div class="row-2">
+          <div class="row-3">
             <div class="field"><label for="nit">NIT</label><input class="input" id="nit" name="nit" maxlength="30" value="<?= e($c['nit']) ?>"></div>
             <div class="field"><label for="years_experience">Años en la industria</label><input class="input" id="years_experience" name="years_experience" type="number" min="0" max="200" value="<?= e((int) $c['years_experience']) ?>"></div>
+            <div class="field"><label for="app_name">Nombre del sistema</label><input class="input" id="app_name" name="app_name" maxlength="80" value="<?= e($appName) ?>">
+              <p class="hint">Aparece en la pantalla de acceso y en el crédito del sitio.</p></div>
           </div>
           <div class="field"><label for="tagline">Frase del hero (se parte en líneas)</label>
             <input class="input" id="tagline" name="tagline" maxlength="190" value="<?= e($c['tagline']) ?>" placeholder="Repuestos industriales con respaldo técnico"></div>
@@ -110,7 +112,7 @@
             <div class="field"><label for="smtp_from">Remitente</label><input class="input" id="smtp_from" name="smtp_from" type="email" maxlength="150" value="<?= e($c['smtp_from']) ?>"></div>
             <div class="field"><label for="smtp_from_name">Nombre del remitente</label><input class="input" id="smtp_from_name" name="smtp_from_name" maxlength="150" value="<?= e($c['smtp_from_name']) ?>"></div>
           </div>
-          <p class="hint">Si lo deja vacío se usa el SMTP de la plataforma o la función mail() del hosting.</p>
+          <p class="hint">Si lo deja vacío se usa la función mail() del servidor.</p>
         </div>
       </div>
 
@@ -128,7 +130,7 @@
       <div class="card">
         <div class="card__body">
           <button class="btn btn--accent btn--block" type="submit">Guardar toda la configuración</button>
-          <a class="btn btn--ghost btn--block" style="margin-top:8px" href="<?= e(url('/e/' . $c['slug'])) ?>" target="_blank" rel="noopener">Ver mi sitio público</a>
+          <a class="btn btn--ghost btn--block" style="margin-top:8px" href="<?= e(url('/')) ?>" target="_blank" rel="noopener">Ver mi sitio público</a>
         </div>
       </div>
 
@@ -155,18 +157,14 @@
       </div>
 
       <div class="card">
-        <div class="card__head"><h2>Su plan</h2></div>
+        <div class="card__head"><h2>Contenido de la instalación</h2></div>
         <div class="card__body">
-          <p style="font-family:var(--f-display);font-size:1.2rem;letter-spacing:-.02em;margin:0 0 4px"><?= e($plan['name'] ?? 'Sin plan asignado') ?></p>
-          <p class="small muted" style="margin:0 0 16px">Estado: <?= e(ucfirst((string) $c['status'])) ?><?= $c['expires_at'] ? ' · vence el ' . e(fechaCorta((string) $c['expires_at'])) : '' ?></p>
-          <?php foreach ([['Productos', 'products'], ['Usuarios', 'users'], ['Cotizaciones del mes', 'quotes']] as $row):
-            $u = (int) ($usage[$row[1]] ?? 0); $l = (int) ($limits[$row[1]] ?? 0);
-            $pct = $l > 0 ? min(100, (int) round($u / $l * 100)) : 0; ?>
-            <div style="margin-bottom:14px">
-              <div class="flex small" style="justify-content:space-between;margin-bottom:6px"><span><?= e($row[0]) ?></span><b><?= e($u) ?><?= $l > 0 ? ' / ' . e($l) : '' ?></b></div>
-              <?php if ($l > 0): ?><span class="progressbar<?= $pct >= 100 ? ' is-full' : '' ?>"><i style="width:<?= e($pct) ?>%"></i></span><?php endif; ?>
+          <?php foreach ([['Productos', 'products'], ['Usuarios', 'users'], ['Cotizaciones del mes', 'quotes']] as $row): ?>
+            <div class="flex small" style="justify-content:space-between;margin-bottom:10px">
+              <span><?= e($row[0]) ?></span><b><?= e(number_format((int) ($stats[$row[1]] ?? 0))) ?></b>
             </div>
           <?php endforeach; ?>
+          <a class="btn btn--ghost btn--block" style="margin-top:8px" href="<?= e(url('/panel/respaldos')) ?>">Respaldos de la base</a>
         </div>
       </div>
 
@@ -175,14 +173,10 @@
         <div class="card__body">
           <div class="copyfield">
             <label class="sr-only" for="pubu">Dirección del sitio</label>
-            <input id="pubu" value="<?= e(absUrl('/e/' . $c['slug'])) ?>" readonly>
+            <input id="pubu" value="<?= e(absUrl('/')) ?>" readonly>
             <button type="button" data-copy="pubu">Copiar</button>
           </div>
-          <?php if ($c['domain']): ?>
-            <p class="hint" style="margin-top:10px">Dominio propio: <strong><?= e($c['domain']) ?></strong></p>
-          <?php else: ?>
-            <p class="hint" style="margin-top:10px">¿Quiere un dominio propio? Solicítelo al administrador de la plataforma.</p>
-          <?php endif; ?>
+          <p class="hint" style="margin-top:10px">El sitio público de su empresa se sirve en la raíz de esta instalación.</p>
         </div>
       </div>
     </div>

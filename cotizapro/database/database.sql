@@ -1,41 +1,17 @@
 -- =====================================================================
 --  CotizaPro B2B — Estructura de base de datos
+--  Instalación de una sola empresa
 --  MySQL 8.0 / MariaDB 10.4+   ·   utf8mb4_unicode_ci
 -- =====================================================================
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
--- ------------------------------------------------------------- planes
-CREATE TABLE IF NOT EXISTS `plans` (
-  `id`               INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `code`             VARCHAR(40)  NOT NULL,
-  `name`             VARCHAR(80)  NOT NULL,
-  `tagline`          VARCHAR(160) NULL,
-  `price_month`      DECIMAL(10,2) NOT NULL DEFAULT 0,
-  `price_year`       DECIMAL(10,2) NOT NULL DEFAULT 0,
-  `max_products`     INT NOT NULL DEFAULT 100,
-  `max_users`        INT NOT NULL DEFAULT 2,
-  `max_quotes_month` INT NOT NULL DEFAULT 100,
-  `features`         TEXT NULL,
-  `highlight`        TINYINT(1) NOT NULL DEFAULT 0,
-  `sort`             INT NOT NULL DEFAULT 0,
-  `active`           TINYINT(1) NOT NULL DEFAULT 1,
-  `created_at`       DATETIME NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_plan_code` (`code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ---------------------------------------------------------- empresas
-CREATE TABLE IF NOT EXISTS `companies` (
-  `id`                INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `slug`              VARCHAR(60)  NOT NULL,
+-- ------------------------------------------------ empresa (fila única)
+CREATE TABLE IF NOT EXISTS `company` (
+  `id`                INT UNSIGNED NOT NULL DEFAULT 1,
   `name`              VARCHAR(140) NOT NULL,
   `legal_name`        VARCHAR(180) NULL,
   `nit`               VARCHAR(30)  NULL,
-  `plan_id`           INT UNSIGNED NULL,
-  `status`            ENUM('activa','prueba','suspendida','cancelada') NOT NULL DEFAULT 'prueba',
-  `expires_at`        DATE NULL,
-  `domain`            VARCHAR(190) NULL,
   `logo`              VARCHAR(190) NULL,
   `logo_dark`         VARCHAR(190) NULL,
   `hero_image`        VARCHAR(190) NULL,
@@ -83,21 +59,17 @@ CREATE TABLE IF NOT EXISTS `companies` (
   `seo_description`   VARCHAR(300) NULL,
   `created_at`        DATETIME NULL,
   `updated_at`        DATETIME NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_company_slug` (`slug`),
-  UNIQUE KEY `uq_company_domain` (`domain`),
-  KEY `ix_company_status` (`status`)
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------- usuarios
 CREATE TABLE IF NOT EXISTS `users` (
   `id`             INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `company_id`     INT UNSIGNED NULL,
   `name`           VARCHAR(120) NOT NULL,
   `email`          VARCHAR(150) NOT NULL,
   `username`       VARCHAR(60)  NULL,
   `password`       VARCHAR(255) NOT NULL,
-  `role`           ENUM('superadmin','admin','vendedor','visor') NOT NULL DEFAULT 'vendedor',
+  `role`           ENUM('admin','vendedor','visor') NOT NULL DEFAULT 'vendedor',
   `phone`          VARCHAR(40)  NULL,
   `whatsapp`       VARCHAR(30)  NULL,
   `position`       VARCHAR(90)  NULL,
@@ -113,7 +85,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_user_email` (`email`),
   UNIQUE KEY `uq_user_username` (`username`),
-  KEY `ix_user_company` (`company_id`,`role`,`status`)
+  KEY `ix_user_role` (`role`,`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `password_resets` (
@@ -154,7 +126,6 @@ CREATE TABLE IF NOT EXISTS `rate_limits` (
 -- ----------------------------------------------------------- catálogo
 CREATE TABLE IF NOT EXISTS `brands` (
   `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `company_id` INT UNSIGNED NOT NULL,
   `name`       VARCHAR(120) NOT NULL,
   `slug`       VARCHAR(140) NOT NULL,
   `logo`       VARCHAR(190) NULL,
@@ -162,13 +133,12 @@ CREATE TABLE IF NOT EXISTS `brands` (
   `sort`       INT NOT NULL DEFAULT 0,
   `active`     TINYINT(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_brand` (`company_id`,`slug`),
-  KEY `ix_brand_company` (`company_id`,`active`)
+  UNIQUE KEY `uq_brand` (`slug`),
+  KEY `ix_brand_active` (`active`,`sort`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `categories` (
   `id`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `company_id`  INT UNSIGNED NOT NULL,
   `parent_id`   INT UNSIGNED NULL,
   `name`        VARCHAR(140) NOT NULL,
   `slug`        VARCHAR(160) NOT NULL,
@@ -181,13 +151,12 @@ CREATE TABLE IF NOT EXISTS `categories` (
   `seo_description` VARCHAR(300) NULL,
   `created_at`  DATETIME NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_category` (`company_id`,`slug`),
-  KEY `ix_cat_company` (`company_id`,`parent_id`,`active`,`sort`)
+  UNIQUE KEY `uq_category` (`slug`),
+  KEY `ix_cat_tree` (`parent_id`,`active`,`sort`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `attribute_defs` (
   `id`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `company_id`  INT UNSIGNED NOT NULL,
   `category_id` INT UNSIGNED NULL,
   `code`        VARCHAR(50)  NOT NULL,
   `label`       VARCHAR(90)  NOT NULL,
@@ -197,12 +166,11 @@ CREATE TABLE IF NOT EXISTS `attribute_defs` (
   `filterable`  TINYINT(1) NOT NULL DEFAULT 1,
   `sort`        INT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
-  KEY `ix_attr_company` (`company_id`,`category_id`,`sort`)
+  KEY `ix_attr_cat` (`category_id`,`sort`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `products` (
   `id`               INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `company_id`       INT UNSIGNED NOT NULL,
   `category_id`      INT UNSIGNED NULL,
   `brand_id`         INT UNSIGNED NULL,
   `code`             VARCHAR(60)  NOT NULL,
@@ -227,16 +195,15 @@ CREATE TABLE IF NOT EXISTS `products` (
   `created_at`       DATETIME NULL,
   `updated_at`       DATETIME NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_product_slug` (`company_id`,`slug`),
-  UNIQUE KEY `uq_product_code` (`company_id`,`code`),
-  KEY `ix_prod_company` (`company_id`,`active`,`category_id`),
-  KEY `ix_prod_featured` (`company_id`,`featured`,`active`),
+  UNIQUE KEY `uq_product_slug` (`slug`),
+  UNIQUE KEY `uq_product_code` (`code`),
+  KEY `ix_prod_active` (`active`,`category_id`),
+  KEY `ix_prod_featured` (`featured`,`active`),
   FULLTEXT KEY `ft_prod` (`code`,`name`,`short_desc`,`description`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `product_images` (
   `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `company_id` INT UNSIGNED NOT NULL,
   `product_id` INT UNSIGNED NOT NULL,
   `path`       VARCHAR(190) NOT NULL,
   `path_webp`  VARCHAR(190) NULL,
@@ -247,24 +214,21 @@ CREATE TABLE IF NOT EXISTS `product_images` (
   `alt`        VARCHAR(190) NULL,
   `sort`       INT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
-  KEY `ix_img_product` (`product_id`,`sort`),
-  KEY `ix_img_company` (`company_id`)
+  KEY `ix_img_product` (`product_id`,`sort`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `product_attributes` (
   `id`           INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `company_id`   INT UNSIGNED NOT NULL,
   `product_id`   INT UNSIGNED NOT NULL,
   `attribute_id` INT UNSIGNED NOT NULL,
   `value`        VARCHAR(190) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_prod_attr` (`product_id`,`attribute_id`),
-  KEY `ix_pa_filter` (`company_id`,`attribute_id`,`value`(60))
+  KEY `ix_pa_filter` (`attribute_id`,`value`(60))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `product_documents` (
   `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `company_id` INT UNSIGNED NOT NULL,
   `product_id` INT UNSIGNED NOT NULL,
   `name`       VARCHAR(160) NOT NULL,
   `path`       VARCHAR(190) NOT NULL,
@@ -276,29 +240,24 @@ CREATE TABLE IF NOT EXISTS `product_documents` (
 
 CREATE TABLE IF NOT EXISTS `price_lists` (
   `id`           INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `company_id`   INT UNSIGNED NOT NULL,
   `name`         VARCHAR(90) NOT NULL,
   `discount_pct` DECIMAL(6,2) NOT NULL DEFAULT 0,
   `is_default`   TINYINT(1) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`id`),
-  KEY `ix_pl_company` (`company_id`)
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `product_prices` (
   `id`            INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `company_id`    INT UNSIGNED NOT NULL,
   `product_id`    INT UNSIGNED NOT NULL,
   `price_list_id` INT UNSIGNED NOT NULL,
   `price`         DECIMAL(12,2) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_pp` (`product_id`,`price_list_id`),
-  KEY `ix_pp_company` (`company_id`)
+  UNIQUE KEY `uq_pp` (`product_id`,`price_list_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------ clientes
 CREATE TABLE IF NOT EXISTS `customers` (
   `id`               INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `company_id`       INT UNSIGNED NOT NULL,
   `name`             VARCHAR(160) NOT NULL,
   `legal_name`       VARCHAR(200) NULL,
   `nit`              VARCHAR(30)  NULL,
@@ -315,14 +274,13 @@ CREATE TABLE IF NOT EXISTS `customers` (
   `created_at`       DATETIME NULL,
   `updated_at`       DATETIME NULL,
   PRIMARY KEY (`id`),
-  KEY `ix_cus_company` (`company_id`,`name`),
-  KEY `ix_cus_nit` (`company_id`,`nit`),
-  KEY `ix_cus_user` (`company_id`,`assigned_user_id`)
+  KEY `ix_cus_name` (`name`),
+  KEY `ix_cus_nit` (`nit`),
+  KEY `ix_cus_user` (`assigned_user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `customer_contacts` (
   `id`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `company_id`  INT UNSIGNED NOT NULL,
   `customer_id` INT UNSIGNED NOT NULL,
   `name`        VARCHAR(120) NOT NULL,
   `position`    VARCHAR(90)  NULL,
@@ -336,7 +294,6 @@ CREATE TABLE IF NOT EXISTS `customer_contacts` (
 -- --------------------------------------------------------- cotizaciones
 CREATE TABLE IF NOT EXISTS `quotes` (
   `id`              INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `company_id`      INT UNSIGNED NOT NULL,
   `number`          VARCHAR(40)  NOT NULL,
   `folio_seq`       INT UNSIGNED NOT NULL DEFAULT 0,
   `folio_year`      SMALLINT NOT NULL DEFAULT 2026,
@@ -387,16 +344,15 @@ CREATE TABLE IF NOT EXISTS `quotes` (
   `updated_at`      DATETIME NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_quote_token` (`track_token`),
-  UNIQUE KEY `uq_quote_number` (`company_id`,`number`),
-  KEY `ix_q_company_status` (`company_id`,`status`,`board_sort`),
-  KEY `ix_q_user` (`company_id`,`user_id`,`status`),
-  KEY `ix_q_customer` (`company_id`,`customer_id`),
-  KEY `ix_q_created` (`company_id`,`created_at`)
+  UNIQUE KEY `uq_quote_number` (`number`),
+  KEY `ix_q_status` (`status`,`board_sort`),
+  KEY `ix_q_user` (`user_id`,`status`),
+  KEY `ix_q_customer` (`customer_id`),
+  KEY `ix_q_created` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `quote_items` (
   `id`           INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `company_id`   INT UNSIGNED NOT NULL,
   `quote_id`     INT UNSIGNED NOT NULL,
   `product_id`   INT UNSIGNED NULL,
   `code`         VARCHAR(60)  NULL,
@@ -411,13 +367,11 @@ CREATE TABLE IF NOT EXISTS `quote_items` (
   `sort`         INT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `ix_qi_quote` (`quote_id`,`sort`),
-  KEY `ix_qi_company` (`company_id`),
-  KEY `ix_qi_product` (`company_id`,`product_id`)
+  KEY `ix_qi_product` (`product_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `quote_events` (
   `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `company_id` INT UNSIGNED NOT NULL,
   `quote_id`   INT UNSIGNED NOT NULL,
   `user_id`    INT UNSIGNED NULL,
   `actor`      VARCHAR(120) NULL,
@@ -426,8 +380,7 @@ CREATE TABLE IF NOT EXISTS `quote_events` (
   `body`       TEXT NULL,
   `created_at` DATETIME NULL,
   PRIMARY KEY (`id`),
-  KEY `ix_qe_quote` (`quote_id`,`created_at`),
-  KEY `ix_qe_company` (`company_id`)
+  KEY `ix_qe_quote` (`quote_id`,`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------ sistema
@@ -437,24 +390,8 @@ CREATE TABLE IF NOT EXISTS `settings` (
   PRIMARY KEY (`key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `landing_blocks` (
-  `id`       INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `section`  VARCHAR(40) NOT NULL,
-  `sort`     INT NOT NULL DEFAULT 0,
-  `title`    VARCHAR(190) NULL,
-  `subtitle` VARCHAR(255) NULL,
-  `body`     TEXT NULL,
-  `image`    VARCHAR(190) NULL,
-  `icon`     VARCHAR(40)  NULL,
-  `meta`     TEXT NULL,
-  `active`   TINYINT(1) NOT NULL DEFAULT 1,
-  PRIMARY KEY (`id`),
-  KEY `ix_lb` (`section`,`sort`,`active`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 CREATE TABLE IF NOT EXISTS `audit_log` (
   `id`         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `company_id` INT UNSIGNED NULL,
   `user_id`    INT UNSIGNED NULL,
   `user_name`  VARCHAR(120) NULL,
   `action`     VARCHAR(80)  NOT NULL,
@@ -465,13 +402,12 @@ CREATE TABLE IF NOT EXISTS `audit_log` (
   `user_agent` VARCHAR(255) NULL,
   `created_at` DATETIME NULL,
   PRIMARY KEY (`id`),
-  KEY `ix_audit_company` (`company_id`,`created_at`),
+  KEY `ix_audit_date` (`created_at`),
   KEY `ix_audit_entity` (`entity`,`entity_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `notifications` (
   `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `company_id` INT UNSIGNED NULL,
   `user_id`    INT UNSIGNED NOT NULL,
   `type`       VARCHAR(40) NOT NULL DEFAULT 'info',
   `title`      VARCHAR(190) NOT NULL,
@@ -485,19 +421,17 @@ CREATE TABLE IF NOT EXISTS `notifications` (
 
 CREATE TABLE IF NOT EXISTS `email_log` (
   `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `company_id` INT UNSIGNED NULL,
   `to_email`   VARCHAR(190) NOT NULL,
   `subject`    VARCHAR(220) NOT NULL,
   `status`     ENUM('enviado','error') NOT NULL DEFAULT 'enviado',
   `error`      VARCHAR(400) NULL,
   `created_at` DATETIME NULL,
   PRIMARY KEY (`id`),
-  KEY `ix_mail_company` (`company_id`,`created_at`)
+  KEY `ix_mail_date` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `imports` (
   `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `company_id` INT UNSIGNED NOT NULL,
   `user_id`    INT UNSIGNED NULL,
   `type`       VARCHAR(30) NOT NULL,
   `filename`   VARCHAR(190) NOT NULL,
@@ -507,7 +441,7 @@ CREATE TABLE IF NOT EXISTS `imports` (
   `report`     MEDIUMTEXT NULL,
   `created_at` DATETIME NULL,
   PRIMARY KEY (`id`),
-  KEY `ix_imp_company` (`company_id`,`created_at`)
+  KEY `ix_imp_date` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `backups` (

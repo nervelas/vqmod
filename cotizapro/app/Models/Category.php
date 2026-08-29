@@ -7,28 +7,28 @@ use App\Core\DB;
 
 final class Category
 {
-    public static function find(int $companyId, int $id): ?array
+    public static function find(int $id): ?array
     {
-        return DB::one('SELECT * FROM categories WHERE id = ? AND company_id = ? LIMIT 1', [$id, $companyId]);
+        return DB::one('SELECT * FROM categories WHERE id = ? LIMIT 1', [$id]);
     }
 
-    public static function bySlug(int $companyId, string $slug): ?array
+    public static function bySlug(string $slug): ?array
     {
-        return DB::one('SELECT * FROM categories WHERE slug = ? AND company_id = ? LIMIT 1', [$slug, $companyId]);
+        return DB::one('SELECT * FROM categories WHERE slug = ? LIMIT 1', [$slug]);
     }
 
-    public static function all(int $companyId, bool $onlyActive = false): array
+    public static function all(bool $onlyActive = false): array
     {
         $sql = 'SELECT c.*, (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id AND p.active = 1) AS product_count
-                FROM categories c WHERE c.company_id = ?' . ($onlyActive ? ' AND c.active = 1' : '') . '
+                FROM categories c' . ($onlyActive ? ' WHERE c.active = 1' : '') . '
                 ORDER BY c.sort, c.name';
-        return DB::all($sql, [$companyId]);
+        return DB::all($sql);
     }
 
     /** Árbol padre => hijos. */
-    public static function tree(int $companyId, bool $onlyActive = false): array
+    public static function tree(bool $onlyActive = false): array
     {
-        $rows = self::all($companyId, $onlyActive);
+        $rows = self::all($onlyActive);
         $byId = [];
         foreach ($rows as $r) {
             $r['children'] = [];
@@ -59,9 +59,9 @@ final class Category
     }
 
     /** Ids de la categoría y todas sus descendientes. */
-    public static function descendantIds(int $companyId, int $id): array
+    public static function descendantIds(int $id): array
     {
-        $all = DB::all('SELECT id, parent_id FROM categories WHERE company_id = ?', [$companyId]);
+        $all = DB::all('SELECT id, parent_id FROM categories');
         $children = [];
         foreach ($all as $r) {
             $children[(int) ($r['parent_id'] ?? 0)][] = (int) $r['id'];
@@ -80,12 +80,12 @@ final class Category
         return $out;
     }
 
-    public static function breadcrumb(int $companyId, int $id): array
+    public static function breadcrumb(int $id): array
     {
         $out = [];
         $guard = 0;
         while ($id && $guard++ < 10) {
-            $c = self::find($companyId, $id);
+            $c = self::find($id);
             if (!$c) {
                 break;
             }
@@ -95,13 +95,13 @@ final class Category
         return $out;
     }
 
-    public static function uniqueSlug(int $companyId, string $base, ?int $ignoreId = null): string
+    public static function uniqueSlug(string $base, ?int $ignoreId = null): string
     {
         $slug = slugify($base);
         $i = 1;
         while (true) {
-            $sql = 'SELECT id FROM categories WHERE company_id = ? AND slug = ?' . ($ignoreId ? ' AND id <> ?' : '') . ' LIMIT 1';
-            $p = $ignoreId ? [$companyId, $slug, $ignoreId] : [$companyId, $slug];
+            $sql = 'SELECT id FROM categories WHERE slug = ?' . ($ignoreId ? ' AND id <> ?' : '') . ' LIMIT 1';
+            $p = $ignoreId ? [$slug, $ignoreId] : [$slug];
             if (!DB::one($sql, $p)) {
                 return $slug;
             }
@@ -110,9 +110,9 @@ final class Category
     }
 
     /** Lista plana con sangría para <select>. */
-    public static function options(int $companyId, ?int $exclude = null): array
+    public static function options(?int $exclude = null): array
     {
-        $tree = self::tree($companyId);
+        $tree = self::tree();
         $out = [];
         $walk = static function (array $nodes, int $depth) use (&$walk, &$out, $exclude): void {
             foreach ($nodes as $n) {

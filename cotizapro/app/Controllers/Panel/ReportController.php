@@ -13,10 +13,10 @@ use App\Models\Quote;
 final class ReportController extends Controller
 {
     /** Métricas del periodo elegido; se reutilizan en pantalla, Excel y PDF. */
-    private function build(int $cid, string $from, string $to, ?int $userId): array
+    private function build(string $from, string $to, ?int $userId): array
     {
-        $w = 'q.company_id = ? AND q.is_current = 1 AND q.created_at BETWEEN ? AND ?';
-        $p = [$cid, $from . ' 00:00:00', $to . ' 23:59:59'];
+        $w = 'q.is_current = 1 AND q.created_at BETWEEN ? AND ?';
+        $p = [$from . ' 00:00:00', $to . ' 23:59:59'];
         if ($userId) {
             $w .= ' AND q.user_id = ?';
             $p[] = $userId;
@@ -46,7 +46,7 @@ final class ReportController extends Controller
             ),
             'products' => DB::all(
                 "SELECT qi.code, qi.name, COUNT(DISTINCT qi.quote_id) veces, SUM(qi.qty) unidades, COALESCE(SUM(qi.line_total),0) monto
-                 FROM quote_items qi JOIN quotes q ON q.id = qi.quote_id AND q.company_id = qi.company_id
+                 FROM quote_items qi JOIN quotes q ON q.id = qi.quote_id
                  WHERE {$w} GROUP BY qi.code, qi.name ORDER BY veces DESC, monto DESC LIMIT 25",
                 $p
             ),
@@ -58,7 +58,7 @@ final class ReportController extends Controller
             'customers' => DB::all(
                 "SELECT COALESCE(cu.name, q.contact_company, q.contact_name) cliente, COUNT(*) n,
                         COALESCE(SUM(q.total),0) cotizado, COALESCE(SUM(q.won_amount),0) ganado
-                 FROM quotes q LEFT JOIN customers cu ON cu.id = q.customer_id AND cu.company_id = q.company_id
+                 FROM quotes q LEFT JOIN customers cu ON cu.id = q.customer_id
                  WHERE {$w} GROUP BY cliente ORDER BY cotizado DESC LIMIT 20",
                 $p
             ),
@@ -87,7 +87,6 @@ final class ReportController extends Controller
     public function index(array $params = []): void
     {
         [$u, $c] = $this->panel();
-        $cid = (int) $c['id'];
         [$from, $to] = $this->range();
         $userId = Auth::ownerFilter() ?: Request::int('vendedor');
         $this->view('panel/reports', [
@@ -95,8 +94,8 @@ final class ReportController extends Controller
             'from'   => $from,
             'to'     => $to,
             'userId' => $userId,
-            'r'      => $this->build($cid, $from, $to, $userId),
-            'sellersList' => DB::all('SELECT id, name FROM users WHERE company_id = ? AND role IN ("admin","vendedor") ORDER BY name', [$cid]),
+            'r'      => $this->build($from, $to, $userId),
+            'sellersList' => DB::all('SELECT id, name FROM users WHERE role IN ("admin","vendedor") ORDER BY name'),
             'statuses' => Quote::STATUSES,
         ], 'layout/panel');
     }
@@ -104,10 +103,9 @@ final class ReportController extends Controller
     public function excel(array $params = []): void
     {
         [$u, $c] = $this->panel();
-        $cid = (int) $c['id'];
         [$from, $to] = $this->range();
         $userId = Auth::ownerFilter() ?: Request::int('vendedor');
-        $r = $this->build($cid, $from, $to, $userId);
+        $r = $this->build($from, $to, $userId);
 
         $resumen = [['Indicador', 'Valor']];
         $resumen[] = ['Periodo', $from . ' a ' . $to];
@@ -150,10 +148,9 @@ final class ReportController extends Controller
     public function pdf(array $params = []): void
     {
         [$u, $c] = $this->panel();
-        $cid = (int) $c['id'];
         [$from, $to] = $this->range();
         $userId = Auth::ownerFilter() ?: Request::int('vendedor');
-        $r = $this->build($cid, $from, $to, $userId);
+        $r = $this->build($from, $to, $userId);
         $file = \App\Core\ReportPdf::render($c, $from, $to, $r);
         header('Content-Type: application/pdf');
         header('Content-Disposition: inline; filename="reporte-' . $from . '-a-' . $to . '.pdf"');

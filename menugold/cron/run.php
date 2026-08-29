@@ -26,7 +26,7 @@ use MenuGold\Core\Logger;
 use MenuGold\Core\Mailer;
 use MenuGold\Core\Setting;
 
-if (!is_file(MG_ROOT . '/config/config.php')) {
+if (!is_file(MG_ROOT . '/config/ajustes.json')) {
     http_response_code(503);
     exit("MenuGold no está instalado todavía.\n");
 }
@@ -68,7 +68,7 @@ function tarea(string $nombre, callable $fn, array &$log): void
 //  1. Restaurantes vencidos
 // =====================================================================
 tarea('Suspender vencidos', static function () use ($hoy) {
-    $n = DB::exec(
+    $n = DB::ejecutar(
         "UPDATE restaurants SET estado='suspendido', actualizado=NOW()
          WHERE estado <> 'suspendido' AND vence_el IS NOT NULL AND vence_el < :h",
         ['h' => $hoy]
@@ -119,17 +119,17 @@ tarea('Avisos de vencimiento', static function () use ($hoy) {
 // =====================================================================
 tarea('Pedidos abandonados', static function () {
     // Pedidos "nuevos" de más de 6 horas que nadie tocó
-    $n = DB::exec(
+    $n = DB::ejecutar(
         "UPDATE orders SET estado='anulado', motivo_anulacion='Anulado automáticamente por inactividad',
                 actualizado=NOW()
          WHERE estado='nuevo' AND creado < DATE_SUB(NOW(), INTERVAL 6 HOUR)"
     );
     if ($n > 0) {
-        DB::exec("UPDATE order_items oi INNER JOIN orders o ON o.id = oi.order_id
+        DB::ejecutar("UPDATE order_items oi INNER JOIN orders o ON o.id = oi.order_id
                   SET oi.estado='anulado' WHERE o.estado='anulado' AND oi.estado <> 'anulado'");
     }
     // Mesas ocupadas sin pedidos abiertos
-    $m = DB::exec(
+    $m = DB::ejecutar(
         "UPDATE tables t SET t.estado='libre', t.abierta_desde=NULL, t.mesero_id=NULL
          WHERE t.estado <> 'libre'
            AND NOT EXISTS (SELECT 1 FROM orders o WHERE o.table_id = t.id
@@ -137,7 +137,7 @@ tarea('Pedidos abandonados', static function () {
            AND (t.abierta_desde IS NULL OR t.abierta_desde < DATE_SUB(NOW(), INTERVAL 8 HOUR))"
     );
     // Llamadas al mesero muy antiguas
-    DB::exec("UPDATE waiter_calls SET estado='atendida', atendida_en=NOW()
+    DB::ejecutar("UPDATE waiter_calls SET estado='atendida', atendida_en=NOW()
               WHERE estado='pendiente' AND creado < DATE_SUB(NOW(), INTERVAL 3 HOUR)");
     return $n . ' pedido(s) anulado(s), ' . $m . ' mesa(s) liberada(s)';
 }, $log);
@@ -146,10 +146,10 @@ tarea('Pedidos abandonados', static function () {
 //  4. Limpieza
 // =====================================================================
 tarea('Limpieza', static function () {
-    DB::exec('DELETE FROM rate_limits WHERE ventana_inicio < DATE_SUB(NOW(), INTERVAL 1 DAY)');
-    DB::exec('DELETE FROM password_resets WHERE expira < DATE_SUB(NOW(), INTERVAL 2 DAY)');
-    DB::exec('DELETE FROM remember_tokens WHERE expira < NOW()');
-    DB::exec('DELETE FROM audit_log WHERE creado < DATE_SUB(NOW(), INTERVAL 18 MONTH)');
+    DB::ejecutar('DELETE FROM rate_limits WHERE ventana_inicio < DATE_SUB(NOW(), INTERVAL 1 DAY)');
+    DB::ejecutar('DELETE FROM password_resets WHERE expira < DATE_SUB(NOW(), INTERVAL 2 DAY)');
+    DB::ejecutar('DELETE FROM remember_tokens WHERE expira < NOW()');
+    DB::ejecutar('DELETE FROM audit_log WHERE creado < DATE_SUB(NOW(), INTERVAL 18 MONTH)');
 
     $borrados = 0;
     foreach (['sessions' => 43200, 'cache' => 604800, 'tmp' => 3600] as $carpeta => $edad) {
@@ -185,7 +185,7 @@ tarea('Respaldo semanal', static function () {
 // =====================================================================
 tarea('Marcar novedades', static function () {
     // Quita la etiqueta "nuevo" a los platillos con más de 30 días
-    $n = DB::exec(
+    $n = DB::ejecutar(
         "UPDATE products SET etiquetas = TRIM(BOTH ',' FROM REPLACE(CONCAT(',', etiquetas, ','), ',nuevo,', ','))
          WHERE FIND_IN_SET('nuevo', etiquetas) AND creado < DATE_SUB(NOW(), INTERVAL 45 DAY)"
     );

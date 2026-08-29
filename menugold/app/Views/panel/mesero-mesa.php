@@ -319,14 +319,14 @@ View::start('acciones');
   function filtrar() {
     var q = (document.getElementById('buscarPlato').value || '').toLowerCase().trim();
     var cat = (document.querySelector('input[name=fcat]:checked') || {}).value || '0';
-    M.$$('#listaPlatos [data-agregar]').forEach(function (b) {
+    M.todos('#listaPlatos [data-agregar]').forEach(function (b) {
       var ok = (q === '' || b.dataset.busca.indexOf(q) >= 0) && (cat === '0' || b.dataset.cat === cat);
       b.style.display = ok ? '' : 'none';
     });
   }
   var bp = document.getElementById('buscarPlato');
   if (bp) bp.addEventListener('input', filtrar);
-  M.$$('input[name=fcat]').forEach(function (i) { i.addEventListener('change', filtrar); });
+  M.todos('input[name=fcat]').forEach(function (i) { i.addEventListener('change', filtrar); });
 
   var env = document.getElementById('enviarPedidoMesero');
   if (env) env.addEventListener('click', function () {
@@ -367,11 +367,11 @@ View::start('acciones');
 
   // ---------------------------------------------------- cobrar
   function seleccionados() {
-    return M.$$('.cobrar-pedido:checked').map(function (c) { return Number(c.value); });
+    return M.todos('.cobrar-pedido:checked').map(function (c) { return Number(c.value); });
   }
   function totalSeleccionado() {
     var t = 0;
-    M.$$('.cobrar-pedido:checked').forEach(function (c) { t += Number(c.dataset.total); });
+    M.todos('.cobrar-pedido:checked').forEach(function (c) { t += Number(c.dataset.total); });
     var pct = Number((document.querySelector('input[name=propinaPct]:checked') || {}).value || 0);
     return t + t * pct / 100;
   }
@@ -380,8 +380,8 @@ View::start('acciones');
     if (el) el.textContent = M.money(totalSeleccionado());
     calcularCambio();
   }
-  M.$$('.cobrar-pedido').forEach(function (c) { c.addEventListener('change', refrescarTotal); });
-  M.$$('input[name=propinaPct]').forEach(function (c) { c.addEventListener('change', refrescarTotal); });
+  M.todos('.cobrar-pedido').forEach(function (c) { c.addEventListener('change', refrescarTotal); });
+  M.todos('input[name=propinaPct]').forEach(function (c) { c.addEventListener('change', refrescarTotal); });
 
   function calcularCambio() {
     var rec = document.getElementById('recibido');

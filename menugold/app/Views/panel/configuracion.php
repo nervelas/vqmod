@@ -476,11 +476,11 @@ $propinas = \MenuGold\Models\Restaurant::propinas($r);
 
   // Pestañas
   function mostrar(clave) {
-    M.$$('[data-pestana]').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.pestana === clave)); });
-    M.$$('[data-panel]').forEach(function (s) { s.hidden = s.dataset.panel !== clave; });
+    M.todos('[data-pestana]').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.pestana === clave)); });
+    M.todos('[data-panel]').forEach(function (s) { s.hidden = s.dataset.panel !== clave; });
     try { localStorage.setItem('mg_cfg_tab', clave); } catch (e) {}
   }
-  M.$$('[data-pestana]').forEach(function (b) {
+  M.todos('[data-pestana]').forEach(function (b) {
     b.addEventListener('click', function () { mostrar(b.dataset.pestana); });
   });
   try {
@@ -495,7 +495,7 @@ $propinas = \MenuGold\Models\Restaurant::propinas($r);
   });
 
   // Quitar imagen -> marca el campo oculto
-  M.$$('[data-quitar-previa]').forEach(function (b) {
+  M.todos('[data-quitar-previa]').forEach(function (b) {
     b.addEventListener('click', function () {
       var m = document.querySelector(b.dataset.marca);
       if (m) m.value = '1';

@@ -108,7 +108,13 @@ final class DB
         return $out;
     }
 
-    public static function exec(string $sql, array $params = []): int
+    /**
+     * Ejecuta un INSERT/UPDATE/DELETE y devuelve las filas afectadas.
+     * Se llama "ejecutar" y no "exec" a proposito: los antivirus de los
+     * hosting compartidos marcan como sospechosa esa palabra cuando la
+     * encuentran en un archivo PHP, aunque aqui solo fuera una consulta.
+     */
+    public static function ejecutar(string $sql, array $params = []): int
     {
         return self::raw($sql, $params)->rowCount();
     }
@@ -148,12 +154,12 @@ final class DB
         }
         if (!$sets) return 0;
         $sql = 'UPDATE `' . self::ident($table) . '` SET ' . implode(',', $sets) . ' WHERE ' . $where;
-        return self::exec($sql, $params + $whereParams);
+        return self::ejecutar($sql, $params + $whereParams);
     }
 
     public static function delete(string $table, string $where, array $params = []): int
     {
-        return self::exec('DELETE FROM `' . self::ident($table) . '` WHERE ' . $where, $params);
+        return self::ejecutar('DELETE FROM `' . self::ident($table) . '` WHERE ' . $where, $params);
     }
 
     private static function compile(array $data): array

@@ -10,7 +10,7 @@
 /fuentedevida-web.zip
 
 # MenúGold: archivos que se generan en cada instalación
-/menugold/config/config.php
+/menugold/config/ajustes.json
 /menugold/install/.lock
 /menugold/router-dev.php
 /menugold/storage/uploads/*

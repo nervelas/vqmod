@@ -98,7 +98,7 @@ class Acceso extends Controller
         $u = (new User())->byEmail($email);
         if ($u && (int)$u['activo'] === 1) {
             $token = Security::randomToken(32);
-            DB::exec('UPDATE password_resets SET usado = 1 WHERE user_id = :u AND usado = 0', ['u' => (int)$u['id']]);
+            DB::ejecutar('UPDATE password_resets SET usado = 1 WHERE user_id = :u AND usado = 0', ['u' => (int)$u['id']]);
             DB::insert('password_resets', [
                 'user_id'    => (int)$u['id'],
                 'token_hash' => hash('sha256', $token),

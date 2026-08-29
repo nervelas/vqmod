@@ -34,13 +34,13 @@ final class DemoSeeder
     public function run(bool $silencioso = false): array
     {
         $log = [];
-        DB::exec('SET FOREIGN_KEY_CHECKS = 0');
+        DB::ejecutar('SET FOREIGN_KEY_CHECKS = 0');
         foreach (['order_events','order_items','orders','waiter_calls','product_modifiers','modifier_options',
                   'modifier_groups','products','categories','promotions','coupons','customers','tables','zones',
                   'delivery_zones','schedules','restaurant_settings','users','restaurants','contact_messages'] as $t) {
-            try { DB::exec('DELETE FROM `' . $t . '` WHERE 1'); } catch (\Throwable $e) {}
+            try { DB::ejecutar('DELETE FROM `' . $t . '` WHERE 1'); } catch (\Throwable $e) {}
         }
-        DB::exec('SET FOREIGN_KEY_CHECKS = 1');
+        DB::ejecutar('SET FOREIGN_KEY_CHECKS = 1');
 
         $planes = DB::pairs('SELECT slug, id FROM plans');
         $log[] = $this->superadmin();

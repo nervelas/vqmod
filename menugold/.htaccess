@@ -81,7 +81,7 @@ DirectoryIndex index.php
 # ===========================================================
 #  Archivos sensibles
 # ===========================================================
-<FilesMatch "(^\.|composer\.(json|lock)|\.(sql|log|md|ini|sh|bak|old|yml|yaml|lock|dist|env)$)">
+<FilesMatch "(^\.|composer\.(json|lock)|\.(sql|log|md|ini|sh|bak|old|yml|yaml|lock|dist|env|sha256)$)">
     Require all denied
 </FilesMatch>
 <Files "LEEME.md">

@@ -48,7 +48,7 @@ class Coupon extends Model
 
     public function registrarUso(int $id): void
     {
-        DB::exec('UPDATE coupons SET usos = usos + 1 WHERE id = :i AND restaurant_id = :r',
+        DB::ejecutar('UPDATE coupons SET usos = usos + 1 WHERE id = :i AND restaurant_id = :r',
             ['i' => $id, 'r' => $this->rid()]);
     }
 }

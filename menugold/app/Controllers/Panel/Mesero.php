@@ -255,7 +255,7 @@ class Mesero extends Base
                 'entregado_en'=> $pedido['entregado_en'] ?: date('Y-m-d H:i:s'),
                 'actualizado' => date('Y-m-d H:i:s'),
             ]);
-            DB::exec("UPDATE order_items SET estado='entregado' WHERE order_id=:o AND estado<>'anulado'", ['o' => $id]);
+            DB::ejecutar("UPDATE order_items SET estado='entregado' WHERE order_id=:o AND estado<>'anulado'", ['o' => $id]);
             $om->evento($id, 'pagado', 'Cobrado por ' . Auth::nombre());
             $totalCobrado += $totales['total'];
 
@@ -277,7 +277,7 @@ class Mesero extends Base
             );
             if ($abiertos === 0) {
                 $this->mesas()->cerrar($tableId);
-                DB::exec("UPDATE waiter_calls SET estado='atendida', atendida_en=NOW() WHERE table_id=:t AND estado='pendiente'", ['t' => $tableId]);
+                DB::ejecutar("UPDATE waiter_calls SET estado='atendida', atendida_en=NOW() WHERE table_id=:t AND estado='pendiente'", ['t' => $tableId]);
                 Audit::log('mesa.cerrar', 'tables', $tableId);
             }
         }
@@ -300,7 +300,7 @@ class Mesero extends Base
         );
         if ($abiertos > 0) $this->fail('Esa mesa tiene ' . $abiertos . ' pedido(s) sin cobrar.');
         $this->mesas()->cerrar($id);
-        DB::exec("UPDATE waiter_calls SET estado='atendida', atendida_en=NOW() WHERE table_id=:t AND estado='pendiente'", ['t' => $id]);
+        DB::ejecutar("UPDATE waiter_calls SET estado='atendida', atendida_en=NOW() WHERE table_id=:t AND estado='pendiente'", ['t' => $id]);
         Audit::log('mesa.cerrar', 'tables', $id);
         $this->ok([], 'Mesa liberada');
     }

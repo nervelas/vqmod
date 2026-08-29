@@ -247,7 +247,7 @@ class Order extends Model
                     'creado'        => date('Y-m-d H:i:s'),
                 ]);
                 if (!empty($l['product_id'])) {
-                    DB::exec('UPDATE products SET vendidos = vendidos + :c WHERE id = :p AND restaurant_id = :r',
+                    DB::ejecutar('UPDATE products SET vendidos = vendidos + :c WHERE id = :p AND restaurant_id = :r',
                         ['c' => (int)$l['cantidad'], 'p' => (int)$l['product_id'], 'r' => $rid]);
                 }
             }
@@ -402,7 +402,7 @@ class Order extends Model
         if ($nuevo === 'pagado' && empty($o['pagado_en']))       $datos['pagado_en'] = date('Y-m-d H:i:s');
 
         $this->updateById($id, $datos);
-        DB::exec('UPDATE order_items SET estado = :e WHERE order_id = :o AND estado <> :a',
+        DB::ejecutar('UPDATE order_items SET estado = :e WHERE order_id = :o AND estado <> :a',
             ['e' => $this->estadoLinea($nuevo), 'o' => $id, 'a' => 'anulado']);
         $this->evento($id, $nuevo, $nota);
         return array_merge($o, $datos);
@@ -441,11 +441,11 @@ class Order extends Model
             'motivo_anulacion' => mb_substr($motivo, 0, 255),
             'actualizado' => date('Y-m-d H:i:s'),
         ]);
-        DB::exec('UPDATE order_items SET estado = :e WHERE order_id = :o', ['e' => 'anulado', 'o' => $id]);
+        DB::ejecutar('UPDATE order_items SET estado = :e WHERE order_id = :o', ['e' => 'anulado', 'o' => $id]);
         // Devolver el conteo de vendidos
         foreach ($this->lineas($id) as $l) {
             if (!empty($l['product_id'])) {
-                DB::exec('UPDATE products SET vendidos = GREATEST(0, vendidos - :c) WHERE id = :p AND restaurant_id = :r',
+                DB::ejecutar('UPDATE products SET vendidos = GREATEST(0, vendidos - :c) WHERE id = :p AND restaurant_id = :r',
                     ['c' => (int)$l['cantidad'], 'p' => (int)$l['product_id'], 'r' => $this->rid()]);
             }
         }

@@ -81,7 +81,7 @@ final class App
 
     public static function installed(): bool
     {
-        return is_file(MG_ROOT . '/config/config.php') && !empty(self::$config['db_name']);
+        return is_file(MG_ROOT . '/config/ajustes.json') && !empty(self::$config['db_name']);
     }
 
     // ------------------------------------------------------------------ errores

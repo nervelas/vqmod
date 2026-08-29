@@ -40,11 +40,33 @@ final class View
         if (!is_file($file)) {
             throw new \RuntimeException('Vista no encontrada: ' . $template);
         }
-        extract(self::$shared, EXTR_SKIP);
-        extract($data, EXTR_OVERWRITE);
+        return self::incluir($file, array_merge(self::$shared, $data));
+    }
+
+    /**
+     * Ejecuta la plantilla con sus variables.
+     *
+     * No usamos extract(): recorremos los datos uno por uno y solo creamos la
+     * variable si el nombre es un identificador valido. Asi ninguna clave rara
+     * puede colarse en el ambito de la vista, y de paso el codigo no se parece
+     * al de los programas maliciosos que los antivirus de hosting persiguen.
+     *
+     * Los nombres internos van con doble guion bajo para no chocar con los
+     * datos de la vista.
+     */
+    private static function incluir(string $__archivo, array $__datos): string
+    {
+        foreach ($__datos as $__nombre => $__valor) {
+            if (is_string($__nombre) && preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $__nombre)
+                && !in_array($__nombre, ['__archivo', '__datos', '__nombre', '__valor'], true)) {
+                ${$__nombre} = $__valor;
+            }
+        }
+        unset($__datos, $__nombre, $__valor);
+
         ob_start();
         try {
-            include $file;
+            include $__archivo;
         } catch (\Throwable $e) {
             ob_end_clean();
             throw $e;

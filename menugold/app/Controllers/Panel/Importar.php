@@ -102,9 +102,21 @@ class Importar extends Base
             redirect('panel/importar');
         }
 
+        // Comprobamos que el contenido sea de verdad lo que dice la extension:
+        // un .xlsx empieza siempre por la firma de un ZIP, y un .csv debe ser texto.
+        $cabecera = (string)file_get_contents($tmp, false, null, 0, 8);
+        $contenidoOk = $ext === 'xlsx'
+            ? strncmp($cabecera, "PK\x03\x04", 4) === 0
+            : strpos($cabecera, "\0") === false;
+        if (!$contenidoOk) {
+            unlink($tmp);
+            flash('error', 'El archivo no es un Excel o CSV válido.');
+            redirect('panel/importar');
+        }
+
         $lector = new XlsxReader();
         $filas = $lector->leer($tmp, 3000);
-        @unlink($tmp);
+        unlink($tmp);
 
         if ($lector->error !== '') {
             flash('error', $lector->error);

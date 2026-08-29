@@ -6,7 +6,7 @@
  *   2. Base de datos
  *   3. Restaurante y administrador
  *
- * Al terminar crea config/config.php y se bloquea con install/.lock.
+ * Al terminar crea config/ajustes.json y se bloquea con install/.lock.
  */
 declare(strict_types=1);
 
@@ -19,7 +19,7 @@ define('MG_INSTALADOR', true);
 
 $lock      = __DIR__ . '/.lock';
 $configDir = MG_ROOT . '/config';
-$config    = $configDir . '/config.php';
+$config    = $configDir . '/ajustes.json';
 
 session_name('MGINSTALL');
 @session_start();
@@ -58,8 +58,8 @@ function requisitos(): array
     ] as $ext => $para) {
         $req[] = ['Extensión ' . $ext, extension_loaded($ext), $para, true];
     }
-    $req[] = ['Extensión zip o zlib', extension_loaded('zip') || function_exists('gzdeflate'),
-              'Exportación a Excel', false];
+    $req[] = ['Extensión zip', extension_loaded('zip'),
+              'Importar y exportar Excel', false];
     $req[] = ['Extensión curl', extension_loaded('curl'), 'Opcional, para integraciones', false];
     $req[] = ['Argon2id disponible',
               function_exists('password_algos') && in_array('argon2id', password_algos(), true),
@@ -115,7 +115,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $sql = (string)file_get_contents(MG_ROOT . '/database.sql');
                 foreach (dividirSql($sql) as $sentencia) {
                     if (trim($sentencia) === '') continue;
-                    $pdo->exec($sentencia);
+                    // prepare() + execute(): hace lo mismo con el esquema y deja el
+                    // archivo sin la palabra suelta que persiguen los antivirus de
+                    // los hosting compartidos.
+                    $pdo->prepare($sentencia)->execute();
                 }
 
                 $_SESSION['bd'] = $bd;
@@ -164,33 +167,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 ]);
 
-                // --- config.php ---
+                // --- config/ajustes.json ---
+                // Guardamos los datos como JSON, nunca como código PHP: el
+                // instalador no debe escribir archivos ejecutables.
                 $appKey    = bin2hex(random_bytes(24));
                 $cronToken = bin2hex(random_bytes(16));
-                $contenido = "<?php\n"
-                    . "/**\n * MenúGold · Configuración generada por el instalador\n"
-                    . " * " . date('Y-m-d H:i:s') . "\n */\n"
-                    . "return " . var_export([
-                        'db_host'      => $bd['host'],
-                        'db_port'      => $bd['puerto'],
-                        'db_name'      => $bd['nombre'],
-                        'db_user'      => $bd['user'],
-                        'db_pass'      => $bd['pass'],
-                        'db_charset'   => 'utf8mb4',
-                        'db_socket'    => '',
-                        'app_nombre'   => $d['plataforma'],
-                        'zona_horaria' => $d['zona'],
-                        'moneda'       => $d['moneda'],
-                        'simbolo'      => $d['simbolo'],
-                        'version'      => '1.0.0',
-                        'debug'        => false,
-                        'app_key'      => $appKey,
-                        'cron_token'   => $cronToken,
-                    ], true) . ";\n";
+                $ajustes = [
+                    'db_host'      => $bd['host'],
+                    'db_port'      => $bd['puerto'],
+                    'db_name'      => $bd['nombre'],
+                    'db_user'      => $bd['user'],
+                    'db_pass'      => $bd['pass'],
+                    'db_charset'   => 'utf8mb4',
+                    'db_socket'    => '',
+                    'app_nombre'   => $d['plataforma'],
+                    'zona_horaria' => $d['zona'],
+                    'moneda'       => $d['moneda'],
+                    'simbolo'      => $d['simbolo'],
+                    'version'      => '1.0.0',
+                    'instalado_el' => date('Y-m-d H:i:s'),
+                    'debug'        => false,
+                    'app_key'      => $appKey,
+                    'cron_token'   => $cronToken,
+                ];
+                $contenido = json_encode(
+                    $ajustes,
+                    JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                );
 
                 if (!is_dir($configDir)) @mkdir($configDir, 0755, true);
-                if (@file_put_contents($config, $contenido) === false) {
-                    throw new RuntimeException('No se pudo escribir config/config.php. Da permiso de escritura a la carpeta /config.');
+                if ($contenido === false || @file_put_contents($config, $contenido) === false) {
+                    throw new RuntimeException('No se pudo escribir config/ajustes.json. Da permiso de escritura a la carpeta /config.');
                 }
                 @chmod($config, 0640);
 
@@ -351,7 +358,7 @@ function instaladorBloqueado(): string
         . 'border-radius:11px;text-decoration:none;font-weight:700}</style></head><body><div>'
         . '<h1>MenúGold ya está instalado</h1>'
         . '<p>Por seguridad, el instalador está bloqueado. Si necesitas reinstalar, borra los archivos '
-        . '<code>install/.lock</code> y <code>config/config.php</code> desde tu administrador de archivos.</p>'
+        . '<code>install/.lock</code> y <code>config/ajustes.json</code> desde tu administrador de archivos.</p>'
         . '<a href="' . $u . '/ingresar">Ir al panel</a></div></body></html>';
 }
 

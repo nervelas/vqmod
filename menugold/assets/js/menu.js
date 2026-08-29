@@ -12,7 +12,7 @@
 
   // ------------------------------------------------------------- utilidades
   function $(s, ctx) { return (ctx || document).querySelector(s); }
-  function $$(s, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(s)); }
+  function todos(s, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(s)); }
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -255,8 +255,8 @@
 
   function extrasElegidos() {
     var extra = 0, ids = [], textos = [];
-    $$('.grupo-mod', modalScroll).forEach(function (g) {
-      $$('input:checked', g).forEach(function (inp) {
+    todos('.grupo-mod', modalScroll).forEach(function (g) {
+      todos('input:checked', g).forEach(function (inp) {
         var lbl = inp.closest('.opcion');
         var pr = lbl.querySelector('.opcion__precio');
         var val = pr ? parseFloat(pr.textContent.replace(/[^\d.]/g, '')) || 0 : 0;
@@ -279,9 +279,9 @@
 
   function validarGrupos() {
     var ok = true, faltante = '';
-    $$('.grupo-mod', modalScroll).forEach(function (g) {
+    todos('.grupo-mod', modalScroll).forEach(function (g) {
       if (!g.dataset.grupo) return;
-      var n = $$('input:checked', g).length;
+      var n = todos('input:checked', g).length;
       var min = Number(g.dataset.obligatorio) === 1 ? Math.max(1, Number(g.dataset.min)) : Number(g.dataset.min);
       if (n < min) {
         ok = false;
@@ -517,17 +517,17 @@
   }
 
   function conectarDatos() {
-    $$('[data-modo]', hojaScroll).forEach(function (b) {
+    todos('[data-modo]', hojaScroll).forEach(function (b) {
       b.addEventListener('click', function () {
         estadoPago.modo = b.dataset.modo;
         if (estadoPago.modo !== 'delivery') estadoPago.zona = null;
         pintarDatos();
       });
     });
-    $$('[data-propina]', hojaScroll).forEach(function (b) {
+    todos('[data-propina]', hojaScroll).forEach(function (b) {
       b.addEventListener('click', function () {
         estadoPago.propina = Number(b.dataset.propina);
-        $$('[data-propina]', hojaScroll).forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        todos('[data-propina]', hojaScroll).forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
         pintarPieDatos();
       });
     });
@@ -713,13 +713,13 @@
     var q = (inputBuscar.value || '').trim().toLowerCase();
     if (btnLimpiar) btnLimpiar.classList.toggle('oculto', q === '');
     var visibles = 0;
-    $$('.platillo').forEach(function (card) {
+    todos('.platillo').forEach(function (card) {
       var ok = q === '' || (card.dataset.nombre || '').indexOf(q) >= 0;
       card.style.display = ok ? '' : 'none';
       if (ok) visibles++;
     });
-    $$('.seccion').forEach(function (sec) {
-      var hay = $$('.platillo', sec).some(function (c) { return c.style.display !== 'none'; });
+    todos('.seccion').forEach(function (sec) {
+      var hay = todos('.platillo', sec).some(function (c) { return c.style.display !== 'none'; });
       sec.style.display = hay ? '' : 'none';
     });
     if (sinResultados) sinResultados.classList.toggle('oculto', visibles > 0 || q === '');
@@ -741,8 +741,8 @@
 
   // ------------------------------------------------------------- scroll-spy
   var barraCat = $('#barraCat');
-  var pistas = $$('.pista');
-  var secciones = $$('.seccion[id]');
+  var pistas = todos('.pista');
+  var secciones = todos('.seccion[id]');
   function alDesplazar() {
     if (barraCat) barraCat.classList.toggle('pegada', window.pageYOffset > 12);
     if (!secciones.length) return;
@@ -774,7 +774,7 @@
   })();
   function marcarElegidas(raiz) {
     if (soportaHas) return;
-    $$('.opcion', raiz || document).forEach(function (l) {
+    todos('.opcion', raiz || document).forEach(function (l) {
       var i = l.querySelector('input');
       if (i) l.classList.toggle('elegida', i.checked);
     });

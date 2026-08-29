@@ -1,0 +1,26 @@
+{
+  "_ayuda": "Copia este archivo como ajustes.json solo si prefieres configurar a mano en lugar de usar /install/.",
+
+  "db_host": "localhost",
+  "db_port": 3306,
+  "db_name": "NOMBRE_DE_TU_BASE",
+  "db_user": "USUARIO_DE_TU_BASE",
+  "db_pass": "CONTRASENA_DE_TU_BASE",
+  "db_charset": "utf8mb4",
+  "db_socket": "",
+
+  "app_nombre": "MenúGold",
+  "zona_horaria": "America/Guatemala",
+  "moneda": "GTQ",
+  "simbolo": "Q",
+  "version": "1.0.0",
+
+  "_debug": "Ponlo en true SOLO para diagnosticar. En producción: false.",
+  "debug": false,
+
+  "_app_key": "Clave secreta única de esta instalación: firma los QR de mesa. Si la cambias, los QR ya impresos dejan de validar.",
+  "app_key": "PON_AQUI_48_CARACTERES_ALEATORIOS",
+
+  "_cron_token": "Token del cron: */10 * * * * curl -s https://TUDOMINIO/cron/run.php?token=TU_TOKEN",
+  "cron_token": "PON_AQUI_32_CARACTERES_ALEATORIOS"
+}

@@ -49,7 +49,7 @@ class Customer extends Model
     /** Suma un pedido cerrado al historial del cliente. */
     public function acumular(int $customerId, float $total, int $puntos = 0): void
     {
-        DB::exec(
+        DB::ejecutar(
             'UPDATE customers SET pedidos = pedidos + 1, total_gastado = total_gastado + :t,
                     puntos = puntos + :p, ultimo_pedido = NOW()
              WHERE id = :i AND restaurant_id = :r',

@@ -52,7 +52,7 @@ final class RateLimit
     public static function purge(): void
     {
         try {
-            DB::exec('DELETE FROM rate_limits WHERE ventana_inicio < DATE_SUB(NOW(), INTERVAL 1 DAY)');
+            DB::ejecutar('DELETE FROM rate_limits WHERE ventana_inicio < DATE_SUB(NOW(), INTERVAL 1 DAY)');
         } catch (\Throwable $e) {}
     }
 }

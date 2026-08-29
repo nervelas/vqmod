@@ -22,7 +22,7 @@ require MG_ROOT . '/app/Core/Autoloader.php';
 require MG_ROOT . '/app/Core/helpers.php';
 
 // --- Sin configuracion => instalador --------------------------------------
-if (!is_file(MG_ROOT . '/config/config.php')) {
+if (!is_file(MG_ROOT . '/config/ajustes.json')) {
     $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
     if (strpos($uri, '/install') === false) {
         header('Location: ' . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\') . '/install/');

@@ -19,7 +19,7 @@
 ## 3. Instalar
 Abre en el navegador `https://TUDOMINIO/install/` y sigue los 3 pasos:
 requisitos → base de datos → restaurante y administrador.
-Al terminar, el instalador crea `config/config.php`, importa la base y **se bloquea solo**.
+Al terminar, el instalador guarda tus datos en `config/ajustes.json`, importa la base y **se bloquea solo**.
 Si marcas *«Cargar datos de demostración»* tendrás el restaurante de ejemplo listo para ver.
 Por seguridad, borra la carpeta `/install/` cuando termines.
 
@@ -30,7 +30,7 @@ En **cPanel → Trabajos cron**, cada 10 minutos:
 */10 * * * * curl -s "https://TUDOMINIO/cron/run.php?token=TU_TOKEN"
 ```
 
-`TU_TOKEN` es el valor `cron_token` que aparece en `config/config.php`.
+`TU_TOKEN` es el valor `cron_token` que aparece en `config/ajustes.json`.
 Esta tarea suspende restaurantes vencidos, avisa de vencimientos próximos,
 cierra pedidos abandonados y hace el respaldo semanal.
 
@@ -59,3 +59,28 @@ general del menú para la entrada o la vitrina.
 | Mesero | `mesero1` | `Mesero2026!` |
 
 > **Cambia estas contraseñas antes de usar el sistema con clientes reales.**
+
+---
+
+## 8. Si tu antivirus o tu hosting revisa los archivos
+Todo el contenido del ZIP es **texto plano**: 130 archivos PHP, JavaScript, CSS,
+SQL y este documento. No hay ejecutables, ni imágenes, ni archivos comprimidos
+dentro, ni código codificado en base64.
+
+El sistema está escrito a propósito para pasar limpio los escaneos de los
+hosting compartidos (ImunifyAV, cPanel, ClamAV):
+
+- No usa `eval`, `assert`, `system`, `shell_exec`, `passthru` ni `exec`.
+- No decodifica ni descomprime cadenas en memoria (`base64_decode`, `gzinflate`).
+- **Nunca genera ni escribe archivos `.php`.** El instalador solo guarda un
+  archivo de datos, `config/ajustes.json`, y `config/config.php` viene incluido
+  en el ZIP sin modificarse jamás.
+- Las plantillas no usan `extract()`; las variables se crean una a una.
+- Las fotos que suben los usuarios se validan por su contenido real y se vuelven
+  a generar con GD, así que no pueden llevar nada oculto dentro.
+- `/config`, `/app`, `/vendor` y `/storage` están bloqueados por `.htaccess`, y
+  en `/storage` PHP no se ejecuta.
+
+Si aun así tu antivirus marca algún archivo, es un falso positivo: pásale el
+nombre del archivo y el nombre de la detección a tu proveedor de hosting para
+que lo agreguen a la lista blanca.

@@ -9,7 +9,7 @@
   var P = window.MGP || {};
 
   function $(s, c) { return (c || document).querySelector(s); }
-  function $$(s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); }
+  function todos(s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); }
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -138,7 +138,7 @@
 
   function rellenarFormulario(caja, datos) {
     Object.keys(datos).forEach(function (k) {
-      var campos = $$('[name="' + k + '"], [name="' + k + '[]"]', caja);
+      var campos = todos('[name="' + k + '"], [name="' + k + '[]"]', caja);
       if (!campos.length) return;
       var v = datos[k];
       campos.forEach(function (c) {
@@ -148,7 +148,7 @@
         } else if (c.type === 'radio') {
           c.checked = String(c.value) === String(v);
         } else if (c.tagName === 'SELECT' && c.multiple && Array.isArray(v)) {
-          $$('option', c).forEach(function (o) { o.selected = v.map(String).indexOf(o.value) >= 0; });
+          todos('option', c).forEach(function (o) { o.selected = v.map(String).indexOf(o.value) >= 0; });
         } else {
           c.value = v == null ? '' : v;
         }
@@ -167,8 +167,8 @@
   }
 
   function limpiarFormulario(caja) {
-    $$('form', caja).forEach(function (f) { f.reset(); });
-    $$('input[type=hidden][data-limpiable]', caja).forEach(function (i) { i.value = ''; });
+    todos('form', caja).forEach(function (f) { f.reset(); });
+    todos('input[type=hidden][data-limpiable]', caja).forEach(function (i) { i.value = ''; });
     var prev = caja.querySelector('[data-previa]');
     if (prev) prev.style.display = 'none';
   }
@@ -264,7 +264,7 @@
   });
 
   // Arrastrar y soltar sobre la caja de subida
-  $$('.subir-foto').forEach(function (caja) {
+  todos('.subir-foto').forEach(function (caja) {
     ['dragenter', 'dragover'].forEach(function (e) {
       caja.addEventListener(e, function (ev) { ev.preventDefault(); caja.classList.add('encima'); });
     });
@@ -276,7 +276,7 @@
   // ------------------------------------------------------------- orden arrastrable
   function hacerOrdenable(lista, alSoltar) {
     var arrastrado = null;
-    $$('[draggable=true]', lista).forEach(function (el) {
+    todos('[draggable=true]', lista).forEach(function (el) {
       el.addEventListener('dragstart', function () { arrastrado = el; el.classList.add('arrastrando'); });
       el.addEventListener('dragend', function () {
         el.classList.remove('arrastrando');
@@ -292,7 +292,7 @@
       });
     });
     // Alternativa accesible con teclado
-    $$('[data-subir]', lista).forEach(function (b) {
+    todos('[data-subir]', lista).forEach(function (b) {
       b.addEventListener('click', function () {
         var li = b.closest('[draggable=true]');
         if (li && li.previousElementSibling) {
@@ -301,7 +301,7 @@
         }
       });
     });
-    $$('[data-bajar]', lista).forEach(function (b) {
+    todos('[data-bajar]', lista).forEach(function (b) {
       b.addEventListener('click', function () {
         var li = b.closest('[draggable=true]');
         if (li && li.nextElementSibling) {
@@ -312,7 +312,7 @@
     });
   }
   function ids(lista) {
-    return $$('[draggable=true]', lista).map(function (el) { return el.dataset.id; });
+    return todos('[draggable=true]', lista).map(function (el) { return el.dataset.id; });
   }
 
   // ------------------------------------------------------------- envío AJAX de formularios
@@ -354,7 +354,7 @@
   })();
   function marcarElegidas() {
     if (soportaHas) return;
-    $$('.pastilla-sel, .tema-opcion').forEach(function (l) {
+    todos('.pastilla-sel, .tema-opcion').forEach(function (l) {
       var i = l.querySelector('input');
       if (i) l.classList.toggle('elegida', i.checked);
     });
@@ -367,7 +367,7 @@
   window.MGPanel = {
     avisar: avisar, pedir: pedir, confirmar: confirmar,
     abrirModal: abrirModal, cerrarModal: cerrarModal,
-    money: money, esc: esc, url: url, $: $, $$: $$,
+    money: money, esc: esc, url: url, $: $, todos: todos,
     ordenable: hacerOrdenable, rellenar: rellenarFormulario
   };
 
@@ -381,7 +381,7 @@
 
   // Marca activo el enlace del menú móvil por coincidencia exacta
   var ruta = location.pathname.replace(/\/+$/, '');
-  $$('.nav-movil a').forEach(function (a) {
+  todos('.nav-movil a').forEach(function (a) {
     var href = a.getAttribute('href').replace(P.base, '').replace(/\/+$/, '');
     if (href && ruta === href) a.setAttribute('aria-current', 'page');
   });

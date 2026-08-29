@@ -1,0 +1,90 @@
+# MenúGold · Apache
+
+# ---------- Índice y listados ----------
+DirectoryIndex index.php index.html
+Options -Indexes +FollowSymLinks
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Fuerza HTTPS (respeta los proxys del hosting compartido)
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+    RewriteCond %{HTTP_HOST} !^localhost [NC]
+    RewriteCond %{HTTP_HOST} !^127\.0\.0\.1 [NC]
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+    # Carpetas privadas: nunca se sirven
+    RewriteRule ^(app|config|storage|database|tools)(/|$) - [F,L]
+    RewriteRule ^vendor/.*\.(php|inc)$ - [F,L]
+
+    # Archivos y carpetas reales se sirven tal cual
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Todo lo demás entra por el controlador frontal
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+# ---------- Cabeceras de seguridad ----------
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(self), microphone=(), camera=(self), payment=()"
+    Header always set Cross-Origin-Opener-Policy "same-origin"
+    Header unset X-Powered-By
+    Header always unset X-Powered-By
+</IfModule>
+
+# ---------- Compresión ----------
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript
+    AddOutputFilterByType DEFLATE application/javascript application/json application/xml
+    AddOutputFilterByType DEFLATE image/svg+xml application/manifest+json
+</IfModule>
+
+# ---------- Caché de estáticos ----------
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg           "access plus 1 year"
+    ExpiresByType image/png            "access plus 1 year"
+    ExpiresByType image/webp           "access plus 1 year"
+    ExpiresByType image/svg+xml        "access plus 1 year"
+    ExpiresByType font/woff2           "access plus 1 year"
+    ExpiresByType text/css             "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType text/html            "access plus 0 seconds"
+</IfModule>
+
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+    AddType font/woff2 .woff2
+    AddType image/webp .webp
+</IfModule>
+
+# El service worker nunca debe quedarse cacheado
+<FilesMatch "^sw\.js$">
+    <IfModule mod_headers.c>
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+    </IfModule>
+</FilesMatch>
+
+# ---------- Archivos sensibles ----------
+<FilesMatch "(^\.|composer\.(json|lock)|\.(sql|log|md|ini|sh|bak|dist|yml|yaml)$)">
+    Require all denied
+</FilesMatch>
+<Files "config.php">
+    Require all denied
+</Files>
+
+# ---------- PHP ----------
+<IfModule mod_php.c>
+    php_flag display_errors off
+    php_value upload_max_filesize 12M
+    php_value post_max_size 14M
+</IfModule>
+
+ErrorDocument 403 /index.php
+ErrorDocument 404 /index.php

@@ -1,0 +1,14 @@
+# MenúGold · lista de fotos para importar
+#
+#   php tools/importar-fotos.php --lista=tools/fotos.ejemplo.txt --restaurante=1
+#
+# Una línea por foto:   DIRECCIÓN DIRECTA DE LA IMAGEN | Nombre del platillo
+# Las líneas que empiezan con # se ignoran.
+#
+# Usa direcciones que terminen en .jpg o .webp (el enlace directo, no la página).
+# En Unsplash: abre la foto, botón derecho sobre la imagen → «Copiar dirección de imagen».
+# Respeta la licencia de cada banco de imágenes y da crédito donde corresponda.
+#
+# Ejemplos del formato (sustituye por tus propias direcciones):
+# https://ejemplo.com/fotos/rib-eye.jpg      | Rib eye maduración 45 días
+# https://ejemplo.com/fotos/pulpo-brasa.jpg  | Pulpo a la brasa

@@ -1,0 +1,25 @@
+# Fotografía industrial para el tema. Una línea por imagen:
+#     nombre-del-archivo | URL directa a la imagen
+#
+# El nombre debe ser uno de los que usa el tema para que sustituya al render
+# generado, o cualquier otro si solo quiere ampliar la galería:
+#     hero-planta        nave industrial / bodega (portada de la plataforma)
+#     hero-taller        estantería de repuestos, taller (portada de empresa)
+#     acero-cepillado    textura de acero
+#     pieza-torneada     macro de pieza mecanizada
+#     placa-remachada    placa metálica
+#     plano-tecnico      plano de ingeniería
+#     concreto           piso / muro de concreto
+#
+# De Unsplash, use el enlace directo de la imagen (botón "Download" → copiar
+# dirección) con el ancho que quiera, por ejemplo:
+#     hero-planta | https://images.unsplash.com/photo-XXXXXXXXXXXXX?w=2200&q=80&fm=jpg&fit=max
+#
+# Descomente y pegue sus URLs:
+# hero-planta      | https://images.unsplash.com/photo-...
+# hero-taller      | https://images.unsplash.com/photo-...
+# acero-cepillado  | https://images.unsplash.com/photo-...
+# pieza-torneada   | https://images.unsplash.com/photo-...
+# placa-remachada  | https://images.unsplash.com/photo-...
+# plano-tecnico    | https://images.unsplash.com/photo-...
+# concreto         | https://images.unsplash.com/photo-...

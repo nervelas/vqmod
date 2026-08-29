@@ -8,3 +8,15 @@
 *.log
 .DS_Store
 /fuentedevida-web.zip
+
+# --- CotizaPro B2B ---
+/cotizapro/config/config.php
+/cotizapro/install/.lock
+/cotizapro/storage/uploads/*
+/cotizapro/storage/backups/*
+/cotizapro/storage/logs/*
+/cotizapro/storage/cache/*
+/cotizapro/storage/tmp/*
+/cotizapro/storage/sessions/*
+!/cotizapro/storage/*/.htaccess
+!/cotizapro/storage/*/.gitkeep

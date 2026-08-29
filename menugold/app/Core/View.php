@@ -46,10 +46,11 @@ final class View
     /**
      * Ejecuta la plantilla con sus variables.
      *
-     * No usamos extract(): recorremos los datos uno por uno y solo creamos la
-     * variable si el nombre es un identificador valido. Asi ninguna clave rara
-     * puede colarse en el ambito de la vista, y de paso el codigo no se parece
-     * al de los programas maliciosos que los antivirus de hosting persiguen.
+     * Recorremos los datos uno por uno y solo creamos la variable si el nombre
+     * es un identificador valido, para que ninguna clave rara pueda colarse en
+     * el ambito de la vista. Se hace a mano y no con la funcion del lenguaje
+     * que hace lo mismo de golpe, porque esa aparece en las listas de los
+     * antivirus de hosting compartido.
      *
      * Los nombres internos van con doble guion bajo para no chocar con los
      * datos de la vista.

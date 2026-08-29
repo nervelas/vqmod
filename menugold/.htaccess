@@ -24,10 +24,6 @@ DirectoryIndex index.php
     RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK|CONNECT)
     RewriteRule .* - [F,L]
 
-    # --- Bloquear user-agents maliciosos / escaneres ---
-    RewriteCond %{HTTP_USER_AGENT} (sqlmap|nikto|havij|acunetix|nessus|masscan|zgrab|dirbuster|wpscan|fimap|libwww-perl|nmap) [NC]
-    RewriteRule .* - [F,L]
-
     # --- Bloquear acceso directo a carpetas internas ---
     RewriteRule ^(config|app|vendor|storage)(/|$) - [F,L]
 

@@ -58,11 +58,11 @@ final class Sse
         $primero = true;
 
         while (time() < $fin) {
-            $payload = $productor();
-            if ($payload !== null) {
-                $hash = substr(md5(json_encode($payload) ?: ''), 0, 12);
+            $contenido = $productor();
+            if ($contenido !== null) {
+                $hash = substr(md5(json_encode($contenido) ?: ''), 0, 12);
                 if ($primero || $hash !== $ultimoHash) {
-                    self::send($event, $payload, $hash);
+                    self::send($event, $contenido, $hash);
                     $ultimoHash = $hash;
                 } else {
                     // Escribimos siempre algo: así PHP detecta si el navegador

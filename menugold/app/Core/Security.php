@@ -72,8 +72,8 @@ final class Security
     /** Token firmado para el QR de una mesa: {id}.{firma} */
     public static function tableToken(int $restaurantId, int $tableId): string
     {
-        $payload = $restaurantId . ':' . $tableId;
-        return substr(self::sign($payload, 'mesa'), 0, 24);
+        $datos = $restaurantId . ':' . $tableId;
+        return substr(self::sign($datos, 'mesa'), 0, 24);
     }
 
     public static function verifyTableToken(int $restaurantId, int $tableId, string $token): bool

@@ -5,7 +5,7 @@ namespace MenuGold\Core;
 
 /**
  * Subida segura de imagenes: valida MIME real, recomprime (elimina metadatos
- * y posibles payloads), renombra al azar y genera miniaturas.
+ * y cualquier cosa escondida dentro), renombra al azar y genera miniaturas.
  */
 final class Image
 {
@@ -66,7 +66,8 @@ final class Image
         $nombre = date('Ym') . '-' . bin2hex(random_bytes(10)) . '.jpg';
         $ruta = $dir . '/' . $nombre;
 
-        // Siempre reescribimos como JPEG plano: elimina metadatos y cualquier payload
+        // Siempre reescribimos como JPEG plano: al redibujar la imagen se
+        // pierden los metadatos y cualquier cosa que viniera escondida.
         $bg = imagecreatetruecolor(imagesx($dst), imagesy($dst));
         imagefill($bg, 0, 0, imagecolorallocate($bg, 255, 255, 255));
         imagecopy($bg, $dst, 0, 0, 0, 0, imagesx($dst), imagesy($dst));

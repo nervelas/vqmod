@@ -40,7 +40,7 @@ a{transition:color .18s ease}
 /* ---------- Header fijo que se compacta ---------- */
 #site-header.medium-header .top-header-wrap,
 .is-sticky #site-header.medium-header.is-transparent .top-header-wrap,
-#searchform-header-replace{background-color:var(--agro-bg)!important; border-bottom:1px solid var(--agro-line)}
+#searchform-header-replace{background-color:var(--agro-brand)!important; border-bottom:none}
 #site-header.medium-header #site-navigation-wrap,
 #site-header.medium-header .oceanwp-mobile-menu-icon,
 .is-sticky #site-header.medium-header.is-transparent #site-navigation-wrap,

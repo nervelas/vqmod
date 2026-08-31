@@ -8,7 +8,7 @@ defined( 'ABSPATH' ) || exit;
 define( 'AGRO_WA_NUM', '50240769228' );          // WhatsApp 4076 9228 (GT +502)
 define( 'AGRO_TEL', '25068100' );                // PBX 2506 8100
 define( 'AGRO_MAIL', 'info@agroinco.com' );
-define( 'AGRO_VER', '1.0.0' );
+define( 'AGRO_VER', '1.0.1' );
 
 /* ---------- Estilos y scripts ---------- */
 add_action( 'wp_enqueue_scripts', function () {

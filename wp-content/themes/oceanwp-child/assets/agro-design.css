@@ -4,6 +4,8 @@
    Tipografía: Space Grotesk (títulos) · Inter (texto)
    ============================================================ */
 :root{
+  --agro-brand:#FFB81C; --agro-brand-d:#E6A400;
+
   --agro-bg:#F5F6F4; --agro-ink:#20242A; --agro-steel:#5A6470;
   --agro-orange:#E8590C; --agro-orange-d:#C74A08; --agro-white:#FFFFFF;
   --agro-line:rgba(32,36,42,.08); --agro-blue-line:rgba(90,100,112,.04);
@@ -43,7 +45,7 @@ a{transition:color .18s ease}
 #site-header.medium-header .oceanwp-mobile-menu-icon,
 .is-sticky #site-header.medium-header.is-transparent #site-navigation-wrap,
 .is-sticky #site-header.medium-header.is-transparent .oceanwp-mobile-menu-icon{
-  background-color:var(--agro-ink)!important; border-top:2px solid var(--agro-orange);
+  background-color:#141518!important; border-top:none; border-bottom:3px solid var(--agro-brand);
 }
 #site-header.medium-header #medium-searchform .search-bg{background-color:#fff!important}
 #site-header.medium-header #site-navigation-wrap .dropdown-menu>li>a{
@@ -52,7 +54,7 @@ a{transition:color .18s ease}
 #site-header.medium-header #site-navigation-wrap .dropdown-menu>li>a:hover,
 #site-header.medium-header #site-navigation-wrap .dropdown-menu>li.current-menu-item>a,
 #site-header.medium-header #site-navigation-wrap .dropdown-menu>li.current_page_item>a{
-  color:var(--agro-orange)!important;
+  color:var(--agro-brand)!important;
 }
 #site-header{
   background:var(--agro-bg)!important; border-bottom:1px solid var(--agro-line);
@@ -70,17 +72,17 @@ a{transition:color .18s ease}
 }
 #site-header .oceanwp-mobile-menu-icon a{color:#E7EAEE!important}
 #site-header #site-navigation-wrap .dropdown-menu>li>a:hover,
-#site-header #site-navigation-wrap .dropdown-menu>li.current-menu-item>a{color:var(--agro-orange)!important}
-#site-header #site-navigation-wrap .dropdown-menu>li.current-menu-item>a:after{background:var(--agro-orange)}
+#site-header #site-navigation-wrap .dropdown-menu>li.current-menu-item>a{color:var(--agro-brand)!important}
+#site-header #site-navigation-wrap .dropdown-menu>li.current-menu-item>a:after{background:var(--agro-brand)}
 .dropdown-menu ul li a.menu-link:hover{color:var(--agro-orange)!important}
-#site-header .dropdown-menu .sub-menu{border-top:2px solid var(--agro-orange); box-shadow:var(--agro-shadow-h)}
+#site-header .dropdown-menu .sub-menu{border-top:2px solid var(--agro-brand); box-shadow:var(--agro-shadow-h)}
 /* la franja del header que era amarilla pasa a grafito con línea naranja */
 #site-header.header-replace, .oceanwp-top-bar-sticky{background:var(--agro-bg)}
 
 /* ---------- Barra de título de página ---------- */
 .page-header{
   background:linear-gradient(120deg,var(--agro-ink) 0%,#2B313A 70%,#343B46 100%)!important;
-  border-bottom:3px solid var(--agro-orange); padding:34px 0!important;
+  border-bottom:3px solid var(--agro-brand); padding:34px 0!important;
 }
 .page-header .page-header-title,.page-header h1{color:#fff!important; font-size:30px}
 .site-breadcrumbs, .site-breadcrumbs a, .site-breadcrumbs .breadcrumb-trail{color:#B7BEC9!important}
@@ -153,7 +155,7 @@ ul.products li.product .button{margin:10px 16px 0!important}
 #footer-bottom{background:#181B20!important; border-top:1px solid rgba(255,255,255,.05)}
 #footer-bottom #copyright{color:#8A93A0!important; font-size:12.5px}
 .agro-inline-menu a{font-family:var(--agro-font-head); letter-spacing:.08em}
-.agro-inline-menu a:hover,.agro-inline-menu .current-menu-item>a{color:var(--agro-orange)!important}
+.agro-inline-menu a:hover,.agro-inline-menu .current-menu-item>a{color:var(--agro-brand)!important}
 
 /* ---------- Secciones agregadas en INICIO ---------- */
 .agro-sec{padding:72px 24px; position:relative}
@@ -166,7 +168,7 @@ ul.products li.product .button{margin:10px 16px 0!important}
 .agro-wrap{max-width:1180px; margin:0 auto}
 .agro-kicker{
   display:inline-block; font:600 12px/1 var(--agro-font-head); letter-spacing:.22em;
-  text-transform:uppercase; color:var(--agro-orange); margin-bottom:14px;
+  text-transform:uppercase; color:var(--agro-brand-d); margin-bottom:14px;
 }
 .agro-sec h2.agro-h2{font-size:clamp(26px,4vw,40px); margin:0 0 14px; line-height:1.12}
 .agro-sec--dark h2.agro-h2{color:#fff}
@@ -190,7 +192,7 @@ ul.products li.product .button{margin:10px 16px 0!important}
 /* Contadores */
 .agro-stats{display:grid; grid-template-columns:repeat(4,1fr); gap:20px; text-align:center}
 .agro-stat b{font:700 clamp(34px,5vw,52px)/1 var(--agro-font-head); color:#fff; display:block}
-.agro-stat b em{font-style:normal; color:var(--agro-orange)}
+.agro-stat b em{font-style:normal; color:var(--agro-brand)}
 .agro-stat span{color:#9AA3AF; font-size:13.5px; letter-spacing:.06em; text-transform:uppercase; display:block; margin-top:8px}
 
 /* Marcas */
@@ -268,7 +270,7 @@ ul.products li.product .button{margin:10px 16px 0!important}
 /* Menú móvil */
 .sidr{background:var(--agro-ink)!important}
 .sidr a{color:#E7EAEE!important; font-family:var(--agro-font-head)!important; min-height:48px; line-height:48px}
-.sidr a:hover{color:var(--agro-orange)!important}
+.sidr a:hover{color:var(--agro-brand)!important}
 #mobile-menu-search input{min-height:48px}
 .oceanwp-mobile-menu-icon a{min-width:48px;min-height:48px;display:inline-flex;align-items:center;justify-content:center}
 

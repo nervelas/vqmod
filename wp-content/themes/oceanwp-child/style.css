@@ -1,0 +1,14 @@
+/*
+Theme Name: OceanWP Child - AGROINCO
+Description: Tema hijo de OceanWP para AGROINCO. Rediseño industrial y funciones propias del sitio.
+Template: oceanwp
+Version: 1.0.0
+Text Domain: oceanwp-child
+*/
+
+/* Menú embebido (sustituto del nav-menu de Elementor Pro) */
+.agro-inline-menu ul { list-style: none; margin: 0; padding: 10px 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 0 34px; }
+.agro-inline-menu li { margin: 0; }
+.agro-inline-menu a { color: #ffffff; text-transform: uppercase; font-size: 13px; letter-spacing: .6px; text-decoration: none; }
+.agro-inline-menu a:hover { color: #ffaa01; }
+.agro-inline-menu .current-menu-item > a, .agro-inline-menu .current_page_item > a { color: #ffaa01; }

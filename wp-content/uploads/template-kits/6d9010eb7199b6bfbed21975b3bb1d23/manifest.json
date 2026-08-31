@@ -1,0 +1,1019 @@
+{
+    "manifest_version": "1.0.21",
+    "title": "Trigon - Construction Elementor Template Kit",
+    "page_builder": "elementor",
+    "kit_version": "1.0.0",
+    "templates": [
+        {
+            "name": "Global Kit Styles",
+            "screenshot": "screenshots\/global-kit-styles.jpg",
+            "source": "templates\/global.json",
+            "preview_url": "https:\/\/tykit.rometheme.pro",
+            "type": "section",
+            "category": "page",
+            "metadata": {
+                "template_type": "global-styles",
+                "include_in_zip": "1",
+                "elementor_pro_required": null,
+                "additional_template_information": [
+                    "These are the global theme styles configured through the Elementor Theme Styles area."
+                ]
+            },
+            "elementor_pro_required": false
+        },
+        {
+            "name": "Homepage",
+            "screenshot": "screenshots\/homepage.jpg",
+            "source": "templates\/homepage.json",
+            "preview_url": "https:\/\/tykit.rometheme.pro\/trigon\/template-kit\/homepage\/",
+            "type": "section",
+            "category": "page",
+            "metadata": {
+                "template_type": "single-home",
+                "include_in_zip": "1",
+                "elementor_pro_required": null
+            },
+            "elementor_pro_required": false
+        },
+        {
+            "name": "About Us",
+            "screenshot": "screenshots\/about-us.jpg",
+            "source": "templates\/about-us.json",
+            "preview_url": "https:\/\/tykit.rometheme.pro\/trigon\/template-kit\/about\/",
+            "type": "page",
+            "category": "page",
+            "metadata": {
+                "template_type": "single-page",
+                "include_in_zip": "1",
+                "elementor_pro_required": null
+            },
+            "elementor_pro_required": false
+        },
+        {
+            "name": "Services",
+            "screenshot": "screenshots\/services.jpg",
+            "source": "templates\/services.json",
+            "preview_url": "https:\/\/tykit.rometheme.pro\/trigon\/template-kit\/services\/",
+            "type": "page",
+            "category": "page",
+            "metadata": {
+                "template_type": "single-page",
+                "include_in_zip": "1",
+                "elementor_pro_required": null
+            },
+            "elementor_pro_required": false
+        },
+        {
+            "name": "Portfolio",
+            "screenshot": "screenshots\/portfolio.jpg",
+            "source": "templates\/portfolio.json",
+            "preview_url": "https:\/\/tykit.rometheme.pro\/trigon\/template-kit\/portfolio\/",
+            "type": "page",
+            "category": "page",
+            "metadata": {
+                "template_type": "single-page",
+                "include_in_zip": "1",
+                "elementor_pro_required": null
+            },
+            "elementor_pro_required": false
+        },
+        {
+            "name": "Single Portfolio",
+            "screenshot": "screenshots\/single-portfolio.jpg",
+            "source": "templates\/single-portfolio.json",
+            "preview_url": "https:\/\/tykit.rometheme.pro\/trigon\/template-kit\/single-portfolio\/",
+            "type": "page",
+            "category": "page",
+            "metadata": {
+                "template_type": "single-page",
+                "include_in_zip": "1",
+                "elementor_pro_required": null
+            },
+            "elementor_pro_required": false
+        },
+        {
+            "name": "Team",
+            "screenshot": "screenshots\/team.jpg",
+            "source": "templates\/team.json",
+            "preview_url": "https:\/\/tykit.rometheme.pro\/trigon\/template-kit\/team\/",
+            "type": "page",
+            "category": "page",
+            "metadata": {
+                "template_type": "single-page",
+                "include_in_zip": "1",
+                "elementor_pro_required": null
+            },
+            "elementor_pro_required": false
+        },
+        {
+            "name": "Pricing Plan",
+            "screenshot": "screenshots\/pricing-plan.jpg",
+            "source": "templates\/pricing-plan.json",
+            "preview_url": "https:\/\/tykit.rometheme.pro\/trigon\/template-kit\/pricing-plan\/",
+            "type": "page",
+            "category": "page",
+            "metadata": {
+                "template_type": "single-page",
+                "include_in_zip": "1",
+                "elementor_pro_required": null
+            },
+            "elementor_pro_required": false
+        },
+        {
+            "name": "FAQs",
+            "screenshot": "screenshots\/faqs.jpg",
+            "source": "templates\/faqs.json",
+            "preview_url": "https:\/\/tykit.rometheme.pro\/trigon\/template-kit\/faqs\/",
+            "type": "page",
+            "category": "page",
+            "metadata": {
+                "template_type": "single-page",
+                "include_in_zip": "1",
+                "elementor_pro_required": null
+            },
+            "elementor_pro_required": false
+        },
+        {
+            "name": "Blogs",
+            "screenshot": "screenshots\/blogs.jpg",
+            "source": "templates\/blogs.json",
+            "preview_url": "https:\/\/tykit.rometheme.pro\/trigon\/template-kit\/blogs\/",
+            "type": "page",
+            "category": "page",
+            "metadata": {
+                "template_type": "single-page",
+                "include_in_zip": "1",
+                "elementor_pro_required": null
+            },
+            "elementor_pro_required": false
+        },
+        {
+            "name": "Error 404",
+            "screenshot": "screenshots\/error-404.jpg",
+            "source": "templates\/error-404.json",
+            "preview_url": "https:\/\/tykit.rometheme.pro\/trigon\/template-kit\/error-404\/",
+            "type": "page",
+            "category": "page",
+            "metadata": {
+                "template_type": "single-page",
+                "include_in_zip": "1",
+                "elementor_pro_required": null
+            },
+            "elementor_pro_required": false
+        },
+        {
+            "name": "Contact Us",
+            "screenshot": "screenshots\/contact-us.jpg",
+            "source": "templates\/contact-us.json",
+            "preview_url": "https:\/\/tykit.rometheme.pro\/trigon\/template-kit\/contact-us\/",
+            "type": "page",
+            "category": "page",
+            "metadata": {
+                "template_type": "single-page",
+                "include_in_zip": "1",
+                "elementor_pro_required": null
+            },
+            "elementor_pro_required": false
+        },
+        {
+            "name": "Trigon - Header",
+            "screenshot": "screenshots\/trigon-header.jpg",
+            "source": "templates\/trigon-header.json",
+            "preview_url": "https:\/\/tykit.rometheme.pro\/trigon\/template-kit\/trigon-header\/",
+            "type": "section",
+            "category": "section",
+            "metadata": {
+                "template_type": "section-header",
+                "include_in_zip": "1",
+                "elementor_pro_required": null
+            },
+            "elementor_pro_required": false
+        },
+        {
+            "name": "Trigon - Footer",
+            "screenshot": "screenshots\/trigon-footer.jpg",
+            "source": "templates\/trigon-footer.json",
+            "preview_url": "https:\/\/tykit.rometheme.pro\/trigon\/template-kit\/trigon-footer\/",
+            "type": "section",
+            "category": "section",
+            "metadata": {
+                "template_type": "section-footer",
+                "include_in_zip": "1",
+                "elementor_pro_required": null
+            },
+            "elementor_pro_required": false
+        },
+        {
+            "name": "Trigon - Contact Form",
+            "screenshot": "screenshots\/trigon-contact-form.jpg",
+            "source": "templates\/trigon-contact-form.json",
+            "preview_url": "https:\/\/tykit.rometheme.pro\/trigon\/template-kit\/trigon-contact-form\/",
+            "type": "section",
+            "category": "section",
+            "metadata": {
+                "template_type": "section-contact",
+                "include_in_zip": "1",
+                "elementor_pro_required": null
+            },
+            "elementor_pro_required": false
+        },
+        {
+            "name": "Trigon - Subscribe Form",
+            "screenshot": "screenshots\/trigon-subscribe-form.jpg",
+            "source": "templates\/trigon-subscribe-form.json",
+            "preview_url": "https:\/\/tykit.rometheme.pro\/trigon\/template-kit\/trigon-subscribe-form\/",
+            "type": "section",
+            "category": "section",
+            "metadata": {
+                "template_type": "section-contact",
+                "include_in_zip": "1",
+                "elementor_pro_required": null
+            },
+            "elementor_pro_required": false
+        }
+    ],
+    "required_plugins": [
+        {
+            "name": "Elementor",
+            "version": "3.16.4",
+            "file": "elementor\/elementor.php",
+            "author": "Elementor.com"
+        },
+        {
+            "name": "ElementsKit Lite",
+            "version": "3.0.0",
+            "file": "elementskit-lite\/elementskit-lite.php",
+            "author": "Wpmet"
+        },
+        {
+            "name": "RomethemeKit For Elementor",
+            "version": "1.3.4",
+            "file": "rometheme-for-elementor\/RomeTheme.php",
+            "author": "Rometheme"
+        },
+        {
+            "name": "RomethemeForm",
+            "version": "1.1.1",
+            "file": "romethemeform\/rometheme-form.php",
+            "author": "Rometheme"
+        }
+    ],
+    "images": [
+        {
+            "filename": "BG1.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/BG1-800x533.jpg",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                },
+                {
+                    "source": "templates\/about-us.json",
+                    "name": "About Us"
+                },
+                {
+                    "source": "templates\/portfolio.json",
+                    "name": "Portfolio"
+                }
+            ],
+            "filesize": 205367,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "self_created",
+            "person_or_place": "no",
+            "image_urls": ""
+        },
+        {
+            "filename": "construction-of-an-overhead-mass-rail-transit-trai-P3DWMVDc.png",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/construction-of-an-overhead-mass-rail-transit-trai-P3DWMVDc-800x533.png",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                }
+            ],
+            "filesize": 330162,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "satisfied-smiling-asian-female-architect-construc-2022-12-16-06-16-05-utc.png",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/satisfied-smiling-asian-female-architect-construc-2022-12-16-06-16-05-utc-800x969.png",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                }
+            ],
+            "filesize": 212016,
+            "dimensions": [
+                845,
+                1024
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "busy-builder-standing-at-a-rooftop-of-a-constructi-2021-09-03-21-03-26-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/busy-builder-standing-at-a-rooftop-of-a-constructi-2021-09-03-21-03-26-utc-800x533.jpg",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                }
+            ],
+            "filesize": 259790,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "contractor-checking-construction-progress-report-2021-09-04-15-43-37-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/contractor-checking-construction-progress-report-2021-09-04-15-43-37-utc-800x533.jpg",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                },
+                {
+                    "source": "templates\/about-us.json",
+                    "name": "About Us"
+                }
+            ],
+            "filesize": 245981,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "construction-worker-using-tablet-pc-2021-08-28-12-44-25-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/construction-worker-using-tablet-pc-2021-08-28-12-44-25-utc-800x533.jpg",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                },
+                {
+                    "source": "templates\/portfolio.json",
+                    "name": "Portfolio"
+                }
+            ],
+            "filesize": 151521,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "BG2.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/BG2-800x533.jpg",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                },
+                {
+                    "source": "templates\/about-us.json",
+                    "name": "About Us"
+                },
+                {
+                    "source": "templates\/services.json",
+                    "name": "Services"
+                },
+                {
+                    "source": "templates\/portfolio.json",
+                    "name": "Portfolio"
+                },
+                {
+                    "source": "templates\/pricing-plan.json",
+                    "name": "Pricing Plan"
+                },
+                {
+                    "source": "templates\/faqs.json",
+                    "name": "FAQs"
+                },
+                {
+                    "source": "templates\/contact-us.json",
+                    "name": "Contact Us"
+                }
+            ],
+            "filesize": 249295,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "self_created",
+            "person_or_place": "no",
+            "image_urls": ""
+        },
+        {
+            "filename": "two-young-male-engineers-in-uniform-and-hardhats-w-2021-10-29-20-52-00-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/two-young-male-engineers-in-uniform-and-hardhats-w-2021-10-29-20-52-00-utc-800x533.jpg",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                }
+            ],
+            "filesize": 286413,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "Crane1.png",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/Crane1-800x666.png",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                },
+                {
+                    "source": "templates\/about-us.json",
+                    "name": "About Us"
+                },
+                {
+                    "source": "templates\/faqs.json",
+                    "name": "FAQs"
+                }
+            ],
+            "filesize": 176444,
+            "dimensions": [
+                1305,
+                1087
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "construction-worker-2022-12-15-22-42-08-utc.png",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/construction-worker-2022-12-15-22-42-08-utc-800x785.png",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                },
+                {
+                    "source": "templates\/about-us.json",
+                    "name": "About Us"
+                },
+                {
+                    "source": "templates\/faqs.json",
+                    "name": "FAQs"
+                }
+            ],
+            "filesize": 293307,
+            "dimensions": [
+                1044,
+                1024
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "construction-of-new-store-2022-03-07-23-56-49-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/construction-of-new-store-2022-03-07-23-56-49-utc-800x533.jpg",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                },
+                {
+                    "source": "templates\/about-us.json",
+                    "name": "About Us"
+                },
+                {
+                    "source": "templates\/portfolio.json",
+                    "name": "Portfolio"
+                },
+                {
+                    "source": "templates\/single-portfolio.json",
+                    "name": "Single Portfolio"
+                }
+            ],
+            "filesize": 253804,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "new-houses-construction-site-2022-11-09-18-54-11-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/new-houses-construction-site-2022-11-09-18-54-11-utc-800x533.jpg",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                },
+                {
+                    "source": "templates\/about-us.json",
+                    "name": "About Us"
+                },
+                {
+                    "source": "templates\/portfolio.json",
+                    "name": "Portfolio"
+                }
+            ],
+            "filesize": 284037,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "construction-of-mass-light-rail-transit-track-infr-2021-09-01-20-45-55-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/construction-of-mass-light-rail-transit-track-infr-2021-09-01-20-45-55-utc-800x533.jpg",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                },
+                {
+                    "source": "templates\/about-us.json",
+                    "name": "About Us"
+                },
+                {
+                    "source": "templates\/portfolio.json",
+                    "name": "Portfolio"
+                }
+            ],
+            "filesize": 275842,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "attractive-confident-young-business-man-2021-08-31-04-28-39-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/attractive-confident-young-business-man-2021-08-31-04-28-39-utc-800x533.jpg",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                },
+                {
+                    "source": "templates\/about-us.json",
+                    "name": "About Us"
+                }
+            ],
+            "filesize": 263256,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "business-woman-portrait-indoors-2021-10-13-20-02-58-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/business-woman-portrait-indoors-2021-10-13-20-02-58-utc-800x533.jpg",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                },
+                {
+                    "source": "templates\/about-us.json",
+                    "name": "About Us"
+                }
+            ],
+            "filesize": 249582,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "business-man-working-on-construction-project-2022-07-06-17-36-01-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/business-man-working-on-construction-project-2022-07-06-17-36-01-utc-800x533.jpg",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                },
+                {
+                    "source": "templates\/about-us.json",
+                    "name": "About Us"
+                }
+            ],
+            "filesize": 202938,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "laughing-business-woman-2022-11-16-20-31-29-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/laughing-business-woman-2022-11-16-20-31-29-utc-800x533.jpg",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                },
+                {
+                    "source": "templates\/about-us.json",
+                    "name": "About Us"
+                }
+            ],
+            "filesize": 163995,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "optimistic-handsome-business-man-using-laptop-2021-08-29-02-45-20-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/optimistic-handsome-business-man-using-laptop-2021-08-29-02-45-20-utc-800x533.jpg",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                },
+                {
+                    "source": "templates\/about-us.json",
+                    "name": "About Us"
+                }
+            ],
+            "filesize": 235631,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "successful-business-woman-looking-confident-and-sm-2022-01-19-00-07-13-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/successful-business-woman-looking-confident-and-sm-2022-01-19-00-07-13-utc-800x533.jpg",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                },
+                {
+                    "source": "templates\/about-us.json",
+                    "name": "About Us"
+                }
+            ],
+            "filesize": 146158,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "high-angle-view-of-builders-shaking-hands-over-blu-2022-12-16-19-16-13-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/high-angle-view-of-builders-shaking-hands-over-blu-2022-12-16-19-16-13-utc-800x533.jpg",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                },
+                {
+                    "source": "templates\/services.json",
+                    "name": "Services"
+                }
+            ],
+            "filesize": 298704,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "construction-engineer-with-foreman-worker-checking-2021-08-26-17-30-04-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/construction-engineer-with-foreman-worker-checking-2021-08-26-17-30-04-utc-800x533.jpg",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                },
+                {
+                    "source": "templates\/about-us.json",
+                    "name": "About Us"
+                },
+                {
+                    "source": "templates\/services.json",
+                    "name": "Services"
+                },
+                {
+                    "source": "templates\/portfolio.json",
+                    "name": "Portfolio"
+                },
+                {
+                    "source": "templates\/single-portfolio.json",
+                    "name": "Single Portfolio"
+                },
+                {
+                    "source": "templates\/pricing-plan.json",
+                    "name": "Pricing Plan"
+                }
+            ],
+            "filesize": 252728,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "construction-workers-analyzing-work-results-2021-09-24-03-48-37-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/construction-workers-analyzing-work-results-2021-09-24-03-48-37-utc-800x533.jpg",
+            "templates": [
+                {
+                    "source": "templates\/homepage.json",
+                    "name": "Homepage"
+                },
+                {
+                    "source": "templates\/services.json",
+                    "name": "Services"
+                },
+                {
+                    "source": "templates\/pricing-plan.json",
+                    "name": "Pricing Plan"
+                }
+            ],
+            "filesize": 286738,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "construction-of-highway-overpass-bridge-and-rail-t-2021-09-01-20-45-40-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/construction-of-highway-overpass-bridge-and-rail-t-2021-09-01-20-45-40-utc-800x533.jpg",
+            "templates": [
+                {
+                    "source": "templates\/about-us.json",
+                    "name": "About Us"
+                },
+                {
+                    "source": "templates\/services.json",
+                    "name": "Services"
+                },
+                {
+                    "source": "templates\/portfolio.json",
+                    "name": "Portfolio"
+                },
+                {
+                    "source": "templates\/single-portfolio.json",
+                    "name": "Single Portfolio"
+                },
+                {
+                    "source": "templates\/team.json",
+                    "name": "Team"
+                },
+                {
+                    "source": "templates\/pricing-plan.json",
+                    "name": "Pricing Plan"
+                },
+                {
+                    "source": "templates\/faqs.json",
+                    "name": "FAQs"
+                },
+                {
+                    "source": "templates\/blogs.json",
+                    "name": "Blogs"
+                },
+                {
+                    "source": "templates\/error-404.json",
+                    "name": "Error 404"
+                },
+                {
+                    "source": "templates\/contact-us.json",
+                    "name": "Contact Us"
+                }
+            ],
+            "filesize": 262580,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "man-engineer-standing-on-construction-site-holdin-2022-02-02-04-50-37-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/man-engineer-standing-on-construction-site-holdin-2022-02-02-04-50-37-utc-800x533.jpg",
+            "templates": [
+                {
+                    "source": "templates\/about-us.json",
+                    "name": "About Us"
+                }
+            ],
+            "filesize": 188984,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "wood-construction-worker-2022-12-16-11-42-14-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/wood-construction-worker-2022-12-16-11-42-14-utc-800x533.jpg",
+            "templates": [
+                {
+                    "source": "templates\/portfolio.json",
+                    "name": "Portfolio"
+                }
+            ],
+            "filesize": 243988,
+            "dimensions": [
+                1920,
+                1280
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "handsome-businessman-in-suit-using-the-phone-2022-04-06-19-27-08-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/handsome-businessman-in-suit-using-the-phone-2022-04-06-19-27-08-utc-800x969.jpg",
+            "templates": [
+                {
+                    "source": "templates\/team.json",
+                    "name": "Team"
+                }
+            ],
+            "filesize": 188537,
+            "dimensions": [
+                854,
+                1034
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "businesswoman-working-on-laptop-computer-sitting-a-2021-12-14-22-52-25-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/businesswoman-working-on-laptop-computer-sitting-a-2021-12-14-22-52-25-utc-800x969.jpg",
+            "templates": [
+                {
+                    "source": "templates\/team.json",
+                    "name": "Team"
+                }
+            ],
+            "filesize": 160523,
+            "dimensions": [
+                854,
+                1034
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "indian-construction-site-manager-standing-wearing-2023-09-22-15-32-00-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/indian-construction-site-manager-standing-wearing-2023-09-22-15-32-00-utc-800x969.jpg",
+            "templates": [
+                {
+                    "source": "templates\/team.json",
+                    "name": "Team"
+                }
+            ],
+            "filesize": 289633,
+            "dimensions": [
+                854,
+                1034
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "business-young-woman-with-a-tablet-on-the-backgrou-2022-09-29-21-54-01-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/business-young-woman-with-a-tablet-on-the-backgrou-2022-09-29-21-54-01-utc-800x969.jpg",
+            "templates": [
+                {
+                    "source": "templates\/team.json",
+                    "name": "Team"
+                }
+            ],
+            "filesize": 165935,
+            "dimensions": [
+                854,
+                1034
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "young-business-man-in-office-2021-08-29-18-16-25-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/young-business-man-in-office-2021-08-29-18-16-25-utc-800x969.jpg",
+            "templates": [
+                {
+                    "source": "templates\/team.json",
+                    "name": "Team"
+                }
+            ],
+            "filesize": 120118,
+            "dimensions": [
+                854,
+                1034
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "happy-young-businesswoman-with-mobile-phone-in-the-2022-12-16-22-01-55-utc.jpg",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/happy-young-businesswoman-with-mobile-phone-in-the-2022-12-16-22-01-55-utc-800x969.jpg",
+            "templates": [
+                {
+                    "source": "templates\/team.json",
+                    "name": "Team"
+                }
+            ],
+            "filesize": 152637,
+            "dimensions": [
+                854,
+                1034
+            ],
+            "image_source": "envato_elements",
+            "person_or_place": "yes",
+            "image_urls": "https:\/\/elements.envato.com\/collections\/CJDBNTZMQ3"
+        },
+        {
+            "filename": "LOGO.png",
+            "thumbnail_url": "http:\/\/tykit.rometheme.pro\/trigon\/wp-content\/uploads\/sites\/139\/2023\/10\/LOGO.png",
+            "templates": [
+                {
+                    "source": "templates\/trigon-header.json",
+                    "name": "Trigon - Header"
+                },
+                {
+                    "source": "templates\/trigon-footer.json",
+                    "name": "Trigon - Footer"
+                }
+            ],
+            "filesize": 5237,
+            "dimensions": [
+                350,
+                100
+            ],
+            "image_source": "self_created",
+            "person_or_place": "no",
+            "image_urls": ""
+        }
+    ]
+}

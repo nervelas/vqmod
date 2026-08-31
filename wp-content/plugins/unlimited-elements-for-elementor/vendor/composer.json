@@ -1,0 +1,7 @@
+{
+    "require": {
+        "twig/twig": "3.11.3",
+		"symfony/deprecation-contracts": "^2.5",
+		"tedivm/jshrink": "^1.8"
+    }	
+}

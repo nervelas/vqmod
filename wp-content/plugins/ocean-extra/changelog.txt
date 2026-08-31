@@ -1,0 +1,33 @@
+== Changelog ==
+
+= 2.5.9 - AUG 18 2026 =
+- Added: Compatibility: WordPress 7.1.
+- Improved: Customizer: Panels and options rendering logic for improved Customizer speed.
+- Improved: Minified CSS files: Encoding changed from 'UTF-8 with BOM' to 'UTF-8' to avoid issues with CSS file combination features delivered by optimization plugins.
+- Improved: Opengraph: Logic to avoid empty 'og:url' tag generation.
+- Improved: Opengraph: Logic to avoid returning WP errors as 'og:url' tag.
+
+= 2.5.8 - JUL 28 2026 =
+- Added: Gutenberg Block Editor: Posts & Pages: Editor Style: Front-End Style in Editor option: Display website's front-end style (typography, colors, etc.) inside the editor.
+
+= 2.5.7 - JUN 29 2026 =
+- Added: Customizer: Icon for the new OceanWP 'Accessibility - A11Y' panel. Requires latest OceanWP 4.2.0 version.
+- Improved: Widgets: Flickr: Script handling when widget not in use.
+
+= 2.5.6 - MAY 20 2026 =
+- Updated: Compatibility: WordPress version number.
+
+= 2.5.5 - MAR 31 2026 =
+- Updated: Setup Wizard: Optional newsletter integration provider changed in favor of a self-hosted solution. Remains strictly opt-in.
+- Fixed: Hooks: Hook condition on product category pages. Also relates to the exact same problem in Ocean Hooks plugin.
+- Fixed: Error 'The editor has encountered an unexpected error' in Customizer > Widgets after importing demos that contain classic widgets.
+
+= 2.5.4 - MAR 9 2026 =
+- Fixed: Potential vulnerability patched: Report by Patchstack from FEB 16th 2026 / patch verification from MAR 4th 2026. Shoutout and a thanks to the Patchstack team for patch test and confirmation.
+
+= 2.5.3 - FEB 16 2026 =
+- Improved: Demo Import: Dynamic menu location assignment after import.
+- Improved: Demo Import: Conditional step validation of the import workflow.
+
+= 2.5.2 - NOV 24 2025 =
+All previous changelogs available at: https://docs.oceanwp.org/article/654-ocean-extra-changelog

@@ -1,0 +1,7 @@
+# AGROINCO — sin ejecución de PHP en uploads
+<FilesMatch "\.(php|php3|php4|php5|php7|phtml|pht|phar)$">
+Require all denied
+</FilesMatch>
+<IfModule mod_php.c>
+php_flag engine off
+</IfModule>

@@ -1,0 +1,81 @@
+# ==========================================================
+#  AGROINCO — .htaccess endurecido (generado 2026-08-31)
+# ==========================================================
+
+# --- Forzar HTTPS ---
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteCond %{HTTPS} !=on
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# --- Cabeceras de seguridad ---
+<IfModule mod_headers.c>
+Header always set X-Frame-Options "SAMEORIGIN"
+Header always set X-Content-Type-Options "nosniff"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+</IfModule>
+
+# --- Sin listado de directorios ---
+Options -Indexes
+
+# --- Proteger wp-config.php ---
+<Files wp-config.php>
+Require all denied
+</Files>
+
+# --- Desactivar XML-RPC (nada del sitio lo usa) ---
+<Files xmlrpc.php>
+Require all denied
+</Files>
+
+# --- Bloquear archivos sensibles ---
+<FilesMatch "\.(sql|log|zip|tar|gz|bak|old|orig|swp|env|ini)$">
+Require all denied
+</FilesMatch>
+<FilesMatch "^(\.htaccess|\.htpasswd|readme\.html|license\.txt)$">
+Require all denied
+</FilesMatch>
+
+# --- Compresión y caché de navegador ---
+<IfModule mod_deflate.c>
+AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json image/svg+xml
+</IfModule>
+<IfModule mod_expires.c>
+ExpiresActive On
+ExpiresByType image/webp "access plus 1 year"
+ExpiresByType image/jpeg "access plus 1 year"
+ExpiresByType image/png "access plus 1 year"
+ExpiresByType image/svg+xml "access plus 1 year"
+ExpiresByType text/css "access plus 1 month"
+ExpiresByType application/javascript "access plus 1 month"
+ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>
+
+# --- Servir WebP transparente si el navegador lo acepta ---
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteCond %{HTTP_ACCEPT} image/webp
+RewriteCond %{REQUEST_FILENAME} \.(jpe?g|png)$
+RewriteCond %{REQUEST_FILENAME}.webp -f
+RewriteRule ^(.+)\.(jpe?g|png)$ $1.$2.webp [T=image/webp,L]
+</IfModule>
+<IfModule mod_headers.c>
+<FilesMatch "\.(jpe?g|png)$">
+Header append Vary Accept
+</FilesMatch>
+</IfModule>
+
+# BEGIN WordPress
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+# END WordPress

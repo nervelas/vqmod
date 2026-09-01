@@ -1,0 +1,7 @@
+# Datos generados en el servidor: nunca se versionan.
+storage/db/
+storage/images/
+storage/thumbs/
+storage/logs/
+storage/sessions/
+storage/tmp/

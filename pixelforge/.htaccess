@@ -1,0 +1,46 @@
+# PixelForge — configuración para hosting compartido (Apache).
+
+Options -Indexes
+DirectoryIndex index.php
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "no-referrer"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# Carpetas internas: sin acceso desde el navegador.
+RedirectMatch 404 ^/(.*/)?(storage|app|views)/.*$
+
+# Archivos sensibles.
+<FilesMatch "\.(sqlite|sqlite3|db|log|key|json|md)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+<Files ".htaccess">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</Files>
+
+# Compresión y caché de los estáticos propios.
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json
+</IfModule>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 7 days"
+    ExpiresByType application/javascript "access plus 7 days"
+</IfModule>

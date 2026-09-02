@@ -30,9 +30,9 @@ final class Support
         if (is_dir(PF_VIEWS) && !is_file($viewGuard)) {
             @file_put_contents($viewGuard, self::denyRules());
         }
-        $index = PF_STORAGE . '/index.html';
+        $index = PF_STORAGE . '/index.php';
         if (!is_file($index)) {
-            @file_put_contents($index, '');
+            @file_put_contents($index, "<?php\n// Carpeta privada de PixelForge.\nhttp_response_code(404);\n");
         }
     }
 

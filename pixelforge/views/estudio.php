@@ -207,5 +207,5 @@ $config = [
     <div class="contenido" id="modal-contenido"></div>
 </div>
 
-<script src="<?= Support::e($base) ?>/assets/js/app.js?v=<?= Support::e(PF_VERSION) ?>"></script>
+<script src="<?= Support::e($base) ?>/assets/app.php?v=<?= Support::e(PF_VERSION) ?>"></script>
 <?php require PF_VIEWS . '/pie.php'; ?>

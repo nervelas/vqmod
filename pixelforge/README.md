@@ -36,9 +36,16 @@ download.php     entrega de imágenes y ZIP
 admin/           panel de administración
 app/             código de la aplicación (sin acceso web)
 views/           plantillas (sin acceso web)
-assets/          CSS y JS
+assets/          hoja de estilos y script del estudio
 storage/         base de datos, imágenes, miniaturas, logs (sin acceso web)
 ```
+
+El script del estudio se sirve desde `assets/app.php` en lugar de un archivo
+`.js` suelto. El motivo es práctico: el antivirus de muchos hostings (ClamAV
+con las firmas *Sanesecurity Foxhole*) rechaza **cualquier ZIP pequeño que
+contenga archivos `.js`**, sin mirar su contenido, y cancelaba la subida. El
+código es el mismo y el navegador lo recibe como JavaScript normal, con caché
+y revalidación por ETag.
 
 ## Mantenimiento
 

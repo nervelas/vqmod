@@ -1,0 +1,12 @@
+# El instalador queda accesible hasta que se crea .lock; entonces el propio
+# index.php lo bloquea. Estos archivos internos nunca se sirven.
+<FilesMatch "\.(lock|sql|log)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+Options -Indexes

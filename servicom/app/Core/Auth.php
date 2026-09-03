@@ -1,0 +1,144 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Core;
+
+final class Auth
+{
+    private static ?array $user = null;
+    private static bool $loaded = false;
+
+    public const ROLE_ADMIN  = 'admin';
+    public const ROLE_SELLER = 'vendedor';
+    public const ROLE_VIEWER = 'visor';
+
+    public static function user(): ?array
+    {
+        if (self::$loaded) {
+            return self::$user;
+        }
+        self::$loaded = true;
+        App::startSession();
+        $id = (int) ($_SESSION['uid'] ?? 0);
+        if ($id <= 0) {
+            return self::$user = null;
+        }
+        // Ata la sesión al navegador para dificultar el robo de cookies.
+        if (($_SESSION['fp'] ?? '') !== Security::fingerprint()) {
+            self::logout();
+            return self::$user = null;
+        }
+        $u = DB::one('SELECT * FROM users WHERE id = ? AND status = "activo" LIMIT 1', [$id]);
+        if (!$u) {
+            self::logout();
+            return self::$user = null;
+        }
+        return self::$user = $u;
+    }
+
+    public static function id(): int
+    {
+        return (int) (self::user()['id'] ?? 0);
+    }
+
+    public static function role(): string
+    {
+        return (string) (self::user()['role'] ?? '');
+    }
+
+    public static function check(): bool
+    {
+        return self::user() !== null;
+    }
+
+    public static function isAdmin(): bool
+    {
+        return self::role() === self::ROLE_ADMIN;
+    }
+
+    public static function isSeller(): bool
+    {
+        return self::role() === self::ROLE_SELLER;
+    }
+
+    public static function isViewer(): bool
+    {
+        return self::role() === self::ROLE_VIEWER;
+    }
+
+    /** ¿Puede escribir (crear/editar/borrar) en el panel? */
+    public static function canWrite(): bool
+    {
+        return in_array(self::role(), [self::ROLE_ADMIN, self::ROLE_SELLER], true);
+    }
+
+    public static function canManageCompany(): bool
+    {
+        return self::role() === self::ROLE_ADMIN;
+    }
+
+    public static function login(array $user, bool $twoFactorPending = false): void
+    {
+        App::startSession();
+        session_regenerate_id(true);
+        if ($twoFactorPending) {
+            $_SESSION['2fa_uid'] = (int) $user['id'];
+            $_SESSION['2fa_at']  = time();
+            return;
+        }
+        unset($_SESSION['2fa_uid'], $_SESSION['2fa_at']);
+        $_SESSION['uid']   = (int) $user['id'];
+        $_SESSION['fp']    = Security::fingerprint();
+        $_SESSION['_last'] = time();
+        self::$user = null;
+        self::$loaded = false;
+        DB::update('users', ['last_login_at' => nowSql(), 'last_login_ip' => App::ip()], 'id = :id', ['id' => (int) $user['id']]);
+    }
+
+    public static function logout(): void
+    {
+        App::startSession();
+        $_SESSION = [];
+        if (ini_get('session.use_cookies')) {
+            $p = session_get_cookie_params();
+            setcookie(session_name(), '', ['expires' => time() - 42000] + $p);
+        }
+        session_destroy();
+        self::$user = null;
+        self::$loaded = true;
+    }
+
+    /** Exige sesión iniciada; si no, va al login. */
+    public static function require(): array
+    {
+        $u = self::user();
+        if (!$u) {
+            App::startSession();
+            $_SESSION['intended'] = Request::path();
+            if (Request::isAjax()) {
+                jsonOut(['ok' => false, 'error' => 'Sesión no iniciada'], 401);
+            }
+            redirect('/entrar');
+        }
+        return $u;
+    }
+
+    /** Exige uno de los roles indicados dentro del panel. */
+    public static function requireRole(string ...$roles): array
+    {
+        $u = self::require();
+        if (!in_array($u['role'], $roles, true)) {
+            if (Request::isAjax()) {
+                jsonOut(['ok' => false, 'error' => 'No tiene permisos para esta acción.'], 403);
+            }
+            ErrorHandler::render(403);
+        }
+        return $u;
+    }
+
+    /** Un vendedor solo ve lo suyo: devuelve el id a filtrar o null. */
+    public static function ownerFilter(): ?int
+    {
+        return self::isSeller() ? self::id() : null;
+    }
+}

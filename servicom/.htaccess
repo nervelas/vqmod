@@ -1,0 +1,81 @@
+# =====================================================================
+#  CotizaPro B2B — reglas del servidor Apache
+#  Funciona en la raíz del dominio o en una subcarpeta sin tocar código.
+# =====================================================================
+
+Options -Indexes -MultiViews
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # --- HTTPS forzado (respeta proxys de cPanel) ---
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteCond %{HTTP_HOST} !^localhost [NC]
+    RewriteCond %{HTTP_HOST} !^127\.0\.0\.1 [NC]
+    RewriteCond %{REQUEST_URI} !^/\.well-known/
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+    # --- Bloqueo de carpetas internas ---
+    RewriteRule ^(config|app|vendor|storage|database|tools)(/|$) - [F,L]
+
+    # --- Agentes maliciosos conocidos ---
+    RewriteCond %{HTTP_USER_AGENT} (libwww-perl|wget|nikto|sqlmap|havij|nmap|masscan|zgrab|acunetix|dirbuster|WPScan) [NC]
+    RewriteRule ^ - [F,L]
+
+    # --- Métodos no permitidos ---
+    RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK|DEBUG) [NC]
+    RewriteRule ^ - [F,L]
+
+    # --- Front controller ---
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=()"
+    Header always unset X-Powered-By
+    Header always unset Server
+    <FilesMatch "\.(css|js|woff2|jpg|jpeg|png|webp|svg|ico)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+    <FilesMatch "\.(webmanifest|json)$">
+        Header set Cache-Control "public, max-age=3600"
+    </FilesMatch>
+</IfModule>
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml text/javascript
+    AddOutputFilterByType DEFLATE application/javascript application/json application/xml
+    AddOutputFilterByType DEFLATE application/manifest+json image/svg+xml
+</IfModule>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/webp                "access plus 1 year"
+    ExpiresByType image/jpeg                "access plus 1 year"
+    ExpiresByType image/png                 "access plus 1 year"
+    ExpiresByType image/svg+xml             "access plus 1 year"
+    ExpiresByType text/css                  "access plus 1 year"
+    ExpiresByType application/javascript    "access plus 1 year"
+    ExpiresByType font/woff2                "access plus 1 year"
+</IfModule>
+
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+    AddType font/woff2 .woff2
+    AddType image/webp .webp
+</IfModule>
+
+# --- Archivos sensibles ---
+<FilesMatch "^(\.env|\.git.*|composer\.(json|lock)|database\.sql|database_demo\.sql|.*\.log|.*\.sql|.*\.sql\.gz)$">
+    Require all denied
+</FilesMatch>
+
+php_flag display_errors off
+php_flag expose_php off

@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin/
+Disallow: /install/
+Disallow: /includes/
+Disallow: /config/
+Disallow: /database/
+Disallow: /storage/
+
+Sitemap: https://servicom.gt/sitemap.xml

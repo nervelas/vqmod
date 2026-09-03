@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#05070a"/><stop offset="1" stop-color="#0e1a2b"/></linearGradient>
+<linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22e5c7"/><stop offset="1" stop-color="#7c5cff"/></linearGradient>
+<radialGradient id="o" cx="0.82" cy="0.18" r="0.62"><stop offset="0" stop-color="#22e5c7" stop-opacity=".34"/><stop offset="1" stop-color="#22e5c7" stop-opacity="0"/></radialGradient>
+<pattern id="gr" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M48 0H0v48" fill="none" stroke="#fff" stroke-opacity=".05"/></pattern>
+</defs>
+<rect width="1200" height="630" fill="url(#bg)"/><rect width="1200" height="630" fill="url(#gr)"/><rect width="1200" height="630" fill="url(#o)"/>
+<rect x="80" y="84" width="76" height="76" rx="22" fill="url(#lg)"/>
+<path d="M102 138c6.4 5.3 14.8 5.6 20.4 1.1 6-4.9 4.2-13-3.2-16l-7.6-3c-6.8-2.8-8.4-10.4-2.8-14.9 5.3-4.2 13.4-3.7 19.4 1.2" fill="none" stroke="#06131a" stroke-width="6" stroke-linecap="round"/>
+<text x="178" y="122" font-family="Space Grotesk,Inter,sans-serif" font-size="40" font-weight="700" letter-spacing="-1.6" fill="#ffffff">SERVICOM</text>
+<text x="180" y="150" font-family="Inter,sans-serif" font-size="15" letter-spacing="4.4" fill="#8d9bad">DISEÑO WEB · GUATEMALA</text>
+<text x="80" y="330" font-family="Space Grotesk,Inter,sans-serif" font-size="76" font-weight="700" letter-spacing="-3.2" fill="#eef3f8">Diseño de páginas web</text>
+<text x="80" y="416" font-family="Space Grotesk,Inter,sans-serif" font-size="76" font-weight="700" letter-spacing="-3.2" fill="#22e5c7">que atraen clientes</text>
+<text x="80" y="492" font-family="Inter,sans-serif" font-size="26" fill="#8d9bad">Más de 16 años de experiencia · Guatemala</text>
+<rect x="80" y="538" width="290" height="56" rx="28" fill="#22e5c7"/>
+<text x="118" y="574" font-family="Inter,sans-serif" font-size="20" font-weight="600" fill="#03110e">+502 3204 0756</text>
+</svg>

@@ -1,0 +1,12 @@
+config/config.php
+storage/sessions/*
+!storage/sessions/.gitkeep
+storage/cache/*
+!storage/cache/.gitkeep
+storage/*.log
+storage/*.sqlite
+uploads/media/*
+!uploads/media/.gitkeep
+.DS_Store
+Thumbs.db
+router.php

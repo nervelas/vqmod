@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 940" width="1600" height="940">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#070b12"/><stop offset="1" stop-color="#0d1626"/></linearGradient>
+<radialGradient id="o1" cx="0.2" cy="0.15" r="0.6"><stop offset="0" stop-color="#22e5c7" stop-opacity=".34"/><stop offset="1" stop-color="#22e5c7" stop-opacity="0"/></radialGradient>
+<radialGradient id="o2" cx="0.85" cy="0.8" r="0.55"><stop offset="0" stop-color="#7c5cff" stop-opacity=".32"/><stop offset="1" stop-color="#7c5cff" stop-opacity="0"/></radialGradient>
+<pattern id="gr" width="52" height="52" patternUnits="userSpaceOnUse"><path d="M52 0H0v52" fill="none" stroke="#ffffff" stroke-opacity=".045"/></pattern>
+</defs>
+<rect width="1600" height="940" fill="url(#bg)"/>
+<rect width="1600" height="940" fill="url(#gr)"/>
+<rect width="1600" height="940" fill="url(#o1)"/>
+<rect width="1600" height="940" fill="url(#o2)"/>
+<rect x="470" y="180" width="820" height="560" rx="26" fill="#111a29" stroke="#26344a"/>
+<rect x="470" y="180" width="820" height="54" rx="26" fill="#18243a"/>
+<circle cx="506" cy="207" r="7" fill="#ff5f57"/><circle cx="530" cy="207" r="7" fill="#febc2e"/><circle cx="554" cy="207" r="7" fill="#28c840"/>
+<rect x="510" y="278" width="340" height="20" rx="10" fill="#22e5c7" opacity=".9"/>
+<rect x="510" y="316" width="470" height="14" rx="7" fill="#33425c"/>
+<rect x="510" y="344" width="410" height="14" rx="7" fill="#2b384f"/>
+<rect x="510" y="396" width="168" height="46" rx="23" fill="#22e5c7"/>
+<rect x="694" y="396" width="150" height="46" rx="23" fill="none" stroke="#3c4b66"/>
+<rect x="510" y="486" width="230" height="200" rx="18" fill="#18243a" stroke="#2b384f"/>
+<rect x="762" y="486" width="230" height="200" rx="18" fill="#18243a" stroke="#2b384f"/>
+<rect x="1014" y="486" width="230" height="200" rx="18" fill="#18243a" stroke="#2b384f"/>
+<circle cx="560" cy="536" r="20" fill="#22e5c7" opacity=".22"/><circle cx="812" cy="536" r="20" fill="#7c5cff" opacity=".22"/><circle cx="1064" cy="536" r="20" fill="#22e5c7" opacity=".22"/>
+<rect x="1040" y="278" width="204" height="86" rx="16" fill="#18243a" stroke="#2b384f"/>
+<path d="M1064 330l26-28 24 22 36-42" fill="none" stroke="#22e5c7" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

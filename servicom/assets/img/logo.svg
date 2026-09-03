@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 64" width="320" height="64" role="img" aria-label="Servicom">
+<rect x="2" y="10" width="44" height="44" rx="13" fill="#111418"/>
+<path d="M15 39c3.6 3 8.4 3.2 11.6.6 3.4-2.8 2.4-7.4-1.8-9.1l-4.3-1.7c-3.9-1.6-4.8-5.9-1.6-8.5 3-2.4 7.6-2.1 11 .7" fill="none" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round"/>
+<text x="60" y="36" font-family="Space Grotesk,Inter,system-ui,sans-serif" font-size="27" font-weight="700" letter-spacing="-1.1" fill="#111418">SERVICOM</text>
+<text x="61" y="50" font-family="Inter,system-ui,sans-serif" font-size="9.2" font-weight="500" letter-spacing="3.1" fill="#7a8494">DISEÑO WEB · GUATEMALA</text>
+</svg>

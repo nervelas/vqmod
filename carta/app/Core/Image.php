@@ -63,7 +63,7 @@ final class Image
     }
 
     /** Igual que store(), pero a partir de un archivo ya presente en disco. */
-    public static function storePath($path, $folder = 'general', $maxWidth = 1600, $originalName = null)
+    public static function storePath($path, $folder = 'general', $maxWidth = 1600, $originalName = null, $baseFijo = null)
     {
         if (!is_file($path)) {
             throw new \RuntimeException('Archivo no encontrado: ' . $path);
@@ -76,10 +76,28 @@ final class Image
         if (!$src) {
             throw new \RuntimeException('No se pudo leer la imagen.');
         }
-        $base = self::relativeBase($folder, $originalName !== null ? $originalName : basename($path));
+        // Con $baseFijo se reescribe una imagen ya existente conservando su ruta:
+        // así una actualización del paquete cambia la foto sin tocar la base de datos.
+        $base = $baseFijo !== null && $baseFijo !== ''
+            ? self::prepareBase($baseFijo)
+            : self::relativeBase($folder, $originalName !== null ? $originalName : basename($path));
         self::writeVariants($src, $base, $maxWidth);
         imagedestroy($src);
         return $base;
+    }
+
+    /** Asegura que exista la carpeta de una ruta base ya conocida. */
+    private static function prepareBase($rel)
+    {
+        $rel = ltrim(str_replace('\\', '/', (string)$rel), '/');
+        if (strpos($rel, '..') !== false || strpos($rel, 'uploads/') !== 0) {
+            throw new \RuntimeException('Ruta de imagen no permitida: ' . $rel);
+        }
+        $abs = MG_ROOT . '/' . dirname($rel);
+        if (!is_dir($abs) && !@mkdir($abs, 0755, true) && !is_dir($abs)) {
+            throw new \RuntimeException('No se pudo crear la carpeta de imágenes. Revisa permisos en /uploads.');
+        }
+        return $rel;
     }
 
     private static function relativeBase($folder, $originalName)

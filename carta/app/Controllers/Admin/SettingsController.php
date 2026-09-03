@@ -6,6 +6,7 @@ use MenuGold\Core\DB;
 use MenuGold\Core\Image;
 use MenuGold\Core\Money;
 use MenuGold\Core\Session;
+use MenuGold\Core\Theme;
 use MenuGold\Core\Validator;
 use MenuGold\Models\Settings;
 
@@ -13,17 +14,14 @@ class SettingsController extends BaseController
 {
     protected $ability = 'settings';
 
-    /** Ocho temas listos para usar. */
-    public static $themes = array(
-        'brasa'     => array('label' => 'Brasa (predeterminado)', 'primary' => '#D8B26E', 'accent' => '#C4502B'),
-        'olivo'     => array('label' => 'Olivo',                  'primary' => '#B7C49A', 'accent' => '#6E7F4E'),
-        'vino'      => array('label' => 'Vino',                   'primary' => '#D9A5A5', 'accent' => '#7B2B36'),
-        'cobre'     => array('label' => 'Cobre',                  'primary' => '#E0A472', 'accent' => '#9C4F1F'),
-        'marfil'    => array('label' => 'Marfil',                 'primary' => '#EFE3CD', 'accent' => '#A08C63'),
-        'esmeralda' => array('label' => 'Esmeralda',              'primary' => '#8ED0AE', 'accent' => '#1F6B4C'),
-        'indigo'    => array('label' => 'Índigo',                 'primary' => '#A9B6E8', 'accent' => '#3B4A8C'),
-        'obsidiana' => array('label' => 'Obsidiana',              'primary' => '#C9C9C9', 'accent' => '#5E5E5E'),
-    );
+    /**
+     * Temas: definidos en Core\Theme (4 oscuros + 6 claros).
+     * Se deja este acceso porque las vistas ya lo consultaban por aquí.
+     */
+    public static function themes()
+    {
+        return Theme::todos();
+    }
 
     public static $fontCombos = array(
         'editorial' => array('label' => 'Editorial · Fraunces + Inter', 'display' => 'Fraunces', 'ui' => 'Inter'),
@@ -107,16 +105,20 @@ class SettingsController extends BaseController
             $bad = $this->guardCsrf();
             if ($bad) { return $bad; }
 
-            $theme = $this->request->str('theme', 'brasa');
-            if (!isset(self::$themes[$theme]) && $theme !== 'custom') { $theme = 'brasa'; }
+            $theme = $this->request->str('theme', Theme::PREDETERMINADO);
+            if (!Theme::existe($theme)) { $theme = Theme::PREDETERMINADO; }
             $combo = $this->request->str('font_combo', 'editorial');
             if (!isset(self::$fontCombos[$combo])) { $combo = 'editorial'; }
 
-            $primary = $this->hexOr($this->request->str('primary_color'), '#D8B26E');
-            $accent  = $this->hexOr($this->request->str('accent_color'), '#C4502B');
-            if ($theme !== 'custom') {
-                $primary = self::$themes[$theme]['primary'];
-                $accent  = self::$themes[$theme]['accent'];
+            $base = Theme::uno($theme);
+            // Los colores propios solo se guardan si se pidieron a propósito;
+            // si no, el tema manda y los campos quedan alineados con él.
+            if ($this->request->str('color_custom') === '1') {
+                $primary = $this->hexOr($this->request->str('primary_color'), $base['gold']);
+                $accent  = $this->hexOr($this->request->str('accent_color'), $base['ember']);
+            } else {
+                $primary = $base['gold'];
+                $accent  = $base['ember'];
             }
             Settings::setMany(array(
                 'theme' => $theme, 'font_combo' => $combo,
@@ -131,7 +133,7 @@ class SettingsController extends BaseController
                     if ($anterior !== '') { Image::remove($anterior); }
                     Settings::set($field, $base);
                     // Los iconos de la app se regeneran con el logo nuevo.
-                    if ($field === 'logo') { Image::generatePwaIcons($base, '#0C0B09'); }
+                    if ($field === 'logo') { Image::generatePwaIcons($base, Theme::uno($theme)['ink']); }
                 } catch (\Throwable $e) {
                     Session::flash('error', $e->getMessage());
                 }
@@ -143,8 +145,9 @@ class SettingsController extends BaseController
         }
 
         return $this->view('admin/settings/appearance', array(
-            'themes' => self::$themes,
-            'combos' => self::$fontCombos,
+            'oscuros' => Theme::porModo('oscuro'),
+            'claros'  => Theme::porModo('claro'),
+            'combos'  => self::$fontCombos,
         ));
     }
 

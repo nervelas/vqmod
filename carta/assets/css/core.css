@@ -4,21 +4,50 @@
    ============================================================ */
 
 :root {
-  /* Paleta */
-  --ink:        #0C0B09;
-  --carbon:     #161412;
-  --carbon-2:   #1E1B18;
-  --gold:       #D8B26E;
-  --gold-soft:  #E8CE9C;
-  --cream:      #F4EDE1;
-  --ember:      #C4502B;
-  --green:      #6FBF8B;
+  /* Paleta base — un tema solo redefine estos tripletes RGB.
+     `ink` es siempre el fondo y `cream` siempre el texto: en los temas
+     claros se invierten y toda la interfaz cambia con ellos. */
+  --ink-rgb:       12, 11, 9;
+  --carbon-rgb:    22, 20, 18;
+  --carbon2-rgb:   30, 27, 24;
+  --cream-rgb:     244, 237, 225;
+  --gold-rgb:      216, 178, 110;
+  --gold-soft-rgb: 232, 206, 156;
+  --ember-rgb:     196, 80, 43;
+  --green-rgb:     111, 191, 139;
+  --shadow-rgb:    0, 0, 0;
+  --on-accent:     #FFF6F1;
+  --on-gold:       rgb(var(--ink-rgb));
+  --a-numeral:     .65;
 
-  --line:       rgba(216, 178, 110, .20);
-  --line-soft:  rgba(244, 237, 225, .10);
+  /* Opacidades que el tema ajusta: un tinte sobre blanco necesita más
+     fuerza que el mismo tinte sobre negro para verse igual de presente. */
+  --a-line:      .20;
+  --a-line-soft: .10;
+  --a-dim:       .68;
+  --a-faint:     .58;
+  --a-fill:      .07;
+  --a-shadow:    .90;
+
+  /* Velo sobre fotografía: nunca se invierte. El texto que va encima
+     siempre es claro, haya el tema que haya. */
+  --scrim-rgb:  10, 9, 8;
+  --on-scrim:   #F7F3EC;
+
+  --ink:        rgb(var(--ink-rgb));
+  --carbon:     rgb(var(--carbon-rgb));
+  --carbon-2:   rgb(var(--carbon2-rgb));
+  --gold:       rgb(var(--gold-rgb));
+  --gold-soft:  rgb(var(--gold-soft-rgb));
+  --cream:      rgb(var(--cream-rgb));
+  --ember:      rgb(var(--ember-rgb));
+  --green:      rgb(var(--green-rgb));
+
+  --line:       rgba(var(--gold-rgb), var(--a-line));
+  --line-soft:  rgba(var(--cream-rgb), var(--a-line-soft));
   --text:       var(--cream);
-  --text-dim:   rgba(244, 237, 225, .68);
-  --text-faint: rgba(244, 237, 225, .58);
+  --text-dim:   rgba(var(--cream-rgb), var(--a-dim));
+  --text-faint: rgba(var(--cream-rgb), var(--a-faint));
 
   /* Tipografía */
   --font-display: "Fraunces", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
@@ -49,8 +78,8 @@
   --ease-io: cubic-bezier(.65, .05, .36, 1);
   --dur: .68s;
 
-  --shadow: 0 30px 80px -30px rgba(0, 0, 0, .9);
-  --shadow-gold: 0 24px 60px -24px rgba(216, 178, 110, .38);
+  --shadow: 0 30px 80px -30px rgba(var(--shadow-rgb), var(--a-shadow));
+  --shadow-gold: 0 24px 60px -24px rgba(var(--gold-rgb), .38);
   color-scheme: dark;
 }
 
@@ -88,7 +117,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 0; }
   border-radius: 4px;
 }
 
-::selection { background: var(--gold); color: var(--ink); }
+::selection { background: var(--gold); color: var(--on-gold); }
 
 /* ---------- Granulado global ---------- */
 .grain {
@@ -141,8 +170,7 @@ h4.display { font-size: var(--step-2); }
   font-family: var(--font-display);
   font-size: var(--step--1);
   letter-spacing: .34em;
-  color: var(--gold);
-  opacity: .65;
+  color: rgba(var(--gold-rgb), var(--a-numeral));
 }
 
 .lead { font-size: var(--step-1); color: var(--text-dim); line-height: 1.6; max-width: var(--readw); }
@@ -212,8 +240,8 @@ h4.display { font-size: var(--step-2); }
 .btn-ghost:hover { color: var(--ink); border-color: var(--gold); }
 
 .btn-ember { --btn-bg: var(--ember); --btn-fg: var(--cream); }
-.btn-ember::after { background: #d96238; }
-.btn-ember:hover { color: #fff; }
+.btn-ember::after { background: rgb(var(--ember-rgb)); }
+.btn-ember:hover { color: var(--on-accent); }
 
 .btn-sm { padding: .7em 1.4em; font-size: 11px; }
 .btn-block { width: 100%; }
@@ -252,9 +280,9 @@ h4.display { font-size: var(--step-2); }
   color: var(--gold);
   white-space: nowrap;
 }
-.chip-solid { background: var(--gold); color: var(--ink); border-color: transparent; }
-.chip-ember { color: var(--ember); border-color: rgba(196, 80, 43, .4); }
-.chip-green { color: var(--green); border-color: rgba(111, 191, 139, .35); }
+.chip-solid { background: var(--gold); color: var(--on-gold); border-color: transparent; }
+.chip-ember { color: var(--ember); border-color: rgba(var(--ember-rgb), .4); }
+.chip-green { color: var(--green); border-color: rgba(var(--green-rgb), .35); }
 .chip-dim   { color: var(--text-faint); border-color: var(--line-soft); }
 
 .dot-live {
@@ -307,15 +335,15 @@ h4.display { font-size: var(--step-2); }
   aspect-ratio: 4 / 3;
   width: 100%;
   background:
-    radial-gradient(120% 110% at 26% 4%, rgba(216, 178, 110, .20), transparent 58%),
-    radial-gradient(90% 80% at 88% 96%, rgba(196, 80, 43, .12), transparent 62%),
+    radial-gradient(120% 110% at 26% 4%, rgba(var(--gold-rgb), .20), transparent 58%),
+    radial-gradient(90% 80% at 88% 96%, rgba(var(--ember-rgb), .12), transparent 62%),
     linear-gradient(158deg, var(--carbon-2) 0%, var(--ink) 78%);
 }
 .ph-img::before {
   content: "";
   position: absolute;
   inset: 7%;
-  border: 1px solid rgba(216, 178, 110, .17);
+  border: 1px solid rgba(var(--gold-rgb), .17);
   border-radius: inherit;
   pointer-events: none;
 }
@@ -419,7 +447,7 @@ h4.display { font-size: var(--step-2); }
   transform: translate3d(-100px, -100px, 0);
   transition: width .35s var(--ease), height .35s var(--ease), background .35s var(--ease);
 }
-.cursor.is-big { width: 46px; height: 46px; background: rgba(216, 178, 110, .3); }
+.cursor.is-big { width: 46px; height: 46px; background: rgba(var(--gold-rgb), .3); }
 @media (hover: none), (pointer: coarse) { .cursor { display: none; } }
 
 /* ---------- Cortina de transición ---------- */
@@ -451,7 +479,7 @@ h4.display { font-size: var(--step-2); }
   max-width: 100%;
   min-width: 0;
   padding: .92em 1.05em;
-  background: rgba(244, 237, 225, .035);
+  background: rgba(var(--cream-rgb), .035);
   border: 1px solid var(--line-soft);
   border-radius: var(--r-sm);
   color: var(--cream);
@@ -469,9 +497,9 @@ h4.display { font-size: var(--step-2); }
 .input:focus, .select:focus, .textarea:focus {
   outline: none;
   border-color: var(--gold);
-  background: rgba(244, 237, 225, .06);
+  background: rgba(var(--cream-rgb), .06);
 }
-.input::placeholder, .textarea::placeholder { color: rgba(244, 237, 225, .5); }
+.input::placeholder, .textarea::placeholder { color: rgba(var(--cream-rgb), .5); }
 .input:disabled, .select:disabled { opacity: .5; cursor: not-allowed; }
 .field-hint { font-size: 12px; color: var(--text-faint); margin-top: .4rem; }
 .field-error { font-size: 12px; color: var(--ember); margin-top: .4rem; }
@@ -482,7 +510,7 @@ h4.display { font-size: var(--step-2); }
 .switch-track {
   width: 44px; height: 25px;
   border-radius: var(--r-pill);
-  background: rgba(244, 237, 225, .12);
+  background: rgba(var(--cream-rgb), .12);
   border: 1px solid var(--line-soft);
   position: relative;
   transition: background .3s var(--ease), border-color .3s var(--ease);
@@ -497,7 +525,7 @@ h4.display { font-size: var(--step-2); }
   background: var(--cream);
   transition: transform .3s var(--ease), background .3s var(--ease);
 }
-.switch input:checked + .switch-track { background: rgba(216, 178, 110, .3); border-color: var(--gold); }
+.switch input:checked + .switch-track { background: rgba(var(--gold-rgb), .3); border-color: var(--gold); }
 .switch input:checked + .switch-track::after { transform: translateX(19px); background: var(--gold); }
 .switch input:focus-visible + .switch-track { outline: 2px solid var(--gold); outline-offset: 2px; }
 
@@ -509,12 +537,12 @@ h4.display { font-size: var(--step-2); }
   padding: 1rem 1.2rem;
   border-radius: var(--r-md);
   border: 1px solid var(--line);
-  background: rgba(216, 178, 110, .07);
+  background: rgba(var(--gold-rgb), .07);
   font-size: var(--step--1);
   margin-bottom: 1.2rem;
 }
-.alert-error   { border-color: rgba(196, 80, 43, .45); background: rgba(196, 80, 43, .1); color: #F2C3B2; }
-.alert-success { border-color: rgba(111, 191, 139, .4); background: rgba(111, 191, 139, .1); color: #BFE6CD; }
+.alert-error   { border-color: rgba(var(--ember-rgb), .45); background: rgba(var(--ember-rgb), .1); color: rgb(var(--ember-rgb)); }
+.alert-success { border-color: rgba(var(--green-rgb), .4); background: rgba(var(--green-rgb), .1); color: rgb(var(--green-rgb)); }
 
 /* ---------- Accesibilidad ---------- */
 .visually-hidden {

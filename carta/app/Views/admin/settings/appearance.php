@@ -1,9 +1,42 @@
 <?php
-/** Apariencia del menú. */
+/** Apariencia del menú: temas de color, tipografía y marca. */
 use MenuGold\Core\Csrf;
+use MenuGold\Core\Theme;
 $view->extend('layouts/panel');
 $view->set('title', 'Apariencia');
 $r = $cfg;
+$temaActual = Theme::normaliza($r['theme']);
+
+/** Una tarjeta de tema: mini-maqueta del menú con los colores reales. */
+$muestra = function ($key, $t, $activo) {
+    ob_start(); ?>
+    <label class="tema<?= $activo ? ' is-on' : '' ?>" data-tema="<?= e($key) ?>"
+           data-primario="<?= e($t['gold']) ?>" data-acento="<?= e($t['ember']) ?>">
+      <input type="radio" name="theme" value="<?= e($key) ?>" <?= $activo ? 'checked' : '' ?>>
+      <span class="tema-lienzo" style="background:<?= e($t['ink']) ?>" aria-hidden="true">
+        <span class="tema-barra" style="background:<?= e($t['carbon']) ?>">
+          <i style="background:<?= e($t['gold']) ?>"></i>
+          <b style="background:<?= e($t['cream']) ?>"></b>
+        </span>
+        <span class="tema-ficha" style="background:<?= e($t['carbon']) ?>;border-color:<?= e($t['gold']) ?>33">
+          <i style="background:<?= e($t['carbon2']) ?>"></i>
+          <u style="background:<?= e($t['cream']) ?>"></u>
+          <u style="background:<?= e($t['cream']) ?>;width:44%;opacity:.45"></u>
+          <s style="background:<?= e($t['gold']) ?>"></s>
+        </span>
+        <span class="tema-boton" style="background:<?= e($t['ember']) ?>"></span>
+      </span>
+      <span class="tema-pie">
+        <span class="tema-nombre"><?= e($t['label']) ?></span>
+        <span class="tema-nota"><?= e($t['nota']) ?></span>
+      </span>
+      <span class="tema-check" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.4"
+             stroke-linecap="round" stroke-linejoin="round"><path d="m3.5 9.5 3.5 3.5 7.5-8"/></svg>
+      </span>
+    </label>
+    <?php return ob_get_clean();
+};
 ?>
 <?php $view->start('content') ?>
 <?php $view->partial('admin/settings/_tabs'); ?>
@@ -12,32 +45,43 @@ $r = $cfg;
   <?= Csrf::field() ?>
   <div class="grid grid-side">
     <div class="stack">
+
       <div class="card">
-        <div class="card-head"><h2>Tema</h2><p>Ocho combinaciones de lujo, o los colores exactos de tu marca.</p></div>
-        <div class="grid grid-2">
-          <?php foreach ($themes as $key => $t): ?>
-            <label class="opt" style="<?= $r['theme'] === $key ? 'border-color:var(--gold)' : '' ?>">
-              <input type="radio" name="theme" value="<?= e($key) ?>" <?= $r['theme'] === $key ? 'checked' : '' ?>>
-              <span class="opt-mark" aria-hidden="true"></span>
-              <span class="opt-name"><?= e($t['label']) ?></span>
-              <span style="display:flex;gap:4px">
-                <i style="width:16px;height:16px;border-radius:5px;background:<?= e($t['primary']) ?>"></i>
-                <i style="width:16px;height:16px;border-radius:5px;background:<?= e($t['accent']) ?>"></i>
-              </span>
-            </label>
-          <?php endforeach; ?>
-          <label class="opt">
-            <input type="radio" name="theme" value="custom" id="theme-custom" <?= $r['theme'] === 'custom' ? 'checked' : '' ?>>
-            <span class="opt-mark" aria-hidden="true"></span>
-            <span class="opt-name">Personalizado</span>
-          </label>
+        <div class="card-head">
+          <h2>Tema de color</h2>
+          <p>Diez paletas afinadas a mano: cuatro oscuras de noche y seis claras de día.
+             Se aplican al menú y a este panel al guardar.</p>
         </div>
 
-        <div class="grid grid-2 mt-2" data-depends-on="theme-custom" data-depends-value="1">
+        <h3 class="tema-grupo">Oscuros <span>Elegantes, para cenas y bares</span></h3>
+        <div class="temas">
+          <?php foreach ($oscuros as $key => $t) { echo $muestra($key, $t, $temaActual === $key); } ?>
+        </div>
+
+        <h3 class="tema-grupo">Claros <span>Luminosos, para desayunos y cafés</span></h3>
+        <div class="temas">
+          <?php foreach ($claros as $key => $t) { echo $muestra($key, $t, $temaActual === $key); } ?>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>Colores de tu marca</h3>
+          <p>Opcional. Sustituye el dorado y el acento del tema elegido, conservando el resto.</p>
+        </div>
+        <label class="opt">
+          <input type="checkbox" name="color_custom" value="1" id="color-custom"
+                 <?= $r['primary_color'] !== '' && $r['primary_color'] !== Theme::uno($temaActual)['gold'] ? 'checked' : '' ?>>
+          <span class="opt-mark" aria-hidden="true"></span>
+          <span class="opt-name">Usar mis propios colores</span>
+        </label>
+        <div class="grid grid-2 mt-2" data-depends-on="color-custom" data-depends-value="1">
           <div class="field"><label for="primary_color">Color principal</label>
-            <input class="input" id="primary_color" name="primary_color" type="color" value="<?= e($r['primary_color']) ?>" style="height:48px;padding:4px"></div>
+            <input class="input" id="primary_color" name="primary_color" type="color"
+                   value="<?= e($r['primary_color'] !== '' ? $r['primary_color'] : '#D8B26E') ?>" style="height:48px;padding:4px"></div>
           <div class="field"><label for="accent_color">Color de acento</label>
-            <input class="input" id="accent_color" name="accent_color" type="color" value="<?= e($r['accent_color']) ?>" style="height:48px;padding:4px"></div>
+            <input class="input" id="accent_color" name="accent_color" type="color"
+                   value="<?= e($r['accent_color'] !== '' ? $r['accent_color'] : '#C4502B') ?>" style="height:48px;padding:4px"></div>
         </div>
       </div>
 
@@ -81,4 +125,27 @@ $r = $cfg;
 
   <div class="row mt-2"><button class="btn" type="submit">Guardar apariencia</button></div>
 </form>
+
+<script>
+// Marca visualmente el tema elegido y, si no se usan colores propios,
+// mantiene los selectores de color alineados con el tema.
+(function () {
+  var form = document.currentScript.closest('form') || document.querySelector('form');
+  if (!form) { return; }
+  var propio = form.querySelector('#color-custom');
+  form.addEventListener('change', function (ev) {
+    var t = ev.target;
+    if (t.name !== 'theme') { return; }
+    var cards = form.querySelectorAll('.tema');
+    for (var i = 0; i < cards.length; i++) { cards[i].classList.remove('is-on'); }
+    var card = t.closest('.tema');
+    if (card) { card.classList.add('is-on'); }
+    if (propio && !propio.checked && card) {
+      var p = form.querySelector('#primary_color'), a = form.querySelector('#accent_color');
+      if (p) { p.value = card.getAttribute('data-primario'); }
+      if (a) { a.value = card.getAttribute('data-acento'); }
+    }
+  });
+})();
+</script>
 <?php $view->stop() ?>

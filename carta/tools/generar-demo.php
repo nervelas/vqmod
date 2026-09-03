@@ -123,6 +123,17 @@ function limpiarUploads()
     }
 }
 
+/** Rutas de imagen congeladas: ver tools/fotos/rutas.json. */
+function mg_rutas_fijas()
+{
+    static $rutas = null;
+    if ($rutas === null) {
+        $j = __DIR__ . '/fotos/rutas.json';
+        $rutas = is_file($j) ? (array)json_decode((string)file_get_contents($j), true) : array();
+    }
+    return $rutas;
+}
+
 function logo($letras, $tinta)
 {
     $ttf = __DIR__ . '/fuentes/Fraunces.ttf';
@@ -130,21 +141,34 @@ function logo($letras, $tinta)
     $tmp = sys_get_temp_dir() . '/mg-logo-' . bin2hex(random_bytes(4)) . '.png';
     imagepng($im, $tmp);
     imagedestroy($im);
-    $base = Image::storePath($tmp, 'marca', 960, 'logo.png');
+    // Ruta congelada igual que las fotos: al actualizar el paquete el logo
+    // se reescribe encima y la base de datos no necesita ni un UPDATE.
+    $rutas = mg_rutas_fijas();
+    $base = Image::storePath($tmp, 'marca', 960, 'logo.png',
+        isset($rutas['logo']) ? $rutas['logo'] : null);
     @unlink($tmp);
     Image::generatePwaIcons($base, '#0C0B09');
     return $base;
 }
 
-/** Mete una fotografía de tools/fotos/ en la canalización de imágenes. */
+/**
+ * Mete una fotografía de tools/fotos/ en la canalización de imágenes.
+ *
+ * tools/fotos/rutas.json fija la ruta de cada imagen. Gracias a eso, una
+ * actualización del paquete reemplaza las fotos EN SU SITIO: quien ya tiene
+ * MenúGold instalado sobrescribe la raíz y ve las fotos nuevas sin tocar la
+ * base de datos ni volver a instalar.
+ */
 function foto($nombre, $carpeta = 'platillos', $ancho = 1600)
 {
+    $rutas = mg_rutas_fijas();
     $ruta = __DIR__ . '/fotos/' . $nombre . '.jpg';
     if (!is_file($ruta)) {
         fwrite(STDERR, "  ! falta tools/fotos/$nombre.jpg\n");
         return '';
     }
-    return Image::storePath($ruta, $carpeta, $ancho, $nombre . '.jpg');
+    $fija = isset($rutas[$nombre]) ? $rutas[$nombre] : null;
+    return Image::storePath($ruta, $carpeta, $ancho, $nombre . '.jpg', $fija);
 }
 
 function q($v)

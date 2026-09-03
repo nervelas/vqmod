@@ -1,6 +1,7 @@
 <?php
 /** Layout del panel. @var \MenuGold\Core\View $view */
 use MenuGold\Core\Auth;
+use MenuGold\Core\Theme;
 use MenuGold\Core\Url;
 
 $active = isset($nav_active) ? $nav_active : '';
@@ -32,6 +33,12 @@ $icon = function ($name) {
          . (isset($paths[$name]) ? $paths[$name] : '') . '</svg>';
 };
 $role = Auth::role();
+// El panel usa el mismo tema que la carta: quien lo administra ve su marca.
+$temaClave = \MenuGold\Models\Settings::get('theme', Theme::PREDETERMINADO);
+$tema = Theme::uno($temaClave);
+$temaCss = Theme::css($temaClave,
+    \MenuGold\Models\Settings::get('primary_color', ''),
+    \MenuGold\Models\Settings::get('accent_color', ''));
 ?><!DOCTYPE html>
 <html lang="es">
 <head>
@@ -40,13 +47,14 @@ $role = Auth::role();
 <script>document.documentElement.classList.add('js');</script>
 <title><?= e($view->section('title', 'Panel')) ?> · MenúGold</title>
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#0C0B09">
-<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="<?= e($tema['ink']) ?>">
+<meta name="color-scheme" content="<?= $tema['modo'] === 'claro' ? 'light' : 'dark' ?>">
 <link rel="icon" href="<?= e(mg_url('/assets/icons/icon-192.png')) ?>" sizes="192x192">
 <link rel="icon" href="<?= e(mg_url('/favicon.ico')) ?>" sizes="32x32">
 <link rel="stylesheet" href="<?= e(mg_asset('assets/css/fonts.css')) ?>">
 <link rel="stylesheet" href="<?= e(mg_asset('assets/css/core.css')) ?>">
 <link rel="stylesheet" href="<?= e(mg_asset('assets/css/panel.css')) ?>">
+<style>:root{<?= $temaCss ?>}</style>
 <?= $view->section('head') ?>
 </head>
 <body class="panel-body" data-cursor="off" data-curtain="off">

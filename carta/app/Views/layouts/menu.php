@@ -1,6 +1,7 @@
 <?php
 /** Layout del menú del comensal. @var \MenuGold\Core\View $view */
 use MenuGold\Core\Lang;
+use MenuGold\Core\Theme;
 use MenuGold\Core\Url;
 use MenuGold\Controllers\Admin\SettingsController;
 
@@ -12,6 +13,9 @@ $title = $view->section('title', $r['name'] . ' · Menú');
 $desc  = $view->section('description', $r['tagline'] !== '' ? $r['tagline'] : ('Menú digital de ' . $r['name'] . '. Pide desde tu mesa escaneando el QR.'));
 $og    = $r['cover'] !== '' ? mg_img_src($r['cover'], 1600) : '';
 $canonical = $view->section('canonical', Url::abs('/'));
+$tema = Theme::uno(isset($r['theme']) ? $r['theme'] : Theme::PREDETERMINADO);
+$temaCss = Theme::css(isset($r['theme']) ? $r['theme'] : Theme::PREDETERMINADO,
+                      $r['primary_color'], $r['accent_color']);
 ?><!DOCTYPE html>
 <html lang="<?= e(Lang::locale()) ?>">
 <head>
@@ -20,8 +24,8 @@ $canonical = $view->section('canonical', Url::abs('/'));
 <script>document.documentElement.classList.add('js');</script>
 <title><?= e($title) ?></title>
 <meta name="description" content="<?= e($desc) ?>">
-<meta name="theme-color" content="<?= e($r['primary_color']) ?>">
-<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="<?= e($tema['ink']) ?>">
+<meta name="color-scheme" content="<?= $tema['modo'] === 'claro' ? 'light' : 'dark' ?>">
 <link rel="canonical" href="<?= e($canonical) ?>">
 <meta property="og:type" content="restaurant.menu">
 <meta property="og:title" content="<?= e($title) ?>">
@@ -61,9 +65,8 @@ if ($r['cover'] !== '' && \MenuGold\Core\Image::exists($r['cover'])):
 <link rel="stylesheet" href="<?= e(mg_asset('assets/css/menu.css')) ?>">
 <style>
   :root{
-    --gold: <?= e($r['primary_color']) ?>;
-    --ember: <?= e($r['accent_color']) ?>;
-    --line: <?= e($r['primary_color']) ?>33;
+    <?= $temaCss ?>
+
     --font-display: "<?= e($combo['display']) ?>", Georgia, serif;
     --font-ui: "<?= e($combo['ui']) ?>", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }

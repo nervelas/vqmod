@@ -13,7 +13,11 @@ define('MG_APP', MG_ROOT . '/app');
 define('MG_STORAGE', MG_ROOT . '/storage');
 define('MG_VERSION', '1.0.0');
 
-if (is_file(MG_ROOT . '/install/install.lock') && !isset($_GET['listo'])) {
+// Ya instalado: se sale de aquí. Así, si más adelante se sobrescribe la raíz
+// con una versión nueva y vuelve a aparecer esta carpeta, nadie puede reinstalar
+// encima ni borrar la configuración por accidente.
+if (!isset($_GET['listo'])
+    && (is_file(MG_ROOT . '/config/config.php') || is_file(MG_ROOT . '/install/install.lock'))) {
     header('Location: ../panel/entrar');
     exit;
 }

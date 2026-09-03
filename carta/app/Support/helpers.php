@@ -45,7 +45,12 @@ if (!function_exists('mg_img')) {
             $mark = isset($o['mark']) && $o['mark'] !== ''
                 ? $o['mark']
                 : \MenuGold\Core\Str::initials($o['alt'] !== '' ? $o['alt'] : 'Menú');
-            return '<span class="ph-img ' . e($o['class']) . '" role="img" aria-label="' . e($o['alt']) . '"'
+            // Sin texto alternativo es decorativo: anunciarlo como imagen vacía
+            // solo estorba a quien navega con lector de pantalla.
+            $rol = $o['alt'] !== ''
+                ? ' role="img" aria-label="' . e($o['alt']) . '"'
+                : ' aria-hidden="true"';
+            return '<span class="ph-img ' . e($o['class']) . '"' . $rol
                  . ($o['ratio'] !== '' ? ' style="aspect-ratio:' . e($o['ratio']) . '"' : '') . '>'
                  . '<span class="ph-mark" aria-hidden="true">' . e($mark) . '</span></span>';
         }

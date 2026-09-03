@@ -30,7 +30,40 @@ logotipo se aplican solos; los datos de contacto del ejemplo se dejan vacíos.
 
 Si algo falla, el detalle queda en `storage/logs/`.
 
-## 3. Tarea programada (cron)
+## 3. Actualizar sin reinstalar
+
+Si ya tienes MenúGold funcionando y solo quieres la versión nueva (diseño,
+temas, fotografía), **no vuelvas a instalar**: se sobrescribe la raíz y ya.
+
+1. Sube `menugold.zip` a `public_html` y elige **Extract**, aceptando
+   *sobrescribir* cuando lo pregunte.
+2. Listo. Entra a tu menú y recarga.
+
+Lo que **no** toca la actualización, porque no viaja en el ZIP:
+
+- `config/config.php` — tu base de datos, tus llaves y tu token del cron.
+- La base de datos entera: tus platillos, precios, pedidos, mesas y usuarios.
+
+Las fotografías del menú de ejemplo se sobrescriben **en su misma ruta**, así que
+las nuevas aparecen sin ejecutar ni un `UPDATE`. Si ves las fotos viejas es la
+caché del navegador o de Cloudflare: recarga con `Ctrl+F5` o purga la caché.
+
+Si cambiaste alguna foto por la tuya desde el panel, esa se queda como está: la
+actualización solo pisa las del ejemplo.
+
+## 4. Temas de color
+
+*Ajustes → Apariencia*. Diez paletas: **cuatro oscuras** (Brasa, Medianoche,
+Esmeralda, Borgoña) y **seis claras** (Marfil, Lino, Olivo, Porcelana, Arena,
+Rosa). Cada una se elige viendo una maqueta en miniatura del menú con sus
+colores reales, y se aplica al mismo tiempo al menú del comensal y al panel.
+
+Debajo puedes marcar **usar mis propios colores** y poner el dorado y el acento
+exactos de tu marca sobre cualquiera de las diez paletas.
+
+Los diez temas están medidos con `axe`: contraste AA en todos.
+
+## 5. Tarea programada (cron)
 
 cPanel → **Cron Jobs** → cada 10 minutos. El instalador te muestra la línea
 exacta con tu token; tiene esta forma:
@@ -42,7 +75,7 @@ exacta con tu token; tiene esta forma:
 Cierra llamadas al mesero olvidadas, libera mesas, purga la bitácora y crea un
 **respaldo semanal automático** (descargable desde *Respaldos*).
 
-## 4. Códigos QR de las mesas
+## 6. Códigos QR de las mesas
 
 Panel → **Mesas**. Crea las mesas de una vez con *Generar varias* y descarga el
 PDF en el formato que prefieras: **tarjeta de mesa** (se dobla y se para sola),
@@ -53,17 +86,17 @@ mano.
 El comensal escanea, se le abre el menú **con su mesa ya reconocida**, pide, y el
 pedido entra a la pantalla de cocina en un segundo, sin recargar nada.
 
-## 5. Fotografía
+## 7. Fotografía
 
 El menú de ejemplo viene **con fotografía en los 35 platillos, la portada y las
-seis categorías**: imágenes propias incluidas en el paquete, no se descarga nada
-de internet.
+seis categorías**: 53 imágenes hechas para este paquete, renderizadas a 1680 px.
+No se descarga nada de internet ni hay licencias de terceros que pagar.
 
 Para tus platillos, sube tus fotos desde cada platillo en el panel. Se recortan,
 se comprimen a WebP con respaldo JPG en tres tamaños (480/960/1600), se les
 quitan los metadatos y se genera el difuminado de carga.
 
-## 6. Modos de servicio
+## 8. Modos de servicio
 
 En *Ajustes* eliges cómo trabaja el menú:
 
@@ -73,7 +106,7 @@ En *Ajustes* eliges cómo trabaja el menú:
 - **Solo catálogo** · el menú se ve pero no se toman pedidos.
 - **WhatsApp** · el pedido llega armado a tu WhatsApp.
 
-## 7. Credenciales del ejemplo
+## 9. Credenciales del ejemplo
 
 Tu cuenta de dueño es la que creaste en el instalador. Además, el menú de
 ejemplo trae este personal (bórralo o cámbiale la contraseña):
@@ -90,7 +123,7 @@ tablet del salón.
 
 > **Cámbialas antes de abrir al público** en *Usuarios*.
 
-## 8. Rutas útiles
+## 10. Rutas útiles
 
 | Qué | Dónde |
 |---|---|

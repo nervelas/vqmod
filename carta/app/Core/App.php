@@ -44,10 +44,21 @@ final class App
         ini_set('log_errors', '1');
         error_reporting(E_ALL);
 
-        set_error_handler(function ($severity, $message, $file, $line) {
+        // Avisos que NO deben tumbar el menú de un restaurante.
+        //
+        // En desarrollo un aviso salta como excepción, que es lo que ayuda a
+        // corregirlo. En producción se registra y la petición sigue: cada
+        // hosting tiene su versión de PHP y sus manías, y un aviso de los que
+        // solo aparecen en una de ellas no puede dejar sin carta a un local
+        // abierto. Los errores de verdad sí cortan, siempre.
+        $blandos = E_DEPRECATED | E_USER_DEPRECATED | E_NOTICE | E_USER_NOTICE
+                 | E_WARNING | E_USER_WARNING;
+        set_error_handler(function ($severity, $message, $file, $line) use ($debug, $blandos) {
             if (!(error_reporting() & $severity)) { return false; }
-            // Los avisos de obsolescencia se registran, pero no cortan la petición:
-            // una librería de terceros no debe tumbar el menú de un restaurante.
+            if (($severity & $blandos) && !$debug) {
+                Logger::warn('Aviso [' . $severity . ']: ' . $message . ' @ ' . $file . ':' . $line);
+                return true;
+            }
             if ($severity === E_DEPRECATED || $severity === E_USER_DEPRECATED) {
                 Logger::warn('Deprecated: ' . $message . ' @ ' . $file . ':' . $line);
                 return true;
@@ -85,9 +96,16 @@ final class App
                 'error' => $debug ? $e->getMessage() : 'Ocurrió un error inesperado.',
             ), 500);
         }
+        // Referencia corta y ruta del registro: sin esto, dar soporte a un
+        // 500 en el hosting de un cliente es adivinar a ciegas.
+        $ref = strtoupper(substr(bin2hex(random_bytes(3)), 0, 6));
+        Logger::error('Referencia ' . $ref . ' — ' . get_class($e) . ': ' . $e->getMessage()
+            . ' @ ' . $e->getFile() . ':' . $e->getLine());
         try {
             return Response::html(View::render('errors/500', array(
                 'detail' => $debug ? ($e->getMessage() . "\n" . $e->getFile() . ':' . $e->getLine() . "\n" . $e->getTraceAsString()) : '',
+                'ref'    => $ref,
+                'log'    => 'storage/logs/' . date('Y-m') . '.log',
             )), 500);
         } catch (\Throwable $inner) {
             return Response::html('<!doctype html><meta charset="utf-8"><body style="background:#0C0B09;color:#F4EDE1;font-family:system-ui;padding:40px">'

@@ -28,12 +28,21 @@ tar -cf - \
 # Carpetas de trabajo: van vacías pero tienen que existir y ser escribibles.
 for d in storage/logs storage/cache storage/backups; do
   mkdir -p "$TMP/$d"
-  printf 'Deny from all\n' > "$TMP/$d/.htaccess"
+  cat > "$TMP/$d/.htaccess" <<'HT'
+# MenúGold · carpeta privada
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+</IfModule>
+HT
   : > "$TMP/$d/.gitkeep"
 done
 
 cd "$TMP"
-zip -qr9 "$DEST" . -x '.*'
+zip -qr9 "$DEST" . -x '.git/*' '.DS_Store' '*/.DS_Store'
 cd /
 rm -rf "$TMP"
 
@@ -46,4 +55,9 @@ fi
 if unzip -l "$DEST" | grep -q 'install.lock'; then
   echo "ERROR: install.lock se coló en el paquete" >&2; exit 1
 fi
-echo "sin config.php ni install.lock: correcto"
+for imprescindible in .htaccess index.php app/Core/Theme.php config/routes.php vendor/.htaccess; do
+  if ! unzip -l "$DEST" | grep -q " $imprescindible\$"; then
+    echo "ERROR: falta $imprescindible en el paquete" >&2; exit 1
+  fi
+done
+echo "sin config.php ni install.lock, y con todo lo imprescindible: correcto"

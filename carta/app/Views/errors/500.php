@@ -18,6 +18,13 @@
     <h1 class="display" style="font-size:var(--step-3);margin:1rem 0">Se nos quemó algo en la cocina</h1>
     <p class="lead" style="margin-inline:auto"><?= e(isset($message) ? $message : 'Ocurrió un error inesperado. Ya quedó registrado en el servidor.') ?></p>
 
+    <?php if (!empty($ref)): ?>
+      <p style="margin-top:1.4rem;font-size:var(--step--1);color:var(--text-faint)">
+        Referencia <strong style="color:var(--gold);letter-spacing:.14em"><?= e($ref) ?></strong>.
+        El detalle está en <code><?= e($log) ?></code> dentro de tu hosting.
+      </p>
+    <?php endif; ?>
+
     <?php if (!empty($detail)): ?>
       <pre style="text-align:left;background:var(--carbon);border:1px solid var(--line-soft);border-radius:12px;padding:1rem;margin-top:1.6rem;overflow:auto;font-size:12px;color:var(--text-dim)"><?= e($detail) ?></pre>
     <?php endif; ?>

@@ -1,6 +1,15 @@
 -- MenúGold · esquema de un solo restaurante.
 -- Todas las tablas llevan el prefijo mg_ para no chocar con nada que ya
 -- exista en la misma base de datos.
+-- Nota sobre claves foráneas
+--
+-- Aquí NO se les pone nombre a propósito. En InnoDB el nombre de una clave
+-- foránea es único en TODA la base de datos, no por tabla: si otra tabla
+-- cualquiera de esa base ya usa ese nombre, la creación falla con
+-- "errno: 121 Duplicate key on write or update" y la instalación se queda a
+-- medias. Como MenúGold está pensado para convivir en una base que ya usas,
+-- se deja que InnoDB los nombre solo (mg_productos_ibfk_1, …), que se derivan
+-- del nombre de la tabla y por tanto nunca chocan.
 
 SET NAMES utf8mb4;
 
@@ -70,7 +79,7 @@ CREATE TABLE IF NOT EXISTS `mg_products` (
   PRIMARY KEY (`id`),
   KEY `idx_prod_cat` (`category_id`,`sort`),
   KEY `idx_prod_feat` (`is_featured`),
-  CONSTRAINT `fk_prod_cat` FOREIGN KEY (`category_id`) REFERENCES `mg_categories`(`id`) ON DELETE CASCADE
+  FOREIGN KEY (`category_id`) REFERENCES `mg_categories`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `mg_product_images` (
@@ -80,7 +89,7 @@ CREATE TABLE IF NOT EXISTS `mg_product_images` (
   `sort`       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `idx_pimg` (`product_id`,`sort`),
-  CONSTRAINT `fk_pimg_prod` FOREIGN KEY (`product_id`) REFERENCES `mg_products`(`id`) ON DELETE CASCADE
+  FOREIGN KEY (`product_id`) REFERENCES `mg_products`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `mg_variants` (
@@ -92,7 +101,7 @@ CREATE TABLE IF NOT EXISTS `mg_variants` (
   `sort`        SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `idx_var_prod` (`product_id`,`sort`),
-  CONSTRAINT `fk_var_prod` FOREIGN KEY (`product_id`) REFERENCES `mg_products`(`id`) ON DELETE CASCADE
+  FOREIGN KEY (`product_id`) REFERENCES `mg_products`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `mg_modifier_groups` (
@@ -118,7 +127,7 @@ CREATE TABLE IF NOT EXISTS `mg_modifier_options` (
   `sort`        SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `idx_opt_group` (`group_id`,`sort`),
-  CONSTRAINT `fk_opt_group` FOREIGN KEY (`group_id`) REFERENCES `mg_modifier_groups`(`id`) ON DELETE CASCADE
+  FOREIGN KEY (`group_id`) REFERENCES `mg_modifier_groups`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `mg_product_modifier_groups` (
@@ -127,8 +136,8 @@ CREATE TABLE IF NOT EXISTS `mg_product_modifier_groups` (
   `sort`       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (`product_id`,`group_id`),
   KEY `idx_pmg_group` (`group_id`),
-  CONSTRAINT `fk_pmg_prod`  FOREIGN KEY (`product_id`) REFERENCES `mg_products`(`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_pmg_group` FOREIGN KEY (`group_id`)   REFERENCES `mg_modifier_groups`(`id`) ON DELETE CASCADE
+  FOREIGN KEY (`product_id`) REFERENCES `mg_products`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`group_id`)   REFERENCES `mg_modifier_groups`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `mg_combos` (
@@ -148,8 +157,8 @@ CREATE TABLE IF NOT EXISTS `mg_combo_items` (
   `qty`        TINYINT UNSIGNED NOT NULL DEFAULT 1,
   PRIMARY KEY (`combo_id`,`product_id`),
   KEY `idx_ci_prod` (`product_id`),
-  CONSTRAINT `fk_ci_combo` FOREIGN KEY (`combo_id`)   REFERENCES `mg_combos`(`id`)   ON DELETE CASCADE,
-  CONSTRAINT `fk_ci_prod`  FOREIGN KEY (`product_id`) REFERENCES `mg_products`(`id`) ON DELETE CASCADE
+  FOREIGN KEY (`combo_id`)   REFERENCES `mg_combos`(`id`)   ON DELETE CASCADE,
+  FOREIGN KEY (`product_id`) REFERENCES `mg_products`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `mg_promotions` (
@@ -254,8 +263,8 @@ CREATE TABLE IF NOT EXISTS `mg_orders` (
   KEY `idx_order_status` (`status`,`placed_at`),
   KEY `idx_order_code` (`code`),
   KEY `idx_order_table` (`table_id`),
-  CONSTRAINT `fk_order_table` FOREIGN KEY (`table_id`) REFERENCES `mg_tables`(`id`) ON DELETE SET NULL,
-  CONSTRAINT `fk_order_cust`  FOREIGN KEY (`customer_id`) REFERENCES `mg_customers`(`id`) ON DELETE SET NULL
+  FOREIGN KEY (`table_id`) REFERENCES `mg_tables`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`customer_id`) REFERENCES `mg_customers`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `mg_order_items` (
@@ -271,8 +280,8 @@ CREATE TABLE IF NOT EXISTS `mg_order_items` (
   `status`       ENUM('pending','done') NOT NULL DEFAULT 'pending',
   PRIMARY KEY (`id`),
   KEY `idx_item_order` (`order_id`),
-  CONSTRAINT `fk_item_order` FOREIGN KEY (`order_id`) REFERENCES `mg_orders`(`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_item_prod`  FOREIGN KEY (`product_id`) REFERENCES `mg_products`(`id`) ON DELETE SET NULL
+  FOREIGN KEY (`order_id`) REFERENCES `mg_orders`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`product_id`) REFERENCES `mg_products`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `mg_order_item_modifiers` (
@@ -282,7 +291,7 @@ CREATE TABLE IF NOT EXISTS `mg_order_item_modifiers` (
   `price_delta`   DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   PRIMARY KEY (`id`),
   KEY `idx_oim_item` (`order_item_id`),
-  CONSTRAINT `fk_oim_item` FOREIGN KEY (`order_item_id`) REFERENCES `mg_order_items`(`id`) ON DELETE CASCADE
+  FOREIGN KEY (`order_item_id`) REFERENCES `mg_order_items`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `mg_service_calls` (
@@ -295,7 +304,7 @@ CREATE TABLE IF NOT EXISTS `mg_service_calls` (
   `resolved_at` DATETIME NULL,
   PRIMARY KEY (`id`),
   KEY `idx_call_status` (`status`,`created_at`),
-  CONSTRAINT `fk_call_table` FOREIGN KEY (`table_id`) REFERENCES `mg_tables`(`id`) ON DELETE CASCADE
+  FOREIGN KEY (`table_id`) REFERENCES `mg_tables`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `mg_audit_log` (

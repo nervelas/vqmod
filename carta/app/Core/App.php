@@ -90,6 +90,45 @@ final class App
     {
         $debug = (bool)Config::get('app.debug', false);
         $isJson = $this->request && $this->request->wantsJson();
+
+        // Base de datos a medio instalar: no es un error del programa, es que
+        // faltan las tablas. Un 500 aquí deja al dueño sin ninguna pista, así
+        // que se le dice qué pasa y por dónde se arregla.
+        // Sin conexión a la base: casi siempre son las credenciales de
+        // config/config.php tras mover el sitio de hosting. También tiene
+        // arreglo desde el instalador, así que se dice.
+        if ($e instanceof \RuntimeException && strpos($e->getMessage(), 'conectar a la base de datos') !== false) {
+            if ($isJson) {
+                return Response::json(array('ok' => false, 'error' => 'Sin conexión a la base de datos.'), 503);
+            }
+            try {
+                return Response::html(View::render('errors/sin-base', array()), 503);
+            } catch (\Throwable $inner) {
+                return Response::html('<!doctype html><meta charset="utf-8"><body style="font-family:system-ui;padding:40px">'
+                    . '<h1>Sin conexión a la base de datos</h1><p>Revisa los datos en <code>config/config.php</code>, '
+                    . 'o vuelve a escribirlos en <a href="' . Security::e(Url::to('/install/')) . '">/install/</a>.</p>', 503);
+            }
+        }
+
+        if (Schema::esFaltaDeTabla($e)) {
+            $faltan = Schema::faltantes();
+            Logger::error('Base de datos incompleta. Faltan: '
+                . (is_array($faltan) ? implode(', ', $faltan) : 'no se pudo consultar'));
+            if ($isJson) {
+                return Response::json(array('ok' => false, 'error' => 'La base de datos está incompleta.'), 503);
+            }
+            try {
+                return Response::html(View::render('errors/incompleta', array(
+                    'faltan' => is_array($faltan) ? $faltan : array(),
+                )), 503);
+            } catch (\Throwable $inner) {
+                return Response::html('<!doctype html><meta charset="utf-8"><body style="font-family:system-ui;padding:40px">'
+                    . '<h1>Falta preparar la base de datos</h1>'
+                    . '<p>Abre <a href="' . Security::e(Url::to('/install/')) . '">/install/</a> para crear las tablas que faltan. '
+                    . 'No se borra nada de lo que ya tengas.</p>', 503);
+            }
+        }
+
         if ($isJson) {
             return Response::json(array(
                 'ok'    => false,

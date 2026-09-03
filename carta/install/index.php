@@ -13,14 +13,72 @@ define('MG_APP', MG_ROOT . '/app');
 define('MG_STORAGE', MG_ROOT . '/storage');
 define('MG_VERSION', '1.0.0');
 
-// Ya instalado: se sale de aquí. Así, si más adelante se sobrescribe la raíz
-// con una versión nueva y vuelve a aparecer esta carpeta, nadie puede reinstalar
-// encima ni borrar la configuración por accidente.
-if (!isset($_GET['listo'])
-    && (is_file(MG_ROOT . '/config/config.php') || is_file(MG_ROOT . '/install/install.lock'))) {
+require MG_APP . '/Core/Autoloader.php';
+Autoloader::register();
+Autoloader::addNamespace('MenuGold\\Core', MG_APP . '/Core');
+
+/**
+ * ¿Hay una instalación COMPLETA? Config + tablas.
+ *
+ * Antes bastaba con que existiera config/config.php, y eso era una trampa: si
+ * el archivo estaba pero las tablas no (una base distinta, un restore a
+ * medias), la aplicación reventaba con un 500 y desde aquí se redirigía al
+ * panel, así que no quedaba ninguna forma de arreglarlo. Ahora, si falta algo,
+ * esta pantalla sigue accesible en modo reparación.
+ *
+ * @return array{config:bool, conecta:bool, faltan:array|null, completa:bool}
+ */
+function mg_estado_instalacion()
+{
+    $cfgFile = MG_ROOT . '/config/config.php';
+    $estado = array('config' => is_file($cfgFile), 'conecta' => false, 'faltan' => null, 'completa' => false);
+    if (!$estado['config']) { return $estado; }
+    $cfg = @include $cfgFile;
+    if (!is_array($cfg) || empty($cfg['db']['name'])) { return $estado; }
+    try {
+        $db = $cfg['db'];
+        $dsn = 'mysql:host=' . $db['host'] . ';port=' . (int)$db['port'] . ';dbname=' . $db['name'] . ';charset=utf8mb4';
+        $pdo = new PDO($dsn, $db['user'], $db['pass'], array(
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_TIMEOUT => 5,
+        ));
+    } catch (Throwable $e) {
+        return $estado;
+    }
+    $estado['conecta'] = true;
+    $estado['faltan'] = MenuGold\Core\Schema::faltantes($pdo);
+    $estado['completa'] = is_array($estado['faltan']) && count($estado['faltan']) === 0;
+    $estado['cfg'] = $cfg;
+    $estado['pdo'] = $pdo;
+    return $estado;
+}
+
+$estadoPrevio = mg_estado_instalacion();
+
+/** Tablas completas Y una cuenta de dueño con la que entrar. */
+function mg_es_usable(array $estado)
+{
+    if (empty($estado['completa']) || empty($estado['pdo'])) { return false; }
+    try {
+        return (int)$estado['pdo']
+            ->query("SELECT COUNT(*) FROM mg_users WHERE role = 'owner' AND is_active = 1")
+            ->fetchColumn() > 0;
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
+// Solo se cierra la puerta cuando la instalación está entera y se puede entrar
+// a ella. Y solo en GET: cortar un POST aquí abortaría la propia instalación a
+// mitad, que es justo el fallo que tenía esto.
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && !isset($_GET['listo']) && mg_es_usable($estadoPrevio)) {
     header('Location: ../panel/entrar');
     exit;
 }
+
+// Modo reparación: la configuración sirve y la base conecta, solo faltan tablas.
+// Si las tablas están pero no hay dueño, se sigue al alta normal de abajo.
+$reparar = !isset($_GET['listo']) && $estadoPrevio['config']
+        && $estadoPrevio['conecta'] && !$estadoPrevio['completa'];
 
 session_name('mginstall');
 session_start();
@@ -52,8 +110,36 @@ $checks = mg_checks();
 $blocking = false;
 foreach ($checks as $c) { if ($c[3] && !$c[1]) { $blocking = true; } }
 
+/* ---------------- Reparar: solo crear las tablas que faltan ---------------- */
+$reparado = false;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$done
+    && ($_POST['accion'] ?? '') === 'reparar' && $reparar) {
+    if (!hash_equals($_SESSION['csrf'], (string)($_POST['_token'] ?? ''))) {
+        $errors[] = 'La sesión expiró. Recarga la página e inténtalo otra vez.';
+    } else {
+        try {
+            // schema.sql usa CREATE TABLE IF NOT EXISTS: crear lo que falta
+            // no toca ni una fila de lo que ya hubiera en esa base.
+            mg_run_sql($estadoPrevio['pdo'], MG_ROOT . '/database/schema.sql');
+            $estadoPrevio = mg_estado_instalacion();
+            $reparar = !$estadoPrevio['completa'];
+            if ($estadoPrevio['completa']) {
+                if (mg_es_usable($estadoPrevio)) {
+                    // Todo en su sitio: de vuelta al panel, sin tocar nada más.
+                    header('Location: ../panel/entrar');
+                    exit;
+                }
+                // Tablas listas pero sin dueño: sigue el alta normal de abajo.
+                $reparado = true;
+            }
+        } catch (Throwable $e) {
+            $errors[] = 'No se pudieron crear las tablas: ' . $e->getMessage();
+        }
+    }
+}
+
 /* ---------------- Guardar ---------------- */
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$done) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$done && ($_POST['accion'] ?? '') !== 'reparar') {
     if (!hash_equals($_SESSION['csrf'], (string)($_POST['_token'] ?? ''))) {
         $errors[] = 'La sesión expiró. Recarga la página e inténtalo otra vez.';
     } elseif ($blocking) {
@@ -270,7 +356,21 @@ function mg_export($value, $indent = 1)
 }
 
 $token = $_SESSION['csrf'];
-$post = function ($k, $d = '') { return htmlspecialchars((string)($_POST[$k] ?? $d), ENT_QUOTES); };
+// Si ya hay un config/config.php que conecta, los datos de la base se
+// rellenan solos: nadie tiene que ir a buscar su contraseña otra vez para
+// terminar de arreglar algo que ya estaba configurado.
+$dbPrevia = isset($estadoPrevio['cfg']['db']) && $estadoPrevio['conecta']
+    ? $estadoPrevio['cfg']['db'] : array();
+$post = function ($k, $d = '') use ($dbPrevia) {
+    if (!isset($_POST[$k]) && $dbPrevia) {
+        $mapa = array('db_host' => 'host', 'db_port' => 'port', 'db_name' => 'name',
+                      'db_user' => 'user', 'db_pass' => 'pass');
+        if (isset($mapa[$k], $dbPrevia[$mapa[$k]])) {
+            $d = (string)$dbPrevia[$mapa[$k]];
+        }
+    }
+    return htmlspecialchars((string)($_POST[$k] ?? $d), ENT_QUOTES);
+};
 $httpsUrl = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'TUDOMINIO');
 ?><!DOCTYPE html>
 <html lang="es">
@@ -291,7 +391,40 @@ $httpsUrl = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https
     <p class="eyebrow" style="margin-bottom:1.2rem">Instalación</p>
     <h1 class="display" style="font-size:var(--step-3);margin-bottom:.6rem">MenúGold</h1>
 
-    <?php if ($done): ?>
+    <?php if ($reparar): ?>
+      <p class="muted" style="margin-bottom:2rem">Tu configuración ya está. Solo faltan las tablas.</p>
+      <div class="card">
+        <?php foreach ($errors as $e): ?>
+          <div class="alert alert-error"><span><?= htmlspecialchars($e, ENT_QUOTES) ?></span></div>
+        <?php endforeach; ?>
+
+        <h2 style="font-family:var(--font-display);font-weight:400;margin:0 0 .6rem">Preparar la base de datos</h2>
+        <p class="muted">
+          MenúGold conecta bien con tu base de datos <b><?= htmlspecialchars($estadoPrevio['cfg']['db']['name'], ENT_QUOTES) ?></b>,
+          pero le faltan <b><?= count($estadoPrevio['faltan']) ?></b> de sus tablas.
+          Suele pasar al subir esta versión a un dominio donde antes había otra.
+        </p>
+        <p class="muted" style="font-size:var(--step--1);margin-top:.8rem">
+          Al pulsar el botón solo se crean las tablas que empiezan por <code>mg_</code>.
+          <b>No se borra ni se cambia nada</b> de lo que ya tengas ahí, ni tu configuración,
+          ni tus usuarios, ni tus pedidos.
+        </p>
+
+        <form method="post" style="margin-top:1.6rem">
+          <input type="hidden" name="_token" value="<?= htmlspecialchars($_SESSION['csrf'], ENT_QUOTES) ?>">
+          <input type="hidden" name="accion" value="reparar">
+          <button class="btn" type="submit">Crear las tablas que faltan</button>
+        </form>
+
+        <details style="margin-top:1.6rem">
+          <summary style="cursor:pointer;color:var(--text-faint);font-size:var(--step--1)">Ver qué tablas faltan</summary>
+          <p style="font-size:12px;color:var(--text-faint);line-height:1.8;margin-top:.6rem;word-break:break-all">
+            <?= htmlspecialchars(implode(' · ', $estadoPrevio['faltan']), ENT_QUOTES) ?>
+          </p>
+        </details>
+      </div>
+
+    <?php elseif ($done): ?>
       <p class="muted" style="margin-bottom:2rem">Listo. Tu menú ya está en línea.</p>
       <div class="card">
         <div class="alert alert-success"><span>MenúGold quedó instalado.</span></div>
@@ -333,7 +466,13 @@ $httpsUrl = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https
         </ul>
       </div>
 
+      <?php if ($reparado): ?>
+        <div class="alert alert-success" style="margin-bottom:1.4rem">
+          <span>Las tablas quedaron creadas. Solo falta tu cuenta de dueño.</span>
+        </div>
+      <?php endif; ?>
       <form method="post" autocomplete="off">
+        <input type="hidden" name="accion" value="instalar">
         <input type="hidden" name="_token" value="<?= htmlspecialchars($token, ENT_QUOTES) ?>">
 
         <div class="card mt-2">
@@ -351,7 +490,7 @@ $httpsUrl = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https
             <div class="field"><label for="db_user">Usuario *</label>
               <input class="input" id="db_user" name="db_user" type="text" required value="<?= $post('db_user') ?>"></div>
             <div class="field" style="grid-column:1/-1"><label for="db_pass">Contraseña</label>
-              <input class="input" id="db_pass" name="db_pass" type="password" value=""></div>
+              <input class="input" id="db_pass" name="db_pass" type="password" value="<?= $post('db_pass') ?>"></div>
           </div>
         </div>
 

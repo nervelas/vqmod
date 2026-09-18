@@ -64,13 +64,15 @@
     brindisTiempo = setTimeout(function () { caja.classList.remove('visible'); }, 2800);
   }
 
-  function api(datos) {
-    return fetch(CR.apiEscaneo, {
+  function api(datos, senal) {
+    var opciones = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CR.csrf },
       body: JSON.stringify(Object.assign({ csrf: CR.csrf }, datos)),
       credentials: 'same-origin'
-    }).then(function (r) {
+    };
+    if (senal) { opciones.signal = senal; }
+    return fetch(CR.apiEscaneo, opciones).then(function (r) {
       return r.json().catch(function () {
         throw new Error('El servidor devolvió una respuesta inesperada.');
       }).then(function (j) {
@@ -92,6 +94,7 @@
     host: '',
     corriendo: false,
     cancelado: false,
+    aborto: null,                     // AbortController del paso en curso
     correos: [],                      // lista completa de correos
     telefonos: [],                    // lista completa de telefonos y WhatsApp
     vistos: Object.create(null),
@@ -146,8 +149,15 @@
   function siguientePaso() {
     if (estado.cancelado) { return Promise.resolve(); }
 
-    return api({ accion: 'paso', escaneo_id: estado.id })
+    // Cada paso se lanza con su propio controlador, para poder abortarlo
+    // en cuanto se pulsa "Detener" en lugar de esperar a que responda.
+    estado.aborto = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+
+    return api({ accion: 'paso', escaneo_id: estado.id }, estado.aborto ? estado.aborto.signal : null)
       .then(function (p) {
+        // Si se canceló mientras la petición viajaba, su respuesta se ignora:
+        // pintarla haría parecer que el escaneo sigue avanzando.
+        if (estado.cancelado) { return; }
         if (!p.ok) { throw new Error(p.error || 'Error durante el escaneo.'); }
 
         pintarProgreso(p);
@@ -158,6 +168,8 @@
         return siguientePaso();
       })
       .catch(function (err) {
+        // Aborto pedido por el usuario: no es un error que mostrar.
+        if (estado.cancelado || (err && err.name === 'AbortError')) { return; }
         terminar();
         mostrarError(err.message || 'Se interrumpió el escaneo.');
       });
@@ -377,6 +389,13 @@
     btn.removeAttribute('aria-busy');
   }
 
+  /** Igual que terminar(), pero además congela el panel de progreso. */
+  function detener() {
+    terminar();
+    var panel = $('#panel-progreso');
+    if (panel) { panel.classList.add('detenido'); }
+  }
+
   function mostrarError(mensaje) {
     var caja = $('#error-escaneo');
     caja.querySelector('span').textContent = mensaje;
@@ -399,6 +418,12 @@
 
     $('#error-escaneo').classList.add('oculto');
     $('#panel-resultados').classList.add('oculto');
+
+    // El panel puede venir congelado de un escaneo detenido a mano.
+    var panelProg = $('#panel-progreso');
+    if (panelProg) { panelProg.classList.remove('detenido'); }
+    var btnCancelar = $('#btn-cancelar');
+    if (btnCancelar) { btnCancelar.disabled = false; btnCancelar.textContent = 'Detener'; }
     ['#sin-resultados', '#sin-telefonos', '#sin-coincidencias', '#sin-coincidencias-tel',
      '#extras', '#caja-enlaces-wa'].forEach(function (sel) {
       if ($(sel)) { $(sel).classList.add('oculto'); }
@@ -608,11 +633,28 @@
     var cancelar = $('#btn-cancelar');
     if (cancelar) {
       cancelar.addEventListener('click', function () {
+        if (estado.cancelado || !estado.corriendo) { return; }
         estado.cancelado = true;
+
+        // 1. Se corta la petición en curso para que su respuesta no repinte
+        //    el progreso y parezca que el escaneo continúa.
+        if (estado.aborto) {
+          try { estado.aborto.abort(); } catch (err) { /* navegador antiguo */ }
+          estado.aborto = null;
+        }
+
+        // 2. Se congela el panel y se deja claro que ya está detenido.
+        detener();
+        cancelar.disabled = true;
+        cancelar.textContent = 'Detenido';
+        var urlActual = $('#url-actual');
+        if (urlActual) { urlActual.textContent = 'Escaneo detenido. Se conservan los resultados encontrados hasta aquí.'; }
+
+        // 3. Se avisa al servidor para que no siga rastreando páginas.
         api({ accion: 'cancelar', escaneo_id: estado.id }).catch(function () {});
-        terminar();
+
         brindis('Escaneo detenido.');
-        if (estado.correos.length) { cargarResultado(); }
+        if (estado.correos.length || estado.telefonos.length) { cargarResultado(); }
       });
     }
 

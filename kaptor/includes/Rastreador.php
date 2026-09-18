@@ -108,7 +108,8 @@ final class Rastreador
         if (!$escaneo) {
             return ['ok' => false, 'error' => 'El escaneo no existe.'];
         }
-        if ($escaneo['estado'] === 'completado' || $escaneo['estado'] === 'error') {
+        if ($escaneo['estado'] === 'completado' || $escaneo['estado'] === 'error'
+            || $escaneo['estado'] === 'cancelado') {
             return self::progreso($escaneo, [], [], '', true);
         }
 
@@ -128,6 +129,10 @@ final class Rastreador
             if ((int) self::contarCorreos($escaneoId) >= Ajustes::entero('max_correos', 1000, 1, 100000)) {
                 break;
             }
+
+            // Si el usuario ha pulsado "Detener" mientras este paso corría, se
+            // abandona entre página y página en lugar de agotar el turno.
+            if (self::cancelado($escaneoId)) { break; }
 
             $item = self::siguiente($escaneoId);
             if (!$item) { break; }
@@ -586,6 +591,17 @@ final class Rastreador
         $ids    = array_keys($sobran);
         $huecos = implode(',', array_fill(0, count($ids), '?'));
         BD::ejecutar('DELETE FROM `cr_correos` WHERE `id` IN (' . $huecos . ')', $ids);
+    }
+
+    /** ¿El escaneo ha sido detenido a mano mientras este paso se ejecutaba? */
+    private static function cancelado(int $escaneoId): bool
+    {
+        try {
+            $estado = BD::valor('SELECT `estado` FROM `cr_escaneos` WHERE `id` = ?', [$escaneoId], '');
+        } catch (Throwable $e) {
+            return false;
+        }
+        return $estado === 'cancelado';
     }
 
     /** Marca el escaneo como completado. */

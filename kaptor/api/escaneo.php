@@ -66,6 +66,13 @@ switch ($accion) {
         if (!$escaneo) { cr_json(['ok' => false, 'error' => 'El escaneo no existe.'], 404); }
         if (!cr_puede_ver_escaneo($escaneo)) { cr_json(['ok' => false, 'error' => 'Sin permiso.'], 403); }
 
+        // Un paso puede tardar varios segundos y PHP bloquea el archivo de
+        // sesión mientras dura la petición. Sin cerrarla aquí, la llamada a
+        // "cancelar" quedaría esperando en cola y el botón Detener no surtiría
+        // efecto hasta que el paso terminara. Ya no se escribe nada en la
+        // sesión a partir de este punto.
+        if (session_status() === PHP_SESSION_ACTIVE) { session_write_close(); }
+
         try {
             $progreso = Rastreador::paso($id);
         } catch (Throwable $e) {

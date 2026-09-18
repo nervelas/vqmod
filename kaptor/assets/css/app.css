@@ -349,9 +349,11 @@ html[data-tema="claro"] .radar{opacity:.5}
     color-mix(in srgb,var(--neon) 30%,transparent) 0deg,
     transparent 58deg, transparent 360deg);
   animation:girar 7s linear infinite;
+  animation-play-state:paused;
   opacity:0;transition:opacity .6s ease;
 }
-.escaneando .radar-barrido{opacity:1}
+/* El barrido del radar de fondo solo se mueve durante el escaneo. */
+.escaneando .radar-barrido{opacity:1;animation-play-state:running}
 .escaneando .radar{opacity:.92}
 @keyframes girar{to{transform:rotate(360deg)}}
 
@@ -434,10 +436,18 @@ html[data-tema="claro"] .radar{opacity:.5}
 .mini-radar::after{
   content:'';position:absolute;inset:0;border-radius:50%;
   background:conic-gradient(from 0deg,var(--neon) 0deg,transparent 65deg,transparent 360deg);
-  animation:girar 1.5s linear infinite;
   -webkit-mask-image:radial-gradient(circle,transparent 18%,#000 22%);
   mask-image:radial-gradient(circle,transparent 18%,#000 22%);
+  opacity:.35;
 }
+/* El radar solo gira mientras el escaneo está realmente en marcha: al
+   detenerlo se para en seco, que es lo que espera ver quien pulsa. */
+.escaneando .mini-radar::after{animation:girar 1.5s linear infinite;opacity:1}
+/* Escaneo detenido a mano: se congela todo el panel de progreso. */
+.detenido .mini-radar::after{animation:none;opacity:.3}
+.detenido .radar-barrido{animation:none;opacity:0}
+.detenido .barra-progreso i{transition:none}
+
 .barra-progreso{
   height:8px;border-radius:var(--r-full);overflow:hidden;
   background:color-mix(in srgb,var(--texto) 9%,transparent);

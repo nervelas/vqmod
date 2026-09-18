@@ -29,6 +29,23 @@ CREATE TABLE IF NOT EXISTS `cr_usuarios` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Cabecera de cada extracción realizada.
+-- ---------------------------------------------------------------------------
+--  Recuerdos de sesión ("mantener la sesión iniciada")
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `cr_recuerdos` (
+  `id`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `usuario_id`  INT UNSIGNED NOT NULL,
+  `selector`    CHAR(32)     NOT NULL,
+  `verificador` CHAR(64)     NOT NULL,
+  `expira`      DATETIME     NOT NULL,
+  `creado`      DATETIME     NOT NULL,
+  `agente`      VARCHAR(190) NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_selector` (`selector`),
+  KEY `idx_usuario` (`usuario_id`),
+  KEY `idx_expira` (`expira`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `cr_escaneos` (
   `id`              INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `token`           CHAR(32)     NOT NULL,

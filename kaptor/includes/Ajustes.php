@@ -70,8 +70,8 @@ final class Ajustes
             'pausa_ms'            => '0',
 
             // --- Acceso y límites ------------------------------------------
-            'acceso_publico'      => '1',   // 0 = solo usuarios con cuenta
-            'registro_publico'    => '1',   // 0 = solo el administrador crea cuentas
+            'acceso_publico'      => '0',   // 1 = cualquier visitante puede extraer
+            'registro_publico'    => '0',   // 1 = cualquiera puede crearse una cuenta
             'limite_ip_hora'      => '30',  // 0 = sin límite
             'guardar_historial'   => '1',
             'retencion_dias'      => '90',  // 0 = no borrar nunca

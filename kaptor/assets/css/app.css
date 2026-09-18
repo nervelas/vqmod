@@ -172,8 +172,23 @@ p{margin:0 0 1em}
 .marca{display:flex;align-items:center;gap:11px;font-weight:600;color:var(--texto);flex:none}
 .marca:hover{color:var(--texto)}
 .marca img,.marca svg{width:36px;height:36px;flex:none}
-.marca-txt{font-family:'Fraunces',serif;font-size:1.2rem;letter-spacing:-.02em;font-weight:700;white-space:nowrap}
+/* Casilla de "mantener la sesión iniciada" de los formularios de acceso. */
+.recordar{
+  display:flex;align-items:center;gap:10px;margin:-4px 0 18px;
+  font-size:.9rem;color:var(--suave);cursor:pointer;user-select:none;
+}
+.recordar input{
+  width:17px;height:17px;flex:0 0 auto;accent-color:var(--oro);cursor:pointer;
+}
+.recordar:hover span{color:var(--texto)}
+
+.marca-txt{font-family:'Fraunces',serif;font-size:1.18rem;font-weight:700;white-space:nowrap;text-transform:uppercase;letter-spacing:.09em}
 .marca-txt span{color:var(--oro)}
+/* En tema claro se oscurece el oro del logotipo para mantener el
+   contraste AA también cuando el texto se reduce en móvil. */
+html[data-tema="claro"] .marca-txt span{
+  color:color-mix(in srgb, var(--cr-oro, #D8B36A) 45%, #3A2605);
+}
 .barra nav{
   margin-left:auto;display:flex;align-items:center;gap:4px;
   min-width:0;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;

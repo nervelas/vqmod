@@ -34,6 +34,22 @@ function cr_es_https(): bool
     return $fw === 'https';
 }
 
+/**
+ * Devuelve el nombre del sitio listo para pintarlo como logotipo, con la
+ * primera letra en un <span> para que se vea en el color de acento.
+ * El texto ya va escapado: se imprime directamente.
+ */
+function cr_logotipo(string $nombre): string
+{
+    $nombre = trim($nombre);
+    if ($nombre === '') { return ''; }
+
+    $inicial = mb_substr($nombre, 0, 1);
+    $resto   = mb_substr($nombre, 1);
+
+    return '<span>' . e($inicial) . '</span>' . e($resto);
+}
+
 /** URL base pública del sitio, sin barra final. */
 function cr_url_base(): string
 {

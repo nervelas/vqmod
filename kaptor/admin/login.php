@@ -10,7 +10,7 @@ if (Auth::esAdmin()) { cr_redirigir('admin/index.php'); }
 $error = '';
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     Seguridad::exigirCsrf();
-    $res = Auth::entrar((string) cr_post('usuario'), (string) cr_post('clave'), true);
+    $res = Auth::entrar((string) cr_post('usuario'), (string) cr_post('clave'), true, cr_post('recordar') !== '');
     if ($res['ok']) { cr_redirigir('admin/index.php'); }
     $error = $res['error'] ?? 'No se pudo iniciar sesión.';
 }
@@ -42,6 +42,10 @@ cr_cabecera(['titulo' => 'Panel de administración']);
           <label class="etiqueta" for="clave">Contraseña</label>
           <input type="password" id="clave" name="clave" class="campo" required autocomplete="current-password">
         </div>
+        <label class="recordar">
+          <input type="checkbox" name="recordar" value="1" checked>
+          <span>Mantener la sesión iniciada en este equipo</span>
+        </label>
         <button type="submit" class="btn btn-bloque">Entrar al panel</button>
       </form>
     </div>

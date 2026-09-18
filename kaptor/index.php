@@ -71,10 +71,7 @@ cr_cabecera([
         </svg>
         <span>
           Para usar el extractor necesitas una cuenta.
-          <a href="<?= e(cr_url('login.php')) ?>">Inicia sesión</a>
-          <?php if (Ajustes::activo('registro_publico', true)): ?>
-            o <a href="<?= e(cr_url('registro.php')) ?>">crea una gratis</a>
-          <?php endif; ?>.
+          <a href="<?= e(cr_url('login.php')) ?>">Inicia sesión</a><?php if (Ajustes::activo('registro_publico', false)): ?> o <a href="<?= e(cr_url('registro.php')) ?>">crea una gratis</a><?php endif; ?>.
         </span>
       </div>
     <?php endif; ?>

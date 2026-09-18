@@ -26,6 +26,14 @@
 }
 
 .lateral .marca{padding:6px 10px 18px;border-bottom:1px solid var(--borde);margin-bottom:12px}
+.lateral .marca-txt{
+  font-family:'Fraunces',Georgia,serif;font-size:1.12rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.09em;white-space:nowrap;color:var(--texto);
+}
+.lateral .marca-txt span{color:var(--oro)}
+html[data-tema="claro"] .lateral .marca-txt span{
+  color:color-mix(in srgb, var(--cr-oro, #D8B36A) 45%, #3A2605);
+}
 .lateral-grupo{
   font-size:.68rem;letter-spacing:.11em;text-transform:uppercase;color:var(--tenue);
   padding:16px 12px 6px;font-weight:600;

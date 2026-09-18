@@ -9,8 +9,15 @@ declare(strict_types=1);
 
 final class Auth
 {
+    /** Nombre de la cookie de "mantener la sesión iniciada". */
+    public const COOKIE_RECUERDO = 'kaptor_recuerdo';
+
+    /** Duración de esa cookie, en días. */
+    public const DIAS_RECUERDO = 30;
+
     private static ?array $usuario = null;
     private static bool $resuelto = false;
+    private static bool $tablaLista = false;
 
     /** Usuario de la sesión actual, o null si no ha iniciado sesión. */
     public static function usuario(): ?array
@@ -19,7 +26,11 @@ final class Auth
         self::$resuelto = true;
 
         $id = (int) ($_SESSION['usuario_id'] ?? 0);
-        if ($id <= 0) { return self::$usuario = null; }
+        if ($id <= 0) {
+            // Sin sesión activa: puede haber una cookie de "mantener sesión".
+            $fila = self::recuperarPorCookie();
+            return self::$usuario = $fila;
+        }
 
         $fila = BD::fila('SELECT * FROM `cr_usuarios` WHERE `id` = ? AND `activo` = 1', [$id]);
         if (!$fila) {
@@ -54,7 +65,7 @@ final class Auth
      *
      * @return array{ok:bool,error?:string}
      */
-    public static function entrar(string $identificador, string $clave, bool $soloAdmin = false): array
+    public static function entrar(string $identificador, string $clave, bool $soloAdmin = false, bool $recordar = false): array
     {
         $identificador = trim($identificador);
 
@@ -101,12 +112,183 @@ final class Auth
         BD::actualizar('cr_usuarios', ['ultimo_acceso' => date('Y-m-d H:i:s')], '`id` = ?', [$fila['id']]);
         Seguridad::registrarIntento($identificador, true);
 
+        // "Mantener la sesión iniciada": cookie de larga duración.
+        if ($recordar) { self::recordar((int) $fila['id']); }
+
         return ['ok' => true];
+    }
+
+    // ==========================================================================
+    //  "MANTENER LA SESIÓN INICIADA" (cookie de recuerdo)
+    // ==========================================================================
+
+    /**
+     * Crea la tabla de recuerdos si no existe.
+     *
+     * Se hace aquí, y no solo en el instalador, para que las instalaciones
+     * antiguas ganen la función al actualizar los archivos.
+     */
+    private static function asegurarTabla(): bool
+    {
+        if (self::$tablaLista) { return true; }
+        try {
+            BD::ejecutar(
+                'CREATE TABLE IF NOT EXISTS `cr_recuerdos` (
+                    `id`           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                    `usuario_id`   INT UNSIGNED NOT NULL,
+                    `selector`     CHAR(32)     NOT NULL,
+                    `verificador`  CHAR(64)     NOT NULL,
+                    `expira`       DATETIME     NOT NULL,
+                    `creado`       DATETIME     NOT NULL,
+                    `agente`       VARCHAR(190) NULL,
+                    PRIMARY KEY (`id`),
+                    UNIQUE KEY `uq_selector` (`selector`),
+                    KEY `idx_usuario` (`usuario_id`),
+                    KEY `idx_expira` (`expira`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+            );
+            self::$tablaLista = true;
+        } catch (Throwable $e) {
+            error_log('Kaptor / tabla de recuerdos: ' . $e->getMessage());
+            return false;
+        }
+        return true;
+    }
+
+    /** Parámetros de la cookie, iguales a los de la sesión. */
+    private static function opcionesCookie(int $expira): array
+    {
+        return [
+            'expires'  => $expira,
+            'path'     => '/',
+            'domain'   => '',
+            'secure'   => cr_es_https(),
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ];
+    }
+
+    /**
+     * Guarda un recuerdo nuevo para el usuario indicado.
+     *
+     * La cookie lleva "selector:verificador". En la base de datos solo se
+     * guarda el hash del verificador, de modo que robar la tabla no permite
+     * suplantar a nadie.
+     */
+    private static function recordar(int $usuarioId): void
+    {
+        if (!self::asegurarTabla()) { return; }
+
+        $selector    = bin2hex(random_bytes(16));
+        $verificador = bin2hex(random_bytes(32));
+        $expira      = time() + (self::DIAS_RECUERDO * 86400);
+
+        try {
+            BD::insertar('cr_recuerdos', [
+                'usuario_id'  => $usuarioId,
+                'selector'    => $selector,
+                'verificador' => hash('sha256', $verificador),
+                'expira'      => date('Y-m-d H:i:s', $expira),
+                'creado'      => date('Y-m-d H:i:s'),
+                'agente'      => mb_substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 190),
+            ]);
+        } catch (Throwable $e) {
+            error_log('Kaptor / guardar recuerdo: ' . $e->getMessage());
+            return;
+        }
+
+        // Limpieza oportunista de los recuerdos caducados.
+        try {
+            BD::ejecutar('DELETE FROM `cr_recuerdos` WHERE `expira` < ?', [date('Y-m-d H:i:s')]);
+        } catch (Throwable $e) { /* sin importancia */ }
+
+        setcookie(self::COOKIE_RECUERDO, $selector . ':' . $verificador, self::opcionesCookie($expira));
+    }
+
+    /**
+     * Intenta reabrir la sesión a partir de la cookie de recuerdo.
+     *
+     * @return array<string,mixed>|null
+     */
+    private static function recuperarPorCookie(): ?array
+    {
+        $cookie = (string) ($_COOKIE[self::COOKIE_RECUERDO] ?? '');
+        if ($cookie === '' || !str_contains($cookie, ':')) { return null; }
+
+        [$selector, $verificador] = explode(':', $cookie, 2);
+        if (strlen($selector) !== 32 || strlen($verificador) !== 64) {
+            self::olvidar();
+            return null;
+        }
+
+        if (!self::asegurarTabla()) { return null; }
+
+        try {
+            $recuerdo = BD::fila(
+                'SELECT * FROM `cr_recuerdos` WHERE `selector` = ? LIMIT 1',
+                [$selector]
+            );
+        } catch (Throwable $e) {
+            error_log('Kaptor / leer recuerdo: ' . $e->getMessage());
+            return null;
+        }
+
+        if (!$recuerdo || strtotime((string) $recuerdo['expira']) < time()) {
+            self::olvidar();
+            return null;
+        }
+        if (!hash_equals((string) $recuerdo['verificador'], hash('sha256', $verificador))) {
+            // La cookie no cuadra: se anulan todos los recuerdos del usuario.
+            self::olvidar((int) $recuerdo['usuario_id']);
+            return null;
+        }
+
+        $fila = BD::fila('SELECT * FROM `cr_usuarios` WHERE `id` = ? AND `activo` = 1', [(int) $recuerdo['usuario_id']]);
+        if (!$fila) {
+            self::olvidar((int) $recuerdo['usuario_id']);
+            return null;
+        }
+
+        // Se abre la sesión y se rota el recuerdo (un solo uso por cookie).
+        session_regenerate_id(true);
+        $_SESSION['usuario_id'] = (int) $fila['id'];
+        $_SESSION['_creada']    = time();
+
+        try {
+            BD::ejecutar('DELETE FROM `cr_recuerdos` WHERE `id` = ?', [(int) $recuerdo['id']]);
+        } catch (Throwable $e) { /* sin importancia */ }
+        self::recordar((int) $fila['id']);
+
+        return $fila;
+    }
+
+    /**
+     * Borra la cookie de recuerdo y, si se indica un usuario, todos los
+     * recuerdos guardados para él.
+     */
+    private static function olvidar(int $usuarioId = 0): void
+    {
+        $cookie = (string) ($_COOKIE[self::COOKIE_RECUERDO] ?? '');
+        if ($cookie !== '' && str_contains($cookie, ':') && self::asegurarTabla()) {
+            [$selector] = explode(':', $cookie, 2);
+            try {
+                BD::ejecutar('DELETE FROM `cr_recuerdos` WHERE `selector` = ?', [$selector]);
+            } catch (Throwable $e) { /* sin importancia */ }
+        }
+        if ($usuarioId > 0 && self::asegurarTabla()) {
+            try {
+                BD::ejecutar('DELETE FROM `cr_recuerdos` WHERE `usuario_id` = ?', [$usuarioId]);
+            } catch (Throwable $e) { /* sin importancia */ }
+        }
+
+        unset($_COOKIE[self::COOKIE_RECUERDO]);
+        setcookie(self::COOKIE_RECUERDO, '', self::opcionesCookie(time() - 42000));
     }
 
     /** Cierra la sesión actual por completo. */
     public static function salir(): void
     {
+        self::olvidar(self::id());
         $_SESSION = [];
         if (ini_get('session.use_cookies')) {
             $p = session_get_cookie_params();
@@ -168,6 +350,6 @@ final class Auth
      */
     public static function puedeExtraer(): bool
     {
-        return Ajustes::activo('acceso_publico', true) || self::autenticado();
+        return Ajustes::activo('acceso_publico', false) || self::autenticado();
     }
 }

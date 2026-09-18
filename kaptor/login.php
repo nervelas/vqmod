@@ -10,7 +10,7 @@ if (Auth::autenticado()) { cr_redirigir('index.php'); }
 $error = '';
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     Seguridad::exigirCsrf();
-    $res = Auth::entrar((string) cr_post('usuario'), (string) cr_post('clave'));
+    $res = Auth::entrar((string) cr_post('usuario'), (string) cr_post('clave'), false, cr_post('recordar') !== '');
     if ($res['ok']) {
         cr_flash('exito', 'Sesión iniciada. Ya puedes extraer correos.');
         cr_redirigir(Auth::esAdmin() ? 'admin/index.php' : 'index.php');
@@ -46,10 +46,14 @@ cr_cabecera(['titulo' => 'Acceder', 'activo' => 'login']);
           <label class="etiqueta" for="clave">Contraseña</label>
           <input type="password" id="clave" name="clave" class="campo" required autocomplete="current-password">
         </div>
+        <label class="recordar">
+          <input type="checkbox" name="recordar" value="1" checked>
+          <span>Mantener la sesión iniciada en este equipo</span>
+        </label>
         <button type="submit" class="btn btn-bloque">Entrar</button>
       </form>
 
-      <?php if (Ajustes::activo('registro_publico', true)): ?>
+      <?php if (Ajustes::activo('registro_publico', false)): ?>
         <p class="centrado pequeno suave" style="margin-top:20px">
           ¿Aún no tienes cuenta? <a href="<?= e(cr_url('registro.php')) ?>">Crear una gratis</a>
         </p>

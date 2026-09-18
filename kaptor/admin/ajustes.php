@@ -341,10 +341,10 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
   <div class="hoja tarjeta" id="h-acceso">
     <?php
     fila('Acceso libre', 'Con esta opción desactivada solo podrán extraer correos las personas que hayan iniciado sesión.',
-        interruptor('acceso_publico', Ajustes::activo('acceso_publico', true), 'Cualquier visitante puede extraer'));
+        interruptor('acceso_publico', Ajustes::activo('acceso_publico', false), 'Cualquier visitante puede extraer'));
 
     fila('Registro abierto', 'Permite que cualquiera cree su cuenta desde la web. Si lo desactivas, las cuentas las creas tú desde Usuarios.',
-        interruptor('registro_publico', Ajustes::activo('registro_publico', true), 'Registro público activo'));
+        interruptor('registro_publico', Ajustes::activo('registro_publico', false), 'Registro público activo'));
 
     fila('Límite por IP y hora', 'Número máximo de extracciones que puede lanzar una misma IP en una hora. 0 = sin límite.',
         '<input type="number" name="limite_ip_hora" class="campo" style="max-width:140px" min="0" max="100000" value="' . e($a['limite_ip_hora']) . '">');

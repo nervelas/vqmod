@@ -6,7 +6,7 @@ require_once __DIR__ . '/includes/bootstrap.php';
 require_once CR_INCLUDES . '/plantilla.php';
 
 if (Auth::autenticado()) { cr_redirigir('index.php'); }
-if (!Ajustes::activo('registro_publico', true)) {
+if (!Ajustes::activo('registro_publico', false)) {
     cr_flash('error', 'El registro de nuevas cuentas esta desactivado.');
     cr_redirigir('login.php');
 }

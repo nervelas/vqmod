@@ -66,7 +66,7 @@ function admin_cabecera(array $opciones = []): void
 <aside class="lateral" id="lateral">
   <a class="marca" href="<?= e(cr_url('admin/index.php')) ?>">
     <img src="<?= e(cr_url('assets/img/logo.svg')) ?>" alt="" width="34" height="34" aria-hidden="true">
-    <span class="marca-txt"><?= e($nombre) ?></span>
+    <span class="marca-txt"><?= cr_logotipo($nombre) ?></span>
   </a>
 
   <?php foreach (admin_menu() as $grupo => $enlaces): ?>

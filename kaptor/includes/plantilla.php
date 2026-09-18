@@ -69,7 +69,7 @@ function cr_cabecera(array $opciones = []): void
       <?php else: ?>
         <img src="<?= e(cr_url('assets/img/logo.svg')) ?>" alt="" width="36" height="36" aria-hidden="true">
       <?php endif; ?>
-      <span class="marca-txt"><?= e($nombre) ?></span>
+      <span class="marca-txt"><?= cr_logotipo($nombre) ?></span>
     </a>
 
     <nav aria-label="Navegación principal">
@@ -82,7 +82,7 @@ function cr_cabecera(array $opciones = []): void
         <a href="<?= e(cr_url('logout.php')) ?>">Salir</a>
       <?php else: ?>
         <a href="<?= e(cr_url('login.php')) ?>" class="<?= $activo === 'login' ? 'activo' : '' ?>">Entrar</a>
-        <?php if (Ajustes::activo('registro_publico', true)): ?>
+        <?php if (Ajustes::activo('registro_publico', false)): ?>
           <a href="<?= e(cr_url('registro.php')) ?>" class="<?= $activo === 'registro' ? 'activo' : '' ?>">Crear cuenta</a>
         <?php endif; ?>
       <?php endif; ?>

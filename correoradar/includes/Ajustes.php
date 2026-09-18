@@ -75,6 +75,15 @@ final class Ajustes
             'limite_ip_hora'      => '30',  // 0 = sin límite
             'guardar_historial'   => '1',
             'retencion_dias'      => '90',  // 0 = no borrar nunca
+
+            // --- Campañas de correo ----------------------------------------
+            'campanas_activas'      => '1',
+            'remitente_postal'      => '',   // dirección física para el pie legal
+            'seguimiento_aperturas' => '1',
+            'seguimiento_clics'     => '1',
+            'smtp_timeout'          => '20',
+            'cron_clave'            => '',   // la genera el instalador
+            'lote_envio'            => '25', // tope de correos por llamada al motor
         ];
     }
 

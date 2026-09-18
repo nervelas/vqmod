@@ -143,3 +143,126 @@ CREATE TABLE IF NOT EXISTS `cr_dns` (
   `revisado` DATETIME NOT NULL,
   PRIMARY KEY (`dominio`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
+--  MÓDULO DE CAMPAÑAS DE CORREO
+-- ============================================================================
+
+-- Buzones de salida (cuentas SMTP del propio dominio).
+CREATE TABLE IF NOT EXISTS `cr_remitentes` (
+  `id`              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `nombre`          VARCHAR(120) NOT NULL,           -- etiqueta interna
+  `de_correo`       VARCHAR(190) NOT NULL,           -- info@midominio.com
+  `de_nombre`       VARCHAR(120) NOT NULL DEFAULT '',
+  `responder_a`     VARCHAR(190) NOT NULL DEFAULT '',
+  `host`            VARCHAR(190) NOT NULL,
+  `puerto`          SMALLINT UNSIGNED NOT NULL DEFAULT 587,
+  `seguridad`       ENUM('tls','ssl','ninguna') NOT NULL DEFAULT 'tls',
+  `usuario`         VARCHAR(190) NOT NULL,
+  `clave`           VARBINARY(1024) NOT NULL,        -- cifrada con la clave de la app
+  `limite_hora`     SMALLINT UNSIGNED NOT NULL DEFAULT 60,
+  `limite_dia`      SMALLINT UNSIGNED NOT NULL DEFAULT 300,
+  `activo`          TINYINT(1)   NOT NULL DEFAULT 1,
+  `ultimo_error`    VARCHAR(500) NULL,
+  `probado_en`      DATETIME     NULL,
+  `creado`          DATETIME     NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_activo` (`activo`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Listas de contactos.
+CREATE TABLE IF NOT EXISTS `cr_listas` (
+  `id`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `nombre`      VARCHAR(160) NOT NULL,
+  `descripcion` VARCHAR(500) NULL,
+  `contactos`   MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+  `creado`      DATETIME NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Contactos de cada lista.
+CREATE TABLE IF NOT EXISTS `cr_contactos` (
+  `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `lista_id`   INT UNSIGNED NOT NULL,
+  `correo`     VARCHAR(190) NOT NULL,
+  `nombre`     VARCHAR(160) NOT NULL DEFAULT '',
+  `centro`     VARCHAR(190) NOT NULL DEFAULT '',     -- nombre del colegio o empresa
+  `dominio`    VARCHAR(190) NOT NULL DEFAULT '',
+  `telefono`   VARCHAR(24)  NOT NULL DEFAULT '',
+  `origen`     VARCHAR(255) NOT NULL DEFAULT '',     -- URL de donde salió
+  `estado`     ENUM('activo','baja','rebotado','suprimido') NOT NULL DEFAULT 'activo',
+  `creado`     DATETIME NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_lista_correo` (`lista_id`,`correo`),
+  KEY `idx_estado` (`lista_id`,`estado`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Lista de supresión global: nunca se escribe a estas direcciones.
+CREATE TABLE IF NOT EXISTS `cr_supresion` (
+  `id`       INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `correo`   VARCHAR(190) NOT NULL,
+  `motivo`   ENUM('baja','rebote','queja','manual','importada') NOT NULL DEFAULT 'manual',
+  `detalle`  VARCHAR(400) NULL,
+  `creado`   DATETIME NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_supresion` (`correo`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Plantillas de mensaje.
+CREATE TABLE IF NOT EXISTS `cr_plantillas` (
+  `id`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `nombre`      VARCHAR(160) NOT NULL,
+  `asunto`      VARCHAR(300) NOT NULL,
+  `cuerpo`      MEDIUMTEXT   NOT NULL,
+  `creado`      DATETIME NOT NULL,
+  `actualizado` DATETIME NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Campañas.
+CREATE TABLE IF NOT EXISTS `cr_campanas` (
+  `id`            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `nombre`        VARCHAR(160) NOT NULL,
+  `lista_id`      INT UNSIGNED NOT NULL,
+  `plantilla_id`  INT UNSIGNED NOT NULL,
+  `remitentes`    VARCHAR(190) NOT NULL DEFAULT '',  -- ids separados por coma
+  `estado`        ENUM('borrador','preparada','enviando','pausada','completada','cancelada') NOT NULL DEFAULT 'borrador',
+  `limite_hora`   SMALLINT UNSIGNED NOT NULL DEFAULT 60,
+  `pausa_min`     SMALLINT UNSIGNED NOT NULL DEFAULT 8,   -- segundos entre envíos
+  `pausa_max`     SMALLINT UNSIGNED NOT NULL DEFAULT 30,
+  `total`         MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+  `enviados`      MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+  `errores`       MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+  `rebotes`       MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+  `aperturas`     MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+  `clics`         MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+  `bajas`         MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+  `creado`        DATETIME NOT NULL,
+  `iniciada`      DATETIME NULL,
+  `finalizada`    DATETIME NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_estado_camp` (`estado`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Un registro por destinatario y campaña.
+CREATE TABLE IF NOT EXISTS `cr_envios` (
+  `id`           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `campana_id`   INT UNSIGNED NOT NULL,
+  `contacto_id`  INT UNSIGNED NOT NULL,
+  `correo`       VARCHAR(190) NOT NULL,
+  `remitente_id` INT UNSIGNED NULL,
+  `token`        CHAR(32)     NOT NULL,
+  `estado`       ENUM('pendiente','enviado','error','rebotado','cancelado') NOT NULL DEFAULT 'pendiente',
+  `intentos`     TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  `error`        VARCHAR(400) NULL,
+  `aperturas`    SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  `clics`        SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  `enviado_en`   DATETIME NULL,
+  `abierto_en`   DATETIME NULL,
+  `creado`       DATETIME NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_token_envio` (`token`),
+  UNIQUE KEY `uq_campana_contacto` (`campana_id`,`contacto_id`),
+  KEY `idx_pendientes` (`campana_id`,`estado`,`id`),
+  KEY `idx_enviados` (`remitente_id`,`enviado_en`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

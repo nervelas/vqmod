@@ -173,6 +173,7 @@ if (!$yaInstalado && !$faltaAlgo && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST
             require_once CR_RAIZ . '/includes/Ajustes.php';
             $defectos = Ajustes::porDefecto();
             $defectos['sitio_nombre'] = trim($datos['sitio_nombre']) !== '' ? trim($datos['sitio_nombre']) : 'CorreoRadar';
+            $defectos['cron_clave']   = bin2hex(random_bytes(16));   // para automatizar el envío
             $defectos['pie_texto']    = '© ' . date('Y') . ' ' . $defectos['sitio_nombre']
                 . '. Uso responsable: extrae solo datos públicos y respeta la legislación de protección de datos.';
             $ins = $pdo->prepare('INSERT INTO `cr_ajustes` (`clave`,`valor`,`actualizado`) VALUES (?,?,NOW())

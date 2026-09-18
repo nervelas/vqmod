@@ -18,11 +18,13 @@ const CAMPOS_TEXTO = [
     'sitio_nombre', 'sitio_lema', 'sitio_descripcion', 'pie_texto',
     'hero_titulo', 'hero_subtitulo', 'hero_placeholder', 'hero_boton', 'hero_etiqueta', 'aviso_legal',
     'user_agent', 'headless_binario', 'dominios_excluidos', 'prefijo_pais',
+    'remitente_postal', 'cron_clave',
 ];
 /** Interruptores (se guardan como 1 o 0). */
 const CAMPOS_BOOL = [
     'rastreo_profundo', 'analizar_js_css', 'analizar_sitemap', 'analizar_json',
     'verificar_mx', 'tld_estricto', 'permitir_privadas', 'ssl_estricto', 'headless_activo', 'buscar_whatsapp',
+    'campanas_activas', 'seguimiento_aperturas', 'seguimiento_clics',
     'acceso_publico', 'registro_publico', 'guardar_historial',
 ];
 /** Números con su rango permitido: clave => [mínimo, máximo]. */
@@ -36,6 +38,8 @@ const CAMPOS_NUM = [
     'pausa_ms'        => [0, 5000],
     'limite_ip_hora'  => [0, 100000],
     'retencion_dias'  => [0, 3650],
+    'smtp_timeout'    => [5, 120],
+    'lote_envio'      => [1, 500],
 ];
 /** Colores en formato #RRGGBB. */
 const CAMPOS_COLOR = ['color_fondo', 'color_oro', 'color_neon', 'color_texto'];
@@ -177,6 +181,7 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
     <button type="button" data-hoja="h-apariencia">Apariencia</button>
     <button type="button" data-hoja="h-motor">Motor</button>
     <button type="button" data-hoja="h-acceso">Acceso y límites</button>
+    <button type="button" data-hoja="h-campanas">Campañas</button>
   </div>
 
   <!-- ====================== IDENTIDAD ====================== -->
@@ -350,6 +355,47 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
     fila('Días de retención', 'Los escaneos más antiguos se borran automáticamente. 0 = conservar para siempre.',
         '<input type="number" name="retencion_dias" class="campo" style="max-width:140px" min="0" max="3650" value="' . e($a['retencion_dias']) . '"> <span class="suave pequeno">días</span>');
     ?>
+  </div>
+
+  <!-- ====================== CAMPAÑAS ====================== -->
+  <div class="hoja tarjeta" id="h-campanas">
+    <?php
+    fila('Módulo de campañas', 'Permite crear listas, plantillas y enviar correo desde tus propios buzones.',
+        interruptor('campanas_activas', Ajustes::activo('campanas_activas', true), 'Módulo activo'));
+
+    fila('Dirección postal del remitente',
+        'Se añade al pie de cada mensaje. En varios países es obligatoria en el correo comercial y, '
+        . 'además, mejora bastante la entrega porque es una señal de remitente legítimo.',
+        '<textarea name="remitente_postal" class="campo" rows="2" maxlength="300" placeholder="Servicom, 5a Avenida 1-23, Zona 10, Ciudad de Guatemala">'
+        . e($a['remitente_postal'] ?? '') . '</textarea>');
+
+    fila('Seguimiento de aperturas', 'Añade un píxel invisible para saber quién abrió el mensaje.',
+        interruptor('seguimiento_aperturas', Ajustes::activo('seguimiento_aperturas', true)));
+
+    fila('Seguimiento de clics', 'Los enlaces pasan por tu dominio para poder contarlos. Van firmados, así que no se pueden manipular.',
+        interruptor('seguimiento_clics', Ajustes::activo('seguimiento_clics', true)));
+
+    fila('Tiempo de espera SMTP', 'Segundos que se espera al servidor de correo antes de dar el envío por fallido.',
+        '<input type="number" name="smtp_timeout" class="campo" style="max-width:140px" min="5" max="120" value="' . e($a['smtp_timeout'] ?? '20') . '"> <span class="suave pequeno">segundos</span>');
+
+    $clave = $a['cron_clave'] ?? '';
+    $urlCron = cr_url('cron.php?clave=' . $clave);
+    fila('Clave del cron',
+        'Protege la dirección que avanza las campañas automáticamente. Programa esta línea en cPanel &rarr; Tareas Cron, cada 5 minutos:'
+        . ($clave !== '' ? '<br><code class="mono" style="display:block;margin-top:8px;word-break:break-all">curl -s "' . e($urlCron) . '"</code>' : ''),
+        '<input type="text" name="cron_clave" class="campo mono" value="' . e($clave) . '" placeholder="pulsa Generar">'
+        . '<button type="button" class="btn btn-fantasma btn-peq" style="margin-top:8px" onclick="'
+        . "var c=document.getElementsByName('cron_clave')[0];var a=new Uint8Array(16);crypto.getRandomValues(a);"
+        . "c.value=Array.from(a).map(function(b){return b.toString(16).padStart(2,'0')}).join('');"
+        . '">Generar una clave nueva</button>');
+    ?>
+
+    <div class="aviso aviso-info" style="margin-top:18px">
+      <span>
+        <b>Antes de tu primera campaña:</b> configura SPF, DKIM y DMARC en tu dominio (cPanel &rarr; Autenticación de correo),
+        envía una prueba a tu propio correo y empieza con 20–30 mensajes al día por buzón durante la primera semana.
+      </span>
+    </div>
   </div>
 
   <div class="guardar-barra">

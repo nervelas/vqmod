@@ -1,7 +1,8 @@
 # CorreoRadar 1.0
 
 Extractor profesional de **correos electrónicos y números de WhatsApp** a partir
-de una URL. Si la web tiene los dos, saca los dos; si solo tiene uno, saca ese.
+de una URL, con **módulo de campañas de correo** incluido: extraes, filtras y
+envías desde tu propio dominio, todo en la misma herramienta.
 PHP 8.0+ · MySQL/MariaDB · sin Composer · listo para subir a `public_html`.
 
 ---
@@ -149,6 +150,63 @@ funcionando con el resto de técnicas.
 
 ---
 
+## Campañas de correo
+
+CorreoRadar incluye su propio motor de envío. No necesitas Mailchimp ni Brevo
+—que además prohíben en sus términos las listas extraídas— porque los mensajes
+salen **desde tus propias cuentas de correo** por SMTP.
+
+### Puesta en marcha
+
+1. **Buzones** → añade la cuenta de tu dominio (`info@tudominio.com`) con los
+   datos SMTP que te da tu hosting. Pulsa *Probar* y envíate un correo de prueba.
+2. **Contactos** → crea una lista e impórtala directamente desde una extracción
+   (con filtros de confianza, MX y tipo de buzón) o pegando un CSV.
+3. **Plantillas** → escribe el mensaje con variables: `{{nombre}}`, `{{centro}}`,
+   `{{correo}}`, `{{remitente}}`… El pie con el enlace de baja se añade solo.
+4. **Campañas** → elige lista, plantilla y buzones, fija el ritmo y lanza.
+
+### Cómo envía
+
+- **Ritmo controlado**: límite por hora en la campaña, y límite por hora y por
+  día en cada buzón. Entre correo y correo hay una pausa aleatoria.
+- **Rotación de buzones**: si añades varios, el motor reparte la carga.
+- **Sin dejar el navegador abierto**: programa una tarea cron cada 5 minutos y
+  la campaña avanza sola durante días.
+
+```
+curl -s "https://tudominio.com/cron.php?clave=TU_CLAVE"
+```
+
+La clave está en *Ajustes → Campañas*. El cron también hace la limpieza del
+historial y cierra los escaneos que se quedaron a medias.
+
+### Lo que hace por ti para no acabar en spam
+
+- Cabeceras `List-Unsubscribe` y `List-Unsubscribe-Post`, con **baja en un clic**
+  (RFC 8058), que es lo que Gmail y Outlook exigen desde 2024.
+- Mensaje en dos partes (texto y HTML), asunto codificado correctamente y
+  `Message-ID` propio.
+- **Lista de supresión global**: quien se da de baja o rebota queda excluido de
+  todas las campañas, para siempre y sin excepción.
+- Los rebotes definitivos (error 5xx) se detectan y se suprimen solos.
+- Seguimiento de aperturas y de clics, con los enlaces firmados por HMAC para
+  que nadie pueda usar tu dominio como redirector hacia sitios de phishing.
+- Las contraseñas SMTP se guardan cifradas con AES-256-GCM.
+
+### Antes de tu primera campaña
+
+| Paso | Por qué importa |
+|---|---|
+| Configura **SPF, DKIM y DMARC** (cPanel → Autenticación de correo) | Sin esto, la mitad de tus correos van a spam |
+| Envía una prueba a tu propio correo | Comprueba que llega a la bandeja de entrada |
+| Empieza con **20–30 al día** por buzón y sube poco a poco | Un buzón nuevo que manda 500 de golpe se quema |
+| Usa un dominio secundario si puedes | Protege la reputación de tu dominio principal |
+| Revisa los rebotes | Más de un 5 % es señal de que la lista necesita limpieza |
+
+Con un solo buzón a 40 correos/hora, una lista de 5.000 tarda unos cinco días.
+Es lo normal y lo sano: con tres buzones baja a menos de dos días.
+
 ## Panel de administración
 
 `https://tudominio.com/admin/`
@@ -158,10 +216,13 @@ funcionando con el resto de técnicas.
 - **Historial:** todas las extracciones (correos y WhatsApp), con buscador,
   filtros, vista de detalle y nueva descarga en los tres formatos.
 - **Usuarios:** alta, roles, activación, cambio de contraseña y borrado.
+- **Campañas, Contactos, Plantillas, Buzones y Supresión:** todo el módulo de
+  envío, con estadísticas de aperturas, clics, rebotes y bajas.
 - **Ajustes:** nombre, logo, colores, todos los textos de la portada, límites del
   motor, tiempo de espera, profundidad del rastreo, dominios excluidos,
   detección de WhatsApp y prefijo de país, acceso libre o solo con cuenta,
-  registro público y retención del historial.
+  registro público, retención del historial, dirección postal del remitente,
+  seguimiento y clave del cron.
 
 ---
 
@@ -183,9 +244,10 @@ funcionando con el resto de técnicas.
 ## Estructura de carpetas
 
 ```
-/                     index.php, login.php, registro.php, install.php, .htaccess
+/                     index.php, login.php, registro.php, install.php,
+                      baja.php, cron.php, .htaccess
 /admin                panel de administración
-/api                  escaneo.php (AJAX) y exportar.php (descargas)
+/api                  escaneo.php, exportar.php, campana.php, pixel.php, clic.php
 /assets               css, js, fuentes propias, imágenes y subidas
 /config               config.php (lo genera el instalador)
 /database             schema.sql
@@ -212,6 +274,16 @@ Casi siempre el botón de WhatsApp solo está en la página de contacto: activa 
 **rastreo profundo**. Si el número aparece escrito sin prefijo internacional
 (`2222 3333`), configura tu prefijo de país en *Ajustes → Motor*.
 
+**Los correos de la campaña llegan a spam.**
+Casi siempre es falta de SPF/DKIM/DMARC. Compruébalo en tu panel de hosting y
+usa una herramienta como mail-tester.com antes de lanzar la campaña de verdad.
+Lo segundo más común es ir demasiado rápido al principio.
+
+**El cron no envía nada.**
+Comprueba que la clave coincide con la de *Ajustes → Campañas* y que la campaña
+está en estado «enviando». Si tu hosting no permite cron, puedes pulsar
+«Enviar ahora un lote» desde el panel.
+
 **El Excel no se descarga.**
 Tu servidor no tiene la extensión `zip` de PHP. Pídesela a tu proveedor; TXT y
 CSV seguirán funcionando.
@@ -225,10 +297,23 @@ Borra `config/config.php` y `storage/instalado.lock`, sube de nuevo
 ## Aviso de uso
 
 CorreoRadar extrae información **pública** de páginas web. Úsalo sobre sitios
-propios o con autorización y respeta siempre la legislación de protección de
-datos que te aplique (en España y la UE, el RGPD y la LSSI). No envíes correo
-ni mensajes de WhatsApp comerciales no solicitados: además de ser ilegal en
-muchos países, es la forma más rápida de que bloqueen tu número.
+propios o con autorización y respeta siempre la legislación que te aplique.
+
+La ley que cuenta suele ser la **del destinatario**, no la tuya:
+
+- **España y la UE** (RGPD + LSSI): el correo comercial necesita consentimiento
+  previo salvo excepciones muy concretas.
+- **Canadá** (CASL): consentimiento obligatorio, sanciones muy altas.
+- **Estados Unidos** (CAN-SPAM): permite el correo B2B en frío si te identificas
+  con datos reales, incluyes dirección postal y respetas las bajas.
+- **Guatemala**: todavía no hay una ley integral de protección de datos en
+  vigor, aunque hay una iniciativa avanzada en el Congreso.
+
+En la práctica: escribe a buzones corporativos (`info@`, `contacto@`) antes que a
+direcciones personales, identifícate de verdad, deja siempre el enlace de baja y
+**respeta la lista de supresión sin excepciones**. Para WhatsApp, recuerda que el
+envío masivo no solicitado incumple los Términos de Servicio de Meta y suele
+acabar con el número bloqueado: usa la API oficial con consentimiento previo.
 
 ---
 

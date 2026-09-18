@@ -12,6 +12,13 @@ function admin_menu(): array
             ['index.php',     'Resumen',    '<path d="M4 13h6V4H4zM14 20h6v-9h-6zM4 20h6v-4H4zM14 8h6V4h-6z"/>'],
             ['historial.php', 'Historial',  '<path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/>'],
         ],
+        'Campañas' => [
+            ['campanas.php',  'Campañas',   '<path d="M3 5h18v14H3z"/><path d="m3.5 6 8 5.4a1.5 1.5 0 0 0 1.8 0L21 6"/><path d="m16 15 5 4M8 15l-5 4" opacity=".5"/>'],
+            ['listas.php',    'Contactos',  '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.2 2.7-5.4 6-5.4s6 2.2 6 5.4"/><path d="M17 8h5M17 12h5M17 16h3"/>'],
+            ['plantillas.php','Plantillas', '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>'],
+            ['remitentes.php','Buzones',    '<path d="M4 6h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z"/><path d="m3.4 6.8 8 5.4a1.2 1.2 0 0 0 1.3 0l8-5.4"/>'],
+            ['supresion.php', 'Supresión',  '<circle cx="12" cy="12" r="9"/><path d="m8 8 8 8"/>'],
+        ],
         'Gestión' => [
             ['usuarios.php',  'Usuarios',   '<circle cx="9" cy="8" r="3.4"/><path d="M3 20c0-3.4 2.7-5.6 6-5.6s6 2.2 6 5.6"/><path d="M17 11a3 3 0 1 0-1.8-5.4M21 20c0-2.6-1.6-4.4-4-5"/>'],
             ['ajustes.php',   'Ajustes',    '<circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"/>'],

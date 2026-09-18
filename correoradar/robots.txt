@@ -1,9 +1,0 @@
-# CorreoRadar
-User-agent: *
-Disallow: /admin/
-Disallow: /api/
-Disallow: /config/
-Disallow: /includes/
-Disallow: /storage/
-Disallow: /database/
-Allow: /

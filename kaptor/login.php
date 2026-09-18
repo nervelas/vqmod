@@ -53,11 +53,6 @@ cr_cabecera(['titulo' => 'Acceder', 'activo' => 'login']);
         <button type="submit" class="btn btn-bloque">Entrar</button>
       </form>
 
-      <?php if (Ajustes::activo('registro_publico', false)): ?>
-        <p class="centrado pequeno suave" style="margin-top:20px">
-          ¿Aún no tienes cuenta? <a href="<?= e(cr_url('registro.php')) ?>">Crear una gratis</a>
-        </p>
-      <?php endif; ?>
     </div>
   </div>
 </section>

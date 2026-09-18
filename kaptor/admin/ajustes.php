@@ -25,7 +25,7 @@ const CAMPOS_BOOL = [
     'rastreo_profundo', 'analizar_js_css', 'analizar_sitemap', 'analizar_json',
     'verificar_mx', 'tld_estricto', 'permitir_privadas', 'ssl_estricto', 'headless_activo', 'buscar_whatsapp',
     'campanas_activas', 'seguimiento_aperturas', 'seguimiento_clics',
-    'acceso_publico', 'registro_publico', 'guardar_historial',
+    'acceso_publico', 'guardar_historial',
 ];
 /** Números con su rango permitido: clave => [mínimo, máximo]. */
 const CAMPOS_NUM = [
@@ -105,6 +105,53 @@ function guardar_logo(array $archivo): array
 
     @chmod($destino, 0644);
     return ['ok' => true, 'ruta' => 'assets/subidas/' . $nombre];
+}
+
+/**
+ * Aplica una paleta y devuelve sus colores.
+ *
+ * @return array<string,string> Los ajustes que hay que guardar.
+ */
+function colores_de_paleta(string $clave, array $tema): array
+{
+    return [
+        'tema_color'          => $clave,
+        'color_fondo'         => strtoupper((string) $tema['fondo']),
+        'color_fondo2'        => strtoupper((string) ($tema['fondo2'] ?? $tema['fondo'])),
+        'color_texto'         => strtoupper((string) $tema['texto']),
+        'color_oro'           => strtoupper((string) $tema['oro']),
+        'color_oro2'          => strtoupper((string) ($tema['oro2'] ?? $tema['oro'])),
+        'color_neon'          => strtoupper((string) $tema['neon']),
+        'color_fondo_claro'   => strtoupper((string) ($tema['fondo_claro']  ?? '#FFFFFF')),
+        'color_fondo2_claro'  => strtoupper((string) ($tema['fondo2_claro'] ?? '#F4F6FA')),
+        'color_texto_claro'   => strtoupper((string) ($tema['texto_claro']  ?? '#111418')),
+        'color_oro_claro'     => strtoupper((string) ($tema['oro_claro']    ?? $tema['oro'])),
+        'color_oro2_claro'    => strtoupper((string) ($tema['oro2_claro']   ?? $tema['oro'])),
+        'color_neon_claro'    => strtoupper((string) ($tema['neon_claro']   ?? $tema['neon'])),
+        'tema_por_defecto'    => ($tema['modo'] ?? 'oscuro') === 'claro' ? 'claro' : 'oscuro',
+    ];
+}
+
+// --------------------------------------------- aplicar una paleta al vuelo
+//  La rejilla de paletas llama aquí al hacer clic: se guarda en el acto y se
+//  devuelven los colores, para que el panel cambie sin recargar ni guardar.
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['accion'] ?? '') === 'aplicar_tema') {
+    header('Content-Type: application/json; charset=utf-8');
+    if (!Seguridad::verificarCsrf((string) ($_POST['csrf'] ?? ''))) {
+        http_response_code(400);
+        exit(json_encode(['ok' => false, 'error' => 'Sesión caducada. Recarga la página.']));
+    }
+
+    $clave = (string) ($_POST['tema'] ?? '');
+    $temas = Ajustes::temas();
+    if (!isset($temas[$clave])) {
+        http_response_code(400);
+        exit(json_encode(['ok' => false, 'error' => 'Esa paleta no existe.']));
+    }
+
+    $colores = colores_de_paleta($clave, $temas[$clave]);
+    Ajustes::guardarVarios($colores);
+    exit(json_encode(['ok' => true, 'colores' => $colores, 'nombre' => $temas[$clave]['nombre']]));
 }
 
 // ------------------------------------------------------------------ guardar
@@ -315,8 +362,10 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
            . '</span></div>';
     }
 
+    echo '<div id="aviso-tema" class="aviso-tema" hidden></div>';
+
     echo '<div class="ajuste ajuste-ancho"><div><div class="titulo">Paleta de color</div>'
-       . '<div class="pista">Elige una y guarda: se aplica a toda la web y al panel. Cada paleta trae '
+       . '<div class="pista">Pulsa una: se aplica al instante en el panel y en toda la web, sin tener que guardar. Cada paleta trae '
        . 'sus colores para el modo oscuro y para el modo claro; el visitante puede cambiar de modo con '
        . 'el botón de la cabecera.</div></div></div>';
 
@@ -469,8 +518,6 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
     fila('Acceso libre', 'Con esta opción desactivada solo podrán extraer correos las personas que hayan iniciado sesión.',
         interruptor('acceso_publico', Ajustes::activo('acceso_publico', false), 'Cualquier visitante puede extraer'));
 
-    fila('Registro abierto', 'Permite que cualquiera cree su cuenta desde la web. Si lo desactivas, las cuentas las creas tú desde Usuarios.',
-        interruptor('registro_publico', Ajustes::activo('registro_publico', false), 'Registro público activo'));
 
     fila('Límite por IP y hora', 'Número máximo de extracciones que puede lanzar una misma IP en una hora. 0 = sin límite.',
         '<input type="number" name="limite_ip_hora" class="campo" style="max-width:140px" min="0" max="100000" value="' . e($a['limite_ip_hora']) . '">');
@@ -531,19 +578,62 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
 </form>
 
 <script>
-/* Paletas de color: al elegir una se rellenan los cuatro campos de color, de
-   modo que se ve el cambio antes de guardar. Si no hay JavaScript, el
-   servidor aplica igualmente los colores de la paleta al guardar. */
+/* ---------------------------------------------------------------------------
+   Paletas de color.
+   Al hacer clic en una paleta se aplica en el acto: se pintan las variables
+   del tema en la propia página (para verlo al momento) y se guarda por AJAX,
+   sin tener que pulsar "Guardar los ajustes".
+   --------------------------------------------------------------------------- */
 (function () {
   var paletas = document.querySelectorAll('.paleta input[type=radio]');
   if (!paletas.length) { return; }
 
-  function ponerColor(nombre, valor) {
-    var texto = document.querySelector('input[name="' + nombre + '"]');
+  var CSRF = document.querySelector('input[name=csrf]');
+  CSRF = CSRF ? CSRF.value : '';
+
+  /* Escribe un color en su campo de texto y en su selector de color. */
+  function ponerColor(campo, valor) {
+    if (!valor) { return; }
+    var texto = document.querySelector('input[name="' + campo + '"]');
     if (!texto) { return; }
-    texto.value = valor.toUpperCase();
+    texto.value = String(valor).toUpperCase();
     var selector = texto.parentNode.querySelector('input[type=color]');
     if (selector) { selector.value = valor; }
+  }
+
+  /* Pinta el tema en esta misma página, sin recargar. */
+  function pintar(c) {
+    var raiz = document.documentElement;
+    var mapa = {
+      '--cr-fondo': c.color_fondo, '--cr-fondo2': c.color_fondo2,
+      '--cr-texto': c.color_texto, '--cr-oro': c.color_oro,
+      '--cr-oro2': c.color_oro2, '--cr-neon': c.color_neon,
+      '--cr-fondo-claro': c.color_fondo_claro, '--cr-fondo2-claro': c.color_fondo2_claro,
+      '--cr-texto-claro': c.color_texto_claro, '--cr-oro-claro': c.color_oro_claro,
+      '--cr-oro2-claro': c.color_oro2_claro, '--cr-neon-claro': c.color_neon_claro
+    };
+    Object.keys(mapa).forEach(function (v) {
+      if (mapa[v]) { raiz.style.setProperty(v, mapa[v]); }
+    });
+    if (c.tema_por_defecto) {
+      raiz.setAttribute('data-tema', c.tema_por_defecto);
+      try { localStorage.setItem('kaptor-tema', c.tema_por_defecto); } catch (e) {}
+      var modo = document.querySelector('select[name=tema_por_defecto]');
+      if (modo) { modo.value = c.tema_por_defecto; }
+    }
+    Object.keys(c).forEach(function (campo) {
+      if (campo.indexOf('color_') === 0) { ponerColor(campo, c[campo]); }
+    });
+  }
+
+  function avisar(texto, error) {
+    var caja = document.getElementById('aviso-tema');
+    if (!caja) { return; }
+    caja.textContent = texto;
+    caja.className = 'aviso-tema' + (error ? ' error' : ' ok');
+    caja.hidden = false;
+    clearTimeout(avisar.t);
+    avisar.t = setTimeout(function () { caja.hidden = true; }, 3500);
   }
 
   Array.prototype.forEach.call(paletas, function (radio) {
@@ -554,21 +644,38 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
       var etiqueta = radio.closest('.paleta');
       if (etiqueta) { etiqueta.classList.add('elegida'); }
 
-      if (radio.value === 'personalizado' || !radio.dataset.fondo) { return; }
-      var mapa = {
-        color_fondo:'fondo', color_fondo2:'fondo2', color_texto:'texto',
-        color_oro:'oro', color_oro2:'oro2', color_neon:'neon',
-        color_fondo_claro:'fondoClaro', color_fondo2_claro:'fondo2Claro', color_texto_claro:'textoClaro',
-        color_oro_claro:'oroClaro', color_oro2_claro:'oro2Claro', color_neon_claro:'neonClaro'
-      };
-      Object.keys(mapa).forEach(function (campo) {
-        var valor = radio.dataset[mapa[campo]];
-        if (valor) { ponerColor(campo, valor); }
-      });
+      if (radio.value === 'personalizado') { return; }   // se ajusta a mano abajo
 
-      /* El selector de modo acompaña al tema elegido. */
-      var modo = document.querySelector('select[name=tema_por_defecto]');
-      if (modo && radio.dataset.modo) { modo.value = radio.dataset.modo; }
+      /* 1. Se ve el cambio al instante con los datos de la propia tarjeta. */
+      var d = radio.dataset;
+      pintar({
+        color_fondo: d.fondo, color_fondo2: d.fondo2, color_texto: d.texto,
+        color_oro: d.oro, color_oro2: d.oro2, color_neon: d.neon,
+        color_fondo_claro: d.fondoClaro, color_fondo2_claro: d.fondo2Claro,
+        color_texto_claro: d.textoClaro, color_oro_claro: d.oroClaro,
+        color_oro2_claro: d.oro2Claro, color_neon_claro: d.neonClaro,
+        tema_por_defecto: d.modo
+      });
+      avisar('Aplicando el tema…');
+
+      /* 2. Y se guarda sin salir de la página. */
+      var cuerpo = new FormData();
+      cuerpo.append('csrf', CSRF);
+      cuerpo.append('accion', 'aplicar_tema');
+      cuerpo.append('tema', radio.value);
+      fetch(window.location.pathname, {
+        method: 'POST', body: cuerpo, credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (!j.ok) { throw new Error(j.error || 'No se pudo guardar el tema.'); }
+          pintar(j.colores);
+          avisar('Tema «' + j.nombre + '» aplicado y guardado.');
+        })
+        .catch(function (err) {
+          avisar(err.message || 'No se pudo guardar el tema.', true);
+        });
     });
   });
 

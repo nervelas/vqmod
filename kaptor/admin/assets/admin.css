@@ -208,3 +208,17 @@
 /* En el panel la aurora se mantiene muy discreta: aquí manda la información. */
 .panel-cuerpo .aurora{opacity:.3;animation-duration:22s}
 html[data-tema="claro"] .panel-cuerpo .aurora{opacity:.16}
+
+/* Aviso de "tema aplicado", junto a la rejilla de paletas. */
+.aviso-tema{
+  margin:0 0 14px;padding:10px 14px;border-radius:10px;
+  font-size:.88rem;font-weight:600;
+  border:1px solid color-mix(in srgb,var(--oro) 40%,transparent);
+  background:color-mix(in srgb,var(--oro) 12%,transparent);
+  color:var(--texto);
+}
+.aviso-tema.error{
+  border-color:color-mix(in srgb,var(--error) 45%,transparent);
+  background:var(--error-fondo);color:var(--error);
+}
+.aviso-tema[hidden]{display:none}

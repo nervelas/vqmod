@@ -93,9 +93,6 @@ function cr_cabecera(array $opciones = []): void
         <a href="<?= e(cr_url('logout.php')) ?>">Salir</a>
       <?php else: ?>
         <a href="<?= e(cr_url('login.php')) ?>" class="<?= $activo === 'login' ? 'activo' : '' ?>">Entrar</a>
-        <?php if (Ajustes::activo('registro_publico', false)): ?>
-          <a href="<?= e(cr_url('registro.php')) ?>" class="<?= $activo === 'registro' ? 'activo' : '' ?>">Crear cuenta</a>
-        <?php endif; ?>
       <?php endif; ?>
     </nav>
 

@@ -204,7 +204,7 @@ admin_cabecera(['titulo' => 'Resumen', 'activo' => 'index.php']);
       <b><?= cr_numero($totalCorreos) ?></b> correos y <b><?= cr_numero($totalTelefonos) ?></b> números en total ·
       <b><?= cr_numero($totalUsuarios) ?></b> usuario<?= $totalUsuarios === 1 ? '' : 's' ?> activo<?= $totalUsuarios === 1 ? '' : 's' ?> ·
       acceso <?= Ajustes::activo('acceso_publico', false) ? 'libre' : 'solo con cuenta' ?> ·
-      registro <?= Ajustes::activo('registro_publico', false) ? 'abierto' : 'cerrado' ?>.
+      las cuentas se crean solo desde el panel.
     </p>
   </div>
 </div>

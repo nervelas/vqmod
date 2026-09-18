@@ -42,7 +42,10 @@ const CAMPOS_NUM = [
     'lote_envio'      => [1, 500],
 ];
 /** Colores en formato #RRGGBB. */
-const CAMPOS_COLOR = ['color_fondo', 'color_oro', 'color_oro2', 'color_neon', 'color_texto'];
+const CAMPOS_COLOR = [
+    'color_fondo', 'color_oro', 'color_oro2', 'color_neon', 'color_texto',
+    'color_fondo_claro', 'color_texto_claro', 'color_oro_claro', 'color_oro2_claro', 'color_neon_claro',
+];
 
 $mensaje = '';
 
@@ -129,6 +132,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $valor = trim((string) $_POST[$clave]);
         if (preg_match('/^#[0-9a-fA-F]{6}$/', $valor)) { $nuevos[$clave] = strtoupper($valor); }
     }
+    if (isset($_POST['tema_por_defecto'])) {
+        $nuevos['tema_por_defecto'] = (string) $_POST['tema_por_defecto'] === 'claro' ? 'claro' : 'oscuro';
+    }
+
     // Paleta elegida: si no es "personalizado", sus colores sustituyen a los
     // cuatro campos manuales, de modo que el cambio funciona incluso sin
     // JavaScript (los campos de color solo son un adelanto visual).
@@ -142,14 +149,22 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $nuevos['color_oro2']  = strtoupper($temas[$elegido]['oro2'] ?? $temas[$elegido]['oro']);
             $nuevos['color_neon']  = strtoupper($temas[$elegido]['neon']);
             $nuevos['color_texto'] = strtoupper($temas[$elegido]['texto']);
+            // Colores del modo claro de esa misma paleta.
+            $nuevos['color_fondo_claro'] = strtoupper($temas[$elegido]['fondo_claro'] ?? '#FBF8F0');
+            $nuevos['color_texto_claro'] = strtoupper($temas[$elegido]['texto_claro'] ?? '#171512');
+            $nuevos['color_oro_claro']   = strtoupper($temas[$elegido]['oro_claro']   ?? '#7E682F');
+            $nuevos['color_oro2_claro']  = strtoupper($temas[$elegido]['oro2_claro']  ?? '#8D7A40');
+            $nuevos['color_neon_claro']  = strtoupper($temas[$elegido]['neon_claro']  ?? '#3B7F55');
+            // Al cambiar de paleta se deja puesto el modo propio del tema
+            // (claro u oscuro). Si la paleta no cambia, manda el selector.
+            if ($elegido !== (string) Ajustes::obtener('tema_color', 'obsidiana')) {
+                $nuevos['tema_por_defecto'] = ($temas[$elegido]['modo'] ?? 'oscuro') === 'claro' ? 'claro' : 'oscuro';
+            }
         } else {
             $nuevos['tema_color'] = 'personalizado';
         }
     }
 
-    if (isset($_POST['tema_por_defecto'])) {
-        $nuevos['tema_por_defecto'] = (string) $_POST['tema_por_defecto'] === 'claro' ? 'claro' : 'oscuro';
-    }
 
     // Logo: subida o borrado
     if (!empty($_POST['borrar_logo'])) {
@@ -254,44 +269,66 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
   <!-- ====================== APARIENCIA ====================== -->
   <div class="hoja tarjeta" id="h-apariencia">
     <?php
-    $temas    = Ajustes::temas();
-    $elegido  = (string) ($a['tema_color'] ?? 'obsidiana');
+    $temas   = Ajustes::temas();
+    $elegido = (string) ($a['tema_color'] ?? 'obsidiana');
     if ($elegido !== 'personalizado' && !isset($temas[$elegido])) { $elegido = 'personalizado'; }
 
-    $tarjetas = '';
-    foreach ($temas as $clave => $t) {
-        $tarjetas .= '<label class="paleta' . ($elegido === $clave ? ' elegida' : '') . '">'
-            . '<input type="radio" name="tema_color" value="' . e($clave) . '"'
-            . ($elegido === $clave ? ' checked' : '')
-            . ' data-fondo="' . e($t['fondo']) . '" data-oro="' . e($t['oro']) . '" data-oro2="' . e($t['oro2'] ?? $t['oro']) . '"'
-            . ' data-neon="' . e($t['neon']) . '" data-texto="' . e($t['texto']) . '">'
-            . '<span class="paleta-muestra" style="background:' . e($t['fondo']) . '">'
-            .   '<i class="paleta-degradado" style="background:linear-gradient(135deg,'
-            .       e($t['oro']) . ',' . e($t['oro2'] ?? $t['oro']) . ')"></i>'
-            .   '<i style="background:' . e($t['neon']) . '"></i>'
-            .   '<b style="color:' . e($t['texto']) . '">Aa</b>'
+    /** Dibuja la tarjeta de una paleta, con su muestra en los dos modos. */
+    $tarjeta = static function (string $clave, array $t, bool $activa): string {
+        $datos = '';
+        foreach (['modo','fondo','texto','oro','oro2','neon','fondo_claro','texto_claro','oro_claro','oro2_claro','neon_claro'] as $c) {
+            $datos .= ' data-' . str_replace('_', '-', $c) . '="' . e((string) ($t[$c] ?? '')) . '"';
+        }
+        return '<label class="paleta' . ($activa ? ' elegida' : '') . '">'
+            . '<input type="radio" name="tema_color" value="' . e($clave) . '"' . ($activa ? ' checked' : '') . $datos . '>'
+            . '<span class="paleta-doble">'
+            .   '<span class="paleta-muestra" style="background:' . e((string) $t['fondo']) . '">'
+            .     '<i class="paleta-degradado" style="background:linear-gradient(135deg,'
+            .        e((string) $t['oro']) . ',' . e((string) ($t['oro2'] ?? $t['oro'])) . ')"></i>'
+            .     '<i style="background:' . e((string) $t['neon']) . '"></i>'
+            .     '<b style="color:' . e((string) $t['texto']) . '">Aa</b>'
+            .   '</span>'
+            .   '<span class="paleta-muestra" style="background:' . e((string) ($t['fondo_claro'] ?? '#FBF8F0')) . '">'
+            .     '<i class="paleta-degradado" style="background:linear-gradient(135deg,'
+            .        e((string) ($t['oro_claro'] ?? $t['oro'])) . ',' . e((string) ($t['oro2_claro'] ?? $t['oro'])) . ')"></i>'
+            .     '<i style="background:' . e((string) ($t['neon_claro'] ?? $t['neon'])) . '"></i>'
+            .     '<b style="color:' . e((string) ($t['texto_claro'] ?? '#171512')) . '">Aa</b>'
+            .   '</span>'
             . '</span>'
-            . '<span class="paleta-nombre">' . e($t['nombre']) . '</span>'
-            . '<span class="paleta-pista">' . e($t['pista']) . '</span>'
+            . '<span class="paleta-nombre">' . e((string) $t['nombre']) . '</span>'
+            . '<span class="paleta-pista">' . e((string) $t['pista']) . '</span>'
             . '</label>';
-    }
-    $tarjetas .= '<label class="paleta' . ($elegido === 'personalizado' ? ' elegida' : '') . '">'
-        . '<input type="radio" name="tema_color" value="personalizado"'
-        . ($elegido === 'personalizado' ? ' checked' : '') . '>'
-        . '<span class="paleta-muestra" style="background:' . e($a['color_fondo']) . '">'
-        .   '<i class="paleta-degradado" style="background:linear-gradient(135deg,'
-        .       e($a['color_oro']) . ',' . e($a['color_oro2'] ?? $a['color_oro']) . ')"></i>'
-        .   '<i style="background:' . e($a['color_neon']) . '"></i>'
-        .   '<b style="color:' . e($a['color_texto']) . '">Aa</b>'
-        . '</span>'
-        . '<span class="paleta-nombre">Personalizado</span>'
-        . '<span class="paleta-pista">Los colores que elijas tú abajo, a mano.</span>'
-        . '</label>';
+    };
 
     echo '<div class="ajuste ajuste-ancho"><div><div class="titulo">Paleta de color</div>'
-       . '<div class="pista">Elige una y guarda: se aplica a toda la web y al panel. '
-       . 'El modo claro se recalcula solo a partir de ella.</div></div></div>'
-       . '<div class="paletas">' . $tarjetas . '</div>';
+       . '<div class="pista">Elige una y guarda: se aplica a toda la web y al panel. Cada paleta trae '
+       . 'sus colores para el modo oscuro y para el modo claro; el visitante puede cambiar de modo con '
+       . 'el botón de la cabecera.</div></div></div>';
+
+    foreach ([['oscuro', 'Temas oscuros'], ['claro', 'Temas claros']] as [$modo, $titulo]) {
+        $grupo = array_filter($temas, static fn(array $t): bool => ($t['modo'] ?? 'oscuro') === $modo);
+        if (!$grupo) { continue; }
+        echo '<h3 class="paletas-titulo">' . e($titulo) . '</h3><div class="paletas">';
+        foreach ($grupo as $clave => $t) { echo $tarjeta((string) $clave, $t, $elegido === $clave); }
+        echo '</div>';
+    }
+
+    // Opción manual, con los colores que haya guardados ahora mismo.
+    echo '<h3 class="paletas-titulo">A tu medida</h3><div class="paletas">'
+       . $tarjeta('personalizado', [
+            'nombre' => 'Personalizado',
+            'pista'  => 'Los colores que elijas tú abajo, a mano.',
+            'modo'   => $a['tema_por_defecto'] ?? 'oscuro',
+            'fondo'  => $a['color_fondo'], 'texto' => $a['color_texto'],
+            'oro'    => $a['color_oro'],   'oro2'  => $a['color_oro2'] ?? $a['color_oro'],
+            'neon'   => $a['color_neon'],
+            'fondo_claro' => $a['color_fondo_claro'] ?? '#FBF8F0',
+            'texto_claro' => $a['color_texto_claro'] ?? '#171512',
+            'oro_claro'   => $a['color_oro_claro']   ?? $a['color_oro'],
+            'oro2_claro'  => $a['color_oro2_claro']  ?? $a['color_oro'],
+            'neon_claro'  => $a['color_neon_claro']  ?? $a['color_neon'],
+         ], $elegido === 'personalizado')
+       . '</div>';
 
     $colores = [
         'color_fondo' => ['Fondo obsidiana', 'Color base de todo el sitio en modo oscuro.'],
@@ -299,6 +336,11 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
         'color_oro2'  => ['Segundo color del degradado', 'Con él se forma el degradado de los botones y los acentos.'],
         'color_neon'  => ['Verde fósforo', 'Color secundario: barrido del radar, aciertos y confirmaciones.'],
         'color_texto' => ['Texto', 'Color del texto principal en modo oscuro.'],
+        'color_fondo_claro' => ['Fondo en modo claro', 'Color base del sitio cuando se ve en claro.'],
+        'color_texto_claro' => ['Texto en modo claro', 'Color del texto principal en modo claro.'],
+        'color_oro_claro'   => ['Acento en modo claro', 'Debe ser oscuro para leerse sobre el fondo claro.'],
+        'color_oro2_claro'  => ['Segundo color del degradado (claro)', 'El otro extremo del degradado en modo claro.'],
+        'color_neon_claro'  => ['Acento secundario en modo claro', 'Aciertos y confirmaciones cuando se ve en claro.'],
     ];
     foreach ($colores as $clave => [$titulo, $pista]) {
         fila($titulo, $pista,
@@ -487,12 +529,20 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
       var etiqueta = radio.closest('.paleta');
       if (etiqueta) { etiqueta.classList.add('elegida'); }
 
-      if (!radio.dataset.fondo) { return; }          // "Personalizado"
-      ponerColor('color_fondo', radio.dataset.fondo);
-      ponerColor('color_oro',   radio.dataset.oro);
-      ponerColor('color_oro2',  radio.dataset.oro2);
-      ponerColor('color_neon',  radio.dataset.neon);
-      ponerColor('color_texto', radio.dataset.texto);
+      if (radio.value === 'personalizado' || !radio.dataset.fondo) { return; }
+      var mapa = {
+        color_fondo:'fondo', color_texto:'texto', color_oro:'oro', color_oro2:'oro2', color_neon:'neon',
+        color_fondo_claro:'fondoClaro', color_texto_claro:'textoClaro',
+        color_oro_claro:'oroClaro', color_oro2_claro:'oro2Claro', color_neon_claro:'neonClaro'
+      };
+      Object.keys(mapa).forEach(function (campo) {
+        var valor = radio.dataset[mapa[campo]];
+        if (valor) { ponerColor(campo, valor); }
+      });
+
+      /* El selector de modo acompaña al tema elegido. */
+      var modo = document.querySelector('select[name=tema_por_defecto]');
+      if (modo && radio.dataset.modo) { modo.value = radio.dataset.modo; }
     });
   });
 

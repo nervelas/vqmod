@@ -170,8 +170,8 @@
 /* ------------------------------------------------- Paletas de color */
 .ajuste-ancho{display:block}
 .paletas{
-  display:grid;gap:14px;margin:6px 0 24px;
-  grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+  display:grid;gap:14px;margin:6px 0 20px;
+  grid-template-columns:repeat(auto-fill,minmax(215px,1fr));
 }
 .paleta{
   display:block;position:relative;cursor:pointer;border-radius:14px;padding:12px;
@@ -187,14 +187,21 @@
   content:'✓';position:absolute;top:10px;right:12px;
   font-size:.82rem;font-weight:700;color:var(--oro);
 }
-.paleta-muestra{
-  display:flex;align-items:center;gap:7px;
-  height:62px;border-radius:10px;padding:0 13px;margin-bottom:10px;
-  border:1px solid rgba(255,255,255,.08);
+.paletas-titulo{
+  font-family:'Fraunces',Georgia,serif;font-size:1rem;font-weight:600;
+  margin:22px 0 10px;color:var(--texto);
 }
-.paleta-muestra i{width:20px;height:20px;border-radius:50%;flex:none}
-.paleta-muestra i.paleta-degradado{width:38px;border-radius:999px}
-.paleta-muestra b{margin-left:auto;font-size:1.02rem;font-weight:700}
+.paletas-titulo:first-of-type{margin-top:6px}
+/* Cada tarjeta enseña la paleta en sus dos modos, uno junto al otro. */
+.paleta-doble{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px}
+.paleta-muestra{
+  display:flex;align-items:center;gap:6px;
+  height:58px;border-radius:9px;padding:0 10px;
+  border:1px solid rgba(128,128,128,.22);overflow:hidden;
+}
+.paleta-muestra i{width:16px;height:16px;border-radius:50%;flex:none}
+.paleta-muestra i.paleta-degradado{width:30px;border-radius:999px}
+.paleta-muestra b{margin-left:auto;font-size:.92rem;font-weight:700}
 .paleta-nombre{display:block;font-weight:600;font-size:.92rem;margin-bottom:3px}
 .paleta-pista{display:block;font-size:.78rem;color:var(--tenue);line-height:1.4}
 

@@ -21,6 +21,7 @@
   --obsidiana:var(--cr-fondo, #07080A);
   --oro:var(--cr-oro, #D8B36A);
   --oro-2:var(--cr-oro2, #F3D89A);
+  --btn-texto:#14100A;
   --neon:var(--cr-neon, #6EF3A5);
   --texto:var(--cr-texto, #EDEAE3);
 
@@ -57,23 +58,27 @@
 
 /* Modo claro: marfil calido, tinta profunda, oro mas saturado */
 [data-tema="claro"]{
-  --fondo:#F6F3EB;
-  --fondo-2:#FFFFFF;
-  --panel:rgba(255,255,255,.88);
-  --panel-solido:#FFFFFF;
-  --borde:rgba(20,22,26,.10);
-  --borde-fuerte:rgba(168,131,58,.38);
-  --texto:#16181C;
-  --suave:#5C6472;
-  --tenue:#5B6371;
-  /* En claro se oscurece el acento contra un neutro (no contra un marrón),
-     así cualquier paleta conserva su tono y mantiene el contraste AA. */
-  --oro-2:color-mix(in srgb, var(--cr-oro2, #F3D89A) 42%, #141210);
-  --oro:color-mix(in srgb, var(--cr-oro, #D8B36A) 42%, #141210);
-  --oro-claro:color-mix(in srgb, var(--cr-oro, #D8B36A) 36%, #141210);
-  --neon:color-mix(in srgb, var(--cr-neon, #6EF3A5) 42%, #141210);
-  --oro-sombra:color-mix(in srgb, var(--cr-oro, #D8B36A) 20%, transparent);
-  --neon-sombra:color-mix(in srgb, var(--cr-neon, #6EF3A5) 18%, transparent);
+  /* El fondo y el texto del modo claro también salen de la paleta elegida
+     en el panel, por eso hay temas claros y no solo oscuros. */
+  --fondo:var(--cr-fondo-claro, #F6F3EB);
+  --fondo-2:color-mix(in srgb, var(--cr-fondo-claro, #F6F3EB) 45%, #FFFFFF);
+  --panel:color-mix(in srgb, var(--cr-fondo-claro, #F6F3EB) 18%, rgba(255,255,255,.90));
+  --panel-solido:color-mix(in srgb, var(--cr-fondo-claro, #F6F3EB) 28%, #FFFFFF);
+  --borde:color-mix(in srgb, var(--cr-texto-claro, #16181C) 11%, transparent);
+  --borde-fuerte:color-mix(in srgb, var(--cr-oro-claro, #7E682F) 46%, transparent);
+  --texto:var(--cr-texto-claro, #16181C);
+  --suave:color-mix(in srgb, var(--cr-texto-claro, #16181C) 66%, #FFFFFF);
+  --tenue:color-mix(in srgb, var(--cr-texto-claro, #16181C) 68%, #FFFFFF);
+  /* Cada paleta trae ya sus acentos para el modo claro, comprobados uno a
+     uno por encima del contraste AA sobre su propio fondo. */
+  --oro:var(--cr-oro-claro, #7E682F);
+  --oro-2:var(--cr-oro2-claro, #8D7A40);
+  --oro-claro:var(--cr-oro-claro, #7E682F);
+  --neon:var(--cr-neon-claro, #3B7F55);
+  --oro-sombra:color-mix(in srgb, var(--cr-oro-claro, #7E682F) 20%, transparent);
+  --neon-sombra:color-mix(in srgb, var(--cr-neon-claro, #3B7F55) 18%, transparent);
+  /* Sobre acentos oscuros el texto del botón va en blanco. */
+  --btn-texto:#FFFFFF;
   --error:#C0392B;
   --error-fondo:rgba(192,57,43,.08);
   --wa:#0F8A46;
@@ -252,7 +257,7 @@ html[data-tema="claro"] .tema .icono-luna{display:block}
   position:relative;display:inline-flex;align-items:center;justify-content:center;gap:9px;
   padding:13px 24px;border:0;border-radius:var(--r-full);cursor:pointer;
   font-family:inherit;font-size:.96rem;font-weight:650;letter-spacing:.005em;
-  background:var(--btn-fondo);color:#1A1206;
+  background:var(--btn-fondo);color:var(--btn-texto,#14100A);
   transition:transform var(--transicion),box-shadow var(--transicion),filter var(--transicion);
   overflow:hidden;white-space:nowrap;text-decoration:none;
 }

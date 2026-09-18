@@ -45,6 +45,12 @@ final class Ajustes
             'color_oro'           => '#D8B36A',
             'color_oro2'          => '#F3D89A',   // segundo color del degradado
             'color_neon'          => '#6EF3A5',
+            // Colores del modo claro (los define también la paleta elegida)
+            'color_fondo_claro'   => '#FBF8F0',
+            'color_texto_claro'   => '#171512',
+            'color_oro_claro'     => '#7E682F',
+            'color_oro2_claro'    => '#8D7A40',
+            'color_neon_claro'    => '#3B7F55',
             'color_texto'         => '#EDEAE3',
             'tema_por_defecto'    => 'oscuro',
 

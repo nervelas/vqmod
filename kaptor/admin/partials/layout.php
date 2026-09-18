@@ -56,6 +56,11 @@ function admin_cabecera(array $opciones = []): void
     --cr-oro:<?= e(Ajustes::obtener('color_oro', '#D8B36A')) ?>;
     --cr-oro2:<?= e(Ajustes::obtener('color_oro2', '#F3D89A')) ?>;
     --cr-neon:<?= e(Ajustes::obtener('color_neon', '#6EF3A5')) ?>;
+    --cr-fondo-claro:<?= e(Ajustes::obtener('color_fondo_claro', '#FBF8F0')) ?>;
+    --cr-texto-claro:<?= e(Ajustes::obtener('color_texto_claro', '#171512')) ?>;
+    --cr-oro-claro:<?= e(Ajustes::obtener('color_oro_claro', '#7E682F')) ?>;
+    --cr-oro2-claro:<?= e(Ajustes::obtener('color_oro2_claro', '#8D7A40')) ?>;
+    --cr-neon-claro:<?= e(Ajustes::obtener('color_neon_claro', '#3B7F55')) ?>;
     --cr-texto:<?= e(Ajustes::obtener('color_texto', '#EDEAE3')) ?>;
   }
 </style>

@@ -40,20 +40,20 @@ final class Ajustes
             'aviso_legal'         => 'Usa Kaptor solo sobre sitios propios o con autorización. No envíes correo no solicitado.',
 
             // --- Paleta "Radar de lujo" ------------------------------------
-            'tema_color'          => 'onice',   // paleta elegida en el panel
-            'color_fondo'         => '#07070A',
-            'color_fondo2'        => '#161008',   // segundo tono del degradado del fondo
-            'color_oro'           => '#E8C275',
+            'tema_color'          => 'oro',   // paleta elegida en el panel
+            'color_fondo'         => '#06070A',
+            'color_fondo2'        => '#0D0F14',   // segundo tono del degradado del fondo
+            'color_oro'           => '#D8B36A',
             'color_oro2'          => '#B8873A',   // segundo color del degradado
-            'color_neon'          => '#5BE3A0',
+            'color_neon'          => '#F0C674',
             // Colores del modo claro (los define también la paleta elegida)
-            'color_fondo_claro'   => '#FCFAF4',
-            'color_fondo2_claro'  => '#F3EAD8',
-            'color_texto_claro'   => '#171308',
-            'color_oro_claro'     => '#856212',
-            'color_oro2_claro'    => '#856319',
-            'color_neon_claro'    => '#0F6E44',
-            'color_texto'         => '#EDEAE3',
+            'color_fondo_claro'   => '#FFFFFF',
+            'color_fondo2_claro'  => '#F4F6FA',
+            'color_texto_claro'   => '#111418',
+            'color_oro_claro'     => '#816D46',
+            'color_oro2_claro'    => '#8D6931',
+            'color_neon_claro'    => '#816D46',
+            'color_texto'         => '#F2F4F7',
             'tema_por_defecto'    => 'oscuro',
 
             // --- Motor de extracción ---------------------------------------

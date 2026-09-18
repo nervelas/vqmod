@@ -61,6 +61,22 @@ RedirectMatch 403 ^/(config|includes|storage|database)(/.*)?$
   </FilesMatch>
 </IfModule>
 
+# ------------------------------------------------- Sin caché del HTML
+#  Muchos hostings con cPanel llevan LiteSpeed Cache activado de fábrica y
+#  guardan el HTML ya generado. Como el color del tema viaja dentro del HTML,
+#  sin estas reglas los cambios del panel parecen no aplicarse hasta que la
+#  caché caduca. Estas líneas desactivan solo la caché de páginas.
+<IfModule LiteSpeed>
+  CacheDisable public /
+</IfModule>
+<IfModule mod_headers.c>
+  <FilesMatch "\.php$">
+    Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header always unset Pragma
+    Header always set Pragma "no-cache"
+  </FilesMatch>
+</IfModule>
+
 # ------------------------------------------------- Tipos MIME correctos
 <IfModule mod_mime.c>
   AddType font/woff2 .woff2

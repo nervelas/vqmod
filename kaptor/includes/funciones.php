@@ -123,7 +123,7 @@ function cr_ip(): string
 }
 
 /** Redirección segura (solo rutas internas). */
-function cr_redirigir(string $ruta): never
+function cr_redirigir(string $ruta): void
 {
     $destino = preg_match('~^https?://~i', $ruta) ? $ruta : cr_url($ruta);
     header('Location: ' . $destino);
@@ -131,7 +131,7 @@ function cr_redirigir(string $ruta): never
 }
 
 /** Devuelve una respuesta JSON y termina la ejecución. */
-function cr_json(array $datos, int $codigo = 200): never
+function cr_json(array $datos, int $codigo = 200): void
 {
     if (!headers_sent()) {
         http_response_code($codigo);

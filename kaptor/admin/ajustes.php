@@ -306,6 +306,15 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
             . '</label>';
     };
 
+    // Diagnóstico visible: si algo impide cargar las paletas, se ve aquí en
+    // lugar de quedarse en una lista vacía sin explicación.
+    if (!$temas) {
+        echo '<div class="aviso aviso-error" style="margin-bottom:16px"><span>'
+           . 'No se han podido cargar las paletas. Falta o no se puede leer el archivo '
+           . '<code>includes/datos/temas.php</code>. Vuelve a subirlo desde el ZIP.'
+           . '</span></div>';
+    }
+
     echo '<div class="ajuste ajuste-ancho"><div><div class="titulo">Paleta de color</div>'
        . '<div class="pista">Elige una y guarda: se aplica a toda la web y al panel. Cada paleta trae '
        . 'sus colores para el modo oscuro y para el modo claro; el visitante puede cambiar de modo con '
@@ -366,6 +375,12 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
         . '<option value="claro"' . ($a['tema_por_defecto'] === 'claro' ? ' selected' : '') . '>Claro</option>'
         . '</select>');
     ?>
+    <p class="suave pequeno" style="margin-top:16px">
+      <?= (int) count(Ajustes::temas()) ?> paletas cargadas ·
+      Kaptor <?= e(CR_VERSION) ?> · PHP <?= e(PHP_VERSION) ?> ·
+      paleta activa: <code><?= e((string) ($a['tema_color'] ?? '—')) ?></code>
+    </p>
+
     <div class="aviso aviso-info" style="margin-top:18px">
       <span>Los cuatro colores de arriba son los de la paleta elegida. Para retocarlos a mano marca
       <b>Personalizado</b> y guarda; mantén siempre un contraste alto entre el fondo y el texto.</span>

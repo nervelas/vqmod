@@ -171,7 +171,7 @@ final class Exportador
      * Envía el archivo al navegador con las cabeceras adecuadas.
      * Limpia cualquier salida previa para que el archivo no se corrompa.
      */
-    public static function descargar(string $contenido, string $nombre, string $mime): never
+    public static function descargar(string $contenido, string $nombre, string $mime): void
     {
         while (ob_get_level() > 0) { ob_end_clean(); }
 

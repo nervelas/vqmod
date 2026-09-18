@@ -40,8 +40,10 @@ final class Ajustes
             'aviso_legal'         => 'Usa Kaptor solo sobre sitios propios o con autorización. No envíes correo no solicitado.',
 
             // --- Paleta "Radar de lujo" ------------------------------------
+            'tema_color'          => 'obsidiana',   // paleta elegida en el panel
             'color_fondo'         => '#07080A',
             'color_oro'           => '#D8B36A',
+            'color_oro2'          => '#F3D89A',   // segundo color del degradado
             'color_neon'          => '#6EF3A5',
             'color_texto'         => '#EDEAE3',
             'tema_por_defecto'    => 'oscuro',
@@ -151,5 +153,20 @@ final class Ajustes
     {
         if (!self::$cargado) { self::cargar(); }
         return self::$valores;
+    }
+
+    /**
+     * Paletas de color disponibles (includes/datos/temas.php).
+     *
+     * @return array<string,array{nombre:string,pista:string,fondo:string,oro:string,neon:string,texto:string}>
+     */
+    public static function temas(): array
+    {
+        static $temas = null;
+        if ($temas === null) {
+            $ruta  = CR_RAIZ . '/includes/datos/temas.php';
+            $temas = is_file($ruta) ? (array) require $ruta : [];
+        }
+        return $temas;
     }
 }

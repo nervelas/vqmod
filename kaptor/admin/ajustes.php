@@ -42,7 +42,7 @@ const CAMPOS_NUM = [
     'lote_envio'      => [1, 500],
 ];
 /** Colores en formato #RRGGBB. */
-const CAMPOS_COLOR = ['color_fondo', 'color_oro', 'color_neon', 'color_texto'];
+const CAMPOS_COLOR = ['color_fondo', 'color_oro', 'color_oro2', 'color_neon', 'color_texto'];
 
 $mensaje = '';
 
@@ -129,6 +129,24 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $valor = trim((string) $_POST[$clave]);
         if (preg_match('/^#[0-9a-fA-F]{6}$/', $valor)) { $nuevos[$clave] = strtoupper($valor); }
     }
+    // Paleta elegida: si no es "personalizado", sus colores sustituyen a los
+    // cuatro campos manuales, de modo que el cambio funciona incluso sin
+    // JavaScript (los campos de color solo son un adelanto visual).
+    if (isset($_POST['tema_color'])) {
+        $elegido = (string) $_POST['tema_color'];
+        $temas   = Ajustes::temas();
+        if (isset($temas[$elegido])) {
+            $nuevos['tema_color']  = $elegido;
+            $nuevos['color_fondo'] = strtoupper($temas[$elegido]['fondo']);
+            $nuevos['color_oro']   = strtoupper($temas[$elegido]['oro']);
+            $nuevos['color_oro2']  = strtoupper($temas[$elegido]['oro2'] ?? $temas[$elegido]['oro']);
+            $nuevos['color_neon']  = strtoupper($temas[$elegido]['neon']);
+            $nuevos['color_texto'] = strtoupper($temas[$elegido]['texto']);
+        } else {
+            $nuevos['tema_color'] = 'personalizado';
+        }
+    }
+
     if (isset($_POST['tema_por_defecto'])) {
         $nuevos['tema_por_defecto'] = (string) $_POST['tema_por_defecto'] === 'claro' ? 'claro' : 'oscuro';
     }
@@ -236,9 +254,49 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
   <!-- ====================== APARIENCIA ====================== -->
   <div class="hoja tarjeta" id="h-apariencia">
     <?php
+    $temas    = Ajustes::temas();
+    $elegido  = (string) ($a['tema_color'] ?? 'obsidiana');
+    if ($elegido !== 'personalizado' && !isset($temas[$elegido])) { $elegido = 'personalizado'; }
+
+    $tarjetas = '';
+    foreach ($temas as $clave => $t) {
+        $tarjetas .= '<label class="paleta' . ($elegido === $clave ? ' elegida' : '') . '">'
+            . '<input type="radio" name="tema_color" value="' . e($clave) . '"'
+            . ($elegido === $clave ? ' checked' : '')
+            . ' data-fondo="' . e($t['fondo']) . '" data-oro="' . e($t['oro']) . '" data-oro2="' . e($t['oro2'] ?? $t['oro']) . '"'
+            . ' data-neon="' . e($t['neon']) . '" data-texto="' . e($t['texto']) . '">'
+            . '<span class="paleta-muestra" style="background:' . e($t['fondo']) . '">'
+            .   '<i class="paleta-degradado" style="background:linear-gradient(135deg,'
+            .       e($t['oro']) . ',' . e($t['oro2'] ?? $t['oro']) . ')"></i>'
+            .   '<i style="background:' . e($t['neon']) . '"></i>'
+            .   '<b style="color:' . e($t['texto']) . '">Aa</b>'
+            . '</span>'
+            . '<span class="paleta-nombre">' . e($t['nombre']) . '</span>'
+            . '<span class="paleta-pista">' . e($t['pista']) . '</span>'
+            . '</label>';
+    }
+    $tarjetas .= '<label class="paleta' . ($elegido === 'personalizado' ? ' elegida' : '') . '">'
+        . '<input type="radio" name="tema_color" value="personalizado"'
+        . ($elegido === 'personalizado' ? ' checked' : '') . '>'
+        . '<span class="paleta-muestra" style="background:' . e($a['color_fondo']) . '">'
+        .   '<i class="paleta-degradado" style="background:linear-gradient(135deg,'
+        .       e($a['color_oro']) . ',' . e($a['color_oro2'] ?? $a['color_oro']) . ')"></i>'
+        .   '<i style="background:' . e($a['color_neon']) . '"></i>'
+        .   '<b style="color:' . e($a['color_texto']) . '">Aa</b>'
+        . '</span>'
+        . '<span class="paleta-nombre">Personalizado</span>'
+        . '<span class="paleta-pista">Los colores que elijas tú abajo, a mano.</span>'
+        . '</label>';
+
+    echo '<div class="ajuste ajuste-ancho"><div><div class="titulo">Paleta de color</div>'
+       . '<div class="pista">Elige una y guarda: se aplica a toda la web y al panel. '
+       . 'El modo claro se recalcula solo a partir de ella.</div></div></div>'
+       . '<div class="paletas">' . $tarjetas . '</div>';
+
     $colores = [
         'color_fondo' => ['Fondo obsidiana', 'Color base de todo el sitio en modo oscuro.'],
         'color_oro'   => ['Oro champán', 'Color principal de acento: botones, títulos y detalles.'],
+        'color_oro2'  => ['Segundo color del degradado', 'Con él se forma el degradado de los botones y los acentos.'],
         'color_neon'  => ['Verde fósforo', 'Color secundario: barrido del radar, aciertos y confirmaciones.'],
         'color_texto' => ['Texto', 'Color del texto principal en modo oscuro.'],
     ];
@@ -257,7 +315,8 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
         . '</select>');
     ?>
     <div class="aviso aviso-info" style="margin-top:18px">
-      <span>Consejo: mantén un contraste alto entre el fondo y el texto para que la web siga siendo accesible.</span>
+      <span>Los cuatro colores de arriba son los de la paleta elegida. Para retocarlos a mano marca
+      <b>Personalizado</b> y guarda; mantén siempre un contraste alto entre el fondo y el texto.</span>
     </div>
   </div>
 
@@ -403,5 +462,48 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
     <button type="submit" class="btn">Guardar los ajustes</button>
   </div>
 </form>
+
+<script>
+/* Paletas de color: al elegir una se rellenan los cuatro campos de color, de
+   modo que se ve el cambio antes de guardar. Si no hay JavaScript, el
+   servidor aplica igualmente los colores de la paleta al guardar. */
+(function () {
+  var paletas = document.querySelectorAll('.paleta input[type=radio]');
+  if (!paletas.length) { return; }
+
+  function ponerColor(nombre, valor) {
+    var texto = document.querySelector('input[name="' + nombre + '"]');
+    if (!texto) { return; }
+    texto.value = valor.toUpperCase();
+    var selector = texto.parentNode.querySelector('input[type=color]');
+    if (selector) { selector.value = valor; }
+  }
+
+  Array.prototype.forEach.call(paletas, function (radio) {
+    radio.addEventListener('change', function () {
+      Array.prototype.forEach.call(document.querySelectorAll('.paleta'), function (l) {
+        l.classList.remove('elegida');
+      });
+      var etiqueta = radio.closest('.paleta');
+      if (etiqueta) { etiqueta.classList.add('elegida'); }
+
+      if (!radio.dataset.fondo) { return; }          // "Personalizado"
+      ponerColor('color_fondo', radio.dataset.fondo);
+      ponerColor('color_oro',   radio.dataset.oro);
+      ponerColor('color_oro2',  radio.dataset.oro2);
+      ponerColor('color_neon',  radio.dataset.neon);
+      ponerColor('color_texto', radio.dataset.texto);
+    });
+  });
+
+  /* Si se retoca un color a mano, la selección pasa a "Personalizado". */
+  Array.prototype.forEach.call(document.querySelectorAll('.color-fila input'), function (campo) {
+    campo.addEventListener('input', function () {
+      var propio = document.querySelector('.paleta input[value="personalizado"]');
+      if (propio && !propio.checked) { propio.checked = true; propio.dispatchEvent(new Event('change')); }
+    });
+  });
+})();
+</script>
 
 <?php admin_pie(); ?>

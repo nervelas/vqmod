@@ -20,6 +20,7 @@
 :root{
   --obsidiana:var(--cr-fondo, #07080A);
   --oro:var(--cr-oro, #D8B36A);
+  --oro-2:var(--cr-oro2, #F3D89A);
   --neon:var(--cr-neon, #6EF3A5);
   --texto:var(--cr-texto, #EDEAE3);
 
@@ -32,9 +33,11 @@
   --borde-fuerte:rgba(216,179,106,.32);
   --suave:#98A0AE;
   --tenue:#8C95A4;
-  --oro-claro:#F0DCAE;
-  --oro-sombra:rgba(216,179,106,.24);
-  --neon-sombra:rgba(110,243,165,.22);
+  /* Derivados del acento: se recalculan solos con la paleta elegida en el
+     panel, de modo que enlaces, halos y sombras acompañan al tema. */
+  --oro-claro:color-mix(in srgb, var(--cr-oro, #D8B36A) 60%, #FFFFFF);
+  --oro-sombra:color-mix(in srgb, var(--cr-oro, #D8B36A) 24%, transparent);
+  --neon-sombra:color-mix(in srgb, var(--cr-neon, #6EF3A5) 22%, transparent);
   --error:#FF7A7A;
   --error-fondo:rgba(255,122,122,.10);
   --wa:#4ADE80;                     /* verde de WhatsApp adaptado a la paleta */
@@ -63,11 +66,14 @@
   --texto:#16181C;
   --suave:#5C6472;
   --tenue:#5B6371;
-  --oro:color-mix(in srgb, var(--cr-oro, #D8B36A) 62%, #4A3208);
-  --oro-claro:color-mix(in srgb, var(--cr-oro, #D8B36A) 78%, #4A3208);
-  --neon:color-mix(in srgb, var(--cr-neon, #6EF3A5) 48%, #04381F);
-  --oro-sombra:rgba(168,131,58,.18);
-  --neon-sombra:rgba(14,155,91,.16);
+  /* En claro se oscurece el acento contra un neutro (no contra un marrón),
+     así cualquier paleta conserva su tono y mantiene el contraste AA. */
+  --oro-2:color-mix(in srgb, var(--cr-oro2, #F3D89A) 42%, #141210);
+  --oro:color-mix(in srgb, var(--cr-oro, #D8B36A) 42%, #141210);
+  --oro-claro:color-mix(in srgb, var(--cr-oro, #D8B36A) 36%, #141210);
+  --neon:color-mix(in srgb, var(--cr-neon, #6EF3A5) 42%, #141210);
+  --oro-sombra:color-mix(in srgb, var(--cr-oro, #D8B36A) 20%, transparent);
+  --neon-sombra:color-mix(in srgb, var(--cr-neon, #6EF3A5) 18%, transparent);
   --error:#C0392B;
   --error-fondo:rgba(192,57,43,.08);
   --wa:#0F8A46;
@@ -183,11 +189,15 @@ p{margin:0 0 1em}
 .recordar:hover span{color:var(--texto)}
 
 .marca-txt{font-family:'Fraunces',serif;font-size:1.18rem;font-weight:700;white-space:nowrap;text-transform:uppercase;letter-spacing:.09em}
+/* La inicial del logotipo lleva el degradado del tema. Si el navegador no
+   admite recortar el fondo al texto, se queda el acento sólido. */
 .marca-txt span{color:var(--oro)}
-/* En tema claro se oscurece el oro del logotipo para mantener el
-   contraste AA también cuando el texto se reduce en móvil. */
-html[data-tema="claro"] .marca-txt span{
-  color:color-mix(in srgb, var(--cr-oro, #D8B36A) 45%, #3A2605);
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  .marca-txt span{
+    background:linear-gradient(135deg,var(--oro),var(--oro-2));
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+  }
 }
 .barra nav{
   margin-left:auto;display:flex;align-items:center;gap:4px;
@@ -238,7 +248,7 @@ html[data-tema="claro"] .tema .icono-luna{display:block}
 
 /* Botones */
 .btn{
-  --btn-fondo:linear-gradient(135deg,var(--oro),var(--oro-claro));
+  --btn-fondo:linear-gradient(135deg,var(--oro) 0%,var(--oro-2) 100%);
   position:relative;display:inline-flex;align-items:center;justify-content:center;gap:9px;
   padding:13px 24px;border:0;border-radius:var(--r-full);cursor:pointer;
   font-family:inherit;font-size:.96rem;font-weight:650;letter-spacing:.005em;
@@ -342,6 +352,18 @@ select.campo{cursor:pointer}
   mask-image:radial-gradient(circle,#000 34%,rgba(0,0,0,.35) 58%,transparent 74%);
 }
 .radar img{width:100%;height:100%;opacity:.8}
+/* La malla del radar se repinta con el color de acento del tema usando la
+   propia imagen como máscara, de modo que la paleta elegida tiñe también el
+   fondo. Si el navegador no admite máscaras, se queda la imagen original. */
+@supports ((-webkit-mask-image:url('../img/radar-malla.png')) or (mask-image:url('../img/radar-malla.png'))){
+  .radar img{opacity:0}
+  .radar::before{
+    content:'';position:absolute;inset:0;
+    background:var(--oro);opacity:.8;
+    -webkit-mask:url('../img/radar-malla.png') center/contain no-repeat;
+    mask:url('../img/radar-malla.png') center/contain no-repeat;
+  }
+}
 html[data-tema="claro"] .radar{opacity:.5}
 .radar-barrido{
   position:absolute;inset:0;border-radius:50%;
@@ -638,4 +660,95 @@ tr.ping{animation:ping 1.25s cubic-bezier(.22,.61,.36,1) both}
   body::before,body::after,.barra,.pie,.exportar,.herramientas,.radar,.caja-radar{display:none !important}
   body{background:#fff;color:#000}
   table.tabla{min-width:0;font-size:11px}
+}
+
+/* ==========================================================================
+   11. Efectos de lujo
+   Todos se construyen sobre --oro / --oro-2 / --neon, así que acompañan
+   automáticamente a la paleta elegida en el panel. Las animaciones se
+   desactivan solas si el sistema pide movimiento reducido (sección 10).
+   ========================================================================== */
+
+/* --- Halos del fondo: una aurora que respira muy despacio --------------- */
+@keyframes aurora{
+  0%,100%{opacity:.52;transform:translate3d(0,0,0) scale(1)}
+  50%    {opacity:.72;transform:translate3d(0,-2.2%,0) scale(1.05)}
+}
+.aurora{
+  position:fixed;inset:-18% -12%;z-index:-2;pointer-events:none;
+  background:
+    radial-gradient(48% 42% at 22% 12%, color-mix(in srgb,var(--oro) 26%,transparent), transparent 70%),
+    radial-gradient(44% 40% at 82% 26%, color-mix(in srgb,var(--oro-2) 22%,transparent), transparent 70%),
+    radial-gradient(52% 46% at 62% 92%, color-mix(in srgb,var(--neon) 20%,transparent), transparent 72%);
+  filter:blur(34px);opacity:.62;
+  animation:aurora 16s ease-in-out infinite;
+  will-change:transform,opacity;
+}
+html[data-tema="claro"] .aurora{opacity:.3;filter:blur(40px)}
+
+/* --- Botón principal: degradado vivo, brillo y halo --------------------- */
+@keyframes degradadoVivo{
+  0%,100%{background-position:0% 50%}
+  50%    {background-position:100% 50%}
+}
+.btn{
+  background-size:220% 220%;
+  animation:degradadoVivo 9s ease infinite;
+  box-shadow:
+    0 10px 26px color-mix(in srgb,var(--oro) 26%,transparent),
+    inset 0 1px 0 rgba(255,255,255,.34);
+}
+.btn:hover{
+  box-shadow:
+    0 16px 40px color-mix(in srgb,var(--oro) 42%,transparent),
+    0 0 0 1px color-mix(in srgb,var(--oro-2) 55%,transparent),
+    inset 0 1px 0 rgba(255,255,255,.45);
+  filter:saturate(112%);
+}
+.btn-fantasma,.btn-neon{animation:none;background-size:auto}
+
+/* --- Caja principal: filo de luz en degradado --------------------------- */
+.caja-radar::before{
+  content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;
+  background:linear-gradient(135deg,
+    color-mix(in srgb,var(--oro) 70%,transparent),
+    color-mix(in srgb,var(--oro-2) 40%,transparent) 42%,
+    transparent 62%,
+    color-mix(in srgb,var(--neon) 40%,transparent));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+  opacity:.75;pointer-events:none;
+}
+.caja-radar:focus-within::before{opacity:1}
+
+/* --- Insignia del encabezado: filo y halo suaves ------------------------ */
+.insignia{
+  background:linear-gradient(135deg,
+    color-mix(in srgb,var(--oro) 14%,transparent),
+    color-mix(in srgb,var(--neon) 10%,transparent));
+  border-color:color-mix(in srgb,var(--oro) 34%,transparent);
+  box-shadow:0 6px 22px color-mix(in srgb,var(--oro) 14%,transparent);
+}
+
+/* --- Emblema: leve resplandor del color del tema ------------------------ */
+.marca-logo{filter:drop-shadow(0 0 7px color-mix(in srgb,var(--neon) 34%,transparent))}
+
+/* --- Barra de progreso: destello que recorre el avance ------------------ */
+@keyframes destello{to{background-position:200% 0}}
+.barra-progreso i{
+  background:
+    linear-gradient(90deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,.42) 50%,
+      rgba(255,255,255,0) 100%) 0 0/200% 100%,
+    linear-gradient(90deg,var(--oro),var(--oro-2),var(--neon));
+  box-shadow:0 0 16px color-mix(in srgb,var(--neon) 34%,transparent);
+}
+.escaneando .barra-progreso i{animation:destello 1.6s linear infinite}
+
+/* --- Filas de resultados: el correo se enciende al pasar el ratón ------- */
+.tabla tbody tr:hover .mono{
+  color:var(--oro-claro);
+  text-shadow:0 0 12px color-mix(in srgb,var(--oro) 34%,transparent);
 }

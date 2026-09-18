@@ -1,4 +1,4 @@
-# Kaptor 1.2
+# Kaptor 1.3
 
 Extractor profesional de **correos electrónicos y números de WhatsApp** a partir
 de una URL, con **módulo de campañas de correo** incluido: extraes, filtras y

@@ -54,6 +54,7 @@ function admin_cabecera(array $opciones = []): void
   :root{
     --cr-fondo:<?= e(Ajustes::obtener('color_fondo', '#07080A')) ?>;
     --cr-oro:<?= e(Ajustes::obtener('color_oro', '#D8B36A')) ?>;
+    --cr-oro2:<?= e(Ajustes::obtener('color_oro2', '#F3D89A')) ?>;
     --cr-neon:<?= e(Ajustes::obtener('color_neon', '#6EF3A5')) ?>;
     --cr-texto:<?= e(Ajustes::obtener('color_texto', '#EDEAE3')) ?>;
   }
@@ -61,11 +62,14 @@ function admin_cabecera(array $opciones = []): void
 </head>
 <body class="panel-cuerpo">
 
+<!-- Aurora de fondo: halos en los colores del tema. Solo decorativa. -->
+<div class="aurora" aria-hidden="true"></div>
+
 <div class="velo" id="velo"></div>
 
 <aside class="lateral" id="lateral">
   <a class="marca" href="<?= e(cr_url('admin/index.php')) ?>">
-    <img src="<?= e(cr_url('assets/img/logo.svg')) ?>" alt="" width="34" height="34" aria-hidden="true">
+    <?= cr_logo_svg(34) ?>
     <span class="marca-txt"><?= cr_logotipo($nombre) ?></span>
   </a>
 

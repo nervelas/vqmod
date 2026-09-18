@@ -31,8 +31,12 @@
   text-transform:uppercase;letter-spacing:.09em;white-space:nowrap;color:var(--texto);
 }
 .lateral .marca-txt span{color:var(--oro)}
-html[data-tema="claro"] .lateral .marca-txt span{
-  color:color-mix(in srgb, var(--cr-oro, #D8B36A) 45%, #3A2605);
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  .lateral .marca-txt span{
+    background:linear-gradient(135deg,var(--oro),var(--oro-2));
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+  }
 }
 .lateral-grupo{
   font-size:.68rem;letter-spacing:.11em;text-transform:uppercase;color:var(--tenue);
@@ -162,3 +166,38 @@ html[data-tema="claro"] .lateral .marca-txt span{
 }
 .estado-linea:last-child{border-bottom:0}
 .estado-linea em{font-style:normal;color:var(--suave);font-size:.79rem;display:block;margin-top:2px}
+
+/* ------------------------------------------------- Paletas de color */
+.ajuste-ancho{display:block}
+.paletas{
+  display:grid;gap:14px;margin:6px 0 24px;
+  grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+}
+.paleta{
+  display:block;position:relative;cursor:pointer;border-radius:14px;padding:12px;
+  border:1px solid var(--borde);background:var(--panel);
+  transition:border-color .16s ease,transform .16s ease,box-shadow .16s ease;
+}
+.paleta:hover{transform:translateY(-2px);border-color:var(--oro)}
+/* El radio se oculta a la vista pero sigue siendo accesible por teclado. */
+.paleta input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.paleta:focus-within{outline:2px solid var(--oro);outline-offset:3px}
+.paleta.elegida{border-color:var(--oro);box-shadow:0 0 0 2px var(--oro) inset}
+.paleta.elegida::after{
+  content:'✓';position:absolute;top:10px;right:12px;
+  font-size:.82rem;font-weight:700;color:var(--oro);
+}
+.paleta-muestra{
+  display:flex;align-items:center;gap:7px;
+  height:62px;border-radius:10px;padding:0 13px;margin-bottom:10px;
+  border:1px solid rgba(255,255,255,.08);
+}
+.paleta-muestra i{width:20px;height:20px;border-radius:50%;flex:none}
+.paleta-muestra i.paleta-degradado{width:38px;border-radius:999px}
+.paleta-muestra b{margin-left:auto;font-size:1.02rem;font-weight:700}
+.paleta-nombre{display:block;font-weight:600;font-size:.92rem;margin-bottom:3px}
+.paleta-pista{display:block;font-size:.78rem;color:var(--tenue);line-height:1.4}
+
+/* En el panel la aurora se mantiene muy discreta: aquí manda la información. */
+.panel-cuerpo .aurora{opacity:.3;animation-duration:22s}
+html[data-tema="claro"] .panel-cuerpo .aurora{opacity:.16}

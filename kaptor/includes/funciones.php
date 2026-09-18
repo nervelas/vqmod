@@ -35,6 +35,36 @@ function cr_es_https(): bool
 }
 
 /**
+ * Marca por defecto de Kaptor, en SVG incrustado.
+ *
+ * Va dentro del documento (no como <img>) para que pueda leer las variables
+ * de color del tema: así el emblema cambia con la paleta elegida en el panel.
+ */
+function cr_logo_svg(int $tamano = 36): string
+{
+    $t = (string) $tamano;
+    return '<svg class="marca-logo" width="' . $t . '" height="' . $t . '" viewBox="0 0 64 64" aria-hidden="true" focusable="false">'
+        . '<defs>'
+        . '<linearGradient id="kap-oro" x1="0" y1="0" x2="1" y2="1">'
+        .   '<stop offset="0" stop-color="var(--oro-claro)"/><stop offset="1" stop-color="var(--oro)"/>'
+        . '</linearGradient>'
+        . '<linearGradient id="kap-barrido" x1="0" y1="1" x2="1" y2="0">'
+        .   '<stop offset="0" stop-color="var(--neon)" stop-opacity="0"/>'
+        .   '<stop offset="1" stop-color="var(--neon)" stop-opacity=".55"/>'
+        . '</linearGradient>'
+        . '</defs>'
+        . '<circle cx="32" cy="32" r="29" fill="none" stroke="url(#kap-oro)" stroke-width="1.7" opacity=".62"/>'
+        . '<circle cx="32" cy="32" r="19.5" fill="none" stroke="url(#kap-oro)" stroke-width="1.2" opacity=".4"/>'
+        . '<circle cx="32" cy="32" r="10" fill="none" stroke="url(#kap-oro)" stroke-width="1" opacity=".28"/>'
+        . '<path d="M32 32 32 3A29 29 0 0 1 57.1 17.5Z" fill="url(#kap-barrido)"/>'
+        . '<path d="M32 32 57.1 17.5" stroke="var(--neon)" stroke-width="1.8" stroke-linecap="round"/>'
+        . '<path d="M20 26h24a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H20a2 2 0 0 1-2-2V28a2 2 0 0 1 2-2Z" fill="var(--fondo)" stroke="url(#kap-oro)" stroke-width="1.7"/>'
+        . '<path d="m18.6 27.4 12.2 8.1a2.2 2.2 0 0 0 2.4 0l12.2-8.1" fill="none" stroke="url(#kap-oro)" stroke-width="1.7" stroke-linecap="round"/>'
+        . '<circle cx="46.5" cy="21.5" r="3.4" fill="var(--neon)"/>'
+        . '</svg>';
+}
+
+/**
  * Devuelve el nombre del sitio listo para pintarlo como logotipo, con la
  * primera letra en un <span> para que se vea en el color de acento.
  * El texto ya va escapado: se imprime directamente.

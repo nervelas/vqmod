@@ -54,6 +54,7 @@ function cr_cabecera(array $opciones = []): void
   :root{
     --cr-fondo:<?= e(Ajustes::obtener('color_fondo', '#07080A')) ?>;
     --cr-oro:<?= e(Ajustes::obtener('color_oro', '#D8B36A')) ?>;
+    --cr-oro2:<?= e(Ajustes::obtener('color_oro2', '#F3D89A')) ?>;
     --cr-neon:<?= e(Ajustes::obtener('color_neon', '#6EF3A5')) ?>;
     --cr-texto:<?= e(Ajustes::obtener('color_texto', '#EDEAE3')) ?>;
   }
@@ -61,13 +62,16 @@ function cr_cabecera(array $opciones = []): void
 </head>
 <body class="<?= e($opciones['clase'] ?? '') ?>">
 
+<!-- Aurora de fondo: halos en los colores del tema. Solo decorativa. -->
+<div class="aurora" aria-hidden="true"></div>
+
 <header class="barra">
   <div class="contenedor barra-int">
     <a class="marca" href="<?= e(cr_url('index.php')) ?>">
       <?php if ($logo !== ''): ?>
         <img src="<?= e($logo) ?>" alt="<?= e($nombre) ?>" width="36" height="36">
       <?php else: ?>
-        <img src="<?= e(cr_url('assets/img/logo.svg')) ?>" alt="" width="36" height="36" aria-hidden="true">
+        <?= cr_logo_svg(36) ?>
       <?php endif; ?>
       <span class="marca-txt"><?= cr_logotipo($nombre) ?></span>
     </a>

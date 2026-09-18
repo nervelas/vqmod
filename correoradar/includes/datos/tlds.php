@@ -1,0 +1,82 @@
+<?php
+/**
+ * CorreoRadar - Lista blanca de dominios de primer nivel (TLD).
+ *
+ * Incluye todos los ccTLD ISO 3166-1 y los gTLD mas usados. Con el ajuste
+ * "TLD estricto" activado, cualquier correo cuya terminacion no este aqui se
+ * descarta como falso positivo (por ejemplo logo@2x.png o icono@sprite.svg).
+ *
+ * @return string[]
+ */
+declare(strict_types=1);
+
+return [
+    'ac', 'academy', 'accountants', 'ad', 'ads', 'adult', 'adventure', 'advisors', 'ae', 'aero',
+    'af', 'ag', 'agency', 'ai', 'al', 'alpha', 'alumni', 'am', 'ao', 'apartments', 'api', 'app',
+    'aq', 'ar', 'area', 'arpa', 'art', 'as', 'asia', 'associates', 'at', 'attorney', 'au', 'audio',
+    'audit', 'auto', 'aw', 'ax', 'az', 'ba', 'baby', 'bags', 'bakery', 'band', 'bank', 'bar',
+    'barber', 'bazaar', 'bb', 'bd', 'be', 'beach', 'beauty', 'beer', 'best', 'beta', 'bf', 'bg',
+    'bh', 'bi', 'bible', 'bike', 'bio', 'bitcoin', 'biz', 'bj', 'black', 'blockchain', 'blog',
+    'blue', 'bm', 'bn', 'bo', 'boutique', 'box', 'bq', 'br', 'bright', 'bs', 'bt', 'build',
+    'builders', 'business', 'bv', 'bw', 'by', 'bz', 'ca', 'cabins', 'cafe', 'camera', 'camp',
+    'capital', 'car', 'care', 'careers', 'cars', 'casa', 'cash', 'cat', 'catering', 'catholic',
+    'cc', 'cd', 'center', 'centre', 'cf', 'cg', 'ch', 'charity', 'chat', 'christmas', 'church',
+    'ci', 'circle', 'city', 'ck', 'cl', 'claims', 'classic', 'cleaning', 'clear', 'click',
+    'clinic', 'clothing', 'cloud', 'club', 'cm', 'cn', 'co', 'code', 'codes', 'coffee', 'college',
+    'com', 'community', 'company', 'computer', 'condos', 'construction', 'consulting',
+    'contractors', 'cool', 'coop', 'country', 'courier', 'courses', 'cr', 'creative', 'credit',
+    'crown', 'cruise', 'crypto', 'cu', 'cube', 'custom', 'cv', 'cw', 'cx', 'cy', 'cz', 'dad',
+    'dairy', 'dance', 'dark', 'data', 'dating', 'de', 'deals', 'degree', 'deli', 'delivery',
+    'delta', 'demo', 'dental', 'dentist', 'desert', 'design', 'designs', 'dev', 'diet', 'digital',
+    'direct', 'directory', 'discount', 'district', 'dj', 'dk', 'dm', 'do', 'doctor', 'domains',
+    'downtown', 'duo', 'dz', 'earth', 'easy', 'ec', 'eco', 'edu', 'education', 'ee', 'eg', 'eh',
+    'electric', 'elite', 'email', 'energy', 'engineer', 'engineering', 'enterprises', 'equipment',
+    'er', 'es', 'estate', 'et', 'eu', 'event', 'events', 'exchange', 'expert', 'expo', 'export',
+    'express', 'factory', 'fair', 'faith', 'family', 'farm', 'fashion', 'fast', 'fi', 'film',
+    'finance', 'financial', 'fire', 'first', 'fish', 'fishing', 'fit', 'fitness', 'fj', 'fk',
+    'flame', 'flights', 'flow', 'flowers', 'fm', 'fo', 'food', 'football', 'forest', 'forex',
+    'forum', 'foundation', 'fr', 'free', 'fresh', 'fun', 'fund', 'future', 'ga', 'gallery', 'game',
+    'games', 'gamma', 'garden', 'gb', 'gd', 'ge', 'gf', 'gg', 'gh', 'gi', 'gift', 'gifts', 'git',
+    'gives', 'giving', 'gl', 'global', 'gm', 'gmbh', 'gn', 'gold', 'golf', 'gov', 'gp', 'gq', 'gr',
+    'graphics', 'green', 'group', 'gs', 'gt', 'gu', 'guide', 'guru', 'gw', 'gy', 'gym', 'hair',
+    'health', 'help', 'hexa', 'history', 'hk', 'hm', 'hn', 'holdings', 'holiday', 'home',
+    'hospital', 'host', 'hosting', 'hotel', 'hotels', 'house', 'hr', 'ht', 'hu', 'hunting',
+    'hyper', 'ice', 'id', 'ie', 'il', 'im', 'import', 'in', 'inc', 'industries', 'info', 'instant',
+    'institute', 'insurance', 'int', 'international', 'invest', 'investments', 'io', 'iq', 'ir',
+    'is', 'island', 'it', 'je', 'jewelry', 'jm', 'jo', 'jobs', 'jp', 'ke', 'kg', 'kh', 'ki',
+    'kids', 'kitchen', 'km', 'kn', 'kp', 'kr', 'kw', 'ky', 'kz', 'la', 'lab', 'lambda', 'land',
+    'landscaping', 'last', 'laundry', 'law', 'lawn', 'lawyer', 'lb', 'lc', 'lease', 'legacy',
+    'legal', 'li', 'life', 'light', 'lighting', 'limo', 'line', 'link', 'linux', 'live', 'lk',
+    'llc', 'loan', 'loans', 'lodge', 'love', 'lr', 'ls', 'lt', 'ltd', 'lu', 'luxury', 'lv', 'ly',
+    'ma', 'mac', 'macro', 'mail', 'makeup', 'management', 'market', 'marketing', 'markets', 'max',
+    'mc', 'md', 'me', 'meat', 'med', 'media', 'mega', 'metro', 'mg', 'mh', 'micro', 'mil', 'mini',
+    'mk', 'ml', 'mm', 'mn', 'mo', 'mobi', 'mobile', 'modern', 'mom', 'money', 'mono', 'moon',
+    'mortgage', 'mosque', 'mountain', 'movie', 'moving', 'mp', 'mq', 'mr', 'ms', 'mt', 'mu',
+    'multi', 'museum', 'music', 'mv', 'mw', 'mx', 'my', 'mz', 'na', 'name', 'nano', 'nation',
+    'natural', 'nc', 'ne', 'net', 'network', 'new', 'news', 'next', 'nf', 'nft', 'ng', 'ngo', 'ni',
+    'ninja', 'nl', 'no', 'now', 'np', 'nr', 'nu', 'nurse', 'nz', 'ocean', 'om', 'omega', 'one',
+    'ong', 'online', 'open', 'ops', 'org', 'organic', 'original', 'outdoors', 'pa', 'page',
+    'partners', 'party', 'past', 'pc', 'pe', 'penta', 'personal', 'pet', 'pets', 'pf', 'pg', 'ph',
+    'pharmacy', 'phone', 'photo', 'photography', 'photos', 'pics', 'picture', 'pink', 'pizza',
+    'pk', 'pl', 'place', 'plants', 'play', 'plumbing', 'plus', 'pm', 'pn', 'point', 'poly', 'post',
+    'pr', 'premium', 'press', 'prime', 'private', 'pro', 'promo', 'properties', 'property', 'ps',
+    'pt', 'public', 'pulse', 'pure', 'pw', 'py', 'qa', 'quad', 'quick', 'radio', 'rain', 'rapid',
+    're', 'realty', 'recipes', 'recovery', 'red', 'region', 'rehab', 'rent', 'rentals', 'repair',
+    'research', 'resort', 'restaurant', 'retro', 'review', 'reviews', 'river', 'ro', 'rocks',
+    'royal', 'rs', 'ru', 'run', 'rw', 'sa', 'sale', 'salon', 'sarl', 'sb', 'sc', 'school',
+    'science', 'sd', 'sdk', 'se', 'server', 'services', 'sg', 'sh', 'shadow', 'shoes', 'shop',
+    'shopping', 'show', 'si', 'sigma', 'silver', 'simple', 'singles', 'site', 'sj', 'sk', 'ski',
+    'skin', 'sky', 'sl', 'sm', 'smart', 'sn', 'snow', 'so', 'soccer', 'social', 'software',
+    'solar', 'solutions', 'spa', 'space', 'spark', 'special', 'sphere', 'sport', 'sports', 'spot',
+    'square', 'sr', 'srl', 'ss', 'st', 'star', 'state', 'storage', 'store', 'storm', 'stream',
+    'studio', 'study', 'style', 'su', 'sun', 'super', 'supplies', 'supply', 'support', 'surf',
+    'surgery', 'sv', 'sx', 'sy', 'systems', 'sz', 'tablet', 'tattoo', 'tax', 'taxi', 'tc', 'td',
+    'team', 'tech', 'technology', 'tel', 'temple', 'tennis', 'test', 'tf', 'tg', 'th', 'theta',
+    'tickets', 'tiket', 'tips', 'tj', 'tk', 'tl', 'tm', 'tn', 'to', 'today', 'token', 'tomorrow',
+    'tools', 'top', 'tour', 'tours', 'town', 'toys', 'tr', 'trade', 'trading', 'training',
+    'travel', 'trees', 'triangle', 'trio', 'tt', 'tv', 'tw', 'tz', 'ua', 'ug', 'uk', 'ultra',
+    'unique', 'university', 'urban', 'us', 'uy', 'uz', 'va', 'vacations', 'vc', 've', 'vegan',
+    'ventures', 'vet', 'vg', 'vi', 'video', 'village', 'villas', 'vintage', 'vip', 'vn', 'vu',
+    'watch', 'wave', 'web', 'website', 'wedding', 'wf', 'white', 'wiki', 'wind', 'windows', 'wine',
+    'work', 'works', 'world', 'ws', 'xxx', 'xyz', 'ye', 'yoga', 'yt', 'za', 'zm', 'zone', 'zw'
+];

@@ -8,3 +8,11 @@
 *.log
 .DS_Store
 /fuentedevida-web.zip
+
+# CorreoRadar
+/correoradar/config/config.php
+/correoradar/storage/instalado.lock
+/correoradar/storage/logs/*
+/correoradar/storage/cache/*
+/correoradar/storage/sessions/*
+/correoradar/assets/subidas/logo-*

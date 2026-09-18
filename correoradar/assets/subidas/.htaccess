@@ -1,0 +1,7 @@
+# Carpeta de archivos subidos desde el panel (logo, favicon).
+# Se sirven como imágenes, pero NUNCA se ejecuta código en ella.
+php_flag engine off
+AddType text/plain .php .phtml .php3 .php4 .php5 .php7 .php8 .pl .py .cgi .asp .sh
+<FilesMatch "\.(php|phtml|php[0-9]|pl|py|cgi|asp|sh|htaccess)$">
+  Require all denied
+</FilesMatch>

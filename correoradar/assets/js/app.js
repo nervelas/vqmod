@@ -1,0 +1,709 @@
+/* ==========================================================================
+   CorreoRadar · JavaScript de la portada
+   Sin librerias externas. Se encarga de:
+     · modo claro / oscuro con memoria
+     · lanzar el escaneo y seguir su progreso en tiempo real (AJAX por pasos)
+     · pintar los correos con efecto "ping" segun van apareciendo
+     · buscador, filtro por dominio, seleccion, copiar y exportar
+   ========================================================================== */
+(function () {
+  'use strict';
+
+  var CR = window.CR || {};
+  var $  = function (sel, ctx) { return (ctx || document).querySelector(sel); };
+  var $$ = function (sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); };
+
+  /* ------------------------------------------------------ 1. Tema claro/oscuro */
+  var TEMA_CLAVE = 'correoradar-tema';
+
+  function aplicarTema(tema) {
+    document.documentElement.setAttribute('data-tema', tema);
+    try { localStorage.setItem(TEMA_CLAVE, tema); } catch (e) { /* modo privado */ }
+    var btn = $('.tema');
+    if (btn) {
+      btn.setAttribute('aria-label', tema === 'oscuro' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro');
+    }
+  }
+
+  function iniciarTema() {
+    var guardado = null;
+    try { guardado = localStorage.getItem(TEMA_CLAVE); } catch (e) { /* nada */ }
+    if (!guardado) {
+      guardado = (CR.temaPorDefecto === 'claro') ? 'claro' : 'oscuro';
+      if (window.matchMedia && !CR.temaForzado) {
+        if (window.matchMedia('(prefers-color-scheme: light)').matches && CR.temaPorDefecto !== 'oscuro') {
+          guardado = 'claro';
+        }
+      }
+    }
+    aplicarTema(guardado);
+
+    var btn = $('.tema');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        aplicarTema(document.documentElement.getAttribute('data-tema') === 'oscuro' ? 'claro' : 'oscuro');
+      });
+    }
+  }
+
+  /* ------------------------------------------------------------- 2. Utilidades */
+  function esc(t) {
+    return String(t == null ? '' : t)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  }
+
+  var brindisTiempo = null;
+  function brindis(mensaje, tipo) {
+    var caja = $('#brindis');
+    if (!caja) { return; }
+    caja.querySelector('span').textContent = mensaje;
+    caja.classList.toggle('error', tipo === 'error');
+    caja.classList.add('visible');
+    clearTimeout(brindisTiempo);
+    brindisTiempo = setTimeout(function () { caja.classList.remove('visible'); }, 2800);
+  }
+
+  function api(datos) {
+    return fetch(CR.apiEscaneo, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CR.csrf },
+      body: JSON.stringify(Object.assign({ csrf: CR.csrf }, datos)),
+      credentials: 'same-origin'
+    }).then(function (r) {
+      return r.json().catch(function () {
+        throw new Error('El servidor devolvió una respuesta inesperada.');
+      }).then(function (j) {
+        if (!r.ok && !j.error) { throw new Error('Error ' + r.status); }
+        return j;
+      });
+    });
+  }
+
+  function recorta(txt, max) {
+    txt = String(txt || '');
+    return txt.length > max ? txt.slice(0, max - 1) + '…' : txt;
+  }
+
+  /* ------------------------------------------- 3. Estado del escaneo en curso */
+  var estado = {
+    id: 0,
+    token: '',
+    host: '',
+    corriendo: false,
+    cancelado: false,
+    correos: [],                      // lista completa de correos
+    telefonos: [],                    // lista completa de telefonos y WhatsApp
+    vistos: Object.create(null),
+    vistosTel: Object.create(null)
+  };
+
+  /* --------------------------------------------------------- 4. Lanzar escaneo */
+  function iniciarEscaneo(e) {
+    if (e) { e.preventDefault(); }
+    if (estado.corriendo) { return; }
+
+    var campo = $('#url');
+    var url = (campo.value || '').trim();
+    if (!url) { campo.focus(); brindis('Pega primero el enlace de una web.', 'error'); return; }
+
+    var profundo = $('#profundo') ? $('#profundo').checked : false;
+
+    reiniciarPanel();
+    estado.corriendo = true;
+    estado.cancelado = false;
+    document.body.classList.add('escaneando');
+    $('#btn-extraer').classList.add('cargando');
+    $('#btn-extraer').setAttribute('aria-busy', 'true');
+
+    api({ accion: 'iniciar', url: url, profundo: profundo })
+      .then(function (r) {
+        if (!r.ok) {
+          if (r.requiere_login && CR.urlLogin) {
+            window.location.href = CR.urlLogin;
+            return;
+          }
+          throw new Error(r.error || 'No se pudo iniciar la extracción.');
+        }
+        estado.id    = r.escaneo_id;
+        estado.token = r.token;
+        estado.host  = r.host;
+
+        $('#panel-progreso').classList.remove('oculto');
+        $('#destino').textContent = r.url;
+        if (r.aviso_js) { mostrarAvisoJs(r.aviso_js); }
+
+        $('#panel-progreso').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        return siguientePaso();
+      })
+      .catch(function (err) {
+        terminar();
+        mostrarError(err.message || 'Se produjo un error inesperado.');
+      });
+  }
+
+  /* ------------------------------------------------- 5. Bucle de pasos (AJAX) */
+  function siguientePaso() {
+    if (estado.cancelado) { return Promise.resolve(); }
+
+    return api({ accion: 'paso', escaneo_id: estado.id })
+      .then(function (p) {
+        if (!p.ok) { throw new Error(p.error || 'Error durante el escaneo.'); }
+
+        pintarProgreso(p);
+        if (p.nuevos && p.nuevos.length) { anadirCorreos(p.nuevos); }
+        if (p.nuevos_tel && p.nuevos_tel.length) { anadirTelefonos(p.nuevos_tel); }
+
+        if (p.terminado) { return cargarResultado(); }
+        return siguientePaso();
+      })
+      .catch(function (err) {
+        terminar();
+        mostrarError(err.message || 'Se interrumpió el escaneo.');
+      });
+  }
+
+  function pintarProgreso(p) {
+    var barra = $('#barra i');
+    if (barra) { barra.style.width = Math.max(3, p.porcentaje) + '%'; }
+    $('#c-revisadas').textContent  = p.revisadas;
+    $('#c-correos').textContent    = p.correos;
+    $('#c-pendientes').textContent = p.pendientes;
+    if ($('#c-whatsapp')) { $('#c-whatsapp').textContent = p.whatsapps || 0; }
+    var urlActual = $('#url-actual');
+    if (urlActual) {
+      urlActual.textContent = p.url_actual ? 'Analizando ' + recorta(p.url_actual, 90) : 'Preparando el radar…';
+    }
+  }
+
+  /* ----------------------------------------------- 6. Pintado de los resultados */
+  function anadirCorreos(lista) {
+    var cuerpo = $('#tabla-cuerpo');
+    if (!cuerpo) { return; }
+
+    $('#panel-resultados').classList.remove('oculto');
+    $('#sin-resultados').classList.add('oculto');
+
+    lista.forEach(function (c) {
+      if (estado.vistos[c.correo]) { return; }
+      estado.vistos[c.correo] = true;
+      estado.correos.push(c);
+      cuerpo.appendChild(crearFila(c, true));
+    });
+
+    actualizarFiltroDominios();
+    actualizarResumen();
+  }
+
+  function crearFila(c, conPing) {
+    var tr = document.createElement('tr');
+    tr.className = conPing ? 'ping' : '';
+    tr.dataset.correo  = c.correo;
+    tr.dataset.dominio = c.dominio;
+    tr.dataset.tipo    = c.tipo || 'personal';
+    tr.dataset.busca   = (c.correo + ' ' + c.dominio + ' ' + (c.metodo || '') + ' ' + (c.url || '')).toLowerCase();
+
+    var mx = c.mx === null || typeof c.mx === 'undefined'
+      ? '<span class="chip chip-gris">sin verificar</span>'
+      : (c.mx ? '<span class="chip chip-neon">MX ok</span>' : '<span class="chip chip-rojo">sin MX</span>');
+
+    var metodos = String(c.metodo || '').split(',').filter(Boolean).map(function (m) {
+      return '<span class="chip chip-gris">' + esc(m) + '</span>';
+    }).join('');
+
+    var conf = parseInt(c.confianza, 10) || 0;
+
+    tr.innerHTML =
+      '<td class="col-check"><input type="checkbox" class="sel" aria-label="Seleccionar ' + esc(c.correo) + '"></td>' +
+      '<td><span class="celda-correo">' + esc(c.correo) + '</span></td>' +
+      '<td>' + esc(c.dominio) + '</td>' +
+      '<td><span class="chip ' + (c.tipo === 'generico' ? '' : 'chip-neon') + '">' +
+          (c.tipo === 'generico' ? 'Genérico' : 'Personal') + '</span></td>' +
+      '<td><div class="confianza"><span class="pista"><i style="width:' + conf + '%"></i></span><b>' + conf + '</b></div></td>' +
+      '<td>' + mx + '</td>' +
+      '<td><div class="celda-metodos">' + metodos + '</div></td>' +
+      '<td class="celda-url"><a href="' + esc(c.url) + '" target="_blank" rel="noopener nofollow">' + esc(recorta(c.url, 70)) + '</a></td>';
+
+    tr.querySelector('.sel').addEventListener('change', function () {
+      tr.classList.toggle('marcada', this.checked);
+      actualizarResumen();
+    });
+    return tr;
+  }
+
+  /* ------------------------------ Telefonos y WhatsApp ------------------- */
+  function anadirTelefonos(lista) {
+    var cuerpo = $('#tabla-tel');
+    if (!cuerpo) { return; }
+
+    $('#panel-resultados').classList.remove('oculto');
+    $('#sin-telefonos').classList.add('oculto');
+
+    lista.forEach(function (t) {
+      if (estado.vistosTel[t.numero]) { return; }
+      estado.vistosTel[t.numero] = true;
+      estado.telefonos.push(t);
+      cuerpo.appendChild(crearFilaTel(t, true));
+    });
+
+    actualizarFiltroPaises();
+    actualizarResumen();
+  }
+
+  function crearFilaTel(t, conPing) {
+    var tr = document.createElement('tr');
+    tr.className = conPing ? 'ping' : '';
+    tr.dataset.numero = t.numero;
+    tr.dataset.pais   = t.pais || '';
+    tr.dataset.wa     = t.whatsapp ? 'si' : 'no';
+    tr.dataset.busca  = (t.numero + ' ' + t.formato + ' ' + (t.pais || '') + ' ' +
+                         (t.metodo || '') + ' ' + (t.url || '')).toLowerCase();
+
+    var metodos = String(t.metodo || '').split(',').filter(Boolean).map(function (m) {
+      return '<span class="chip chip-gris">' + esc(m) + '</span>';
+    }).join('');
+
+    var conf = parseInt(t.confianza, 10) || 0;
+    var tipo = t.whatsapp
+      ? '<span class="chip chip-wa">WhatsApp</span>'
+      : '<span class="chip chip-gris">Teléfono</span>';
+
+    tr.innerHTML =
+      '<td class="col-check"><input type="checkbox" class="sel-tel" aria-label="Seleccionar ' + esc(t.numero) + '"></td>' +
+      '<td><span class="celda-correo">' + esc(t.formato || t.numero) + '</span></td>' +
+      '<td>' + esc(t.pais || '—') + '</td>' +
+      '<td>' + tipo + '</td>' +
+      '<td><div class="confianza"><span class="pista"><i style="width:' + conf + '%"></i></span><b>' + conf + '</b></div></td>' +
+      '<td><div class="celda-metodos">' + metodos + '</div></td>' +
+      '<td class="celda-url"><a href="' + esc(t.url) + '" target="_blank" rel="noopener nofollow">' + esc(recorta(t.url, 52)) + '</a></td>' +
+      '<td><a class="btn btn-neon btn-peq" href="' + esc(t.enlace_wa) + '" target="_blank" rel="noopener nofollow">Chat</a></td>';
+
+    tr.querySelector('.sel-tel').addEventListener('change', function () {
+      tr.classList.toggle('marcada', this.checked);
+      actualizarResumen();
+    });
+    return tr;
+  }
+
+  /* Carga la tabla definitiva (ordenada por confianza) al terminar */
+  function cargarResultado() {
+    return api({ accion: 'resultado', escaneo_id: estado.id })
+      .then(function (r) {
+        terminar();
+        if (!r.ok) { throw new Error(r.error || 'No se pudieron cargar los resultados.'); }
+
+        estado.correos   = r.correos || [];
+        estado.telefonos = r.telefonos || [];
+        estado.vistos    = Object.create(null);
+        estado.vistosTel = Object.create(null);
+
+        var cuerpo = $('#tabla-cuerpo');
+        cuerpo.innerHTML = '';
+        estado.correos.forEach(function (c) {
+          estado.vistos[c.correo] = true;
+          cuerpo.appendChild(crearFila(c, false));
+        });
+
+        var cuerpoTel = $('#tabla-tel');
+        if (cuerpoTel) {
+          cuerpoTel.innerHTML = '';
+          estado.telefonos.forEach(function (t) {
+            estado.vistosTel[t.numero] = true;
+            cuerpoTel.appendChild(crearFilaTel(t, false));
+          });
+        }
+
+        $('#panel-resultados').classList.remove('oculto');
+        $('#sin-resultados').classList.toggle('oculto', estado.correos.length > 0);
+        $('#sin-telefonos').classList.toggle('oculto', estado.telefonos.length > 0);
+
+        pintarExtras(r.enlaces_wa, r.redes);
+        actualizarFiltroDominios();
+        actualizarFiltroPaises();
+        actualizarResumen();
+        aplicarFiltros();
+        aplicarFiltrosTel();
+
+        $('#barra i').style.width = '100%';
+        $('#url-actual').textContent = 'Escaneo completado · ' + r.revisadas + ' página(s) analizada(s)';
+        $('#panel-resultados').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      })
+      .catch(function (err) {
+        terminar();
+        mostrarError(err.message);
+      });
+  }
+
+  /**
+   * Pinta los enlaces de WhatsApp sin numero (enlaces cortos y grupos) y los
+   * perfiles sociales encontrados durante el escaneo.
+   */
+  function pintarExtras(enlacesWa, redes) {
+    var cajaWa = $('#caja-enlaces-wa');
+    if (cajaWa) {
+      if (enlacesWa && enlacesWa.length) {
+        cajaWa.classList.remove('oculto');
+        $('#lista-enlaces-wa').innerHTML = enlacesWa.map(function (u) {
+          var nombre = u.indexOf('chat.whatsapp.com') !== -1 ? 'Grupo de WhatsApp' : 'Enlace corto';
+          return '<li><a href="' + esc(u) + '" target="_blank" rel="noopener nofollow">' + nombre + ' · ' +
+                 esc(recorta(u.replace(/^https?:\/\//, ''), 38)) + '</a></li>';
+        }).join('');
+      } else {
+        cajaWa.classList.add('oculto');
+      }
+    }
+
+    var caja = $('#extras');
+    if (!caja) { return; }
+    if (redes && redes.length) {
+      caja.classList.remove('oculto');
+      var lista = $('#lista-redes');
+      if (lista) {
+        lista.innerHTML = redes.map(function (u) {
+          var nombre = (u.replace(/^https?:\/\/(www\.)?/, '').split('/')[0] || u);
+          return '<li><a href="' + esc(u) + '" target="_blank" rel="noopener nofollow">' + esc(nombre) + '</a></li>';
+        }).join('');
+      }
+    } else {
+      caja.classList.add('oculto');
+    }
+  }
+
+  function terminar() {
+    estado.corriendo = false;
+    document.body.classList.remove('escaneando');
+    var btn = $('#btn-extraer');
+    btn.classList.remove('cargando');
+    btn.removeAttribute('aria-busy');
+  }
+
+  function mostrarError(mensaje) {
+    var caja = $('#error-escaneo');
+    caja.querySelector('span').textContent = mensaje;
+    caja.classList.remove('oculto');
+    caja.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function mostrarAvisoJs(mensaje) {
+    var caja = $('#aviso-js');
+    if (!caja) { return; }
+    caja.querySelector('span').textContent = mensaje;
+    caja.classList.remove('oculto');
+  }
+
+  function reiniciarPanel() {
+    estado.correos   = [];
+    estado.telefonos = [];
+    estado.vistos    = Object.create(null);
+    estado.vistosTel = Object.create(null);
+
+    $('#error-escaneo').classList.add('oculto');
+    $('#panel-resultados').classList.add('oculto');
+    ['#sin-resultados', '#sin-telefonos', '#sin-coincidencias', '#sin-coincidencias-tel',
+     '#extras', '#caja-enlaces-wa'].forEach(function (sel) {
+      if ($(sel)) { $(sel).classList.add('oculto'); }
+    });
+
+    $('#tabla-cuerpo').innerHTML = '';
+    if ($('#tabla-tel')) { $('#tabla-tel').innerHTML = ''; }
+    $('#barra i').style.width = '3%';
+    ['#c-revisadas', '#c-correos', '#c-pendientes', '#c-whatsapp'].forEach(function (sel) {
+      if ($(sel)) { $(sel).textContent = '0'; }
+    });
+
+    if ($('#filtro-dominio')) { $('#filtro-dominio').innerHTML = '<option value="">Todos los dominios</option>'; }
+    if ($('#filtro-pais'))    { $('#filtro-pais').innerHTML = '<option value="">Todos los países</option>'; }
+    ['#buscar', '#buscar-tel'].forEach(function (sel) { if ($(sel)) { $(sel).value = ''; } });
+  }
+
+  /* --------------------------------------------- 7. Buscador, filtros y seleccion */
+  function actualizarFiltroDominios() {
+    var sel = $('#filtro-dominio');
+    if (!sel) { return; }
+    var actual = sel.value;
+    var dominios = {};
+    estado.correos.forEach(function (c) { dominios[c.dominio] = (dominios[c.dominio] || 0) + 1; });
+
+    var claves = Object.keys(dominios).sort();
+    sel.innerHTML = '<option value="">Todos los dominios (' + estado.correos.length + ')</option>' +
+      claves.map(function (d) {
+        return '<option value="' + esc(d) + '">' + esc(d) + ' (' + dominios[d] + ')</option>';
+      }).join('');
+    if (actual && dominios[actual]) { sel.value = actual; }
+  }
+
+  function actualizarFiltroPaises() {
+    var sel = $('#filtro-pais');
+    if (!sel) { return; }
+    var actual = sel.value;
+    var paises = {};
+    estado.telefonos.forEach(function (t) { paises[t.pais || '—'] = (paises[t.pais || '—'] || 0) + 1; });
+
+    var claves = Object.keys(paises).sort();
+    sel.innerHTML = '<option value="">Todos los países (' + estado.telefonos.length + ')</option>' +
+      claves.map(function (p) {
+        return '<option value="' + esc(p) + '">' + esc(p) + ' (' + paises[p] + ')</option>';
+      }).join('');
+    if (actual && paises[actual]) { sel.value = actual; }
+  }
+
+  function aplicarFiltrosTel() {
+    if (!$('#tabla-tel')) { return; }
+    var texto = ($('#buscar-tel') ? $('#buscar-tel').value : '').trim().toLowerCase();
+    var pais  = $('#filtro-pais') ? $('#filtro-pais').value : '';
+    var wa    = $('#filtro-wa') ? $('#filtro-wa').value : '';
+    var visibles = 0;
+
+    $$('#tabla-tel tr').forEach(function (tr) {
+      var ver = (!texto || tr.dataset.busca.indexOf(texto) !== -1)
+             && (!pais  || tr.dataset.pais === pais)
+             && (!wa    || tr.dataset.wa === wa);
+      tr.style.display = ver ? '' : 'none';
+      if (ver) { visibles++; }
+    });
+
+    var vacio = $('#sin-coincidencias-tel');
+    if (vacio) { vacio.classList.toggle('oculto', visibles > 0 || !estado.telefonos.length); }
+  }
+
+  function filasTelVisibles() {
+    return $$('#tabla-tel tr').filter(function (tr) { return tr.style.display !== 'none'; });
+  }
+
+  function seleccionadosTel() {
+    return filasTelVisibles()
+      .filter(function (tr) { return tr.querySelector('.sel-tel').checked; })
+      .map(function (tr) { return tr.dataset.numero; });
+  }
+
+  function aplicarFiltros() {
+    var texto   = ($('#buscar') ? $('#buscar').value : '').trim().toLowerCase();
+    var dominio = $('#filtro-dominio') ? $('#filtro-dominio').value : '';
+    var tipo    = $('#filtro-tipo') ? $('#filtro-tipo').value : '';
+    var visibles = 0;
+
+    $$('#tabla-cuerpo tr').forEach(function (tr) {
+      var okTexto   = !texto || tr.dataset.busca.indexOf(texto) !== -1;
+      var okDominio = !dominio || tr.dataset.dominio === dominio;
+      var okTipo    = !tipo || tr.dataset.tipo === tipo;
+      var ver = okTexto && okDominio && okTipo;
+      tr.style.display = ver ? '' : 'none';
+      if (ver) { visibles++; }
+    });
+
+    var vacio = $('#sin-coincidencias');
+    if (vacio) { vacio.classList.toggle('oculto', visibles > 0 || !estado.correos.length); }
+  }
+
+  function filasVisibles() {
+    return $$('#tabla-cuerpo tr').filter(function (tr) { return tr.style.display !== 'none'; });
+  }
+
+  function seleccionados() {
+    return filasVisibles()
+      .filter(function (tr) { return tr.querySelector('.sel').checked; })
+      .map(function (tr) { return tr.dataset.correo; });
+  }
+
+  function actualizarResumen() {
+    var n = seleccionados().length;
+    if ($('#n-seleccionados')) {
+      $('#n-seleccionados').textContent = n ? n + ' seleccionado' + (n === 1 ? '' : 's') : '';
+    }
+    var nt = seleccionadosTel().length;
+    if ($('#n-sel-tel')) {
+      $('#n-sel-tel').textContent = nt ? nt + ' seleccionado' + (nt === 1 ? '' : 's') : '';
+    }
+
+    if ($('#n-correos'))   { $('#n-correos').textContent = estado.correos.length; }
+    if ($('#n-telefonos')) { $('#n-telefonos').textContent = estado.telefonos.length; }
+
+    var wa = estado.telefonos.filter(function (t) { return t.whatsapp; }).length;
+    var resumen = $('#resumen-hallazgos');
+    if (resumen) {
+      var partes = [];
+      partes.push(estado.correos.length + ' correo' + (estado.correos.length === 1 ? '' : 's'));
+      if (wa) { partes.push(wa + ' WhatsApp'); }
+      var soloTel = estado.telefonos.length - wa;
+      if (soloTel > 0) { partes.push(soloTel + (soloTel === 1 ? ' teléfono' : ' teléfonos')); }
+      resumen.textContent = partes.join(' · ');
+    }
+
+    aplicarFiltros();
+    aplicarFiltrosTel();
+  }
+
+  function copiar(lista, etiqueta) {
+    if (!lista.length) { brindis('No hay correos que copiar.', 'error'); return; }
+    var texto = lista.join('\n');
+
+    var plural = lista.length === 1 ? etiqueta : (etiqueta === 'número' ? 'números' : etiqueta + 's');
+    var exito = function () {
+      brindis(lista.length + ' ' + plural + ' copiado' + (lista.length === 1 ? '' : 's') + ' al portapapeles');
+    };
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(texto).then(exito).catch(function () { copiarRespaldo(texto, exito); });
+    } else {
+      copiarRespaldo(texto, exito);
+    }
+  }
+
+  /* Respaldo para navegadores o conexiones sin API de portapapeles */
+  function copiarRespaldo(texto, exito) {
+    var area = document.createElement('textarea');
+    area.value = texto;
+    area.setAttribute('readonly', '');
+    area.style.cssText = 'position:fixed;left:-9999px;opacity:0';
+    document.body.appendChild(area);
+    area.select();
+    try { document.execCommand('copy'); exito(); }
+    catch (e) { brindis('Tu navegador no permite copiar automáticamente.', 'error'); }
+    document.body.removeChild(area);
+  }
+
+  /* --------------------------------------------------------- 8. Exportaciones */
+  function exportar(formato, datos) {
+    datos = datos || 'correos';
+    if (!estado.id) { brindis('Primero haz una extracción.', 'error'); return; }
+
+    var hay = (datos === 'correos') ? estado.correos.length
+            : (datos === 'telefonos') ? estado.telefonos.length
+            : (estado.correos.length + estado.telefonos.length);
+    if (!hay) { brindis('No hay datos que descargar.', 'error'); return; }
+
+    var marcados = (datos === 'telefonos') ? seleccionadosTel() : seleccionados();
+    var totalDatos = (datos === 'telefonos') ? estado.telefonos.length : estado.correos.length;
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = CR.apiExportar;
+    form.style.display = 'none';
+
+    var campos = {
+      csrf: CR.csrf,
+      escaneo_id: estado.id,
+      token: estado.token,
+      formato: formato,
+      datos: datos,
+      seleccion: (datos !== 'todo' && marcados.length && marcados.length < totalDatos) ? marcados.join(',') : ''
+    };
+    Object.keys(campos).forEach(function (k) {
+      var i = document.createElement('input');
+      i.type = 'hidden'; i.name = k; i.value = campos[k];
+      form.appendChild(i);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+    setTimeout(function () { document.body.removeChild(form); }, 1500);
+
+    brindis('Preparando la descarga en ' + formato.toUpperCase() + '…');
+  }
+
+  /* ------------------------------------------------------------ 9. Conexiones */
+  function conectar() {
+    var form = $('#form-radar');
+    if (form) { form.addEventListener('submit', iniciarEscaneo); }
+
+    var cancelar = $('#btn-cancelar');
+    if (cancelar) {
+      cancelar.addEventListener('click', function () {
+        estado.cancelado = true;
+        api({ accion: 'cancelar', escaneo_id: estado.id }).catch(function () {});
+        terminar();
+        brindis('Escaneo detenido.');
+        if (estado.correos.length) { cargarResultado(); }
+      });
+    }
+
+    ['#buscar', '#filtro-dominio', '#filtro-tipo'].forEach(function (sel) {
+      var el = $(sel);
+      if (el) { el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', aplicarFiltros); }
+    });
+    ['#buscar-tel', '#filtro-pais', '#filtro-wa'].forEach(function (sel) {
+      var el = $(sel);
+      if (el) { el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', aplicarFiltrosTel); }
+    });
+
+    /* Pestanas de resultados: correos / WhatsApp */
+    $$('.pestanas-res button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        $$('.pestanas-res button').forEach(function (x) {
+          x.classList.remove('activa');
+          x.setAttribute('aria-selected', 'false');
+        });
+        $$('.panel-res').forEach(function (p) { p.classList.remove('activo'); });
+        b.classList.add('activa');
+        b.setAttribute('aria-selected', 'true');
+        var destino = document.getElementById(b.dataset.panel);
+        if (destino) { destino.classList.add('activo'); }
+      });
+    });
+
+    var todosTel = $('#sel-todos-tel');
+    if (todosTel) {
+      todosTel.addEventListener('change', function () {
+        var v = this.checked;
+        filasTelVisibles().forEach(function (tr) {
+          tr.querySelector('.sel-tel').checked = v;
+          tr.classList.toggle('marcada', v);
+        });
+        actualizarResumen();
+      });
+    }
+
+    var copiarTel = $('#btn-copiar-tel');
+    if (copiarTel) {
+      copiarTel.addEventListener('click', function () {
+        var marcados = seleccionadosTel();
+        if (marcados.length) { copiar(marcados, 'número'); }
+        else { copiar(filasTelVisibles().map(function (tr) { return tr.dataset.numero; }), 'número'); }
+      });
+    }
+
+    var todos = $('#sel-todos');
+    if (todos) {
+      todos.addEventListener('change', function () {
+        var v = this.checked;
+        filasVisibles().forEach(function (tr) {
+          tr.querySelector('.sel').checked = v;
+          tr.classList.toggle('marcada', v);
+        });
+        actualizarResumen();
+      });
+    }
+
+    var copiarTodo = $('#btn-copiar');
+    if (copiarTodo) {
+      copiarTodo.addEventListener('click', function () {
+        var marcados = seleccionados();
+        if (marcados.length) { copiar(marcados, 'correo'); }
+        else { copiar(filasVisibles().map(function (tr) { return tr.dataset.correo; }), 'correo'); }
+      });
+    }
+
+    $$('[data-exportar]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        exportar(this.getAttribute('data-exportar'), this.getAttribute('data-datos') || 'correos');
+      });
+    });
+
+    // Atajo: Ctrl/Cmd + Enter lanza la extraccion desde el campo de URL
+    var campo = $('#url');
+    if (campo) {
+      campo.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { iniciarEscaneo(e); }
+      });
+      // Pegar un enlace y extraer: si el campo esta vacio, foco automatico
+      if (!campo.value) { setTimeout(function () { campo.focus({ preventScroll: true }); }, 350); }
+    }
+  }
+
+  /* ------------------------------------------------------------- 10. Arranque */
+  iniciarTema();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', conectar);
+  } else {
+    conectar();
+  }
+})();

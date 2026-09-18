@@ -20,6 +20,7 @@
 :root{
   --obsidiana:var(--cr-fondo, #07080A);
   --oro:var(--cr-oro, #D8B36A);
+  --fondo-2b:var(--cr-fondo2, #161008);
   --oro-2:var(--cr-oro2, #F3D89A);
   --btn-texto:#14100A;
   --neon:var(--cr-neon, #6EF3A5);
@@ -71,6 +72,7 @@
   --tenue:color-mix(in srgb, var(--cr-texto-claro, #16181C) 68%, #FFFFFF);
   /* Cada paleta trae ya sus acentos para el modo claro, comprobados uno a
      uno por encima del contraste AA sobre su propio fondo. */
+  --fondo-2b:var(--cr-fondo2-claro, #F3EAD8);
   --oro:var(--cr-oro-claro, #7E682F);
   --oro-2:var(--cr-oro2-claro, #8D7A40);
   --oro-claro:var(--cr-oro-claro, #7E682F);
@@ -112,13 +114,14 @@ body::before{
     radial-gradient(1100px 620px at 50% -8%, var(--oro-sombra), transparent 62%),
     radial-gradient(820px 520px at 92% 104%, var(--neon-sombra), transparent 60%),
     url('../img/textura-obsidiana.jpg') center/cover no-repeat,
-    var(--fondo);
+    /* Degradado propio de cada paleta: el fondo deja de ser un color plano. */
+    linear-gradient(155deg, var(--fondo) 0%, var(--fondo-2b) 52%, var(--fondo) 100%);
 }
 html[data-tema="claro"] body::before{
   background:
     radial-gradient(1100px 620px at 50% -8%, var(--oro-sombra), transparent 62%),
     radial-gradient(820px 520px at 92% 104%, var(--neon-sombra), transparent 62%),
-    var(--fondo);
+    linear-gradient(155deg, var(--fondo) 0%, var(--fondo-2b) 52%, var(--fondo) 100%);
 }
 body::after{
   content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;

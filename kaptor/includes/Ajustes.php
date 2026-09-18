@@ -40,17 +40,19 @@ final class Ajustes
             'aviso_legal'         => 'Usa Kaptor solo sobre sitios propios o con autorización. No envíes correo no solicitado.',
 
             // --- Paleta "Radar de lujo" ------------------------------------
-            'tema_color'          => 'obsidiana',   // paleta elegida en el panel
-            'color_fondo'         => '#07080A',
-            'color_oro'           => '#D8B36A',
-            'color_oro2'          => '#F3D89A',   // segundo color del degradado
-            'color_neon'          => '#6EF3A5',
+            'tema_color'          => 'onice',   // paleta elegida en el panel
+            'color_fondo'         => '#07070A',
+            'color_fondo2'        => '#161008',   // segundo tono del degradado del fondo
+            'color_oro'           => '#E8C275',
+            'color_oro2'          => '#B8873A',   // segundo color del degradado
+            'color_neon'          => '#5BE3A0',
             // Colores del modo claro (los define también la paleta elegida)
-            'color_fondo_claro'   => '#FBF8F0',
-            'color_texto_claro'   => '#171512',
-            'color_oro_claro'     => '#7E682F',
-            'color_oro2_claro'    => '#8D7A40',
-            'color_neon_claro'    => '#3B7F55',
+            'color_fondo_claro'   => '#FCFAF4',
+            'color_fondo2_claro'  => '#F3EAD8',
+            'color_texto_claro'   => '#171308',
+            'color_oro_claro'     => '#856212',
+            'color_oro2_claro'    => '#856319',
+            'color_neon_claro'    => '#0F6E44',
             'color_texto'         => '#EDEAE3',
             'tema_por_defecto'    => 'oscuro',
 

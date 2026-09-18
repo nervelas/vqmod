@@ -53,10 +53,12 @@ function admin_cabecera(array $opciones = []): void
 <style>
   :root{
     --cr-fondo:<?= e(Ajustes::obtener('color_fondo', '#07080A')) ?>;
+    --cr-fondo2:<?= e(Ajustes::obtener('color_fondo2', '#161008')) ?>;
     --cr-oro:<?= e(Ajustes::obtener('color_oro', '#D8B36A')) ?>;
     --cr-oro2:<?= e(Ajustes::obtener('color_oro2', '#F3D89A')) ?>;
     --cr-neon:<?= e(Ajustes::obtener('color_neon', '#6EF3A5')) ?>;
-    --cr-fondo-claro:<?= e(Ajustes::obtener('color_fondo_claro', '#FBF8F0')) ?>;
+    --cr-fondo-claro:<?= e(Ajustes::obtener('color_fondo_claro', '#FCFAF4')) ?>;
+    --cr-fondo2-claro:<?= e(Ajustes::obtener('color_fondo2_claro', '#F3EAD8')) ?>;
     --cr-texto-claro:<?= e(Ajustes::obtener('color_texto_claro', '#171512')) ?>;
     --cr-oro-claro:<?= e(Ajustes::obtener('color_oro_claro', '#7E682F')) ?>;
     --cr-oro2-claro:<?= e(Ajustes::obtener('color_oro2_claro', '#8D7A40')) ?>;

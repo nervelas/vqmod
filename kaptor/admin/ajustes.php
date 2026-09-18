@@ -43,8 +43,9 @@ const CAMPOS_NUM = [
 ];
 /** Colores en formato #RRGGBB. */
 const CAMPOS_COLOR = [
-    'color_fondo', 'color_oro', 'color_oro2', 'color_neon', 'color_texto',
-    'color_fondo_claro', 'color_texto_claro', 'color_oro_claro', 'color_oro2_claro', 'color_neon_claro',
+    'color_fondo', 'color_fondo2', 'color_oro', 'color_oro2', 'color_neon', 'color_texto',
+    'color_fondo_claro', 'color_fondo2_claro', 'color_texto_claro',
+    'color_oro_claro', 'color_oro2_claro', 'color_neon_claro',
 ];
 
 $mensaje = '';
@@ -145,12 +146,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         if (isset($temas[$elegido])) {
             $nuevos['tema_color']  = $elegido;
             $nuevos['color_fondo'] = strtoupper($temas[$elegido]['fondo']);
+            $nuevos['color_fondo2'] = strtoupper($temas[$elegido]['fondo2'] ?? $temas[$elegido]['fondo']);
             $nuevos['color_oro']   = strtoupper($temas[$elegido]['oro']);
             $nuevos['color_oro2']  = strtoupper($temas[$elegido]['oro2'] ?? $temas[$elegido]['oro']);
             $nuevos['color_neon']  = strtoupper($temas[$elegido]['neon']);
             $nuevos['color_texto'] = strtoupper($temas[$elegido]['texto']);
             // Colores del modo claro de esa misma paleta.
             $nuevos['color_fondo_claro'] = strtoupper($temas[$elegido]['fondo_claro'] ?? '#FBF8F0');
+            $nuevos['color_fondo2_claro'] = strtoupper($temas[$elegido]['fondo2_claro'] ?? $temas[$elegido]['fondo_claro'] ?? '#F3EAD8');
             $nuevos['color_texto_claro'] = strtoupper($temas[$elegido]['texto_claro'] ?? '#171512');
             $nuevos['color_oro_claro']   = strtoupper($temas[$elegido]['oro_claro']   ?? '#7E682F');
             $nuevos['color_oro2_claro']  = strtoupper($temas[$elegido]['oro2_claro']  ?? '#8D7A40');
@@ -276,19 +279,22 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
     /** Dibuja la tarjeta de una paleta, con su muestra en los dos modos. */
     $tarjeta = static function (string $clave, array $t, bool $activa): string {
         $datos = '';
-        foreach (['modo','fondo','texto','oro','oro2','neon','fondo_claro','texto_claro','oro_claro','oro2_claro','neon_claro'] as $c) {
+        foreach (['modo','fondo','fondo2','texto','oro','oro2','neon',
+                  'fondo_claro','fondo2_claro','texto_claro','oro_claro','oro2_claro','neon_claro'] as $c) {
             $datos .= ' data-' . str_replace('_', '-', $c) . '="' . e((string) ($t[$c] ?? '')) . '"';
         }
         return '<label class="paleta' . ($activa ? ' elegida' : '') . '">'
             . '<input type="radio" name="tema_color" value="' . e($clave) . '"' . ($activa ? ' checked' : '') . $datos . '>'
             . '<span class="paleta-doble">'
-            .   '<span class="paleta-muestra" style="background:' . e((string) $t['fondo']) . '">'
+            .   '<span class="paleta-muestra" style="background:linear-gradient(150deg,'
+            .        e((string) $t['fondo']) . ',' . e((string) ($t['fondo2'] ?? $t['fondo'])) . ')">'
             .     '<i class="paleta-degradado" style="background:linear-gradient(135deg,'
             .        e((string) $t['oro']) . ',' . e((string) ($t['oro2'] ?? $t['oro'])) . ')"></i>'
             .     '<i style="background:' . e((string) $t['neon']) . '"></i>'
             .     '<b style="color:' . e((string) $t['texto']) . '">Aa</b>'
             .   '</span>'
-            .   '<span class="paleta-muestra" style="background:' . e((string) ($t['fondo_claro'] ?? '#FBF8F0')) . '">'
+            .   '<span class="paleta-muestra" style="background:linear-gradient(150deg,'
+            .        e((string) ($t['fondo_claro'] ?? '#FCFAF4')) . ',' . e((string) ($t['fondo2_claro'] ?? $t['fondo_claro'] ?? '#F3EAD8')) . ')">'
             .     '<i class="paleta-degradado" style="background:linear-gradient(135deg,'
             .        e((string) ($t['oro_claro'] ?? $t['oro'])) . ',' . e((string) ($t['oro2_claro'] ?? $t['oro'])) . ')"></i>'
             .     '<i style="background:' . e((string) ($t['neon_claro'] ?? $t['neon'])) . '"></i>'
@@ -319,10 +325,12 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
             'nombre' => 'Personalizado',
             'pista'  => 'Los colores que elijas tú abajo, a mano.',
             'modo'   => $a['tema_por_defecto'] ?? 'oscuro',
-            'fondo'  => $a['color_fondo'], 'texto' => $a['color_texto'],
+            'fondo'  => $a['color_fondo'], 'fondo2' => $a['color_fondo2'] ?? $a['color_fondo'],
+            'texto'  => $a['color_texto'],
             'oro'    => $a['color_oro'],   'oro2'  => $a['color_oro2'] ?? $a['color_oro'],
             'neon'   => $a['color_neon'],
-            'fondo_claro' => $a['color_fondo_claro'] ?? '#FBF8F0',
+            'fondo_claro' => $a['color_fondo_claro'] ?? '#FCFAF4',
+            'fondo2_claro' => $a['color_fondo2_claro'] ?? '#F3EAD8',
             'texto_claro' => $a['color_texto_claro'] ?? '#171512',
             'oro_claro'   => $a['color_oro_claro']   ?? $a['color_oro'],
             'oro2_claro'  => $a['color_oro2_claro']  ?? $a['color_oro'],
@@ -331,12 +339,14 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
        . '</div>';
 
     $colores = [
-        'color_fondo' => ['Fondo obsidiana', 'Color base de todo el sitio en modo oscuro.'],
+        'color_fondo' => ['Fondo en modo oscuro', 'Color base de todo el sitio en modo oscuro.'],
+        'color_fondo2' => ['Segundo tono del fondo (oscuro)', 'Con él se forma el degradado del fondo.'],
         'color_oro'   => ['Oro champán', 'Color principal de acento: botones, títulos y detalles.'],
         'color_oro2'  => ['Segundo color del degradado', 'Con él se forma el degradado de los botones y los acentos.'],
         'color_neon'  => ['Verde fósforo', 'Color secundario: barrido del radar, aciertos y confirmaciones.'],
         'color_texto' => ['Texto', 'Color del texto principal en modo oscuro.'],
         'color_fondo_claro' => ['Fondo en modo claro', 'Color base del sitio cuando se ve en claro.'],
+        'color_fondo2_claro' => ['Segundo tono del fondo (claro)', 'El otro extremo del degradado del fondo en claro.'],
         'color_texto_claro' => ['Texto en modo claro', 'Color del texto principal en modo claro.'],
         'color_oro_claro'   => ['Acento en modo claro', 'Debe ser oscuro para leerse sobre el fondo claro.'],
         'color_oro2_claro'  => ['Segundo color del degradado (claro)', 'El otro extremo del degradado en modo claro.'],
@@ -531,8 +541,9 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
 
       if (radio.value === 'personalizado' || !radio.dataset.fondo) { return; }
       var mapa = {
-        color_fondo:'fondo', color_texto:'texto', color_oro:'oro', color_oro2:'oro2', color_neon:'neon',
-        color_fondo_claro:'fondoClaro', color_texto_claro:'textoClaro',
+        color_fondo:'fondo', color_fondo2:'fondo2', color_texto:'texto',
+        color_oro:'oro', color_oro2:'oro2', color_neon:'neon',
+        color_fondo_claro:'fondoClaro', color_fondo2_claro:'fondo2Claro', color_texto_claro:'textoClaro',
         color_oro_claro:'oroClaro', color_oro2_claro:'oro2Claro', color_neon_claro:'neonClaro'
       };
       Object.keys(mapa).forEach(function (campo) {

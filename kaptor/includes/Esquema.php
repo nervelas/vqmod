@@ -14,7 +14,7 @@ declare(strict_types=1);
 final class Esquema
 {
     /** Se sube de uno en uno cada vez que cambia la estructura. */
-    public const VERSION = 3;
+    public const VERSION = 4;
 
     /** Aplica los cambios pendientes. Se llama desde bootstrap.php. */
     public static function actualizar(): void
@@ -40,6 +40,9 @@ final class Esquema
                     Ajustes::guardar('max_sitios_lote', '300');
                 }
             }
+
+            // 4: niveles educativos detectados en cada sitio del escaneo.
+            if ($actual < 4) { self::tablaSitios(); }
 
             Ajustes::guardar('esquema', (string) self::VERSION);
         } catch (Throwable $e) {
@@ -98,6 +101,29 @@ final class Esquema
             Ajustes::guardarVarios($cambios);
             Ajustes::cargar();
         }
+    }
+
+    /**
+     * Tabla con un renglón por web visitada dentro de un escaneo, donde se
+     * apuntan los niveles educativos que menciona (primaria, básicos,
+     * diversificado...). Así se puede escribir solo a los colegios que dan
+     * el nivel que interesa.
+     */
+    private static function tablaSitios(): void
+    {
+        BD::ejecutar(
+            'CREATE TABLE IF NOT EXISTS `cr_sitios` (
+              `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+              `escaneo_id` INT UNSIGNED NOT NULL,
+              `host`       VARCHAR(190) NOT NULL,
+              `niveles`    VARCHAR(190) NOT NULL DEFAULT \'\',
+              `titulo`     VARCHAR(255) NULL,
+              `paginas`    SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+              PRIMARY KEY (`id`),
+              UNIQUE KEY `uq_sitio` (`escaneo_id`, `host`),
+              KEY `idx_escaneo` (`escaneo_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+        );
     }
 
     /**

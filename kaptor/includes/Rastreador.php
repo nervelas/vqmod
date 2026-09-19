@@ -341,6 +341,12 @@ final class Rastreador
                     $extractor->analizar($render, $resp['url_final'], 'text/html');
                 }
             }
+
+            // Un dominio .edu.gt no dice si el centro llega a diversificado o se
+            // queda en primaria: eso solo lo dice su web. Se apunta aquí.
+            if (!$esRecurso) {
+                self::anotarNiveles($escaneoId, cr_host_de_url($resp['url_final']), $resp['cuerpo']);
+            }
         }
 
         $datos = $extractor->resultados();
@@ -707,6 +713,78 @@ final class Rastreador
      * Dentro de una misma página lo resuelve el propio Extractor; aquí se
      * repasa el escaneo completo, que es donde pueden quedar separados.
      */
+    /**
+     * Apunta en cr_sitios los niveles educativos que menciona una página y el
+     * título del sitio. Los niveles de todas las páginas de un mismo dominio
+     * se van sumando: la portada suele decir "preprimaria a diversificado" y
+     * la página de carreras detalla el bachillerato.
+     */
+    private static function anotarNiveles(int $escaneoId, string $host, string $html): void
+    {
+        if ($host === '' || $html === '') { return; }
+
+        // Solo el texto visible: los menús y las carreras están ahí.
+        $texto = preg_replace('~<(script|style|noscript)\b[^>]*>.*?</\1>~is', ' ', $html) ?? $html;
+        $texto = strip_tags($texto);
+        $texto = html_entity_decode($texto, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $texto = mb_substr($texto, 0, 200000);
+
+        $nuevos = Niveles::detectar($texto);
+
+        $titulo = '';
+        if (preg_match('~<title[^>]*>(.*?)</title>~is', $html, $m)) {
+            $titulo = trim(html_entity_decode(strip_tags($m[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        }
+
+        try {
+            $fila = BD::fila(
+                'SELECT `id`, `niveles`, `titulo` FROM `cr_sitios` WHERE `escaneo_id` = ? AND `host` = ?',
+                [$escaneoId, $host]
+            );
+
+            if ($fila) {
+                $juntos = Niveles::unir(
+                    array_filter(explode(',', (string) $fila['niveles'])),
+                    $nuevos
+                );
+                BD::ejecutar(
+                    'UPDATE `cr_sitios` SET `niveles` = ?, `titulo` = COALESCE(NULLIF(`titulo`, \'\'), ?), `paginas` = `paginas` + 1 WHERE `id` = ?',
+                    [mb_substr(implode(',', $juntos), 0, 190), mb_substr($titulo, 0, 255), (int) $fila['id']]
+                );
+                return;
+            }
+
+            BD::insertar('cr_sitios', [
+                'escaneo_id' => $escaneoId,
+                'host'       => mb_substr($host, 0, 190),
+                'niveles'    => mb_substr(implode(',', $nuevos), 0, 190),
+                'titulo'     => mb_substr($titulo, 0, 255),
+                'paginas'    => 1,
+            ]);
+        } catch (Throwable $e) {
+            // La tabla puede no existir en una instalación a medio actualizar:
+            // los niveles son un extra, nunca deben tumbar un escaneo.
+            error_log('Kaptor / niveles: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Niveles detectados por dominio en un escaneo.
+     *
+     * @return array<string,string> host => "basicos,diversificado"
+     */
+    public static function nivelesPorHost(int $escaneoId): array
+    {
+        try {
+            $filas = BD::todos('SELECT `host`, `niveles` FROM `cr_sitios` WHERE `escaneo_id` = ?', [$escaneoId]);
+        } catch (Throwable $e) {
+            return [];
+        }
+        $mapa = [];
+        foreach ($filas as $f) { $mapa[(string) $f['host']] = (string) $f['niveles']; }
+        return $mapa;
+    }
+
     private static function limpiarParesRot13(int $escaneoId): void
     {
         $filas = BD::todos(
@@ -805,10 +883,35 @@ final class Rastreador
     /** Correos de un escaneo, ordenados por confianza. */
     public static function correos(int $escaneoId): array
     {
-        return BD::todos(
+        $correos = BD::todos(
             'SELECT * FROM `cr_correos` WHERE `escaneo_id` = ? ORDER BY `confianza` DESC, `dominio` ASC, `correo` ASC',
             [$escaneoId]
         );
+
+        // A cada correo se le pega el nivel educativo de su dominio: es lo que
+        // permite escribir solo a los colegios con básicos y diversificado.
+        $niveles = self::nivelesPorHost($escaneoId);
+        if ($niveles) {
+            foreach ($correos as &$c) {
+                $dom = (string) $c['dominio'];
+                $c['niveles'] = $niveles[$dom] ?? ($niveles['www.' . $dom] ?? '');
+                if ($c['niveles'] === '') {
+                    // El correo puede ser de colegio.edu.gt y la web www.colegio.edu.gt.
+                    foreach ($niveles as $host => $n) {
+                        if ($host === $dom || str_ends_with($host, '.' . $dom) || str_ends_with($dom, '.' . $host)) {
+                            $c['niveles'] = $n;
+                            break;
+                        }
+                    }
+                }
+            }
+            unset($c);
+        } else {
+            foreach ($correos as &$c) { $c['niveles'] = ''; }
+            unset($c);
+        }
+
+        return $correos;
     }
 
     /** Estructura de progreso que consume el JavaScript de la portada. */

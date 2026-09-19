@@ -95,6 +95,19 @@ CREATE TABLE IF NOT EXISTS `cr_cola` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Correos encontrados (únicos por escaneo).
+-- Un renglón por web visitada: guarda los niveles educativos que menciona.
+CREATE TABLE IF NOT EXISTS `cr_sitios` (
+  `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `escaneo_id` INT UNSIGNED NOT NULL,
+  `host`       VARCHAR(190) NOT NULL,
+  `niveles`    VARCHAR(190) NOT NULL DEFAULT '',
+  `titulo`     VARCHAR(255) NULL,
+  `paginas`    SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_sitio` (`escaneo_id`, `host`),
+  KEY `idx_escaneo` (`escaneo_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `cr_correos` (
   `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `escaneo_id` INT UNSIGNED NOT NULL,

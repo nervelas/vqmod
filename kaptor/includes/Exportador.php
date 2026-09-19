@@ -20,7 +20,7 @@ final class Exportador
 {
     /** Columnas de la tabla de correos. */
     private const COL_CORREOS = [
-        'Correo', 'Dominio', 'Tipo', 'Confianza', 'MX', 'Veces',
+        'Correo', 'Dominio', 'Niveles que imparte', 'Tipo', 'Confianza', 'MX', 'Veces',
         'Método de detección', 'Página donde se encontró',
     ];
 
@@ -112,11 +112,11 @@ final class Exportador
             $filas = [];
             foreach ($correos as $c) {
                 $fila = self::filaCorreo($c);
-                $fila[3] = (int) $c['confianza'];     // la confianza va como número
-                $fila[5] = (int) $c['veces'];
+                $fila[4] = (int) $c['confianza'];     // la confianza va como número
+                $fila[6] = (int) $c['veces'];
                 $filas[] = $fila;
             }
-            $libro->agregarHoja('Correos', self::COL_CORREOS, $filas, [34, 24, 12, 11, 7, 8, 40, 52]);
+            $libro->agregarHoja('Correos', self::COL_CORREOS, $filas, [34, 24, 30, 12, 11, 7, 8, 40, 52]);
         }
 
         if ($datos !== 'correos') {
@@ -195,6 +195,7 @@ final class Exportador
         return [
             (string) $c['correo'],
             (string) $c['dominio'],
+            Niveles::etiqueta((string) ($c['niveles'] ?? '')),
             ($c['tipo'] ?? '') === 'generico' ? 'Genérico' : 'Personal',
             (string) (int) ($c['confianza'] ?? 0),
             $c['mx'] === null ? 'Sin verificar' : ((int) $c['mx'] === 1 ? 'Sí' : 'No'),

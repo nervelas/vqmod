@@ -159,6 +159,7 @@ switch ($accion) {
                 'confianza' => (int) $fila['confianza'],
                 'mx'        => $fila['mx'] === null ? null : ((int) $fila['mx'] === 1),
                 'veces'     => (int) $fila['veces'],
+                'niveles'   => (string) ($fila['niveles'] ?? ''),
             ];
         }
 

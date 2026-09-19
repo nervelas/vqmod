@@ -249,12 +249,14 @@
 
     var conf = parseInt(c.confianza, 10) || 0;
 
-    tr.dataset.ext = extensionDe(c.dominio);
+    tr.dataset.ext     = extensionDe(c.dominio);
+    tr.dataset.niveles = c.niveles || '';
 
     tr.innerHTML =
       '<td class="col-check"><input type="checkbox" class="sel" aria-label="Seleccionar ' + esc(c.correo) + '"></td>' +
       '<td><span class="celda-correo" title="' + esc(metodosTexto) + '">' + esc(c.correo) + '</span></td>' +
       '<td class="col-dominio">' + esc(c.dominio) + '</td>' +
+      '<td class="celda-niveles">' + pintarNiveles(c.niveles) + '</td>' +
       '<td><span class="chip ' + (c.tipo === 'generico' ? '' : 'chip-neon') + '">' +
           (c.tipo === 'generico' ? 'Genérico' : 'Personal') + '</span></td>' +
       '<td class="col-conf"><div class="confianza"><span class="pista"><i style="width:' + conf + '%"></i></span><b>' + conf + '</b></div></td>' +
@@ -464,6 +466,25 @@
 
   /* --------------------------------------------- 7. Buscador, filtros y seleccion */
 
+  /* Niveles educativos: se resaltan los que interesan para vender a secundaria. */
+  var NIVELES = {
+    preprimaria:   'Preprimaria',
+    primaria:      'Primaria',
+    basicos:       'Básicos',
+    diversificado: 'Diversificado',
+    superior:      'Superior'
+  };
+
+  function pintarNiveles(guardados) {
+    var lista = String(guardados || '').split(',').filter(Boolean);
+    if (!lista.length) { return '<span class="chip chip-gris">—</span>'; }
+    return lista.map(function (n) {
+      var fuerte = (n === 'basicos' || n === 'diversificado');
+      return '<span class="chip ' + (fuerte ? 'chip-neon' : 'chip-gris') + '">' +
+             esc(NIVELES[n] || n) + '</span>';
+    }).join(' ');
+  }
+
   /* Segundos niveles habituales: colegio.edu.gt => "edu.gt", tienda.com => "com". */
   var SEGUNDOS = ['com','edu','gob','gov','org','net','mil','int','ac','co','or','ne','go','nom','info','web'];
 
@@ -589,13 +610,22 @@
     var texto = ($('#buscar') ? $('#buscar').value : '').trim().toLowerCase();
     var exts  = listaExtensiones($('#filtro-ext') ? $('#filtro-ext').value : '');
     var tipo  = $('#filtro-tipo') ? $('#filtro-tipo').value : '';
+    var nivel = $('#filtro-nivel') ? $('#filtro-nivel').value : '';
+    var buscados = nivel && nivel !== '_sin' ? nivel.split(',') : [];
     var visibles = 0;
 
     $$('#tabla-cuerpo tr').forEach(function (tr) {
+      var suyos = String(tr.dataset.niveles || '').split(',').filter(Boolean);
+      var okNivel = true;
+      if (nivel === '_sin')      { okNivel = suyos.length === 0; }
+      else if (buscados.length)  {
+        okNivel = buscados.some(function (n) { return suyos.indexOf(n) !== -1; });
+      }
+
       var okTexto = !texto || tr.dataset.busca.indexOf(texto) !== -1;
       var okExt   = coincideExt(tr.dataset.dominio, exts);
       var okTipo  = !tipo || tr.dataset.tipo === tipo;
-      var ver = okTexto && okExt && okTipo;
+      var ver = okTexto && okExt && okTipo && okNivel;
       tr.style.display = ver ? '' : 'none';
       if (ver) { visibles++; }
     });
@@ -615,7 +645,7 @@
 
     var aviso = $('#n-filtrados');
     if (aviso) {
-      aviso.textContent = (exts.length || tipo || texto)
+      aviso.textContent = (exts.length || tipo || texto || nivel)
         ? visibles + ' de ' + estado.correos.length + ' tras el filtro'
         : '';
     }
@@ -786,7 +816,7 @@
       });
     }
 
-    ['#buscar', '#filtro-ext', '#filtro-tipo'].forEach(function (sel) {
+    ['#buscar', '#filtro-ext', '#filtro-tipo', '#filtro-nivel'].forEach(function (sel) {
       var el = $(sel);
       if (el) { el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', aplicarFiltros); }
     });

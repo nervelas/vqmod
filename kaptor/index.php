@@ -228,6 +228,16 @@ cr_cabecera([
         <option value="generico">Genéricos (info@, ventas@…)</option>
         <option value="personal">Personales (nombre@…)</option>
       </select>
+      <select id="filtro-nivel" class="campo" aria-label="Filtrar por nivel educativo">
+        <option value="">Todos los niveles</option>
+        <option value="basicos,diversificado">Básicos o diversificado</option>
+        <option value="basicos">Solo básicos</option>
+        <option value="diversificado">Solo diversificado</option>
+        <option value="primaria">Primaria</option>
+        <option value="preprimaria">Preprimaria</option>
+        <option value="superior">Superior (universidades)</option>
+        <option value="_sin">Sin nivel detectado</option>
+      </select>
       <button type="button" class="btn btn-fantasma btn-peq" id="btn-vista" aria-pressed="false">Ver detalles</button>
     </div>
 
@@ -276,7 +286,7 @@ cr_cabecera([
           <thead>
             <tr>
               <th class="col-check"><input type="checkbox" id="sel-todos" aria-label="Seleccionar todos los correos"></th>
-              <th>Correo</th><th class="col-dominio">Dominio</th><th>Tipo</th>
+              <th>Correo</th><th class="col-dominio">Dominio</th><th>Niveles</th><th>Tipo</th>
               <th class="col-conf">Confianza</th><th class="col-mx">MX</th><th class="col-url">Página</th>
             </tr>
           </thead>

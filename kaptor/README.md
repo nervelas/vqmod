@@ -48,6 +48,26 @@ Guatemala: `https://crt.sh/?q=%.edu.gt&output=json`.
 
 ---
 
+### Nivel educativo de cada centro
+
+Un dominio `.edu.gt` no dice si el colegio llega a diversificado o se queda en
+primaria: eso solo lo dice su web. Mientras rastrea, Kaptor lee el texto de cada
+sitio y apunta los niveles que menciona:
+
+**Preprimaria · Primaria · Básicos · Diversificado · Superior**
+
+Se reconocen por cómo se describen los propios centros: *preprimaria*, *párvulos*,
+*kínder*; *primaria*, *sexto grado*; *básicos*, *tercero básico*, *INEB*;
+*bachillerato*, *perito contador*, *secretariado*, *magisterio*; y, para las
+universidades, *facultad de*, *licenciatura*, *maestría*, *campus universitario*.
+«Superior» pide dos señales, porque cualquier colegio dice de pasada que prepara
+«para la universidad» y no por eso lo es.
+
+Los niveles salen en su propia columna, en el desplegable **«Básicos o
+diversificado»** que filtra la tabla y la descarga, y en el TXT, el CSV y el Excel.
+
+---
+
 ### Filtrar la descarga por terminación de dominio
 
 En la tabla de resultados, encima de los botones de descarga, hay un bloque que

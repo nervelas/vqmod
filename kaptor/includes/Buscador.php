@@ -17,6 +17,9 @@ declare(strict_types=1);
 
 final class Buscador
 {
+    /** ¿Esta búsqueda quiere perfiles de Facebook o Instagram? */
+    private static bool $conRedes = false;
+
     /** Resultados que pide cada página a los buscadores. */
     private const POR_PAGINA = 10;
 
@@ -77,6 +80,12 @@ final class Buscador
     public static function buscar(string $consulta, int $resultados = 50): array
     {
         $consulta = trim($consulta);
+
+        // Si la consulta apunta expresamente a una red (site:facebook.com,
+        // "instagram colegios"...), sus perfiles dejan de descartarse: es
+        // justo lo que se está buscando.
+        self::$conRedes = Ajustes::activo('buscar_redes')
+            || (bool) preg_match('~\b(site:\s*)?(www\.)?(facebook|instagram|fb)\.(com|me)\b~i', $consulta);
         if ($consulta === '') {
             return ['ok' => false, 'error' => 'Escribe qué quieres buscar.'];
         }
@@ -213,14 +222,22 @@ final class Buscador
             $puerto = parse_url($u, PHP_URL_PORT);
             $sitio  = $host . ($puerto ? ':' . $puerto : '');
 
+            // En Facebook e Instagram todas las páginas comparten dominio, así
+            // que ahí lo que distingue un sitio de otro es el nombre de la
+            // página: sin esto, de veinte colegios solo entraría uno.
+            $perfil = Social::usuario($u);
+            if ($perfil !== '' && Social::tipo($u) !== '') {
+                $sitio .= '/' . strtolower($perfil);
+            }
+
             $saltar = false;
             foreach (self::DESCARTAR as $d) {
                 if (str_contains($host, $d)) { $saltar = true; break; }
             }
-            // Los perfiles de Facebook e Instagram se descartan salvo que el
-            // administrador los quiera: suelen acabar en muro de acceso y
+            // Los perfiles de Facebook e Instagram se descartan salvo que se
+            // estén buscando a propósito: si no, acaban en muro de acceso y
             // gastarían el escaneo sin dar nada.
-            if ($saltar && Ajustes::activo('buscar_redes')
+            if ($saltar && self::$conRedes
                 && preg_match('~(^|\.)(facebook\.com|instagram\.com)$~', $host)) {
                 $saltar = false;
             }

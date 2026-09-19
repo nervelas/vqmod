@@ -59,6 +59,8 @@ cr_cabecera([
         <button type="button" class="modo" data-ejemplo="https://www.colegio.edu.gt">Una web</button>
         <button type="button" class="modo" data-ejemplo="colegio1.edu.gt&#10;colegio2.edu.gt&#10;colegio3.edu.gt">Lista de webs</button>
         <button type="button" class="modo" data-ejemplo="colegios privados Guatemala correo">Buscar en Google</button>
+        <button type="button" class="modo" data-ejemplo="site:facebook.com colegios Guatemala">Buscar en Facebook</button>
+        <button type="button" class="modo" data-ejemplo="https://www.facebook.com/nombredelapagina">Una página de Facebook</button>
       </div>
       <?php endif; ?>
 

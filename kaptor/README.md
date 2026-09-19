@@ -5,6 +5,14 @@ de una URL, con **módulo de campañas de correo** incluido: extraes, filtras y
 envías desde tu propio dominio, todo en la misma herramienta.
 PHP 8.0+ · MySQL/MariaDB · sin Composer · listo para subir a `public_html`.
 
+## Cómo se actualiza
+
+El ZIP lleva los archivos **en la raíz**, sin carpeta que los envuelva: se
+extrae directamente dentro de la carpeta del sitio y sobrescribe lo que haya.
+No se pierde nada propio —`config/config.php`, la base de datos, el logo y los
+textos que hayas escrito siguen igual— y la base de datos se pone al día sola
+la primera vez que se abre una página.
+
 
 
 ---

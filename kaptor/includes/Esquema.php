@@ -14,7 +14,7 @@ declare(strict_types=1);
 final class Esquema
 {
     /** Se sube de uno en uno cada vez que cambia la estructura. */
-    public const VERSION = 2;
+    public const VERSION = 3;
 
     /** Aplica los cambios pendientes. Se llama desde bootstrap.php. */
     public static function actualizar(): void
@@ -28,11 +28,75 @@ final class Esquema
                 self::columna('cr_escaneos', 'filtro_ext', "VARCHAR(190) NULL DEFAULT NULL AFTER `host`");
             }
 
+            // 3: los textos guardados que todavía llevaban el nombre anterior.
+            //    Solo se tocan si nadie los cambió: si el usuario escribió los
+            //    suyos, se respetan tal cual.
+            if ($actual < 3) {
+                self::renombrarTextos();
+
+                // El tope por lote de fábrica era 100 y dejaba fuera media
+                // lista sin decirlo. Si nadie lo cambió, se sube a 300.
+                if (Ajustes::obtener('max_sitios_lote') === '100') {
+                    Ajustes::guardar('max_sitios_lote', '300');
+                }
+            }
+
             Ajustes::guardar('esquema', (string) self::VERSION);
         } catch (Throwable $e) {
             // Si el usuario de la base de datos no tiene permiso de ALTER, la
             // aplicación sigue funcionando; solo se pierde la función nueva.
             error_log('Kaptor / esquema: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Cambia los textos que siguen siendo los de fábrica del nombre anterior.
+     *
+     * La plataforma se llamaba CorreoRadar y esos textos viven en la base de
+     * datos, no en el código: actualizar por ZIP no los tocaba y el sitio
+     * seguía enseñando el nombre viejo. Se sustituyen UNO A UNO y solo cuando
+     * el valor guardado es exactamente el antiguo de fábrica; cualquier texto
+     * escrito por el usuario se queda como está.
+     */
+    private static function renombrarTextos(): void
+    {
+        $antiguos = [
+            'sitio_nombre'     => ['CorreoRadar'],
+            'sitio_lema'       => ['Extrae correos de cualquier web', 'Capta correos y WhatsApp de cualquier web'],
+            'hero_titulo'      => ['Extrae cada correo de cualquier web', 'Capta cada correo de cualquier web'],
+            'hero_etiqueta'    => ['Pega tu enlace'],
+            'hero_boton'       => ['Extraer correos'],
+            'hero_placeholder' => ['https://ejemplo.com/contacto'],
+        ];
+
+        $nuevos = [
+            'sitio_nombre'     => 'Kaptor',
+            'sitio_lema'       => 'Capta correos y WhatsApp de cualquier web',
+            'hero_titulo'      => 'Capta cada correo y WhatsApp de cualquier web',
+            'hero_etiqueta'    => 'Pega una web, una lista o una búsqueda',
+            'hero_boton'       => 'Capturar contactos',
+            'hero_placeholder' => 'https://ejemplo.com  ·  varias webs, una por línea  ·  o unas palabras para buscar',
+        ];
+
+        $cambios = [];
+        foreach ($antiguos as $clave => $valores) {
+            $actual = Ajustes::obtener($clave);
+            if ($actual !== '' && in_array($actual, $valores, true)) {
+                $cambios[$clave] = $nuevos[$clave];
+            }
+        }
+
+        // Los textos largos solo cambian el nombre dentro de la frase.
+        foreach (['sitio_descripcion', 'hero_subtitulo', 'pie_texto', 'aviso_legal'] as $clave) {
+            $actual = Ajustes::obtener($clave);
+            if ($actual !== '' && str_contains($actual, 'CorreoRadar')) {
+                $cambios[$clave] = str_replace('CorreoRadar', 'Kaptor', $actual);
+            }
+        }
+
+        if ($cambios) {
+            Ajustes::guardarVarios($cambios);
+            Ajustes::cargar();
         }
     }
 

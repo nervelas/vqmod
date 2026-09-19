@@ -272,3 +272,62 @@ function cr_titulo_brillo(string $titulo, int $palabras = 2): string
     $finales = array_splice($piezas, -$palabras);
     return e(implode(' ', $piezas)) . ' <span class="brillo">' . e(implode(' ', $finales)) . '</span>';
 }
+
+/**
+ * Cierra una página a quien no ha iniciado sesión.
+ *
+ * Kaptor es privado: se usa con cuenta, y las cuentas las crea el
+ * administrador desde el panel. Quien llegue sin sesión va al acceso, y
+ * después de entrar vuelve a donde quería ir.
+ *
+ * Quedan fuera a propósito: la baja de las campañas (el enlace de "darse de
+ * baja" tiene que funcionar para cualquiera que reciba un correo), el pixel
+ * y el registro de clics, y el instalador.
+ */
+function cr_exigir_sesion(): void
+{
+    if (Auth::autenticado()) { return; }
+
+    $destino = (string) ($_SERVER['REQUEST_URI'] ?? '');
+    $volver  = $destino !== '' ? '?volver=' . rawurlencode($destino) : '';
+    cr_redirigir('login.php' . $volver);
+}
+
+/**
+ * Lo que este usuario lleva hecho con Kaptor: extracciones, correos y
+ * números. Sirve para que la portada enseñe el estado del instrumento en vez
+ * de un hueco vacío.
+ *
+ * Si algo falla —una tabla que todavía no existe en una instalación a medio
+ * actualizar— devuelve ceros: es un adorno, nunca debe tumbar la página.
+ *
+ * @return array{escaneos:int,correos:int,whatsapps:int,ultimo:string}
+ */
+function cr_resumen_usuario(): array
+{
+    $vacio = ['escaneos' => 0, 'correos' => 0, 'whatsapps' => 0, 'ultimo' => ''];
+
+    try {
+        $id = Auth::id();
+        $donde = $id > 0 ? '`usuario_id` = ?' : '1 = 1';
+        $args  = $id > 0 ? [$id] : [];
+
+        $fila = BD::fila(
+            'SELECT COUNT(*) AS escaneos, COALESCE(SUM(`correos`),0) AS correos,
+                    COALESCE(SUM(`whatsapps`),0) AS whatsapps, MAX(`inicio`) AS ultimo
+               FROM `cr_escaneos` WHERE ' . $donde,
+            $args
+        );
+        if (!$fila) { return $vacio; }
+
+        $ultimo = (string) ($fila['ultimo'] ?? '');
+        return [
+            'escaneos'  => (int) $fila['escaneos'],
+            'correos'   => (int) $fila['correos'],
+            'whatsapps' => (int) $fila['whatsapps'],
+            'ultimo'    => $ultimo !== '' ? date('d/m/Y H:i', strtotime($ultimo) ?: time()) : '',
+        ];
+    } catch (Throwable $e) {
+        return $vacio;
+    }
+}

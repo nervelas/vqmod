@@ -14,7 +14,7 @@ declare(strict_types=1);
 final class Esquema
 {
     /** Se sube de uno en uno cada vez que cambia la estructura. */
-    public const VERSION = 4;
+    public const VERSION = 5;
 
     /** Aplica los cambios pendientes. Se llama desde bootstrap.php. */
     public static function actualizar(): void
@@ -43,6 +43,10 @@ final class Esquema
 
             // 4: niveles educativos detectados en cada sitio del escaneo.
             if ($actual < 4) { self::tablaSitios(); }
+
+            // 5: Kaptor pasa a ser privado. Si alguien tenía el acceso libre
+            //    encendido, se apaga: ahora hace falta sesión siempre.
+            if ($actual < 5) { Ajustes::guardar('acceso_publico', '0'); }
 
             Ajustes::guardar('esquema', (string) self::VERSION);
         } catch (Throwable $e) {

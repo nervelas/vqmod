@@ -20,6 +20,9 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/bootstrap.php';
 require_once CR_INCLUDES . '/plantilla.php';
 
+// Kaptor es privado: sin sesión no se entra.
+cr_exigir_sesion();
+
 // Las listas muy grandes necesitan algo mas de aire; si el hosting no deja
 // subirlo, se sigue trabajando con lo que haya (3 MB caben en 128 MB de PHP).
 @ini_set('memory_limit', '512M');

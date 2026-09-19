@@ -93,9 +93,11 @@ function cr_cabecera(array $opciones = []): void
     </a>
 
     <nav aria-label="Navegación principal">
-      <a href="<?= e(cr_url('index.php')) ?>" class="enlace-extraer <?= $activo === 'inicio' ? 'activo' : '' ?>">Extraer</a>
-      <a href="<?= e(cr_url('depurar.php')) ?>" class="<?= $activo === 'depurar' ? 'activo' : '' ?>">Extraer de un texto</a>
       <?php if (Auth::autenticado()): ?>
+        <!-- Kaptor es privado: sin sesión no se enseñan destinos que solo
+             llevarían de vuelta al acceso. -->
+        <a href="<?= e(cr_url('index.php')) ?>" class="enlace-extraer <?= $activo === 'inicio' ? 'activo' : '' ?>">Extraer</a>
+        <a href="<?= e(cr_url('depurar.php')) ?>" class="<?= $activo === 'depurar' ? 'activo' : '' ?>">Extraer de un texto</a>
         <a href="<?= e(cr_url('mis-extracciones.php')) ?>" class="<?= $activo === 'mias' ? 'activo' : '' ?>">Mis extracciones</a>
         <?php if (Auth::esAdmin()): ?>
           <a href="<?= e(cr_url('admin/index.php')) ?>">Panel</a>
@@ -135,9 +137,13 @@ function cr_pie(bool $conJs = true): void
   <div class="contenedor pie-int">
     <span><?= e(Ajustes::obtener('pie_texto')) ?></span>
     <span>
-      <a href="<?= e(cr_url('index.php')) ?>">Inicio</a> ·
-      <a href="<?= e(cr_url('depurar.php')) ?>">Extraer de un texto</a> ·
-      <a href="<?= e(cr_url('login.php')) ?>">Acceder</a>
+      <?php if (Auth::autenticado()): ?>
+        <a href="<?= e(cr_url('index.php')) ?>">Inicio</a> ·
+        <a href="<?= e(cr_url('depurar.php')) ?>">Extraer de un texto</a> ·
+        <a href="<?= e(cr_url('logout.php')) ?>">Salir</a>
+      <?php else: ?>
+        <a href="<?= e(cr_url('login.php')) ?>">Acceder</a>
+      <?php endif; ?>
     </span>
   </div>
 </footer>

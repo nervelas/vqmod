@@ -26,7 +26,7 @@ const CAMPOS_BOOL = [
     'rastreo_profundo', 'analizar_js_css', 'analizar_sitemap', 'analizar_json',
     'verificar_mx', 'tld_estricto', 'permitir_privadas', 'ssl_estricto', 'headless_activo', 'buscar_whatsapp',
     'campanas_activas', 'seguimiento_aperturas', 'seguimiento_clics',
-    'acceso_publico', 'guardar_historial', 'buscar_activo',
+    'guardar_historial', 'buscar_activo',
     'redes_sociales', 'seguir_redes', 'buscar_redes',
 ];
 /** Números con su rango permitido: clave => [mínimo, máximo]. */
@@ -554,9 +554,7 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
   <!-- ====================== ACCESO ====================== -->
   <div class="hoja tarjeta" id="h-acceso">
     <?php
-    fila('Acceso libre', 'Con esta opción desactivada solo podrán extraer correos las personas que hayan iniciado sesión.',
-        interruptor('acceso_publico', Ajustes::activo('acceso_publico', false), 'Cualquier visitante puede extraer'));
-
+    
 
     fila('Límite por IP y hora', 'Número máximo de extracciones que puede lanzar una misma IP en una hora. 0 = sin límite.',
         '<input type="number" name="limite_ip_hora" class="campo" style="max-width:140px" min="0" max="100000" value="' . e($a['limite_ip_hora']) . '">');

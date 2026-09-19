@@ -5,7 +5,35 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/bootstrap.php';
 require_once CR_INCLUDES . '/plantilla.php';
 
-if (Auth::autenticado()) { cr_redirigir('index.php'); }
+/**
+ * A dónde iba el visitante antes de que se le pidiera la sesión.
+ *
+ * Solo se admiten rutas de este mismo sitio: nada de "//otro.com" ni de
+ * direcciones absolutas, para que el acceso no sirva de trampolín a una
+ * página ajena.
+ */
+function cr_destino_seguro(string $volver): string
+{
+    $volver = trim($volver);
+    if ($volver === '' || $volver[0] !== '/' || str_starts_with($volver, '//')) { return ''; }
+    if (str_contains($volver, "\n") || str_contains($volver, "\r")) { return ''; }
+
+    $base = rtrim((string) parse_url(cr_url_base(), PHP_URL_PATH), '/');
+    if ($base !== '' && str_starts_with($volver, $base . '/')) {
+        $volver = substr($volver, strlen($base));
+    }
+    $volver = ltrim($volver, '/');
+
+    // Solo páginas de verdad, nunca el propio acceso (daría una vuelta infinita).
+    if (!preg_match('~^[A-Za-z0-9._/-]{1,120}(\?[^\s]{0,200})?$~', $volver)) { return ''; }
+    if (str_contains($volver, '..') || str_starts_with($volver, 'login.php')) { return ''; }
+
+    return $volver;
+}
+
+$volver = cr_destino_seguro((string) ($_GET['volver'] ?? ($_POST['volver'] ?? '')));
+
+if (Auth::autenticado()) { cr_redirigir($volver !== '' ? $volver : 'index.php'); }
 
 $error = '';
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
@@ -13,6 +41,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $res = Auth::entrar((string) cr_post('usuario'), (string) cr_post('clave'), false, cr_post('recordar') !== '');
     if ($res['ok']) {
         cr_flash('exito', 'Sesión iniciada. Ya puedes extraer correos.');
+        if ($volver !== '') { cr_redirigir($volver); }
         cr_redirigir(Auth::esAdmin() ? 'admin/index.php' : 'index.php');
     }
     $error = $res['error'] ?? 'No se pudo iniciar sesión.';
@@ -37,6 +66,7 @@ cr_cabecera(['titulo' => 'Acceder', 'activo' => 'login']);
 
       <form method="post" autocomplete="on">
         <?= Seguridad::campoCsrf() ?>
+        <?php if ($volver !== ''): ?><input type="hidden" name="volver" value="<?= e($volver) ?>"><?php endif; ?>
         <div class="campo-grupo">
           <label class="etiqueta" for="usuario">Usuario o correo</label>
           <input type="text" id="usuario" name="usuario" class="campo" required autofocus

@@ -16,6 +16,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
 
 Seguridad::exigirCsrf();
 
+// Kaptor es privado: descargar resultados exige sesión, igual que extraerlos.
+if (!Auth::autenticado()) {
+    http_response_code(403);
+    exit('Necesitas iniciar sesión para descargar los resultados.');
+}
+
 $id      = (int) cr_post('escaneo_id', 0);
 $token   = trim((string) cr_post('token', ''));
 $formato = strtolower((string) cr_post('formato', 'txt'));

@@ -5,6 +5,9 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/bootstrap.php';
 require_once CR_INCLUDES . '/plantilla.php';
 
+// Kaptor es privado: sin sesión no se entra.
+cr_exigir_sesion();
+
 if (!Auth::autenticado()) {
     cr_flash('info', 'Inicia sesión para ver tus extracciones.');
     cr_redirigir('login.php');

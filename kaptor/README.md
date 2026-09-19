@@ -1,14 +1,41 @@
-# Kaptor 2.2
+# Kaptor 3.0
 
 Extractor profesional de **correos electrónicos y números de WhatsApp** a partir
 de una URL, con **módulo de campañas de correo** incluido: extraes, filtras y
 envías desde tu propio dominio, todo en la misma herramienta.
 PHP 8.0+ · MySQL/MariaDB · sin Composer · listo para subir a `public_html`.
 
+## De uso privado
+
+Kaptor no tiene página pública: **para usarlo hay que iniciar sesión**, y las
+cuentas las crea el administrador desde *Panel → Usuarios*. No hay registro
+abierto. Quien llegue sin sesión va al acceso y, al entrar, vuelve justo a
+donde iba —con sus parámetros incluidos—; el destino se valida para que solo
+puedan ser rutas del propio sitio.
+
+Siguen abiertas a propósito tres cosas: la **baja de las campañas** (el enlace
+de "darse de baja" tiene que funcionar para cualquiera que reciba un correo),
+el **pixel** y el **registro de clics**, y el **instalador**.
+
+---
+
 ## El diseño
 
-Dirección de arte **oscuro cinematográfico**, con modo claro de verdad (no un
-oscuro aclarado) y diez paletas que se cambian de un clic desde el panel.
+Dirección de arte: **instrumento de precisión**. Kaptor no es un folleto, es un
+aparato de medición, y desde que se entra lo primero que se ve es el panel de
+mando. Modo claro de verdad (no un oscuro aclarado) y diez paletas que se
+cambian de un clic desde el panel.
+
+- **Composición asimétrica**: el mando a la izquierda, la lectura del
+  instrumento a la derecha y el radar saliéndose del encuadre.
+- **Tres pasos numerados** —de dónde, qué quiero, hasta dónde— en lugar de un
+  formulario corrido.
+- **Retícula técnica** de fondo y esquinas marcadas en los paneles, como el
+  visor de un aparato.
+- **Tipografía con carácter**: Fraunces con el eje óptico al máximo para los
+  titulares, que a tamaño grande da unos remates dramáticos; JetBrains Mono
+  —la misma letra con la que se leen los correos— para los rótulos, en
+  versalitas y numerados.
 
 - **Luz ambiental** que respira detrás del contenido, grano finísimo y viñeta:
   es lo que le quita a un fondo oscuro el aspecto de plástico.

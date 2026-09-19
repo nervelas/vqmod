@@ -346,10 +346,11 @@ final class Auth
 
     /**
      * ¿Puede el visitante actual lanzar una extracción?
-     * Depende del ajuste "acceso_publico" (libre o solo con cuenta).
+     * Kaptor es de uso privado: hace falta haber iniciado sesión. Las cuentas
+     * las crea el administrador desde el panel; no hay registro público.
      */
     public static function puedeExtraer(): bool
     {
-        return Ajustes::activo('acceso_publico', false) || self::autenticado();
+        return self::autenticado();
     }
 }

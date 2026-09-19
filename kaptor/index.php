@@ -10,6 +10,9 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/bootstrap.php';
 require_once CR_INCLUDES . '/plantilla.php';
 
+// Kaptor es privado: sin sesión no se entra.
+cr_exigir_sesion();
+
 $puedeExtraer  = Auth::puedeExtraer();
 $rastreoActivo = Ajustes::activo('rastreo_profundo', true);
 
@@ -19,109 +22,167 @@ cr_cabecera([
 ]);
 ?>
 
-<section class="portada">
-  <!-- Radar decorativo: gira mientras se escanea -->
+<!-- ==========================================================================
+     LA CONSOLA
+     Kaptor es un instrumento, no un folleto: desde que se entra, lo primero
+     es el panel de mando. Composición asimétrica — el mando a la izquierda,
+     el radar a la derecha saliéndose del encuadre — y los tres pasos
+     numerados como en un aparato de medición.
+     ========================================================================== -->
+<section class="consola">
+
+  <!-- Radar: decorativo, gira mientras se escanea. Sangra por la derecha. -->
   <div class="radar" aria-hidden="true">
     <img src="<?= e(cr_url('assets/img/radar-malla.png')) ?>" alt="" width="900" height="900" loading="eager">
     <div class="radar-barrido"></div>
   </div>
 
-  <div class="contenedor portada-int">
-    <span class="insignia"><span class="punto"></span> Correos y WhatsApp</span>
+  <div class="contenedor consola-int portada-int">
 
-    <h1><?= cr_titulo_brillo(Ajustes::obtener('hero_titulo')) ?></h1>
-    <p class="portada-sub"><?= e(Ajustes::obtener('hero_subtitulo')) ?></p>
+    <!-- ----------------------------- COLUMNA DE MANDO ----------------------------- -->
+    <div class="consola-mando">
 
-    <p class="aviso-busqueda" id="aviso-busqueda" hidden></p>
+      <p class="rotulo">
+        <span class="rotulo-punto" aria-hidden="true"></span>
+        Correos y WhatsApp
+        <span class="rotulo-linea" aria-hidden="true"></span>
+        <span class="rotulo-usuario"><?= e(Auth::usuario()['usuario'] ?? '') ?></span>
+      </p>
 
-    <!-- ================= LA CAJA: todo en 1 clic ================= -->
-    <form class="caja-radar" id="form-radar" autocomplete="off" novalidate>
-      <label class="caja-etiqueta" for="url"><?= e(Ajustes::obtener('hero_etiqueta', 'Pega tu enlace')) ?></label>
+      <h1 class="titular"><?= cr_titulo_brillo(Ajustes::obtener('hero_titulo')) ?></h1>
+      <p class="portada-sub"><?= e(Ajustes::obtener('hero_subtitulo')) ?></p>
 
-      <div class="caja-fila">
-        <!-- Un solo campo para las tres cosas: una web, una lista de webs o
-             una búsqueda. Es un textarea para que quepan varias líneas y para
-             que en el móvil la dirección se parta en lugar de salirse. -->
-        <textarea id="url" name="url" class="caja-url" rows="1" spellcheck="false"
-               inputmode="url" enterkeyhint="go"
-               placeholder="<?= e(Ajustes::obtener('hero_placeholder')) ?>"
-               <?= $puedeExtraer ? '' : 'disabled' ?> required></textarea>
+      <p class="aviso-busqueda" id="aviso-busqueda" hidden></p>
+
+      <form class="caja-radar panel" id="form-radar" autocomplete="off" novalidate>
+
+        <!-- ····· 01 · de dónde ····· -->
+        <div class="paso">
+          <span class="paso-n" aria-hidden="true">01</span>
+          <label class="caja-etiqueta" for="url"><?= e(Ajustes::obtener('hero_etiqueta', 'Pega tu enlace')) ?></label>
+        </div>
+
+        <div class="caja-fila">
+          <!-- Un solo campo para las tres cosas: una web, una lista de webs o
+               una búsqueda. Es un textarea para que quepan varias líneas y para
+               que en el móvil la dirección se parta en lugar de salirse. -->
+          <textarea id="url" name="url" class="caja-url" rows="1" spellcheck="false"
+                 inputmode="url" enterkeyhint="go"
+                 placeholder="<?= e(Ajustes::obtener('hero_placeholder')) ?>"
+                 <?= $puedeExtraer ? '' : 'disabled' ?> required></textarea>
+        </div>
+
+        <?php if (Ajustes::activo('buscar_activo', true)): ?>
+        <div class="caja-modos">
+          <button type="button" class="modo" data-ejemplo="https://www.colegio.edu.gt">Una web</button>
+          <button type="button" class="modo" data-ejemplo="colegio1.edu.gt&#10;colegio2.edu.gt&#10;colegio3.edu.gt">Lista de webs</button>
+          <button type="button" class="modo" data-ejemplo="colegios privados Guatemala correo">Buscar en Google</button>
+          <button type="button" class="modo" data-ejemplo="site:facebook.com colegios Guatemala">Buscar en Facebook</button>
+          <button type="button" class="modo" data-ejemplo="https://www.facebook.com/nombredelapagina">Una página de Facebook</button>
+        </div>
+        <?php endif; ?>
+
+        <!-- ····· 02 · qué quiero ·····
+             Búsqueda inteligente: "solo correos que terminen en .edu.gt".
+             Kaptor reescribe la consulta al buscador con site: y, además, tira
+             todo correo que no cumpla antes siquiera de guardarlo. -->
+        <div class="caja-objetivo">
+          <div class="paso">
+            <span class="paso-n" aria-hidden="true">02</span>
+            <label class="caja-objetivo-tit" for="objetivo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.6"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/>
+              </svg>
+              Búsqueda inteligente <span class="suave pequeno">— quiero <b>solo</b> correos que terminen en:</span>
+            </label>
+          </div>
+          <input type="text" id="objetivo" name="objetivo" class="campo" autocomplete="off" spellcheck="false"
+                 placeholder="Ej.: .edu.gt   ·   vacío = todos los dominios" <?= $puedeExtraer ? '' : 'disabled' ?>>
+          <div class="chips-ext" id="chips-objetivo">
+            <button type="button" class="chip-ext chip-todos" data-ext="">Todos</button>
+            <button type="button" class="chip-ext" data-ext="edu.gt">.edu.gt</button>
+            <button type="button" class="chip-ext" data-ext="com.gt">.com.gt</button>
+            <button type="button" class="chip-ext" data-ext="gob.gt">.gob.gt</button>
+            <button type="button" class="chip-ext" data-ext="org.gt">.org.gt</button>
+            <button type="button" class="chip-ext" data-ext="gt">.gt</button>
+            <button type="button" class="chip-ext" data-ext="com">.com</button>
+            <button type="button" class="chip-ext" data-ext="org">.org</button>
+            <button type="button" class="chip-ext" data-ext="edu">.edu</button>
+          </div>
+        </div>
+
+        <!-- ····· 03 · hasta dónde ····· -->
+        <div class="caja-pie">
+          <div class="paso">
+            <span class="paso-n" aria-hidden="true">03</span>
+            <?php if ($rastreoActivo): ?>
+              <label class="interruptor" for="profundo" title="Rastrea también las páginas internas del mismo dominio">
+                <input type="checkbox" id="profundo" name="profundo" <?= $puedeExtraer ? '' : 'disabled' ?>>
+                <span class="pista" aria-hidden="true"></span>
+                <span class="txt">Rastreo profundo
+                  <span class="suave pequeno">(hasta <?= e((string) Ajustes::entero('max_paginas', 30)) ?> páginas)</span>
+                </span>
+              </label>
+            <?php else: ?>
+              <span class="caja-nota">Análisis de una sola página.</span>
+            <?php endif; ?>
+          </div>
+        </div>
+
         <button type="submit" class="btn caja-boton" id="btn-extraer" <?= $puedeExtraer ? '' : 'disabled' ?>>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
           </svg>
           <?= e(Ajustes::obtener('hero_boton')) ?>
         </button>
-      </div>
 
-      <?php if (Ajustes::activo('buscar_activo', true)): ?>
-      <div class="caja-modos">
-        <button type="button" class="modo" data-ejemplo="https://www.colegio.edu.gt">Una web</button>
-        <button type="button" class="modo" data-ejemplo="colegio1.edu.gt&#10;colegio2.edu.gt&#10;colegio3.edu.gt">Lista de webs</button>
-        <button type="button" class="modo" data-ejemplo="colegios privados Guatemala correo">Buscar en Google</button>
-        <button type="button" class="modo" data-ejemplo="site:facebook.com colegios Guatemala">Buscar en Facebook</button>
-        <button type="button" class="modo" data-ejemplo="https://www.facebook.com/nombredelapagina">Una página de Facebook</button>
-      </div>
-      <?php endif; ?>
+        <p class="caja-nota caja-nota-legal"><?= e(Ajustes::obtener('aviso_legal')) ?></p>
+      </form>
 
-      <!-- Búsqueda inteligente: "solo quiero correos que terminen en .edu.gt".
-           Kaptor reescribe la consulta al buscador con site: y, además, tira
-           todo correo que no cumpla antes siquiera de guardarlo. -->
-      <div class="caja-objetivo">
-        <label class="caja-objetivo-tit" for="objetivo">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.6"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/>
-          </svg>
-          Búsqueda inteligente <span class="suave pequeno">— quiero <b>solo</b> correos que terminen en:</span>
-        </label>
-        <input type="text" id="objetivo" name="objetivo" class="campo" autocomplete="off" spellcheck="false"
-               placeholder="Ej.: .edu.gt   ·   vacío = todos los dominios" <?= $puedeExtraer ? '' : 'disabled' ?>>
-        <div class="chips-ext" id="chips-objetivo">
-          <button type="button" class="chip-ext chip-todos" data-ext="">Todos</button>
-          <button type="button" class="chip-ext" data-ext="edu.gt">.edu.gt</button>
-          <button type="button" class="chip-ext" data-ext="com.gt">.com.gt</button>
-          <button type="button" class="chip-ext" data-ext="gob.gt">.gob.gt</button>
-          <button type="button" class="chip-ext" data-ext="org.gt">.org.gt</button>
-          <button type="button" class="chip-ext" data-ext="gt">.gt</button>
-          <button type="button" class="chip-ext" data-ext="com">.com</button>
-          <button type="button" class="chip-ext" data-ext="org">.org</button>
-          <button type="button" class="chip-ext" data-ext="edu">.edu</button>
+      <!-- El otro camino: no hay web que rastrear, ya se tiene el texto. -->
+      <p class="atajo-texto">
+        ¿Ya tienes el texto o la lista y solo quieres sacarle los correos?
+        <a href="<?= e(cr_url('depurar.php')) ?>">Extraer correos de un texto →</a>
+      </p>
+    </div>
+
+    <!-- ----------------------------- COLUMNA DE LECTURA ----------------------------- -->
+    <!-- Lo que un instrumento enseña cuando está en reposo: de qué es capaz y
+         qué se ha hecho con él. En pantallas estrechas pasa debajo. -->
+    <aside class="consola-lectura" aria-label="Estado del instrumento">
+      <?php $resumen = cr_resumen_usuario(); ?>
+
+      <div class="lectura-cifras">
+        <div class="lectura-dato">
+          <span class="lectura-n"><?= number_format((float) $resumen['escaneos'], 0, ',', '.') ?></span>
+          <span class="lectura-txt">extracciones</span>
+        </div>
+        <div class="lectura-dato">
+          <span class="lectura-n"><?= number_format((float) $resumen['correos'], 0, ',', '.') ?></span>
+          <span class="lectura-txt">correos captados</span>
+        </div>
+        <div class="lectura-dato">
+          <span class="lectura-n"><?= number_format((float) $resumen['whatsapps'], 0, ',', '.') ?></span>
+          <span class="lectura-txt">WhatsApp</span>
         </div>
       </div>
 
-      <div class="caja-pie">
-        <?php if ($rastreoActivo): ?>
-          <label class="interruptor" for="profundo" title="Rastrea también las páginas internas del mismo dominio">
-            <input type="checkbox" id="profundo" name="profundo" <?= $puedeExtraer ? '' : 'disabled' ?>>
-            <span class="pista" aria-hidden="true"></span>
-            <span class="txt">Rastreo profundo
-              <span class="suave pequeno">(hasta <?= e((string) Ajustes::entero('max_paginas', 30)) ?> páginas)</span>
-            </span>
-          </label>
-        <?php else: ?>
-          <span class="caja-nota">Análisis de una sola página.</span>
-        <?php endif; ?>
-        <span class="caja-nota"><?= e(Ajustes::obtener('aviso_legal')) ?></span>
-      </div>
-    </form>
+      <ol class="lectura-lista">
+        <li><b>20 técnicas</b> para los correos y 8 para los números: mailto, widgets, JSON-LD, texto y ofuscaciones.</li>
+        <li><b>Rastreo profundo</b> por contacto, nosotros y equipo, con el sitemap incluido.</li>
+        <li><b>Nivel educativo</b> de cada centro, leído en su propia web.</li>
+        <li><b>TXT, CSV y Excel</b>, filtrados por la terminación que elijas.</li>
+      </ol>
 
-    <!-- El otro camino: no hay web que rastrear, ya se tiene el texto. -->
-    <p class="atajo-texto">
-      ¿Ya tienes el texto o la lista y solo quieres sacarle los correos?
-      <a href="<?= e(cr_url('depurar.php')) ?>">Extraer correos de un texto →</a>
-    </p>
+      <?php if ($resumen['ultimo'] !== ''): ?>
+        <p class="lectura-pie">
+          Última extracción · <span class="mono"><?= e($resumen['ultimo']) ?></span>
+        </p>
+      <?php endif; ?>
+    </aside>
 
-    <?php if (!$puedeExtraer): ?>
-      <div class="aviso aviso-info" style="max-width:760px;margin:20px auto 0;text-align:left">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/>
-        </svg>
-        <span>
-          Para usar el extractor necesitas una cuenta.
-          <a href="<?= e(cr_url('login.php')) ?>">Inicia sesión</a>.
-        </span>
-      </div>
-    <?php endif; ?>
+  </div>
+</section>
 
     <!-- Ventajas -->
     <div class="ventajas">

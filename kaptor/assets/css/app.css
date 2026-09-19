@@ -1036,3 +1036,29 @@ table.tabla.tabla-compacta tbody tr:hover{background:color-mix(in srgb,var(--oro
 .atajo-texto a{color:var(--oro);font-weight:600;white-space:nowrap}
 .atajo-texto a:hover{color:var(--oro2)}
 @media (max-width:560px){ .atajo-texto a{display:block;margin-top:4px} }
+
+/* --------- Selector: ¿sacar correos o páginas web del texto pegado? -------- */
+.modo-depurar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+.modo-opcion{
+  flex:1 1 220px;display:flex;align-items:center;gap:11px;cursor:pointer;
+  border:1px solid var(--borde);border-radius:var(--r-md);padding:12px 15px;
+  transition:border-color var(--transicion),background var(--transicion);
+}
+.modo-opcion input{position:absolute;opacity:0;width:0;height:0}
+.modo-opcion svg{width:21px;height:21px;color:var(--suave);flex:none}
+.modo-opcion span{display:flex;flex-direction:column;gap:2px;min-width:0}
+.modo-opcion b{font-size:.92rem}
+.modo-opcion i{font-style:normal;font-size:.75rem;color:var(--suave);font-family:var(--mono,ui-monospace,Menlo,monospace)}
+.modo-opcion:hover{border-color:var(--oro)}
+.modo-opcion:focus-within{outline:2px solid var(--oro);outline-offset:2px}
+.modo-opcion.activa{
+  border-color:color-mix(in srgb,var(--oro) 58%,transparent);
+  background:color-mix(in srgb,var(--oro) 9%,transparent);
+}
+.modo-opcion.activa svg{color:var(--oro)}
+.caja-depurar code{
+  font-family:var(--mono,ui-monospace,Menlo,monospace);font-size:.82em;
+  background:color-mix(in srgb,var(--texto) 8%,transparent);
+  padding:1px 5px;border-radius:5px;
+}
+@media (max-width:560px){ .modo-opcion{flex:1 1 100%} }

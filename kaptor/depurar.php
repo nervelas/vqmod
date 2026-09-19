@@ -27,8 +27,14 @@ require_once CR_INCLUDES . '/plantilla.php';
 
 $puedeUsar = Auth::puedeExtraer();
 
+// Dos usos con el mismo motor: sacar correos, o sacar páginas web.
+$modo    = (string) (cr_post('modo', '') ?: ($_GET['modo'] ?? 'correos'));
+$modo    = $modo === 'webs' ? 'webs' : 'correos';
 $texto   = '';
 $op      = [
+    'contiene'           => '',
+    'sin_palabra'        => '',
+    'solo_raiz'          => true,
     'extensiones'        => '',
     'excluir'            => '',
     'solo'               => '',
@@ -55,25 +61,37 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && $puedeUsar) {
     $op['verificar_mx']       = cr_post('verificar_mx', '') !== '';
     $op['uno_por_dominio']    = cr_post('uno_por_dominio', '') !== '';
     $op['orden']              = (string) cr_post('orden', 'correo');
+    $op['contiene']           = trim((string) cr_post('contiene', ''));
+    $op['sin_palabra']        = trim((string) cr_post('sin_palabra', ''));
+    $op['solo_raiz']          = cr_post('enviado', '') === '' || cr_post('solo_raiz', '') !== '';
+
+    $que = $modo === 'webs' ? 'páginas web' : 'correos';
 
     if (trim($texto) === '') {
-        $error = 'Pega primero la lista de correos que quieres depurar.';
+        $error = 'Pega primero el texto del que quieres sacar los ' . $que . '.';
     } elseif (strlen($texto) > Depurador::MAX_ENTRADA) {
-        $error = 'La lista es demasiado grande (máximo 3 MB de texto, unos 100.000 correos). Divídela en dos partes.';
+        $error = 'El texto es demasiado grande (máximo 3 MB). Divídelo en dos partes.';
     } else {
-        $resultado = Depurador::procesar($texto, $op);
+        $resultado = $modo === 'webs'
+            ? Depurador::webs($texto, $op)
+            : Depurador::procesar($texto, $op);
+
+        $filas = $modo === 'webs' ? $resultado['webs'] : $resultado['correos'];
 
         // Descarga directa desde el mismo envío.
         $formato = strtolower((string) cr_post('descargar', ''));
         if (in_array($formato, ['txt', 'csv', 'xlsx'], true)) {
-            if (!$resultado['correos']) {
-                $error = 'No quedó ningún correo que descargar con esos filtros.';
+            if (!$filas) {
+                $error = 'No quedó nada que descargar con esos filtros.';
             } else {
                 $etiqueta  = Depurador::extensiones($op['extensiones']);
-                $contenido = Exportador::lista($resultado['correos'], $formato);
+                $etiqueta  = $etiqueta ? implode('-', array_slice($etiqueta, 0, 2)) : '';
+                $contenido = $modo === 'webs'
+                    ? Exportador::listaWebs($filas, $formato)
+                    : Exportador::lista($filas, $formato);
                 Exportador::descargar(
                     $contenido,
-                    Exportador::nombreLista($formato, $etiqueta ? implode('-', array_slice($etiqueta, 0, 2)) : ''),
+                    Exportador::nombreLista($formato, trim(($modo === 'webs' ? 'webs-' : '') . $etiqueta, '-')),
                     Exportador::mime($formato)
                 );
             }
@@ -88,7 +106,7 @@ if ($resultado && $resultado['extensiones']) {
 }
 
 cr_cabecera([
-    'titulo'      => 'Extraer correos de un texto',
+    'titulo'      => $modo === 'webs' ? 'Extraer páginas web de un texto' : 'Extraer correos de un texto',
     'descripcion' => 'Pega un texto largo o una lista de correos y Kaptor saca todos los correos que lleve dentro, sin repetidos y filtrados por la terminación de dominio que elijas.',
     'activo'      => 'depurar',
 ]);
@@ -98,13 +116,24 @@ cr_cabecera([
 
   <header class="depurar-cab">
     <span class="insignia"><span class="punto"></span> Sin salir a internet</span>
-    <h1>Extraer correos de un texto</h1>
-    <p class="portada-sub">
-      Pega <b>cualquier cosa</b> y Kaptor saca los correos que lleve dentro: un texto largo, un
-      artículo, un PDF copiado, un correo reenviado con cien firmas, una columna de Excel, un CSV
-      entero o una lista suelta. Los pone en minúsculas, <b>quita los repetidos</b> y te deja solo
-      los que terminen como tú digas.
-    </p>
+    <?php if ($modo === 'webs'): ?>
+      <h1>Extraer páginas web de un texto</h1>
+      <p class="portada-sub">
+        Pega el listado que sea —el JSON de <b>crt.sh</b>, unos resultados de búsqueda, un
+        directorio copiado— y Kaptor saca las <b>páginas web</b> que lleve dentro: sin repetidos,
+        sin <code>www.</code> ni subdominios, y solo las que digan lo que tú pidas
+        (<i>colegio</i>, <i>liceo</i>, <i>instituto</i>…). La lista sale lista para pegarla en la
+        caja de extracción.
+      </p>
+    <?php else: ?>
+      <h1>Extraer correos de un texto</h1>
+      <p class="portada-sub">
+        Pega <b>cualquier cosa</b> y Kaptor saca los correos que lleve dentro: un texto largo, un
+        artículo, un PDF copiado, un correo reenviado con cien firmas, una columna de Excel, un CSV
+        entero o una lista suelta. Los pone en minúsculas, <b>quita los repetidos</b> y te deja solo
+        los que terminen como tú digas.
+      </p>
+    <?php endif; ?>
   </header>
 
   <?php if ($error !== ''): ?>
@@ -123,10 +152,37 @@ cr_cabecera([
   <form method="post" class="tarjeta caja-depurar" id="form-depurar">
     <?= Seguridad::campoCsrf() ?>
     <input type="hidden" name="descargar" id="descargar" value="">
+    <input type="hidden" name="enviado" value="1">
+
+    <input type="hidden" name="modo" value="<?= e($modo) ?>">
+
+    <!-- ¿Qué se quiere sacar del texto? Va por la dirección, no por el envío:
+         los filtros de un modo no sirven para el otro. -->
+    <div class="modo-depurar">
+      <a class="modo-opcion <?= $modo === 'correos' ? 'activa' : '' ?>"
+         href="<?= e(cr_url('depurar.php')) ?>?modo=correos" <?= $modo === 'correos' ? 'aria-current="page"' : '' ?>>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 7.6 5.1a1.6 1.6 0 0 0 1.8 0l7.6-5.1"/>
+        </svg>
+        <span><b>Correos</b><i>info@colegio.edu.gt</i></span>
+      </a>
+      <a class="modo-opcion <?= $modo === 'webs' ? 'activa' : '' ?>"
+         href="<?= e(cr_url('depurar.php')) ?>?modo=webs" <?= $modo === 'webs' ? 'aria-current="page"' : '' ?>>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"/>
+        </svg>
+        <span><b>Páginas web</b><i>colegio.edu.gt</i></span>
+      </a>
+    </div>
 
     <label class="caja-etiqueta" for="lista">Pega aquí tu texto o tu lista</label>
-    <textarea name="lista" id="lista" class="campo area-lista" rows="9" spellcheck="false" <?= $puedeUsar ? "" : "disabled" ?>
-      placeholder="Pega aquí el texto entero. Da igual cómo vengan los correos:&#10;&#10;«Escríbenos a info@colegio.edu.gt o a direccion (at) liceo (dot) edu (dot) gt»&#10;juan.perez@empresa.com.gt&#10;&quot;Ventas&quot;;&quot;ventas@tienda.com&quot;;&quot;5022200&quot;&#10;&#10;…un artículo, un PDF copiado, un correo reenviado, un CSV o una columna de Excel."><?= e($texto) ?></textarea>
+    <?php if ($modo === 'webs'): ?>
+      <textarea name="lista" id="lista" class="campo area-lista" rows="9" spellcheck="false" <?= $puedeUsar ? "" : "disabled" ?>
+        placeholder="Pega el listado entero. Da igual cómo vengan las webs:&#10;&#10;{&quot;name_value&quot;:&quot;colegioamericano.com.gt\nwww.colegioamericano.com.gt&quot;}&#10;*.liceoguatemala.com.gt&#10;https://www.institutomoderno.com.gt/contacto&#10;escuelabilingue.org.gt&#10;&#10;…el JSON de crt.sh, resultados de búsqueda o un directorio copiado."><?= e($texto) ?></textarea>
+    <?php else: ?>
+      <textarea name="lista" id="lista" class="campo area-lista" rows="9" spellcheck="false" <?= $puedeUsar ? "" : "disabled" ?>
+        placeholder="Pega aquí el texto entero. Da igual cómo vengan los correos:&#10;&#10;«Escríbenos a info@colegio.edu.gt o a direccion (at) liceo (dot) edu (dot) gt»&#10;juan.perez@empresa.com.gt&#10;&quot;Ventas&quot;;&quot;ventas@tienda.com&quot;;&quot;5022200&quot;&#10;&#10;…un artículo, un PDF copiado, un correo reenviado, un CSV o una columna de Excel."><?= e($texto) ?></textarea>
+    <?php endif; ?>
 
     <div class="depurar-filtros">
 
@@ -151,25 +207,54 @@ cr_cabecera([
                placeholder="Ej.: .ru, .cn, .xyz" autocomplete="off" spellcheck="false">
       </div>
 
-      <div class="campo-grupo">
-        <label for="solo">Tipo de buzón</label>
-        <select name="solo" id="solo" class="campo">
-          <option value="">Todos los buzones</option>
-          <option value="generico" <?= $op['solo'] === 'generico' ? 'selected' : '' ?>>Solo genéricos (info@, ventas@…)</option>
-          <option value="personal" <?= $op['solo'] === 'personal' ? 'selected' : '' ?>>Solo personales (nombre@…)</option>
-        </select>
-      </div>
+      <?php if ($modo === 'webs'): ?>
+        <div class="campo-grupo">
+          <label for="contiene">Solo las webs que digan <span class="suave pequeno">(vacío = todas)</span></label>
+          <input type="text" name="contiene" id="contiene" class="campo"
+                 value="<?= e((string) $op['contiene']) ?>"
+                 placeholder="Ej.: colegio, liceo, instituto, escuela, educativo"
+                 autocomplete="off" spellcheck="false">
+          <div class="chips-ext" id="chips-palabras">
+            <button type="button" class="chip-ext" data-palabras="colegio, liceo, instituto, escuela, educativo, cole">Colegios</button>
+            <button type="button" class="chip-ext" data-palabras="universidad, facultad, campus">Universidades</button>
+            <button type="button" class="chip-ext" data-palabras="academia, capacitacion, tecnico">Academias</button>
+            <button type="button" class="chip-ext chip-todos" data-palabras="">Todas</button>
+          </div>
+        </div>
 
-      <div class="campo-grupo">
-        <label for="orden">Ordenar por</label>
-        <select name="orden" id="orden" class="campo">
-          <option value="correo"   <?= $op['orden'] === 'correo'   ? 'selected' : '' ?>>Correo (A-Z)</option>
-          <option value="dominio"  <?= $op['orden'] === 'dominio'  ? 'selected' : '' ?>>Dominio (A-Z)</option>
-          <option value="original" <?= $op['orden'] === 'original' ? 'selected' : '' ?>>Como venían</option>
-        </select>
-      </div>
+        <div class="campo-grupo">
+          <label for="sin_palabra">Fuera las que digan <span class="suave pequeno">(opcional)</span></label>
+          <input type="text" name="sin_palabra" id="sin_palabra" class="campo"
+                 value="<?= e((string) $op['sin_palabra']) ?>"
+                 placeholder="Ej.: tienda, banco, hotel" autocomplete="off" spellcheck="false">
+        </div>
+      <?php else: ?>
+        <div class="campo-grupo">
+          <label for="solo">Tipo de buzón</label>
+          <select name="solo" id="solo" class="campo">
+            <option value="">Todos los buzones</option>
+            <option value="generico" <?= $op['solo'] === 'generico' ? 'selected' : '' ?>>Solo genéricos (info@, ventas@…)</option>
+            <option value="personal" <?= $op['solo'] === 'personal' ? 'selected' : '' ?>>Solo personales (nombre@…)</option>
+          </select>
+        </div>
+
+        <div class="campo-grupo">
+          <label for="orden">Ordenar por</label>
+          <select name="orden" id="orden" class="campo">
+            <option value="correo"   <?= $op['orden'] === 'correo'   ? 'selected' : '' ?>>Correo (A-Z)</option>
+            <option value="dominio"  <?= $op['orden'] === 'dominio'  ? 'selected' : '' ?>>Dominio (A-Z)</option>
+            <option value="original" <?= $op['orden'] === 'original' ? 'selected' : '' ?>>Como venían</option>
+          </select>
+        </div>
+      <?php endif; ?>
     </div>
 
+    <?php if ($modo === 'webs'): ?>
+    <div class="depurar-casillas">
+      <label class="casilla"><input type="checkbox" name="solo_raiz" value="1" <?= $op['solo_raiz'] ? 'checked' : '' ?>>
+        <span>Dejar solo el <b>dominio principal</b>: <code>www.x.edu.gt</code> y <code>mail.x.edu.gt</code> pasan a ser <code>x.edu.gt</code></span></label>
+    </div>
+    <?php else: ?>
     <div class="depurar-casillas">
       <label class="casilla"><input type="checkbox" name="quitar_noreply" value="1" <?= $op['quitar_noreply'] ? 'checked' : '' ?>>
         <span>Quitar <b>noreply@</b> y buzones que no admiten respuesta</span></label>
@@ -182,29 +267,34 @@ cr_cabecera([
       <label class="casilla"><input type="checkbox" name="verificar_mx" value="1" <?= $op['verificar_mx'] ? 'checked' : '' ?>>
         <span>Comprobar que el dominio <b>recibe correo</b> (MX) <i class="suave pequeno">— tarda más</i></span></label>
     </div>
+    <?php endif; ?>
 
     <div class="depurar-acciones">
       <button type="submit" class="btn" <?= $puedeUsar ? '' : 'disabled' ?>>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M3 5h18l-7 8v6l-4 2v-8Z"/>
         </svg>
-        Extraer los correos
+        <?= $modo === 'webs' ? 'Extraer las páginas web' : 'Extraer los correos' ?>
       </button>
       <button type="reset" class="btn btn-fantasma" id="btn-limpiar-todo">Vaciar</button>
     </div>
   </form>
 
-  <?php if ($resultado): $r = $resultado['resumen']; ?>
+  <?php if ($resultado): $r = $resultado['resumen'];
+        $filas = $modo === 'webs' ? $resultado['webs'] : $resultado['correos'];
+        $descartados = $modo === 'webs'
+            ? ($r['invalidos'] + $r['extension'] + $r['palabra'])
+            : ($r['invalidos'] + $r['extension'] + $r['rol'] + $r['noreply'] + $r['desechables'] + $r['suprimidos'] + $r['sin_mx'] + $r['por_dominio']); ?>
 
     <div class="depurar-marcador">
       <div class="marca-dato"><b><?= number_format((float) $r['encontrados'], 0, ',', '.') ?></b><span>Pegados</span></div>
       <div class="marca-dato"><b><?= number_format((float) $r['unicos'], 0, ',', '.') ?></b><span>Distintos</span></div>
       <div class="marca-dato malo"><b><?= number_format((float) $r['repetidos'], 0, ',', '.') ?></b><span>Repetidos</span></div>
-      <div class="marca-dato malo"><b><?= number_format((float) ($r['invalidos'] + $r['extension'] + $r['rol'] + $r['noreply'] + $r['desechables'] + $r['suprimidos'] + $r['sin_mx'] + $r['por_dominio']), 0, ',', '.') ?></b><span>Descartados</span></div>
+      <div class="marca-dato malo"><b><?= number_format((float) $descartados, 0, ',', '.') ?></b><span>Descartados</span></div>
       <div class="marca-dato bueno"><b><?= number_format((float) $r['final'], 0, ',', '.') ?></b><span>Lista final</span></div>
     </div>
 
-    <?php if ($resultado['correos']): ?>
+    <?php if ($filas): ?>
       <div class="exportar exportar-lista">
         <button type="button" class="btn btn-fantasma btn-peq" id="btn-copiar-lista">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -227,12 +317,31 @@ cr_cabecera([
         </p>
       <?php endif; ?>
 
+      <?php if ($modo === 'webs'): ?>
+      <div class="tabla-caja">
+        <div class="tabla-scroll">
+          <table class="tabla tabla-compacta">
+            <thead><tr><th class="col-num">#</th><th>Página web</th><th>Ext.</th><th>Abrir</th></tr></thead>
+            <tbody>
+            <?php foreach (array_slice($filas, 0, 2000) as $i => $w): ?>
+              <tr>
+                <td class="col-num"><?= $i + 1 ?></td>
+                <td><span class="celda-correo"><?= e((string) $w['web']) ?></span></td>
+                <td><span class="chip chip-gris">.<?= e((string) $w['extension']) ?></span></td>
+                <td><a href="https://<?= e((string) $w['web']) ?>" target="_blank" rel="noopener nofollow" class="pequeno">ver →</a></td>
+              </tr>
+            <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <?php else: ?>
       <div class="tabla-caja">
         <div class="tabla-scroll">
           <table class="tabla tabla-compacta">
             <thead><tr><th class="col-num">#</th><th>Correo</th><th>Dominio</th><th>Ext.</th><th>Tipo</th><?= $op['verificar_mx'] ? '<th>MX</th>' : '' ?></tr></thead>
             <tbody>
-            <?php foreach (array_slice($resultado['correos'], 0, 2000) as $i => $c): ?>
+            <?php foreach (array_slice($filas, 0, 2000) as $i => $c): ?>
               <tr>
                 <td class="col-num"><?= $i + 1 ?></td>
                 <td><span class="celda-correo"><?= e((string) $c['correo']) ?></span></td>
@@ -248,22 +357,23 @@ cr_cabecera([
           </table>
         </div>
       </div>
-      <?php if (count($resultado['correos']) > 2000): ?>
+      <?php endif; ?>
+      <?php if (count($filas) > 2000): ?>
         <p class="pequeno suave">Se muestran los primeros 2.000. La descarga incluye los <?= (int) $r['final'] ?>.</p>
       <?php endif; ?>
 
-      <?php $paraCopiar = array_slice(array_column($resultado['correos'], 'correo'), 0, 20000); ?>
+      <?php $paraCopiar = array_slice(array_column($filas, $modo === 'webs' ? 'web' : 'correo'), 0, 20000); ?>
       <textarea id="lista-limpia" class="oculto" aria-hidden="true"><?= e(implode("\n", $paraCopiar)) ?></textarea>
-      <?php if (count($resultado['correos']) > 20000): ?>
+      <?php if (count($filas) > 20000): ?>
         <p class="pequeno suave">El botón «Copiar» se lleva los primeros 20.000. Para la lista entera usa la descarga en TXT.</p>
       <?php endif; ?>
 
     <?php else: ?>
-      <div class="vacio"><p><b>No quedó ningún correo.</b></p>
-        <p class="pequeno">Revisa las extensiones que pediste: si escribes <b>.edu.gt</b> solo salen esos. Deja el campo vacío para no filtrar.</p></div>
+      <div class="vacio"><p><b>No quedó <?= $modo === 'webs' ? 'ninguna página web' : 'ningún correo' ?>.</b></p>
+        <p class="pequeno">Revisa lo que pediste: si escribes <b>.edu.gt</b> solo salen esos<?= $modo === 'webs' ? ', y si pides que digan «colegio» se van los demás' : '' ?>. Deja los campos vacíos para no filtrar.</p></div>
     <?php endif; ?>
 
-    <?php if ($resultado['descartados']): ?>
+    <?php if ($modo !== 'webs' && !empty($resultado['descartados'])): ?>
       <details class="depurar-descartes">
         <summary>Ver por qué se descartaron (<?= count($resultado['descartados']) ?> primeros)</summary>
         <ul class="lista-extras">

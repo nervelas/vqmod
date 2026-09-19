@@ -20,6 +20,13 @@ final class Depurador
     /** Cuántos dominios distintos se comprueban por MX como máximo. */
     private const MAX_MX = 300;
 
+    /**
+     * Un dominio suelto o dentro de un enlace. Pide al menos dos etiquetas y
+     * una terminación de 2 a 24 letras, que luego se valida contra la lista
+     * de extensiones reales.
+     */
+    public const RE_DOMINIO = '~(?<![A-Za-z0-9.@\-])((?:[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,24})(?![A-Za-z0-9\-])~';
+
     /** Cuántos descartes se guardan para ensenar en pantalla. */
     private const MAX_DESCARTES = 400;
 
@@ -319,6 +326,171 @@ final class Depurador
             'extensiones' => $extVistas,
             'descartados' => $descartados,
         ];
+    }
+
+    // ---------------------------------------------------------------- dominios
+
+    /**
+     * Saca las páginas web que haya dentro de un texto cualquiera.
+     *
+     * Está pensada para lo que de verdad se pega: el JSON de crt.sh (los
+     * registros públicos de certificados), una lista de resultados de Google,
+     * un directorio copiado o unos dominios sueltos. Entiende las formas en
+     * las que aparecen:
+     *
+     *   "name_value":"colegio.edu.gt\nwww.colegio.edu.gt"   (JSON con saltos)
+     *   *.colegio.edu.gt                                     (comodín de los certificados)
+     *   https://www.colegio.edu.gt/contacto                  (enlace completo)
+     *   colegio.edu.gt                                       (a secas)
+     *
+     * Opciones:
+     *   extensiones   string[]  solo estas terminaciones
+     *   excluir       string[]  nunca estas terminaciones
+     *   contiene      string    solo los que lleven alguna de estas palabras
+     *   sin_palabra   string    fuera los que lleven alguna de estas palabras
+     *   solo_raiz     bool      www.x.edu.gt y mail.x.edu.gt => x.edu.gt
+     *   limite        int
+     *
+     * @param array<string,mixed> $op
+     * @return array<string,mixed>
+     */
+    public static function webs(string $texto, array $op = []): array
+    {
+        $extensiones = self::normalizarLista($op['extensiones'] ?? []);
+        $excluir     = self::normalizarLista($op['excluir'] ?? []);
+        $contiene    = self::palabras($op['contiene'] ?? '');
+        $sinPalabra  = self::palabras($op['sin_palabra'] ?? '');
+        $soloRaiz    = !array_key_exists('solo_raiz', $op) || !empty($op['solo_raiz']);
+        $limite      = max(0, (int) ($op['limite'] ?? 0));
+
+        if (strlen($texto) > self::MAX_ENTRADA) {
+            $texto = substr($texto, 0, self::MAX_ENTRADA);
+        }
+
+        // Los saltos escapados del JSON separan dominios: hay que deshacerlos
+        // antes de buscar, o "a.com\nb.com" se leería como un solo dominio.
+        $texto = str_replace(['\\n', '\\r', '\\/', '\\u002f'], [" ", " ", '/', '/'], $texto);
+        $texto = str_replace(['*.', '"', "'", '<', '>', '(', ')', '[', ']', '{', '}', ','], ' ', $texto);
+
+        $encontrados = [];
+        if (preg_match_all(self::RE_DOMINIO, $texto, $m)) {
+            $encontrados = $m[0];
+        }
+        unset($m, $texto);
+
+        $stats = [
+            'encontrados' => count($encontrados),
+            'repetidos'   => 0,
+            'invalidos'   => 0,
+            'extension'   => 0,
+            'palabra'     => 0,
+            'final'       => 0,
+        ];
+
+        $vistos = [];
+        $lista  = [];
+        $extVistas = [];
+
+        foreach ($encontrados as $indice => $crudo) {
+            unset($encontrados[$indice]);
+
+            $host = self::limpiarHost($crudo);
+            if ($host === '') { $stats['invalidos']++; continue; }
+
+            $ext = self::extensionDe($host);
+            if ($ext === '' || !in_array(self::tldDe($host), Validador::listaTlds(), true)) {
+                $stats['invalidos']++;
+                continue;
+            }
+
+            if ($soloRaiz) { $host = self::raizDe($host, $ext); }
+
+            if (isset($vistos[$host])) { $stats['repetidos']++; continue; }
+            $vistos[$host] = true;
+
+            if ($extensiones && !self::coincide($host, $extensiones)) { $stats['extension']++; continue; }
+            if ($excluir && self::coincide($host, $excluir))          { $stats['extension']++; continue; }
+
+            if ($contiene && !self::llevaPalabra($host, $contiene))   { $stats['palabra']++; continue; }
+            if ($sinPalabra && self::llevaPalabra($host, $sinPalabra)) { $stats['palabra']++; continue; }
+
+            $extVistas[$ext] = ($extVistas[$ext] ?? 0) + 1;
+            $lista[] = ['web' => $host, 'extension' => $ext];
+        }
+
+        usort($lista, static fn($a, $b) => strcmp($a['web'], $b['web']));
+        if ($limite > 0 && count($lista) > $limite) { $lista = array_slice($lista, 0, $limite); }
+
+        $stats['final']  = count($lista);
+        $stats['unicos'] = count($vistos);
+        arsort($extVistas);
+
+        return ['webs' => $lista, 'resumen' => $stats, 'extensiones' => $extVistas];
+    }
+
+    /** "colegio, liceo, instituto" => ['colegio','liceo','instituto'] */
+    private static function palabras($valor): array
+    {
+        if (is_array($valor)) { $valor = implode(',', $valor); }
+        $valor = mb_strtolower(trim((string) $valor), 'UTF-8');
+        if ($valor === '') { return []; }
+
+        $piezas = preg_split('~[\s,;|]+~u', $valor) ?: [];
+        $salida = [];
+        foreach ($piezas as $pieza) {
+            $pieza = preg_replace('~[^a-z0-9\-]~', '', self::sinAcentos($pieza)) ?? '';
+            if ($pieza !== '') { $salida[$pieza] = true; }
+        }
+        return array_keys($salida);
+    }
+
+    /** ¿El dominio lleva alguna de esas palabras? */
+    private static function llevaPalabra(string $host, array $palabras): bool
+    {
+        $plano = str_replace(['-', '.'], '', self::sinAcentos($host));
+        foreach ($palabras as $p) {
+            if (str_contains($host, $p) || str_contains($plano, str_replace('-', '', $p))) { return true; }
+        }
+        return false;
+    }
+
+    /** Deja el host en limpio: sin esquema, sin ruta, sin www, en minúsculas. */
+    private static function limpiarHost(string $crudo): string
+    {
+        $h = mb_strtolower(trim($crudo), 'UTF-8');
+        $h = preg_replace('~^[a-z][a-z0-9+.\-]*://~', '', $h) ?? $h;
+        $h = explode('/', $h)[0];
+        $h = explode('?', $h)[0];
+        $h = explode('@', $h)[count(explode('@', $h)) - 1];   // por si venía un correo
+        $h = explode(':', $h)[0];
+        $h = trim($h, ".-*\t ");
+        if ($h === '' || !str_contains($h, '.')) { return ''; }
+        if (strlen($h) > 190) { return ''; }
+        if (!preg_match('~^(?:[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}$~', $h)) { return ''; }
+        return $h;
+    }
+
+    /** Última etiqueta del dominio: colegio.edu.gt => gt */
+    private static function tldDe(string $host): string
+    {
+        $p = explode('.', $host);
+        return end($p) ?: '';
+    }
+
+    /** www.mail.colegio.edu.gt => colegio.edu.gt */
+    private static function raizDe(string $host, string $ext): string
+    {
+        if ($ext === '' || !str_ends_with($host, '.' . $ext)) { return $host; }
+        $sinExt = substr($host, 0, -strlen($ext) - 1);
+        $partes = explode('.', $sinExt);
+        $nombre = end($partes);
+        return $nombre !== '' ? $nombre . '.' . $ext : $host;
+    }
+
+    /** Quita las tildes para que "colegío" también valga como "colegio". */
+    private static function sinAcentos(string $t): string
+    {
+        return strtr($t, ['á'=>'a','é'=>'e','í'=>'i','ó'=>'o','ú'=>'u','ü'=>'u','ñ'=>'n']);
     }
 
     /**

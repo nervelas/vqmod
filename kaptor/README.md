@@ -99,6 +99,35 @@ Se pueden pedir varias a la vez (`.edu.gt, .gob.gt`). Vacío = todos los dominio
 
 ---
 
+## Extraer páginas web de un texto
+
+Mismo menú, pestaña **Páginas web**. Sirve para lo contrario que la otra: en vez
+de sacar correos, saca **dominios**. Se pega el listado que sea —el JSON de
+`crt.sh`, unos resultados de búsqueda, un directorio copiado— y devuelve una
+lista limpia, lista para pegarla en la caja de extracción:
+
+- Entiende todas las formas en que aparecen: `"name_value":"x.com\nwww.x.com"`
+  del JSON, el comodín `*.x.com` de los certificados, enlaces completos y
+  dominios a secas.
+- **Un dominio por centro**: `www.x.edu.gt`, `mail.x.edu.gt` y `webmail.x.edu.gt`
+  se convierten en `x.edu.gt`.
+- Filtro por terminación (`.com.gt`, `.org.gt`, `.net`…) y por palabra: *solo las
+  que digan colegio, liceo, instituto, escuela*. Con botones hechos para
+  Colegios, Universidades y Academias.
+- Descarga en TXT (un dominio por línea), CSV y Excel.
+
+Ejemplo real: 128 nombres de un volcado de certificados se quedan en 9 colegios.
+
+Para conseguir el listado de partida, los registros públicos de certificados:
+
+```
+https://crt.sh/?q=%.edu.gt&output=json
+https://crt.sh/?q=%.com.gt&output=json
+https://crt.sh/?q=%.org.gt&output=json
+```
+
+---
+
 ## Extraer correos de un texto (y depurar listas)
 
 Menú **Extraer de un texto**. No hace falta que haya una web que rastrear: se

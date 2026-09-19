@@ -1162,6 +1162,21 @@
   if (campo) { campo.addEventListener('input', pintar); }
   pintar();
 
+  /* Botones de palabras del modo web: colegios, universidades, academias. */
+  var chipsPal = document.getElementById('chips-palabras');
+  var campoPal = document.getElementById('contiene');
+  if (chipsPal && campoPal) {
+    chipsPal.addEventListener('click', function (ev) {
+      var b = ev.target.closest ? ev.target.closest('.chip-ext') : null;
+      if (!b) { return; }
+      campoPal.value = b.dataset.palabras || '';
+      Array.prototype.forEach.call(chipsPal.querySelectorAll('.chip-ext'), function (x) {
+        x.classList.toggle('activo', x === b);
+      });
+      campoPal.focus();
+    });
+  }
+
   /* Descargas: se marca el formato y se reenvía el mismo formulario, así el
      servidor depura otra vez con los mismos filtros y devuelve el archivo. */
   var oculto = document.getElementById('descargar');
@@ -1170,8 +1185,16 @@
       if (!oculto) { return; }
       oculto.value = b.dataset.bajar;
       form.submit();
-      setTimeout(function () { oculto.value = ''; }, 800);
+      // El navegador ya serializó el formulario: se limpia enseguida para que
+      // el siguiente envío recalcule en vez de volver a bajar el archivo.
+      oculto.value = '';
     });
+  });
+
+  /* Red de seguridad: un envío normal nunca descarga. */
+  form.addEventListener('submit', function (ev) {
+    if (!ev.submitter || ev.submitter.hasAttribute('data-bajar')) { return; }
+    if (oculto) { oculto.value = ''; }
   });
 
   /* Copiar la lista limpia. */

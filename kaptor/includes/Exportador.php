@@ -180,6 +180,50 @@ final class Exportador
         return "\xEF\xBB\xBF" . $contenido;
     }
 
+    /** Columnas de una lista de páginas web. */
+    private const COL_WEBS = ['Página web', 'Extensión', 'Para pegar en el navegador'];
+
+    /**
+     * Exporta una lista de páginas web (la que devuelve Depurador::webs).
+     *
+     * En TXT sale un dominio por línea, tal cual, para poder pegarlo de golpe
+     * en la caja de extracción de Kaptor.
+     *
+     * @param array<int,array<string,mixed>> $webs
+     */
+    public static function listaWebs(array $webs, string $formato): string
+    {
+        if ($formato === 'txt') {
+            $lineas = [];
+            foreach ($webs as $w) { $lineas[] = (string) $w['web']; }
+            return implode("\r\n", $lineas) . "\r\n";
+        }
+
+        $filas = [];
+        foreach ($webs as $w) {
+            $filas[] = [
+                (string) $w['web'],
+                '.' . (string) ($w['extension'] ?? ''),
+                'https://' . (string) $w['web'],
+            ];
+        }
+
+        if ($formato === 'xlsx') {
+            $libro = new XlsxEscritor('Kaptor · páginas web');
+            $libro->agregarHoja('Páginas web', self::COL_WEBS, $filas, [38, 13, 42]);
+            return $libro->generar();
+        }
+
+        $salida = fopen('php://temp', 'r+');
+        fputcsv($salida, self::COL_WEBS, ';', '"', '');
+        foreach ($filas as $fila) { fputcsv($salida, $fila, ';', '"', ''); }
+        rewind($salida);
+        $contenido = (string) stream_get_contents($salida);
+        fclose($salida);
+
+        return "\xEF\xBB\xBF" . $contenido;
+    }
+
     /** Nombre del archivo de una lista depurada. */
     public static function nombreLista(string $formato, string $etiqueta = ''): string
     {

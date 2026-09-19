@@ -891,3 +891,114 @@ textarea.caja-url::placeholder{white-space:pre-wrap}
 /* El aviso de error respeta los saltos de línea: el diagnóstico de los
    buscadores va en su propio renglón para poder leerlo. */
 .aviso-error span{white-space:pre-line}
+
+/* ==========================================================================
+   15. Tabla compacta, filtro por extensión y depurador de listas
+   La tabla de resultados nace apretada: se ve el doble de correos de un
+   vistazo y cabe entera en un portátil. El botón "Ver detalles" devuelve
+   las columnas largas para quien las necesite.
+   ========================================================================== */
+table.tabla.tabla-compacta{font-size:.84rem;min-width:0}
+table.tabla.tabla-compacta thead th{padding:9px 12px;font-size:.68rem;letter-spacing:.07em}
+table.tabla.tabla-compacta tbody td{padding:7px 12px;line-height:1.35}
+table.tabla.tabla-compacta .col-dominio,
+table.tabla.tabla-compacta .col-conf{display:none}
+table.tabla.tabla-compacta .celda-url{max-width:210px;font-size:.74rem}
+table.tabla.tabla-compacta .chip{padding:2px 8px;font-size:.68rem}
+table.tabla.tabla-compacta .celda-correo{font-size:.88rem}
+table.tabla.tabla-compacta tbody tr:nth-child(even){background:color-mix(in srgb,var(--texto) 3%,transparent)}
+table.tabla.tabla-compacta tbody tr:hover{background:color-mix(in srgb,var(--oro) 9%,transparent)}
+.col-num{width:44px;color:var(--suave);font-variant-numeric:tabular-nums;font-size:.75rem;text-align:right}
+
+/* Campo donde se escriben las extensiones a mano: .com, .com.gt, .edu.gt */
+.campo-ext{width:auto;min-width:260px;flex:1}
+.herramientas .campo-ext{padding-top:11px;padding-bottom:11px}
+
+/* Botones-extensión: filtran de un toque, sin listas interminables. */
+.chips-ext{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 14px}
+.chips-ext[hidden]{display:none}
+.chip-ext{
+  border:1px solid var(--borde);background:transparent;color:var(--suave);
+  border-radius:var(--r-full);padding:5px 12px;font:inherit;font-size:.76rem;
+  cursor:pointer;display:inline-flex;align-items:center;gap:6px;
+  transition:border-color var(--transicion),color var(--transicion),background var(--transicion);
+}
+.chip-ext i{font-style:normal;font-size:.68rem;opacity:.7;font-variant-numeric:tabular-nums}
+.chip-ext:hover{border-color:var(--oro);color:var(--texto)}
+.chip-ext:focus-visible{outline:2px solid var(--oro);outline-offset:2px}
+.chip-ext.activo{
+  border-color:color-mix(in srgb,var(--neon) 52%,transparent);
+  background:color-mix(in srgb,var(--neon) 13%,transparent);
+  color:var(--neon);
+}
+
+/* -------------------------------------------------- Depurar lista de correos */
+.seccion-depurar{padding-top:44px;padding-bottom:72px}
+.depurar-cab{max-width:760px;margin-bottom:26px}
+.depurar-cab h1{font-size:clamp(1.9rem,4.4vw,2.6rem);margin:14px 0 10px}
+.caja-depurar{padding:24px}
+.area-lista{
+  width:100%;min-height:190px;resize:vertical;font-family:var(--mono,ui-monospace,SFMono-Regular,Menlo,monospace);
+  font-size:.88rem;line-height:1.55;white-space:pre;overflow-wrap:normal;overflow-x:auto;
+}
+.depurar-filtros{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:18px}
+.campo-grupo{display:flex;flex-direction:column;gap:7px;min-width:0}
+.campo-grupo > label{font-size:.82rem;color:var(--suave);font-weight:600}
+.depurar-casillas{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px 20px;margin-top:20px}
+.casilla{display:flex;align-items:flex-start;gap:9px;font-size:.87rem;cursor:pointer;line-height:1.4}
+.casilla input{margin-top:3px;flex:none;width:17px;height:17px;accent-color:var(--oro)}
+.depurar-acciones{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+
+/* Marcador: pegados / distintos / repetidos / descartados / lista final */
+.depurar-marcador{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin:26px 0 18px;
+}
+.marca-dato{
+  border:1px solid var(--borde);border-radius:var(--r-md);padding:14px 16px;
+  background:color-mix(in srgb,var(--texto) 3%,transparent);text-align:center;
+}
+.marca-dato b{display:block;font-size:1.6rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.marca-dato span{display:block;margin-top:4px;font-size:.74rem;color:var(--suave);text-transform:uppercase;letter-spacing:.06em}
+.marca-dato.bueno{border-color:color-mix(in srgb,var(--neon) 46%,transparent);background:color-mix(in srgb,var(--neon) 10%,transparent)}
+.marca-dato.bueno b{color:var(--neon)}
+.marca-dato.malo b{color:var(--suave)}
+.exportar-lista{margin-bottom:12px}
+.depurar-reparto{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 14px}
+.depurar-descartes{margin-top:18px}
+.depurar-descartes summary{cursor:pointer;color:var(--suave);font-size:.86rem;padding:8px 0}
+.depurar-descartes summary:hover{color:var(--oro)}
+.depurar-descartes .lista-extras li{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+@media (max-width:760px){
+  .caja-depurar{padding:18px}
+  .depurar-filtros,.depurar-casillas{grid-template-columns:1fr}
+  .depurar-acciones .btn{width:100%;justify-content:center}
+  .depurar-marcador{grid-template-columns:repeat(2,1fr)}
+  .marca-dato b{font-size:1.35rem}
+  .herramientas .campo-ext{width:100%;min-width:0}
+  table.tabla.tabla-compacta{min-width:0}
+  table.tabla.tabla-compacta .col-url{display:none}
+}
+@media (max-width:560px){
+  table.tabla.tabla-compacta{min-width:0;font-size:.8rem}
+  table.tabla.tabla-compacta thead th,table.tabla.tabla-compacta tbody td{padding:7px 8px}
+  /* En un teléfono lo que importa es el correo: MX se ve en «Ver detalles». */
+  table.tabla.tabla-compacta .col-mx{display:none}
+  table.tabla.tabla-compacta .celda-correo{word-break:break-word;overflow-wrap:anywhere}
+  .depurar-marcador{grid-template-columns:repeat(2,1fr)}
+}
+
+/* --------------------------------- Búsqueda inteligente (portada) ---------- */
+.caja-objetivo{margin-top:16px;padding-top:16px;border-top:1px solid var(--borde);text-align:left}
+.caja-objetivo-tit{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  font-size:.86rem;font-weight:600;color:var(--texto);margin-bottom:10px;
+}
+.caja-objetivo-tit svg{width:17px;height:17px;color:var(--oro);flex:none}
+.caja-objetivo-tit .pequeno{font-weight:400}
+.caja-objetivo .campo{width:100%}
+.caja-objetivo .chips-ext{margin:10px 0 0}
+@media (max-width:560px){
+  .caja-objetivo .chip-ext{flex:1 1 auto;justify-content:center;min-height:36px}
+  .caja-objetivo .campo{font-size:16px}   /* evita el zoom de iOS */
+}

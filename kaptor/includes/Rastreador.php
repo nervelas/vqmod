@@ -58,7 +58,7 @@ final class Rastreador
      * @param string[] $urls
      * @return array{ok:bool,escaneo?:array,error?:string,aceptadas?:int,descartadas?:int}
      */
-    public static function iniciarVarias(array $urls, bool $profundo, int $usuarioId = 0, string $etiqueta = ''): array
+    public static function iniciarVarias(array $urls, bool $profundo, int $usuarioId = 0, string $etiqueta = '', string $filtroExt = ''): array
     {
         $privadas = Ajustes::activo('permitir_privadas');
         $tope     = Ajustes::entero('max_sitios_lote', 100, 1, 500);
@@ -92,6 +92,7 @@ final class Rastreador
             'usuario_id'      => $usuarioId > 0 ? $usuarioId : null,
             'url_origen'      => mb_substr($etiqueta !== '' ? $etiqueta : $primera, 0, 1000),
             'host'            => '*',
+            'filtro_ext'      => $filtroExt !== '' ? mb_substr($filtroExt, 0, 190) : null,
             'profundo'        => $profundo ? 1 : 0,
             'max_paginas'     => $maxPag,
             'max_profundidad' => $profundo ? Ajustes::entero('max_profundidad', 2, 0, 10) : 0,
@@ -115,7 +116,7 @@ final class Rastreador
         ];
     }
 
-    public static function iniciar(string $url, bool $profundo, int $usuarioId = 0): array
+    public static function iniciar(string $url, bool $profundo, int $usuarioId = 0, string $filtroExt = ''): array
     {
         $privadas = Ajustes::activo('permitir_privadas');
         $val = Seguridad::validarUrl($url, $privadas);
@@ -135,6 +136,7 @@ final class Rastreador
             'usuario_id'      => $usuarioId > 0 ? $usuarioId : null,
             'url_origen'      => mb_substr($urlLimpia, 0, 1000),
             'host'            => mb_substr($host, 0, 190),
+            'filtro_ext'      => $filtroExt !== '' ? mb_substr($filtroExt, 0, 190) : null,
             'profundo'        => $profundo ? 1 : 0,
             'max_paginas'     => $maxPag,
             'max_profundidad' => $maxProf,
@@ -403,8 +405,17 @@ final class Rastreador
         $maxCorreos = Ajustes::entero('max_correos', 1000, 1, 100000);
         $nuevos     = [];
 
+        // Búsqueda inteligente: si el escaneo pidió ".edu.gt", solo se guardan
+        // esos correos. El resto ni siquiera llega a la base de datos.
+        $filtro = Depurador::extensiones((string) ($escaneo['filtro_ext'] ?? ''));
+
         foreach ($correos as $correo => $info) {
             if (self::contarCorreos($escaneoId) >= $maxCorreos) { break; }
+
+            if ($filtro) {
+                $dom = explode('@', (string) $correo)[1] ?? '';
+                if (!Depurador::coincide($dom, $filtro)) { continue; }
+            }
 
             $metodos = implode(',', array_keys($info['metodos']));
             $veces   = max(1, (int) $info['veces']);

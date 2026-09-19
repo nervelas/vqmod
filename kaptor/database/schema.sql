@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS `cr_escaneos` (
   `usuario_id`      INT UNSIGNED NULL,
   `url_origen`      VARCHAR(1000) NOT NULL,
   `host`            VARCHAR(190) NOT NULL,
+  `filtro_ext`      VARCHAR(190) NULL DEFAULT NULL,
   `profundo`        TINYINT(1)   NOT NULL DEFAULT 0,
   `max_paginas`     SMALLINT UNSIGNED NOT NULL DEFAULT 1,
   `max_profundidad` TINYINT UNSIGNED  NOT NULL DEFAULT 0,

@@ -14,7 +14,7 @@ ini_set('display_errors', '1');
 @set_time_limit(180);
 
 define('CR_RAIZ', __DIR__);
-define('CR_VERSION', '1.0.0');
+define('CR_VERSION', '2.2.0');
 const PHP_MINIMO = '8.0.0';
 
 $rutaConfig = CR_RAIZ . '/config/config.php';
@@ -315,7 +315,7 @@ code{background:#0B0D11;border:1px solid var(--borde);padding:2px 7px;border-rad
       <circle cx="46" cy="24" r="3.2" fill="#6EF3A5"/>
     </svg>
     <div>
-      <h1>Correo<span>Radar</span></h1>
+      <h1>Kap<span>tor</span></h1>
       <p class="lema">Instalación guiada · versión <?= h(CR_VERSION) ?></p>
     </div>
   </div>

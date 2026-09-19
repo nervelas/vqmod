@@ -93,6 +93,7 @@ function cr_cabecera(array $opciones = []): void
 
     <nav aria-label="Navegación principal">
       <a href="<?= e(cr_url('index.php')) ?>" class="enlace-extraer <?= $activo === 'inicio' ? 'activo' : '' ?>">Extraer</a>
+      <a href="<?= e(cr_url('depurar.php')) ?>" class="<?= $activo === 'depurar' ? 'activo' : '' ?>">Depurar lista</a>
       <?php if (Auth::autenticado()): ?>
         <a href="<?= e(cr_url('mis-extracciones.php')) ?>" class="<?= $activo === 'mias' ? 'activo' : '' ?>">Mis extracciones</a>
         <?php if (Auth::esAdmin()): ?>
@@ -134,6 +135,7 @@ function cr_pie(bool $conJs = true): void
     <span><?= e(Ajustes::obtener('pie_texto')) ?></span>
     <span>
       <a href="<?= e(cr_url('index.php')) ?>">Inicio</a> ·
+      <a href="<?= e(cr_url('depurar.php')) ?>">Depurar lista</a> ·
       <a href="<?= e(cr_url('login.php')) ?>">Acceder</a>
     </span>
   </div>

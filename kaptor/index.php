@@ -64,6 +64,31 @@ cr_cabecera([
       </div>
       <?php endif; ?>
 
+      <!-- Búsqueda inteligente: "solo quiero correos que terminen en .edu.gt".
+           Kaptor reescribe la consulta al buscador con site: y, además, tira
+           todo correo que no cumpla antes siquiera de guardarlo. -->
+      <div class="caja-objetivo">
+        <label class="caja-objetivo-tit" for="objetivo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.6"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/>
+          </svg>
+          Búsqueda inteligente <span class="suave pequeno">— quiero <b>solo</b> correos que terminen en:</span>
+        </label>
+        <input type="text" id="objetivo" name="objetivo" class="campo" autocomplete="off" spellcheck="false"
+               placeholder="Ej.: .edu.gt   ·   vacío = todos los dominios" <?= $puedeExtraer ? '' : 'disabled' ?>>
+        <div class="chips-ext" id="chips-objetivo">
+          <button type="button" class="chip-ext chip-todos" data-ext="">Todos</button>
+          <button type="button" class="chip-ext" data-ext="edu.gt">.edu.gt</button>
+          <button type="button" class="chip-ext" data-ext="com.gt">.com.gt</button>
+          <button type="button" class="chip-ext" data-ext="gob.gt">.gob.gt</button>
+          <button type="button" class="chip-ext" data-ext="org.gt">.org.gt</button>
+          <button type="button" class="chip-ext" data-ext="gt">.gt</button>
+          <button type="button" class="chip-ext" data-ext="com">.com</button>
+          <button type="button" class="chip-ext" data-ext="org">.org</button>
+          <button type="button" class="chip-ext" data-ext="edu">.edu</button>
+        </div>
+      </div>
+
       <div class="caja-pie">
         <?php if ($rastreoActivo): ?>
           <label class="interruptor" for="profundo" title="Rastrea también las páginas internas del mismo dominio">
@@ -192,15 +217,18 @@ cr_cabecera([
         </svg>
         <input type="search" id="buscar" class="campo" placeholder="Buscar correo, dominio o método…" aria-label="Buscar en los correos">
       </div>
-      <select id="filtro-dominio" class="campo" aria-label="Filtrar por dominio">
-        <option value="">Todos los dominios</option>
-      </select>
+      <input type="text" id="filtro-ext" class="campo campo-ext" autocomplete="off" spellcheck="false"
+             placeholder="Extensiones: .com, .com.gt, .edu.gt…" aria-label="Filtrar por extensión de dominio">
       <select id="filtro-tipo" class="campo" aria-label="Filtrar por tipo de correo">
         <option value="">Todos los tipos</option>
         <option value="generico">Genéricos (info@, ventas@…)</option>
         <option value="personal">Personales (nombre@…)</option>
       </select>
+      <button type="button" class="btn btn-fantasma btn-peq" id="btn-vista" aria-pressed="false">Ver detalles</button>
     </div>
+
+    <!-- Extensiones encontradas: se pulsan para filtrar sin escribir nada. -->
+    <div class="chips-ext" id="chips-ext-res" hidden></div>
 
     <div class="exportar">
       <button type="button" class="btn btn-fantasma btn-peq" id="btn-copiar">
@@ -210,6 +238,7 @@ cr_cabecera([
         Copiar correos
       </button>
       <span class="neon pequeno" id="n-seleccionados"></span>
+      <span class="pequeno suave" id="n-filtrados"></span>
       <span style="flex:1"></span>
       <button type="button" class="btn btn-peq" data-exportar="txt" data-datos="correos">TXT</button>
       <button type="button" class="btn btn-peq" data-exportar="csv" data-datos="correos">CSV</button>
@@ -218,12 +247,12 @@ cr_cabecera([
 
     <div class="tabla-caja">
       <div class="tabla-scroll">
-        <table class="tabla">
+        <table class="tabla tabla-compacta" id="tabla-correos">
           <thead>
             <tr>
               <th class="col-check"><input type="checkbox" id="sel-todos" aria-label="Seleccionar todos los correos"></th>
-              <th>Correo</th><th>Dominio</th><th>Tipo</th><th>Confianza</th><th>MX</th>
-              <th>Método de detección</th><th>Página exacta</th>
+              <th>Correo</th><th class="col-dominio">Dominio</th><th>Tipo</th>
+              <th class="col-conf">Confianza</th><th class="col-mx">MX</th><th class="col-url">Página</th>
             </tr>
           </thead>
           <tbody id="tabla-cuerpo"></tbody>
@@ -276,12 +305,12 @@ cr_cabecera([
 
     <div class="tabla-caja">
       <div class="tabla-scroll">
-        <table class="tabla">
+        <table class="tabla tabla-compacta" id="tabla-telefonos">
           <thead>
             <tr>
               <th class="col-check"><input type="checkbox" id="sel-todos-tel" aria-label="Seleccionar todos los números"></th>
-              <th>Número</th><th>País</th><th>Tipo</th><th>Confianza</th>
-              <th>Método de detección</th><th>Página exacta</th><th>Abrir</th>
+              <th>Número</th><th>País</th><th>Tipo</th><th class="col-conf">Confianza</th>
+              <th class="col-url">Página</th><th>Abrir</th>
             </tr>
           </thead>
           <tbody id="tabla-tel"></tbody>

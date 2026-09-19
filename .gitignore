@@ -9,10 +9,11 @@
 .DS_Store
 /fuentedevida-web.zip
 
-# CorreoRadar
-/correoradar/config/config.php
-/correoradar/storage/instalado.lock
-/correoradar/storage/logs/*
-/correoradar/storage/cache/*
-/correoradar/storage/sessions/*
-/correoradar/assets/subidas/logo-*
+# Kaptor
+/kaptor/config/config.php
+/kaptor/storage/instalado.lock
+/kaptor/storage/logs/*
+/kaptor/storage/cache/*
+/kaptor/storage/sessions/*
+!/kaptor/storage/*/index.html
+/kaptor/assets/subidas/logo-*

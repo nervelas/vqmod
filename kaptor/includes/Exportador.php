@@ -133,6 +133,60 @@ final class Exportador
         return $libro->generar();
     }
 
+
+    // ------------------------------------------------- lista depurada
+
+    /** Columnas de una lista depurada. */
+    private const COL_LISTA = ['Correo', 'Buzón', 'Dominio', 'Extensión', 'Tipo', 'Recibe correo (MX)'];
+
+    /**
+     * Exporta una lista ya depurada (la que devuelve Depurador::procesar).
+     *
+     * @param array<int,array<string,mixed>> $correos
+     */
+    public static function lista(array $correos, string $formato): string
+    {
+        if ($formato === 'txt') {
+            $lineas = [];
+            foreach ($correos as $c) { $lineas[] = (string) $c['correo']; }
+            return implode("\r\n", $lineas) . "\r\n";
+        }
+
+        $filas = [];
+        foreach ($correos as $c) {
+            $filas[] = [
+                (string) $c['correo'],
+                (string) ($c['buzon'] ?? ''),
+                (string) ($c['dominio'] ?? ''),
+                '.' . (string) ($c['extension'] ?? ''),
+                ($c['tipo'] ?? '') === 'generico' ? 'Genérico' : 'Personal',
+                $c['mx'] === null ? 'Sin verificar' : ($c['mx'] ? 'Sí' : 'No'),
+            ];
+        }
+
+        if ($formato === 'xlsx') {
+            $libro = new XlsxEscritor('Kaptor · lista depurada');
+            $libro->agregarHoja('Lista depurada', self::COL_LISTA, $filas, [34, 22, 26, 13, 12, 18]);
+            return $libro->generar();
+        }
+
+        $salida = fopen('php://temp', 'r+');
+        fputcsv($salida, self::COL_LISTA, ';', '"', '');
+        foreach ($filas as $fila) { fputcsv($salida, $fila, ';', '"', ''); }
+        rewind($salida);
+        $contenido = (string) stream_get_contents($salida);
+        fclose($salida);
+
+        return "\xEF\xBB\xBF" . $contenido;
+    }
+
+    /** Nombre del archivo de una lista depurada. */
+    public static function nombreLista(string $formato, string $etiqueta = ''): string
+    {
+        $etiqueta = $etiqueta !== '' ? '-' . cr_slug($etiqueta) : '';
+        return 'kaptor-lista-depurada' . $etiqueta . '-' . date('Y-m-d') . '.' . $formato;
+    }
+
     // --------------------------------------------------------------- utilidades
 
     /** Fila común para CSV y XLSX (correos). */

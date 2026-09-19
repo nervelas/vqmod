@@ -115,6 +115,7 @@
     }
 
     var profundo = $('#profundo') ? $('#profundo').checked : false;
+    var objetivo = $('#objetivo') ? ($('#objetivo').value || '').trim() : '';
 
     reiniciarPanel();
     estado.corriendo = true;
@@ -123,7 +124,7 @@
     $('#btn-extraer').classList.add('cargando');
     $('#btn-extraer').setAttribute('aria-busy', 'true');
 
-    api({ accion: 'iniciar', url: url, profundo: profundo })
+    api({ accion: 'iniciar', url: url, profundo: profundo, objetivo: objetivo })
       .then(function (r) {
         if (!r.ok) {
           if (r.requiere_login && CR.urlLogin) {
@@ -150,6 +151,10 @@
           else { avisoB.hidden = true; }
         }
         if (r.aviso_js) { mostrarAvisoJs(r.aviso_js); }
+
+        // Lo que se pidió en la búsqueda inteligente queda ya escrito en el
+        // filtro de la tabla: lo que se ve y lo que se descarga coinciden.
+        if (r.objetivo && $('#filtro-ext')) { $('#filtro-ext').value = r.objetivo; }
 
         $('#panel-progreso').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         return siguientePaso();
@@ -218,7 +223,7 @@
       cuerpo.appendChild(crearFila(c, true));
     });
 
-    actualizarFiltroDominios();
+    actualizarChipsExt();
     actualizarResumen();
   }
 
@@ -234,22 +239,24 @@
       ? '<span class="chip chip-gris">sin verificar</span>'
       : (c.mx ? '<span class="chip chip-neon">MX ok</span>' : '<span class="chip chip-rojo">sin MX</span>');
 
-    var metodos = String(c.metodo || '').split(',').filter(Boolean).map(function (m) {
-      return '<span class="chip chip-gris">' + esc(m) + '</span>';
-    }).join('');
+    // El método de detección ya no ocupa una columna: viaja en el "title"
+    // del correo para que la tabla quepa entera en pantalla.
+    var metodosTexto = String(c.metodo || '').split(',').filter(Boolean).join(' · ');
+    if (metodosTexto) { metodosTexto = 'Detectado por: ' + metodosTexto; }
 
     var conf = parseInt(c.confianza, 10) || 0;
 
+    tr.dataset.ext = extensionDe(c.dominio);
+
     tr.innerHTML =
       '<td class="col-check"><input type="checkbox" class="sel" aria-label="Seleccionar ' + esc(c.correo) + '"></td>' +
-      '<td><span class="celda-correo">' + esc(c.correo) + '</span></td>' +
-      '<td>' + esc(c.dominio) + '</td>' +
+      '<td><span class="celda-correo" title="' + esc(metodosTexto) + '">' + esc(c.correo) + '</span></td>' +
+      '<td class="col-dominio">' + esc(c.dominio) + '</td>' +
       '<td><span class="chip ' + (c.tipo === 'generico' ? '' : 'chip-neon') + '">' +
           (c.tipo === 'generico' ? 'Genérico' : 'Personal') + '</span></td>' +
-      '<td><div class="confianza"><span class="pista"><i style="width:' + conf + '%"></i></span><b>' + conf + '</b></div></td>' +
-      '<td>' + mx + '</td>' +
-      '<td><div class="celda-metodos">' + metodos + '</div></td>' +
-      '<td class="celda-url"><a href="' + esc(c.url) + '" target="_blank" rel="noopener nofollow">' + esc(recorta(c.url, 70)) + '</a></td>';
+      '<td class="col-conf"><div class="confianza"><span class="pista"><i style="width:' + conf + '%"></i></span><b>' + conf + '</b></div></td>' +
+      '<td class="col-mx">' + mx + '</td>' +
+      '<td class="col-url celda-url"><a href="' + esc(c.url) + '" target="_blank" rel="noopener nofollow" title="' + esc(c.url) + '">' + esc(recorta(c.url, 44)) + '</a></td>';
 
     tr.querySelector('.sel').addEventListener('change', function () {
       tr.classList.toggle('marcada', this.checked);
@@ -286,10 +293,6 @@
     tr.dataset.busca  = (t.numero + ' ' + t.formato + ' ' + (t.pais || '') + ' ' +
                          (t.metodo || '') + ' ' + (t.url || '')).toLowerCase();
 
-    var metodos = String(t.metodo || '').split(',').filter(Boolean).map(function (m) {
-      return '<span class="chip chip-gris">' + esc(m) + '</span>';
-    }).join('');
-
     var conf = parseInt(t.confianza, 10) || 0;
     var tipo = t.whatsapp
       ? '<span class="chip chip-wa">WhatsApp</span>'
@@ -300,9 +303,8 @@
       '<td><span class="celda-correo">' + esc(t.formato || t.numero) + '</span></td>' +
       '<td>' + esc(t.pais || '—') + '</td>' +
       '<td>' + tipo + '</td>' +
-      '<td><div class="confianza"><span class="pista"><i style="width:' + conf + '%"></i></span><b>' + conf + '</b></div></td>' +
-      '<td><div class="celda-metodos">' + metodos + '</div></td>' +
-      '<td class="celda-url"><a href="' + esc(t.url) + '" target="_blank" rel="noopener nofollow">' + esc(recorta(t.url, 52)) + '</a></td>' +
+      '<td class="col-conf"><div class="confianza"><span class="pista"><i style="width:' + conf + '%"></i></span><b>' + conf + '</b></div></td>' +
+      '<td class="col-url celda-url"><a href="' + esc(t.url) + '" target="_blank" rel="noopener nofollow" title="' + esc(t.url) + '">' + esc(recorta(t.url, 40)) + '</a></td>' +
       '<td><a class="btn btn-neon btn-peq" href="' + esc(t.enlace_wa) + '" target="_blank" rel="noopener nofollow">Chat</a></td>';
 
     tr.querySelector('.sel-tel').addEventListener('change', function () {
@@ -345,7 +347,7 @@
         $('#sin-telefonos').classList.toggle('oculto', estado.telefonos.length > 0);
 
         pintarExtras(r.enlaces_wa, r.redes);
-        actualizarFiltroDominios();
+        actualizarChipsExt();
         actualizarFiltroPaises();
         actualizarResumen();
         aplicarFiltros();
@@ -451,25 +453,72 @@
       if ($(sel)) { $(sel).textContent = '0'; }
     });
 
-    if ($('#filtro-dominio')) { $('#filtro-dominio').innerHTML = '<option value="">Todos los dominios</option>'; }
+    if ($('#chips-ext-res')) { $('#chips-ext-res').hidden = true; $('#chips-ext-res').innerHTML = ''; }
+    if ($('#filtro-ext')) { $('#filtro-ext').value = ''; }
     if ($('#filtro-pais'))    { $('#filtro-pais').innerHTML = '<option value="">Todos los países</option>'; }
     ['#buscar', '#buscar-tel'].forEach(function (sel) { if ($(sel)) { $(sel).value = ''; } });
   }
 
   /* --------------------------------------------- 7. Buscador, filtros y seleccion */
-  function actualizarFiltroDominios() {
-    var sel = $('#filtro-dominio');
-    if (!sel) { return; }
-    var actual = sel.value;
-    var dominios = {};
-    estado.correos.forEach(function (c) { dominios[c.dominio] = (dominios[c.dominio] || 0) + 1; });
 
-    var claves = Object.keys(dominios).sort();
-    sel.innerHTML = '<option value="">Todos los dominios (' + estado.correos.length + ')</option>' +
-      claves.map(function (d) {
-        return '<option value="' + esc(d) + '">' + esc(d) + ' (' + dominios[d] + ')</option>';
+  /* Segundos niveles habituales: colegio.edu.gt => "edu.gt", tienda.com => "com". */
+  var SEGUNDOS = ['com','edu','gob','gov','org','net','mil','int','ac','co','or','ne','go','nom','info','web'];
+
+  function extensionDe(dominio) {
+    var p = String(dominio || '').toLowerCase().split('.');
+    if (p.length < 2) { return p[0] || ''; }
+    var tld = p[p.length - 1], sld = p[p.length - 2];
+    if (p.length >= 3 && tld.length <= 3 && SEGUNDOS.indexOf(sld) !== -1) { return sld + '.' + tld; }
+    return tld;
+  }
+
+  /* Convierte ".com, edu.gt  *.org" en ['com','edu.gt','org']. '' o "todos" = sin filtro. */
+  function listaExtensiones(texto) {
+    texto = String(texto || '').toLowerCase().trim();
+    if (!texto || texto === '*' || texto === 'todos' || texto === 'todas' || texto === 'todo') { return []; }
+    return texto.split(/[\s,;|/]+/).map(function (x) {
+      return x.replace(/^[*@]+/, '').replace(/^\.+|\.+$/g, '').replace(/[^a-z0-9.\-]/g, '');
+    }).filter(function (x) { return x && x !== '*' && x !== 'todos' && x !== 'todas' && x !== 'todo'; });
+  }
+
+  function coincideExt(dominio, exts) {
+    if (!exts.length) { return true; }
+    dominio = String(dominio || '').toLowerCase();
+    for (var i = 0; i < exts.length; i++) {
+      if (dominio === exts[i] || dominio.slice(-(exts[i].length + 1)) === '.' + exts[i]) { return true; }
+    }
+    return false;
+  }
+
+  /* Botones con las extensiones realmente encontradas: filtrar sin escribir. */
+  function actualizarChipsExt() {
+    var caja = $('#chips-ext-res');
+    if (!caja) { return; }
+
+    var cuenta = {};
+    estado.correos.forEach(function (c) {
+      var x = extensionDe(c.dominio);
+      if (x) { cuenta[x] = (cuenta[x] || 0) + 1; }
+    });
+
+    var claves = Object.keys(cuenta).sort(function (a, b) { return cuenta[b] - cuenta[a] || a.localeCompare(b); });
+    if (claves.length < 2) { caja.hidden = true; caja.innerHTML = ''; return; }
+
+    caja.hidden = false;
+    caja.innerHTML = '<button type="button" class="chip-ext chip-todos" data-ext="">Todas (' + estado.correos.length + ')</button>' +
+      claves.slice(0, 14).map(function (x) {
+        return '<button type="button" class="chip-ext" data-ext="' + esc(x) + '">.' + esc(x) + ' <i>' + cuenta[x] + '</i></button>';
       }).join('');
-    if (actual && dominios[actual]) { sel.value = actual; }
+
+    marcarChipsActivos();
+  }
+
+  function marcarChipsActivos() {
+    var exts = listaExtensiones($('#filtro-ext') ? $('#filtro-ext').value : '');
+    $$('#chips-ext-res .chip-ext').forEach(function (b) {
+      var x = b.dataset.ext;
+      b.classList.toggle('activo', x ? exts.indexOf(x) !== -1 : exts.length === 0);
+    });
   }
 
   function actualizarFiltroPaises() {
@@ -517,22 +566,33 @@
   }
 
   function aplicarFiltros() {
-    var texto   = ($('#buscar') ? $('#buscar').value : '').trim().toLowerCase();
-    var dominio = $('#filtro-dominio') ? $('#filtro-dominio').value : '';
-    var tipo    = $('#filtro-tipo') ? $('#filtro-tipo').value : '';
+    var texto = ($('#buscar') ? $('#buscar').value : '').trim().toLowerCase();
+    var exts  = listaExtensiones($('#filtro-ext') ? $('#filtro-ext').value : '');
+    var tipo  = $('#filtro-tipo') ? $('#filtro-tipo').value : '';
     var visibles = 0;
 
     $$('#tabla-cuerpo tr').forEach(function (tr) {
-      var okTexto   = !texto || tr.dataset.busca.indexOf(texto) !== -1;
-      var okDominio = !dominio || tr.dataset.dominio === dominio;
-      var okTipo    = !tipo || tr.dataset.tipo === tipo;
-      var ver = okTexto && okDominio && okTipo;
+      var okTexto = !texto || tr.dataset.busca.indexOf(texto) !== -1;
+      var okExt   = coincideExt(tr.dataset.dominio, exts);
+      var okTipo  = !tipo || tr.dataset.tipo === tipo;
+      var ver = okTexto && okExt && okTipo;
       tr.style.display = ver ? '' : 'none';
       if (ver) { visibles++; }
     });
 
+    marcarChipsActivos();
+
     var vacio = $('#sin-coincidencias');
     if (vacio) { vacio.classList.toggle('oculto', visibles > 0 || !estado.correos.length); }
+
+    // La descarga sigue a lo que se ve: se avisa de cuántos saldrían.
+    var aviso = $('#n-filtrados');
+    if (aviso) {
+      aviso.textContent = (exts.length || tipo || texto)
+        ? visibles + ' de ' + estado.correos.length + ' tras el filtro'
+        : '';
+    }
+    return visibles;
   }
 
   function filasVisibles() {
@@ -612,8 +672,16 @@
             : (estado.correos.length + estado.telefonos.length);
     if (!hay) { brindis('No hay datos que descargar.', 'error'); return; }
 
+    // Si hay filas marcadas se bajan esas; si no, se baja exactamente lo que
+    // se está viendo (el filtro de extensiones manda sobre la descarga).
     var marcados = (datos === 'telefonos') ? seleccionadosTel() : seleccionados();
+    if (!marcados.length && datos !== 'todo') {
+      marcados = (datos === 'telefonos')
+        ? filasTelVisibles().map(function (tr) { return tr.dataset.numero; })
+        : filasVisibles().map(function (tr) { return tr.dataset.correo; });
+    }
     var totalDatos = (datos === 'telefonos') ? estado.telefonos.length : estado.correos.length;
+    if (datos !== 'todo' && !marcados.length) { brindis('Ningún dato pasa el filtro actual.', 'error'); return; }
     var form = document.createElement('form');
     form.method = 'POST';
     form.action = CR.apiExportar;
@@ -673,7 +741,7 @@
       });
     }
 
-    ['#buscar', '#filtro-dominio', '#filtro-tipo'].forEach(function (sel) {
+    ['#buscar', '#filtro-ext', '#filtro-tipo'].forEach(function (sel) {
       var el = $(sel);
       if (el) { el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', aplicarFiltros); }
     });
@@ -681,6 +749,46 @@
       var el = $(sel);
       if (el) { el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', aplicarFiltrosTel); }
     });
+
+    /* Chips de extensión: suman o quitan esa extensión del filtro escrito. */
+    var cajaChips = $('#chips-ext-res');
+    if (cajaChips) {
+      cajaChips.addEventListener('click', function (ev) {
+        var b = ev.target.closest('.chip-ext');
+        if (!b) { return; }
+        var campo = $('#filtro-ext');
+        if (!campo) { return; }
+
+        var x = b.dataset.ext;
+        if (!x) { campo.value = ''; }
+        else {
+          var exts = listaExtensiones(campo.value);
+          var i = exts.indexOf(x);
+          if (i === -1) { exts.push(x); } else { exts.splice(i, 1); }
+          campo.value = exts.map(function (e2) { return '.' + e2; }).join(', ');
+        }
+        aplicarFiltros();
+      });
+    }
+
+    /* Vista compacta <-> vista con todos los detalles. */
+    var btnVista = $('#btn-vista');
+    if (btnVista) {
+      btnVista.addEventListener('click', function () {
+        var detalle = false;
+        ['#tabla-correos', '#tabla-telefonos'].forEach(function (sel) {
+          var t = $(sel);
+          if (t) { t.classList.toggle('tabla-compacta'); detalle = !t.classList.contains('tabla-compacta'); }
+        });
+        btnVista.textContent = detalle ? 'Vista compacta' : 'Ver detalles';
+        btnVista.setAttribute('aria-pressed', detalle ? 'true' : 'false');
+        try { localStorage.setItem('cr_vista', detalle ? 'detalle' : 'compacta'); } catch (e) { /* sin permiso */ }
+      });
+
+      try {
+        if (localStorage.getItem('cr_vista') === 'detalle') { btnVista.click(); }
+      } catch (e) { /* sin permiso */ }
+    }
 
     /* Pestanas de resultados: correos / WhatsApp */
     $$('.pestanas-res button').forEach(function (b) {
@@ -881,6 +989,39 @@
     }
   });
 
+  /* Botones de la búsqueda inteligente: .edu.gt, .com.gt, .gob.gt… */
+  var objetivo = document.getElementById('objetivo');
+  var chipsObj = document.getElementById('chips-objetivo');
+  if (objetivo && chipsObj) {
+    var leerObj = function () {
+      var t = (objetivo.value || '').toLowerCase().trim();
+      if (!t || t === '*' || t === 'todos' || t === 'todas') { return []; }
+      return t.split(/[\s,;|/]+/).map(function (x) {
+        return x.replace(/^[*@]+/, '').replace(/^\.+|\.+$/g, '').replace(/[^a-z0-9.\-]/g, '');
+      }).filter(Boolean);
+    };
+    var pintarObj = function () {
+      var act = leerObj();
+      Array.prototype.forEach.call(chipsObj.querySelectorAll('.chip-ext'), function (b) {
+        var x = b.dataset.ext;
+        b.classList.toggle('activo', x ? act.indexOf(x) !== -1 : act.length === 0);
+      });
+    };
+    chipsObj.addEventListener('click', function (ev) {
+      var b = ev.target.closest ? ev.target.closest('.chip-ext') : null;
+      if (!b) { return; }
+      var x = b.dataset.ext;
+      if (!x) { objetivo.value = ''; pintarObj(); return; }
+      var lista = leerObj();
+      var i = lista.indexOf(x);
+      if (i === -1) { lista.push(x); } else { lista.splice(i, 1); }
+      objetivo.value = lista.map(function (e2) { return '.' + e2; }).join(', ');
+      pintarObj();
+    });
+    objetivo.addEventListener('input', pintarObj);
+    pintarObj();
+  }
+
   /* Los tres botones de ejemplo rellenan el campo para enseñar cómo se usa. */
   Array.prototype.forEach.call(document.querySelectorAll('.caja-modos .modo'), function (b) {
     b.addEventListener('click', function () {
@@ -890,4 +1031,120 @@
       campo.setSelectionRange(campo.value.length, campo.value.length);
     });
   });
+})();
+
+/* ==========================================================================
+   16. Depurar una lista de correos (depurar.php)
+   Los botones de extensión escriben en el campo, la descarga reenvía el
+   mismo formulario y el botón "Copiar" se lleva la lista ya limpia.
+   ========================================================================== */
+(function () {
+  'use strict';
+
+  var form = document.getElementById('form-depurar');
+  if (!form) { return; }
+
+  var campo = document.getElementById('extensiones');
+  var chips = document.getElementById('chips-ext');
+
+  /** Extensiones escritas en el campo, ya normalizadas. */
+  function leer() {
+    var t = (campo && campo.value ? campo.value : '').toLowerCase().trim();
+    if (!t || t === '*' || t === 'todos' || t === 'todas' || t === 'todo') { return []; }
+    return t.split(/[\s,;|/]+/).map(function (x) {
+      return x.replace(/^[*@]+/, '').replace(/^\.+|\.+$/g, '').replace(/[^a-z0-9.\-]/g, '');
+    }).filter(Boolean);
+  }
+
+  function escribir(lista) {
+    if (!campo) { return; }
+    campo.value = lista.map(function (x) { return '.' + x; }).join(', ');
+    pintar();
+  }
+
+  function pintar() {
+    if (!chips) { return; }
+    var actuales = leer();
+    Array.prototype.forEach.call(chips.querySelectorAll('.chip-ext'), function (b) {
+      var x = b.dataset.ext;
+      b.classList.toggle('activo', x ? actuales.indexOf(x) !== -1 : actuales.length === 0);
+    });
+  }
+
+  if (chips) {
+    chips.addEventListener('click', function (ev) {
+      var b = ev.target.closest ? ev.target.closest('.chip-ext') : null;
+      if (!b) { return; }
+      var x = b.dataset.ext;
+      if (!x) { escribir([]); return; }
+
+      var lista = leer();
+      var i = lista.indexOf(x);
+      if (i === -1) { lista.push(x); } else { lista.splice(i, 1); }
+      escribir(lista);
+    });
+  }
+  if (campo) { campo.addEventListener('input', pintar); }
+  pintar();
+
+  /* Descargas: se marca el formato y se reenvía el mismo formulario, así el
+     servidor depura otra vez con los mismos filtros y devuelve el archivo. */
+  var oculto = document.getElementById('descargar');
+  Array.prototype.forEach.call(document.querySelectorAll('[data-bajar]'), function (b) {
+    b.addEventListener('click', function () {
+      if (!oculto) { return; }
+      oculto.value = b.dataset.bajar;
+      form.submit();
+      setTimeout(function () { oculto.value = ''; }, 800);
+    });
+  });
+
+  /* Copiar la lista limpia. */
+  var btnCopiar = document.getElementById('btn-copiar-lista');
+  var caja      = document.getElementById('lista-limpia');
+  if (btnCopiar && caja) {
+    btnCopiar.addEventListener('click', function () {
+      var texto = caja.value;
+      var n = texto ? texto.split('\n').length : 0;
+      var listo = function () { avisar(n + ' correo' + (n === 1 ? '' : 's') + ' copiado' + (n === 1 ? '' : 's')); };
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(texto).then(listo).catch(function () { respaldo(texto, listo); });
+      } else {
+        respaldo(texto, listo);
+      }
+    });
+  }
+
+  function respaldo(texto, listo) {
+    var area = document.createElement('textarea');
+    area.value = texto;
+    area.setAttribute('readonly', '');
+    area.style.cssText = 'position:fixed;left:-9999px;opacity:0';
+    document.body.appendChild(area);
+    area.select();
+    try { document.execCommand('copy'); listo(); }
+    catch (e) { avisar('Tu navegador no permite copiar automáticamente.'); }
+    document.body.removeChild(area);
+  }
+
+  function avisar(mensaje) {
+    var brindis = document.getElementById('brindis');
+    if (!brindis) { alert(mensaje); return; }
+    brindis.querySelector('span').textContent = mensaje;
+    brindis.classList.add('visible');
+    setTimeout(function () { brindis.classList.remove('visible'); }, 3200);
+  }
+
+  /* "Vaciar" limpia también los resultados de la pantalla. */
+  var limpiar = document.getElementById('btn-limpiar-todo');
+  if (limpiar) {
+    limpiar.addEventListener('click', function () {
+      setTimeout(function () {
+        var lista = document.getElementById('lista');
+        if (lista) { lista.focus(); }
+        pintar();
+      }, 0);
+    });
+  }
 })();

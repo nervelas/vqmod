@@ -1,4 +1,4 @@
-# Kaptor 2.0
+# Kaptor 2.2
 
 Extractor profesional de **correos electrónicos y números de WhatsApp** a partir
 de una URL, con **módulo de campañas de correo** incluido: extraes, filtras y
@@ -19,6 +19,45 @@ PHP 8.0+ · MySQL/MariaDB · sin Composer · listo para subir a `public_html`.
   entra en cada web de los resultados y rastrea por dentro.
 - **Facebook e Instagram.** Pega la dirección de una página o un perfil: lee la
   ficha de contacto y la biografía, y sigue la web que el negocio publica ahí.
+
+### Búsqueda inteligente: "solo quiero correos .edu.gt"
+
+Debajo de la caja principal hay un campo llamado **Búsqueda inteligente**. Se
+escribe la extensión que interesa (`.edu.gt`, `.com.gt`, `.gob.gt`…) o se pulsa
+uno de los botones, y Kaptor hace dos cosas:
+
+1. **Reescribe la consulta al buscador** con los operadores que entienden todos
+   (`site:edu.gt colegios Guatemala`, `"@edu.gt" colegios Guatemala`), así que
+   los resultados ya vienen filtrados desde el origen.
+2. **Descarta cualquier correo que no cumpla** antes siquiera de guardarlo: si
+   se pidió `.edu.gt`, en la tabla y en la base de datos solo habrá `.edu.gt`.
+
+Se pueden pedir varias a la vez (`.edu.gt, .gob.gt`). Vacío = todos los dominios.
+
+---
+
+## Depurar una lista de correos
+
+Menú **Depurar lista**. Se pega cualquier texto con correos dentro —una lista
+suelta, una columna de Excel, un CSV entero, mil firmas de correo— y sale una
+lista limpia:
+
+- **Sin repetidos.** Se normaliza a minúsculas y se deduplica.
+- **Solo las extensiones que se pidan.** Se escriben a mano (`.com, .com.gt,
+  .edu.gt`) o se pulsan los botones. Vacío o `TODOS` = sin filtro.
+- **Extensiones que no se quieren** (`.ru, .cn, .xyz`) en su propio campo.
+- **Solo genéricos** (info@, ventas@) o **solo personales**, a elegir.
+- Quita `noreply@`, correos temporales de usar y tirar, y los que estén en la
+  **lista de bajas**.
+- **Un solo correo por dominio**, si se quiere una lista de empresas.
+- **Comprobar MX**: deja solo dominios que de verdad reciben correo.
+- Marcador con lo pegado, lo distinto, lo repetido y lo descartado, con el
+  motivo de cada descarte.
+- Descarga en **TXT, CSV y Excel**, o copia al portapapeles.
+
+Admite hasta 3 MB de texto pegado (unos 100.000 correos) en una sola pasada.
+
+---
 
 ### Lo que hay que saber de cada fuente
 

@@ -20,6 +20,9 @@ final class Buscador
     /** ¿Esta búsqueda quiere perfiles de Facebook o Instagram? */
     private static bool $conRedes = false;
 
+    /** Extensiones pedidas en la búsqueda inteligente (['edu.gt', ...]). */
+    private static array $extensiones = [];
+
     /** Resultados que pide cada página a los buscadores. */
     private const POR_PAGINA = 10;
 
@@ -100,12 +103,17 @@ final class Buscador
      *
      * @return array{ok:bool,urls?:string[],motor?:string,error?:string,detalle?:string}
      */
-    public static function buscar(string $consulta, int $resultados = 50): array
+    public static function buscar(string $consulta, int $resultados = 50, array $extensiones = []): array
     {
         $consulta = trim($consulta);
         if ($consulta === '') {
             return ['ok' => false, 'error' => 'Escribe qué quieres buscar.'];
         }
+
+        // Búsqueda inteligente: si se pide ".edu.gt", la consulta se reescribe
+        // para que el buscador solo devuelva webs de ese tipo de dominio.
+        $consultas = self::consultasDirigidas($consulta, $extensiones);
+        self::$extensiones = $extensiones;
 
         // Si la consulta apunta expresamente a una red (site:facebook.com,
         // "instagram colegios"...), sus perfiles dejan de descartarse: es
@@ -126,10 +134,13 @@ final class Buscador
 
         $diagnostico = [];
         foreach ($motores as $motor => $nombre) {
-            $urls = [];
+            $urls   = [];
+            $caido  = false;   // el motor no contesta o pide captcha: no insistir
 
+          foreach ($consultas as $iConsulta => $consultaMotor) {
+            if ($caido) { break; }
             for ($pagina = 0; $pagina < $paginas; $pagina++) {
-                $peticion = self::peticion($motor, $consulta, $pagina);
+                $peticion = self::peticion($motor, $consultaMotor, $pagina);
                 $resp = Http::obtener($peticion['url'], [
                     'timeout'   => Ajustes::entero('timeout', 20, 3, 180),
                     'cabeceras' => self::cabeceras(),
@@ -138,12 +149,14 @@ final class Buscador
                 ]);
 
                 // Diagnóstico honesto: qué contestó exactamente cada motor.
-                if ($pagina === 0) {
+                if ($pagina === 0 && $iConsulta === 0) {
                     $diagnostico[] = $nombre . ': ' . self::resumen($resp);
                 }
 
-                if (!$resp['ok'] || $resp['cuerpo'] === '')  { break; }
-                if (self::pareceBloqueo($resp['cuerpo']))    { break; }
+                // Si el motor no responde o pide captcha, no tiene sentido
+                // probar con él las demás consultas dirigidas.
+                if (!$resp['ok'] || $resp['cuerpo'] === '')  { $caido = true; break; }
+                if (self::pareceBloqueo($resp['cuerpo']))    { $caido = true; break; }
 
                 $nuevas = self::enlaces($motor, $resp['cuerpo']);
                 if (!$nuevas) { break; }
@@ -153,8 +166,22 @@ final class Buscador
 
                 usleep(400000);   // un respiro entre páginas
             }
+            if (count($urls) >= $resultados) { break; }
+          }
 
-            $urls = array_slice(array_keys($urls), 0, $resultados);
+            // Con filtro de extensiones, las webs que no lo cumplen sobran:
+            // el rastreador no perdería el tiempo entrando en ellas.
+            $lista = array_keys($urls);
+            if ($extensiones) {
+                $propias = array_values(array_filter($lista, static function ($u) use ($extensiones) {
+                    return Depurador::coincide(cr_host_de_url($u), $extensiones);
+                }));
+                // Si el buscador no respetó el site:, se conserva lo que haya:
+                // muchas webs .com publican correos .edu.gt de sus clientes.
+                if ($propias) { $lista = $propias; }
+            }
+
+            $urls = array_slice($lista, 0, $resultados);
             if ($urls) {
                 return ['ok' => true, 'urls' => $urls, 'motor' => $nombre];
             }
@@ -187,6 +214,35 @@ final class Buscador
      *
      * @return array{url:string,datos?:array<string,string>,referer?:string}
      */
+    /**
+     * Convierte "colegios Guatemala" + ['edu.gt'] en varias consultas que los
+     * buscadores entienden como "solo dominios .edu.gt":
+     *
+     *   site:edu.gt colegios Guatemala
+     *   "@edu.gt" colegios Guatemala
+     *
+     * Si no se piden extensiones (o la consulta ya trae su propio site:),
+     * se devuelve la consulta tal cual.
+     *
+     * @param string[] $extensiones
+     * @return string[]
+     */
+    public static function consultasDirigidas(string $consulta, array $extensiones): array
+    {
+        if (!$extensiones || preg_match('~\bsite:~i', $consulta)) { return [$consulta]; }
+
+        $lista = [];
+        // Como mucho tres extensiones: mas consultas = mas lento y mas bloqueos.
+        foreach (array_slice($extensiones, 0, 3) as $ext) {
+            $lista[] = 'site:' . $ext . ' ' . $consulta;
+            $lista[] = '"@' . $ext . '" ' . $consulta;
+        }
+        // Y al final la consulta limpia, por si el buscador ignora los operadores.
+        $lista[] = $consulta;
+
+        return array_values(array_unique($lista));
+    }
+
     private static function peticion(string $motor, string $consulta, int $pagina): array
     {
         $q      = rawurlencode($consulta);

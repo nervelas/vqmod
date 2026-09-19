@@ -47,6 +47,11 @@ echo json_encode([
             'icons' => [['src' => $base . 'assets/img/icono-192.png', 'sizes' => '192x192']],
         ],
         [
+            'name'  => 'Depurar lista',
+            'url'   => $base . 'depurar.php',
+            'icons' => [['src' => $base . 'assets/img/icono-192.png', 'sizes' => '192x192']],
+        ],
+        [
             'name'  => 'Mis extracciones',
             'url'   => $base . 'mis-extracciones.php',
             'icons' => [['src' => $base . 'assets/img/icono-192.png', 'sizes' => '192x192']],

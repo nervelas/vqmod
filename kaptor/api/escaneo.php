@@ -37,6 +37,10 @@ switch ($accion) {
         $entrada  = trim((string) ($datos['url'] ?? ''));
         $profundo = !empty($datos['profundo']);
 
+        // Búsqueda inteligente: "solo quiero correos .edu.gt".
+        $objetivo = Depurador::extensiones((string) ($datos['objetivo'] ?? ''));
+        $objetivoTxt = $objetivo ? implode(',', $objetivo) : '';
+
         // ¿Qué ha pegado el usuario? Una web, una lista de webs, el enlace de
         // una búsqueda de Google, o directamente unas palabras para buscar.
         $lineas = preg_split('~[\r\n,;]+~', $entrada) ?: [];
@@ -53,7 +57,7 @@ switch ($accion) {
             if (!Ajustes::activo('buscar_activo', true)) {
                 cr_json(['ok' => false, 'error' => 'La búsqueda por palabras está desactivada en los ajustes.'], 400);
             }
-            $hallazgo = Buscador::buscar($consulta, Ajustes::entero('buscador_max', 100, 10, 300));
+            $hallazgo = Buscador::buscar($consulta, Ajustes::entero('buscador_max', 100, 10, 300), $objetivo);
             if (!$hallazgo['ok']) {
                 cr_json([
                     'ok'      => false,
@@ -66,16 +70,21 @@ switch ($accion) {
             // rastreo dentro de cada sitio va activado salvo que el
             // administrador lo haya apagado del todo en los ajustes.
             $res = Rastreador::iniciarVarias(
-                $hallazgo['urls'], true, Auth::id(), 'Búsqueda: ' . $consulta
+                $hallazgo['urls'], true, Auth::id(), 'Búsqueda: ' . $consulta, $objetivoTxt
             );
             $aviso = count($hallazgo['urls']) . ' webs encontradas en ' . $hallazgo['motor']
                    . ' para «' . $consulta . '».';
         } elseif (count($lineas) > 1) {
-            $res   = Rastreador::iniciarVarias($lineas, true, Auth::id(), count($lineas) . ' webs');
+            $res   = Rastreador::iniciarVarias($lineas, true, Auth::id(), count($lineas) . ' webs', $objetivoTxt);
             $aviso = ($res['aceptadas'] ?? 0) . ' webs en la lista'
                    . (!empty($res['descartadas']) ? ', ' . $res['descartadas'] . ' descartadas por no ser válidas' : '') . '.';
         } else {
-            $res = Rastreador::iniciar($entrada, $profundo, Auth::id());
+            $res = Rastreador::iniciar($entrada, $profundo, Auth::id(), $objetivoTxt);
+        }
+
+        if ($objetivo) {
+            $aviso = trim((string) $aviso . ' Solo se guardarán los correos que terminen en '
+                   . implode(', ', array_map(static fn($x) => '.' . $x, $objetivo)) . '.');
         }
 
         if (!$res['ok']) {
@@ -96,6 +105,7 @@ switch ($accion) {
             'aviso_js'   => Headless::aviso(),
             'aviso'      => $aviso,
             'sitios'     => $res['aceptadas'] ?? 1,
+            'objetivo'   => $objetivo ? implode(', ', array_map(static fn($x) => '.' . $x, $objetivo)) : '',
         ]);
         // no se alcanza
 

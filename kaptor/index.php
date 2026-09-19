@@ -29,7 +29,7 @@ cr_cabecera([
   <div class="contenedor portada-int">
     <span class="insignia"><span class="punto"></span> Correos y WhatsApp</span>
 
-    <h1><?= e(Ajustes::obtener('hero_titulo')) ?></h1>
+    <h1><?= cr_titulo_brillo(Ajustes::obtener('hero_titulo')) ?></h1>
     <p class="portada-sub"><?= e(Ajustes::obtener('hero_subtitulo')) ?></p>
 
     <p class="aviso-busqueda" id="aviso-busqueda" hidden></p>

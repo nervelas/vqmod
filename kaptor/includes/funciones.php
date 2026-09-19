@@ -255,3 +255,20 @@ function cr_marcar_escaneo(int $id): void
     // Solo guardamos los últimos 50 para no engordar la sesión.
     $_SESSION['mis_escaneos'] = array_slice(array_values(array_unique($mios)), -50);
 }
+
+/**
+ * Envuelve las últimas palabras de un título en <span class="brillo">.
+ *
+ * Es puramente de presentación: da al final del titular el degradado dorado
+ * con el destello que pasa. Si el título es muy corto se deja como está,
+ * porque resaltarlo entero no resalta nada.
+ */
+function cr_titulo_brillo(string $titulo, int $palabras = 2): string
+{
+    $titulo = trim($titulo);
+    $piezas = preg_split('~\s+~u', $titulo) ?: [];
+    if (count($piezas) <= $palabras + 1) { return e($titulo); }
+
+    $finales = array_splice($piezas, -$palabras);
+    return e(implode(' ', $piezas)) . ' <span class="brillo">' . e(implode(' ', $finales)) . '</span>';
+}

@@ -57,6 +57,7 @@ function cr_cabecera(array $opciones = []): void
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="<?= e(cr_url('assets/fonts/inter-var-latin.woff2')) ?>" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="<?= e(cr_url('assets/css/app.css')) ?>?v=<?= e(CR_VERSION) ?>">
+<link rel="stylesheet" href="<?= e(cr_url('assets/css/lujo.css')) ?>?v=<?= e(CR_VERSION) ?>">
 <style>
   /* Paleta configurada desde el panel de administración */
   :root{

@@ -50,6 +50,7 @@ function admin_cabecera(array $opciones = []): void
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="<?= e(cr_url('assets/img/favicon.svg')) ?>" type="image/svg+xml">
 <link rel="stylesheet" href="<?= e(cr_url('admin/assets/admin.css')) ?>?v=<?= e(CR_VERSION) ?>">
+<link rel="stylesheet" href="<?= e(cr_url('admin/assets/lujo-admin.css')) ?>?v=<?= e(CR_VERSION) ?>">
 <style>
   :root{
     --cr-fondo:<?= e(Ajustes::obtener('color_fondo', '#07080A')) ?>;

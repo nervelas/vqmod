@@ -5,6 +5,35 @@ de una URL, con **módulo de campañas de correo** incluido: extraes, filtras y
 envías desde tu propio dominio, todo en la misma herramienta.
 PHP 8.0+ · MySQL/MariaDB · sin Composer · listo para subir a `public_html`.
 
+## El diseño
+
+Dirección de arte **oscuro cinematográfico**, con modo claro de verdad (no un
+oscuro aclarado) y diez paletas que se cambian de un clic desde el panel.
+
+- **Luz ambiental** que respira detrás del contenido, grano finísimo y viñeta:
+  es lo que le quita a un fondo oscuro el aspecto de plástico.
+- **Superficies de cristal** con filo de luz en el borde de arriba, el detalle
+  que separa una interfaz cara de una barata.
+- **Movimiento con intención**, de 160 a 320 ms y curva Expo: el radar late
+  mientras rastrea, las filas nuevas entran en lugar de aparecer de golpe, los
+  botones tienen un destello que los cruza y se hunden 2,5 % al pulsarlos.
+- **Iconos** dentro de un disco de cristal con anillo de oro y halo propio.
+- **Tipografía** Fraunces para los títulos, Inter para el texto y JetBrains
+  Mono para los correos, servidas desde el propio servidor: sin llamadas a
+  Google Fonts ni dependencias externas.
+
+Todo vive en dos hojas aparte —`assets/css/lujo.css` y
+`admin/assets/lujo-admin.css`— que se cargan después de las de siempre. No
+añaden ni quitan un solo selector de los que usa el JavaScript, así que el
+diseño se puede revisar, ajustar o quitar sin tocar el funcionamiento.
+
+**Comprobado**: las diez paletas por encima del mínimo AA (la peor, 5,5:1), las
+catorce páginas sin desbordes a 390, 768 y 1440 px, todo lo pulsable de 44 px o
+más en el teléfono, anillo de foco en el recorrido completo con teclado, y
+`prefers-reduced-motion` detiene hasta la luz de fondo.
+
+---
+
 ## Cómo se actualiza
 
 El ZIP lleva los archivos **en la raíz**, sin carpeta que los envuelva: se

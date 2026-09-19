@@ -1246,3 +1246,72 @@
     });
   }
 })();
+
+/* ==========================================================================
+   17. Luz que sigue al cursor (solo decoración)
+   Le pasa a la tarjeta dónde está el ratón en dos variables CSS. Si esto no
+   se ejecutara, el degradado se queda centrado y no pasa nada: ninguna
+   función de la página depende de ello.
+   ========================================================================== */
+(function () {
+  'use strict';
+
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) { return; }
+  if (!window.matchMedia || !window.matchMedia('(hover: hover)').matches) { return; }
+
+  var tarjetas = document.querySelectorAll('.ventaja, .marca-dato, .modo-opcion');
+  if (!tarjetas.length) { return; }
+
+  Array.prototype.forEach.call(tarjetas, function (t) {
+    t.addEventListener('pointermove', function (e) {
+      var c = t.getBoundingClientRect();
+      t.style.setProperty('--mx', ((e.clientX - c.left) / c.width * 100).toFixed(1) + '%');
+      t.style.setProperty('--my', ((e.clientY - c.top) / c.height * 100).toFixed(1) + '%');
+    });
+    t.addEventListener('pointerleave', function () {
+      t.style.removeProperty('--mx');
+      t.style.removeProperty('--my');
+    });
+  });
+})();
+
+/* ==========================================================================
+   18. Textos cortos en pantallas pequeñas
+   El marcador de posición del campo principal está escrito para un monitor:
+   en un teléfono ocupaba tres renglones y empujaba el botón fuera de la
+   vista. Aquí se cambia por su versión corta, y se devuelve el largo si la
+   pantalla crece (girar el teléfono, abrir en una tableta).
+   ========================================================================== */
+(function () {
+  'use strict';
+
+  var consulta = window.matchMedia ? window.matchMedia('(max-width: 620px)') : null;
+  if (!consulta) { return; }
+
+  // Cada campo con su versión corta. Si el campo no está en la página, se
+  // salta sin más: esta lista vale para la portada y para el depurador.
+  var campos = [
+    { id: 'url',         corto: 'Pega una web, una lista o unas palabras' },
+    { id: 'objetivo',    corto: 'Ej.: .edu.gt  ·  vacío = todos' },
+    { id: 'extensiones', corto: 'Ej.: .com, .edu.gt  ·  vacío = todas' },
+    { id: 'excluir',     corto: 'Ej.: .ru, .cn' },
+    { id: 'contiene',    corto: 'Ej.: colegio, liceo, instituto' },
+    { id: 'sin_palabra', corto: 'Ej.: tienda, banco' },
+    { id: 'filtro-ext',  corto: 'Extensiones: .edu.gt, .com…' }
+  ].map(function (c) {
+    var el = document.getElementById(c.id);
+    return el ? { el: el, corto: c.corto, largo: el.getAttribute('placeholder') || '' } : null;
+  }).filter(Boolean);
+
+  if (!campos.length) { return; }
+
+  function ajustar() {
+    campos.forEach(function (c) {
+      c.el.setAttribute('placeholder', consulta.matches ? c.corto : c.largo);
+    });
+  }
+  ajustar();
+
+  if (consulta.addEventListener) { consulta.addEventListener('change', ajustar); }
+  else if (consulta.addListener) { consulta.addListener(ajustar); }
+})();

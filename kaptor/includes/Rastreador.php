@@ -245,9 +245,41 @@ final class Rastreador
         $esRecurso = $item['tipo'] === 'recurso';
         $esSitemap = $item['tipo'] === 'sitemap';
 
-        $resp = Http::obtener($url, [
-            'referer' => (string) $escaneo['url_origen'],
-        ]);
+        // Facebook e Instagram: se prueban varias direcciones de la misma
+        // página, porque unas responden cuando otras devuelven el muro.
+        $red = Ajustes::activo('redes_sociales', true) ? Social::tipo($url) : '';
+        if ($red !== '') {
+            $resp = ['ok' => false, 'codigo' => 0, 'cuerpo' => '', 'error' => ''];
+            // Con tiempo de espera corto y como mucho tres direcciones: si la
+            // red no responde, un perfil inalcanzable no puede comerse el
+            // turno entero y dejar el resto del escaneo esperando.
+            $espera = min(8, Ajustes::entero('timeout', 20, 3, 180));
+            $probadas = 0;
+            foreach (Social::variantes($url) as $variante) {
+                $intento = Http::obtener($variante, [
+                    'referer' => 'https://www.google.com/',
+                    'timeout' => $espera,
+                ]);
+                $resp = $intento;
+                if ($intento['ok'] && $intento['cuerpo'] !== '' && !Social::muro($intento['cuerpo'])) {
+                    break;
+                }
+                // Si ni siquiera se pudo conectar, las demás direcciones de la
+                // misma red tampoco van a responder: no se insiste.
+                if ($intento['codigo'] === 0) { break; }
+                if (++$probadas >= 3) { break; }
+                usleep(200000);
+            }
+            if ($resp['ok'] && Social::muro($resp['cuerpo'])) {
+                $resp['ok']     = false;
+                $resp['error']  = ucfirst($red) . ' pidió iniciar sesión para ver esta página.';
+                $resp['cuerpo'] = '';
+            }
+        } else {
+            $resp = Http::obtener($url, [
+                'referer' => (string) $escaneo['url_origen'],
+            ]);
+        }
 
         BD::actualizar('cr_cola', [
             'estado'      => $resp['ok'] ? 'hecho' : 'error',
@@ -264,6 +296,17 @@ final class Rastreador
         $hostAmbito = (string) $escaneo['host'];
         if ($hostAmbito === '*') { $hostAmbito = cr_host_de_url($url); }
         $extractor = new Extractor($hostAmbito);
+
+        if ($red !== '') {
+            // De una página de Facebook o Instagram interesan dos cosas: el
+            // texto de la biografía y la ficha de contacto (donde puede estar
+            // el correo), y la web propia del negocio, que se encola aparte
+            // porque es donde el correo aparece casi siempre.
+            $extractor->analizar(Social::texto($resp['cuerpo']), $url, 'text/plain');
+            foreach (Social::webs($resp['cuerpo'], $url) as $web) {
+                self::encolar($escaneoId, $web, (int) $item['profundidad'], 0, 'pagina');
+            }
+        }
 
         if ($esSitemap) {
             // robots.txt también puede apuntar a otros sitemaps.
@@ -301,6 +344,17 @@ final class Rastreador
         // --- Enlaces de WhatsApp sin número y perfiles sociales ---------------
         if ($datos['enlaces_wa'] || $datos['redes']) {
             self::acumularEnlaces($escaneoId, $datos['enlaces_wa'], $datos['redes']);
+
+            // Si la web enlaza su Facebook o su Instagram, se visitan también:
+            // muchos negocios publican ahí el correo y no en su propia web.
+            if ($red === '' && Ajustes::activo('redes_sociales', true) && Ajustes::activo('seguir_redes', true)) {
+                $puestas = 0;
+                foreach ($datos['redes'] as $perfil) {
+                    if (Social::tipo($perfil) === '' || Social::usuario($perfil) === '') { continue; }
+                    self::encolar($escaneoId, $perfil, (int) $item['profundidad'], 2, 'pagina');
+                    if (++$puestas >= 2) { break; }   // Facebook e Instagram, nada más
+                }
+            }
         }
 
         // --- Encolar lo descubierto ------------------------------------------

@@ -63,6 +63,9 @@ final class Ajustes
             'max_correos'         => '1000',  // tope de correos por escaneo
             'max_telefonos'       => '500',   // tope de teléfonos por escaneo
             // --- Búsqueda y lotes -----------------------------------------
+            'redes_sociales'      => '1',     // entra en Facebook e Instagram
+            'seguir_redes'        => '1',     // visita el Facebook/Instagram que enlaza la web
+            'buscar_redes'        => '0',     // incluye perfiles sociales en las búsquedas
             'buscar_activo'       => '1',     // permite buscar por palabras
             'buscador_motor'      => 'auto',  // auto | duckduckgo | bing | google
             'buscador_max'        => '100',   // webs que se traen de la búsqueda

@@ -27,6 +27,7 @@ const CAMPOS_BOOL = [
     'verificar_mx', 'tld_estricto', 'permitir_privadas', 'ssl_estricto', 'headless_activo', 'buscar_whatsapp',
     'campanas_activas', 'seguimiento_aperturas', 'seguimiento_clics',
     'acceso_publico', 'guardar_historial', 'buscar_activo',
+    'redes_sociales', 'seguir_redes', 'buscar_redes',
 ];
 /** Números con su rango permitido: clave => [mínimo, máximo]. */
 const CAMPOS_NUM = [
@@ -454,6 +455,18 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
 
     fila('Buscar por palabras', 'Permite escribir unas palabras, o pegar el enlace de una búsqueda de Google, y extraer de todas las webs que salgan.',
         interruptor('buscar_activo', Ajustes::activo('buscar_activo', true), 'Búsqueda activada'));
+
+    fila('Facebook e Instagram',
+        'Al pegar la dirección de una página o un perfil, Kaptor prueba varias direcciones de esa misma página, '
+        . 'lee la ficha de contacto y la biografía, y sigue la web que el negocio publica. '
+        . '<b>Aviso:</b> Meta pide iniciar sesión muy a menudo; cuando eso ocurre se indica en el resultado.',
+        interruptor('redes_sociales', Ajustes::activo('redes_sociales', true), 'Entrar en Facebook e Instagram'));
+
+    fila('Seguir las redes de cada web', 'Si una web enlaza su Facebook o su Instagram, se visitan también. Muchos negocios publican ahí el correo y no en su web.',
+        interruptor('seguir_redes', Ajustes::activo('seguir_redes', true), 'Visitar los perfiles enlazados'));
+
+    fila('Perfiles sociales en las búsquedas', 'Normalmente se descartan de los resultados porque suelen acabar en muro de acceso y gastan el escaneo.',
+        interruptor('buscar_redes', Ajustes::activo('buscar_redes'), 'Incluir perfiles sociales'));
 
     fila('Webs por búsqueda', 'Cuántos resultados se traen del buscador antes de empezar a extraer.',
         '<input type="number" name="buscador_max" class="campo" style="max-width:140px" min="10" max="300" value="' . e($a['buscador_max'] ?? '100') . '">');

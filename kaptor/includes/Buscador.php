@@ -217,6 +217,13 @@ final class Buscador
             foreach (self::DESCARTAR as $d) {
                 if (str_contains($host, $d)) { $saltar = true; break; }
             }
+            // Los perfiles de Facebook e Instagram se descartan salvo que el
+            // administrador los quiera: suelen acabar en muro de acceso y
+            // gastarían el escaneo sin dar nada.
+            if ($saltar && Ajustes::activo('buscar_redes')
+                && preg_match('~(^|\.)(facebook\.com|instagram\.com)$~', $host)) {
+                $saltar = false;
+            }
             if ($saltar) { continue; }
 
             // Se guarda el enlace tal cual sale en los resultados: es la página

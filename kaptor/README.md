@@ -1,10 +1,38 @@
-# Kaptor 1.9
+# Kaptor 2.0
 
 Extractor profesional de **correos electrónicos y números de WhatsApp** a partir
 de una URL, con **módulo de campañas de correo** incluido: extraes, filtras y
 envías desde tu propio dominio, todo en la misma herramienta.
 PHP 8.0+ · MySQL/MariaDB · sin Composer · listo para subir a `public_html`.
 
+
+
+---
+
+## De dónde puede extraer
+
+- **Una web.** Pega la dirección y listo.
+- **Muchas webs a la vez.** Pega la lista, una por línea: se recorren todas en
+  un solo escaneo y los resultados salen juntos.
+- **Una búsqueda.** Escribe unas palabras (`colegios privados Guatemala`) o
+  pega el enlace de una búsqueda ya hecha en Google, Bing o DuckDuckGo: Kaptor
+  entra en cada web de los resultados y rastrea por dentro.
+- **Facebook e Instagram.** Pega la dirección de una página o un perfil: lee la
+  ficha de contacto y la biografía, y sigue la web que el negocio publica ahí.
+
+### Lo que hay que saber de cada fuente
+
+**Buscadores.** Google bloquea con frecuencia las consultas automáticas hechas
+desde un servidor y responde con captcha. Kaptor prueba DuckDuckGo, luego Bing
+y por último Google, y usa el primero que conteste; si ninguno responde, lo
+dice. Se puede elegir el buscador en *Ajustes → Motor*.
+
+**Facebook e Instagram.** Meta sirve parte de los datos públicos a quien no ha
+iniciado sesión, pero levanta muros de acceso a menudo y sus condiciones de uso
+no permiten el rastreo automático. Kaptor prueba varias direcciones de la misma
+página y, cuando se topa con el muro, lo indica en lugar de decir que no hay
+correos. La vía más fiable sigue siendo la web propia del negocio: por eso, si
+la página publica su sitio, se rastrea también.
 
 ---
 

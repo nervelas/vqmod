@@ -201,12 +201,17 @@ final class Buscador
         }
 
         $limpias = [];
+        $porHost = [];
         foreach ($encontradas as $u) {
             $u = trim($u);
             if ($u === '' || !preg_match('~^https?://~i', $u)) { continue; }
 
             $host = strtolower((string) parse_url($u, PHP_URL_HOST));
             if ($host === '') { continue; }
+            // El puerto forma parte del sitio: dos servicios en la misma
+            // máquina y puertos distintos son webs distintas.
+            $puerto = parse_url($u, PHP_URL_PORT);
+            $sitio  = $host . ($puerto ? ':' . $puerto : '');
 
             $saltar = false;
             foreach (self::DESCARTAR as $d) {
@@ -214,10 +219,16 @@ final class Buscador
             }
             if ($saltar) { continue; }
 
-            // Interesa la web, no la página concreta: así el rastreo empieza
-            // por la portada y encuentra la sección de contacto.
-            $esquema = (string) (parse_url($u, PHP_URL_SCHEME) ?: 'https');
-            $limpias[$esquema . '://' . $host] = true;
+            // Se guarda el enlace tal cual sale en los resultados: es la página
+            // que el buscador considera relevante y suele ser la del colegio o
+            // su sección de contacto. Desde ahí el rastreo sigue por dentro del
+            // mismo sitio. Solo se guarda el primer enlace de cada web, para no
+            // gastar el escaneo entero en un único dominio.
+            $u = strtok($u, '#');
+            if (!isset($porHost[$sitio])) {
+                $porHost[$sitio] = true;
+                $limpias[$u] = true;
+            }
         }
 
         return array_keys($limpias);

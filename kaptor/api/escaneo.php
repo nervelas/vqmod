@@ -57,13 +57,17 @@ switch ($accion) {
             if (!$hallazgo['ok']) {
                 cr_json(['ok' => false, 'error' => $hallazgo['error']], 502);
             }
+            // En una búsqueda hay que entrar en cada web: el correo casi nunca
+            // está en la portada, sino en "Contacto" o "Nosotros". Por eso el
+            // rastreo dentro de cada sitio va activado salvo que el
+            // administrador lo haya apagado del todo en los ajustes.
             $res = Rastreador::iniciarVarias(
-                $hallazgo['urls'], $profundo, Auth::id(), 'Búsqueda: ' . $consulta
+                $hallazgo['urls'], true, Auth::id(), 'Búsqueda: ' . $consulta
             );
             $aviso = count($hallazgo['urls']) . ' webs encontradas en ' . $hallazgo['motor']
                    . ' para «' . $consulta . '».';
         } elseif (count($lineas) > 1) {
-            $res   = Rastreador::iniciarVarias($lineas, $profundo, Auth::id(), count($lineas) . ' webs');
+            $res   = Rastreador::iniciarVarias($lineas, true, Auth::id(), count($lineas) . ' webs');
             $aviso = ($res['aceptadas'] ?? 0) . ' webs en la lista'
                    . (!empty($res['descartadas']) ? ', ' . $res['descartadas'] . ' descartadas por no ser válidas' : '') . '.';
         } else {

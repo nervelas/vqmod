@@ -61,20 +61,26 @@ final class Rastreador
     public static function iniciarVarias(array $urls, bool $profundo, int $usuarioId = 0, string $etiqueta = '', string $filtroExt = ''): array
     {
         $privadas = Ajustes::activo('permitir_privadas');
-        $tope     = Ajustes::entero('max_sitios_lote', 100, 1, 500);
+        $tope     = Ajustes::entero('max_sitios_lote', 300, 1, 2000);
 
-        $buenas = [];
-        $malas  = 0;
+        $buenas    = [];
+        $malas     = 0;
+        $recortadas = 0;   // las que se quedan fuera por el tope del lote
         foreach ($urls as $u) {
             $u = trim((string) $u);
             if ($u === '') { continue; }
             if (!preg_match('~^https?://~i', $u)) { $u = 'https://' . ltrim($u, '/'); }
 
-            $val = Seguridad::validarUrl($u, $privadas);
+            // Pasado el tope se sigue contando, pero ya no se encola: así se
+            // puede decir cuántas quedaron fuera en lugar de callarlo.
+            if (count($buenas) >= $tope) { $recortadas++; continue; }
+
+            // Sin DNS: encolar 300 webs no puede costar 900 consultas de DNS.
+            // Http::obtener revalida cada una, con DNS, antes de conectarse.
+            $val = Seguridad::validarUrlBasica($u, $privadas);
             if (!$val['ok']) { $malas++; continue; }
 
             $buenas[$val['url']] = $val['host'];
-            if (count($buenas) >= $tope) { break; }
         }
 
         if (!$buenas) {
@@ -84,7 +90,7 @@ final class Rastreador
         $profundo = $profundo && Ajustes::activo('rastreo_profundo', true);
         // El tope de páginas se reparte entre los sitios, con un mínimo por sitio.
         $porSitio = $profundo ? Ajustes::entero('paginas_por_sitio', 4, 1, 50) : 1;
-        $maxPag   = min(2000, count($buenas) * $porSitio + 10);
+        $maxPag   = min(8000, count($buenas) * $porSitio + 10);
 
         $primera = array_key_first($buenas);
         $id = BD::insertar('cr_escaneos', [
@@ -113,6 +119,8 @@ final class Rastreador
             'escaneo'     => self::escaneo($id),
             'aceptadas'   => count($buenas),
             'descartadas' => $malas,
+            'recortadas'  => $recortadas,
+            'tope'        => $tope,
         ];
     }
 

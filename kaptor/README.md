@@ -20,6 +20,26 @@ PHP 8.0+ · MySQL/MariaDB · sin Composer · listo para subir a `public_html`.
 - **Facebook e Instagram.** Pega la dirección de una página o un perfil: lee la
   ficha de contacto y la biografía, y sigue la web que el negocio publica ahí.
 
+### Listas grandes (cientos de webs de golpe)
+
+Se pega la lista entera, una web por línea, y se lanza un solo escaneo. El tope
+viene de fábrica en **300 webs** por lote y se sube hasta 2000 en
+*Ajustes → Motor → «Webs por escaneo en lote»*. Si la lista pasa del tope,
+Kaptor **lo dice**: «ATENCIÓN: 190 webs se quedaron fuera porque el tope por
+lote está en 100» — antes recortaba en silencio.
+
+Encolar no consulta el DNS: 300 webs entran en unos 150 ms. La comprobación
+completa (DNS incluido, y también en cada redirección) la hace igualmente quien
+se conecta, así que la protección contra SSRF es la misma; lo único que cambia
+es que ya no se pagan 900 consultas de DNS antes de empezar, que era lo que
+mataba el escaneo en los hosting con límite de 30 segundos.
+
+Fuente recomendada para sacar la lista de dominios de un país o de un sector:
+los registros públicos de certificados (Certificate Transparency). Ejemplo para
+Guatemala: `https://crt.sh/?q=%.edu.gt&output=json`.
+
+---
+
 ### Filtrar la descarga por terminación de dominio
 
 En la tabla de resultados, encima de los botones de descarga, hay un bloque que

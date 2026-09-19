@@ -94,7 +94,23 @@ final class Seguridad
      *
      * @return array{ok:bool,url?:string,host?:string,ip?:string,error?:string}
      */
-    public static function validarUrl(string $url, bool $permitirPrivadas = false): array
+    /**
+     * Comprobación ligera: formato, esquema, puerto y host prohibido, SIN
+     * resolver DNS.
+     *
+     * Sirve para meter muchas webs en la cola de golpe. Una lista de 300
+     * dominios son 900 consultas de DNS (A, AAAA y el respaldo), y los
+     * dominios muertos agotan el tiempo de espera uno por uno: el escaneo se
+     * moría antes de empezar. No se pierde ni un gramo de seguridad, porque
+     * Http::obtener vuelve a validar cada dirección —y cada redirección— con
+     * DNS incluido justo antes de conectarse.
+     */
+    public static function validarUrlBasica(string $url, bool $permitirPrivadas = false): array
+    {
+        return self::validarUrl($url, $permitirPrivadas, false);
+    }
+
+    public static function validarUrl(string $url, bool $permitirPrivadas = false, bool $conDns = true): array
     {
         $url = trim($url);
         if ($url === '') {
@@ -131,15 +147,25 @@ final class Seguridad
             return ['ok' => false, 'error' => 'No se permite analizar direcciones internas.'];
         }
 
-        // Resolución DNS: todas las IPs del host deben ser públicas.
-        $ips = self::resolver($host);
-        if (!$ips) {
-            return ['ok' => false, 'error' => 'No se pudo resolver el dominio "' . $host . '".'];
+        // Si el host ya es una IP escrita a pelo no hace falta DNS para saber
+        // si es privada: se comprueba siempre, también en el modo ligero.
+        $literal = trim($host, '[]');
+        if (!$permitirPrivadas && filter_var($literal, FILTER_VALIDATE_IP) && !self::ipPublica($literal)) {
+            return ['ok' => false, 'error' => 'La dirección apunta a una red privada o reservada.'];
         }
-        if (!$permitirPrivadas) {
-            foreach ($ips as $ip) {
-                if (!self::ipPublica($ip)) {
-                    return ['ok' => false, 'error' => 'La dirección apunta a una red privada o reservada.'];
+
+        // Resolución DNS: todas las IPs del host deben ser públicas.
+        $ips = [];
+        if ($conDns) {
+            $ips = self::resolver($host);
+            if (!$ips) {
+                return ['ok' => false, 'error' => 'No se pudo resolver el dominio "' . $host . '".'];
+            }
+            if (!$permitirPrivadas) {
+                foreach ($ips as $ip) {
+                    if (!self::ipPublica($ip)) {
+                        return ['ok' => false, 'error' => 'La dirección apunta a una red privada o reservada.'];
+                    }
                 }
             }
         }
@@ -150,7 +176,7 @@ final class Seguridad
         $normalizada .= $partes['path'] ?? '/';
         if (!empty($partes['query'])) { $normalizada .= '?' . $partes['query']; }
 
-        return ['ok' => true, 'url' => $normalizada, 'host' => $host, 'ip' => $ips[0]];
+        return ['ok' => true, 'url' => $normalizada, 'host' => $host, 'ip' => $ips[0] ?? ''];
     }
 
     /** ¿El nombre de host esta en la lista negra o apunta a la maquina local? */

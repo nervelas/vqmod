@@ -43,7 +43,7 @@ const CAMPOS_NUM = [
     'smtp_timeout'    => [5, 120],
     'lote_envio'      => [1, 500],
     'buscador_max'      => [10, 300],
-    'max_sitios_lote'   => [1, 500],
+    'max_sitios_lote'   => [1, 2000],
     'paginas_por_sitio' => [1, 50],
 ];
 /** Colores en formato #RRGGBB. */
@@ -482,7 +482,7 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
         . '</select>');
 
     fila('Webs por lote', 'Tope de direcciones que admite una lista pegada de una vez.',
-        '<input type="number" name="max_sitios_lote" class="campo" style="max-width:140px" min="1" max="500" value="' . e($a['max_sitios_lote'] ?? '100') . '">');
+        '<input type="number" name="max_sitios_lote" class="campo" style="max-width:140px" min="1" max="2000" value="' . e($a['max_sitios_lote'] ?? '300') . '">');
 
     fila('Páginas de cada web', 'En una búsqueda o una lista, cuántas páginas se miran de cada web (portada, contacto, nosotros...).',
         '<input type="number" name="paginas_por_sitio" class="campo" style="max-width:140px" min="1" max="50" value="' . e($a['paginas_por_sitio'] ?? '4') . '">');

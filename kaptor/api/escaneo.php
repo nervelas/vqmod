@@ -78,6 +78,12 @@ switch ($accion) {
             $res   = Rastreador::iniciarVarias($lineas, true, Auth::id(), count($lineas) . ' webs', $objetivoTxt);
             $aviso = ($res['aceptadas'] ?? 0) . ' webs en la lista'
                    . (!empty($res['descartadas']) ? ', ' . $res['descartadas'] . ' descartadas por no ser válidas' : '') . '.';
+            // Callar que se han quedado webs fuera es la peor manera de fallar:
+            // se dice cuántas y dónde se sube el tope.
+            if (!empty($res['recortadas'])) {
+                $aviso .= ' ATENCIÓN: ' . $res['recortadas'] . ' webs se quedaron fuera porque el tope por lote está en '
+                        . ($res['tope'] ?? 0) . '. Súbelo en Ajustes → Motor → «Webs por escaneo en lote» y vuelve a pegar la lista.';
+            }
         } else {
             $res = Rastreador::iniciar($entrada, $profundo, Auth::id(), $objetivoTxt);
         }

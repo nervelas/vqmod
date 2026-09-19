@@ -110,8 +110,8 @@ if ($resultado && $resultado['extensiones']) {
 
 cr_cabecera([
     'titulo'      => $modo === 'webs' ? 'Extraer páginas web de un texto' : 'Extraer correos de un texto',
+    'activo'      => $modo === 'webs' ? 'dominios' : 'depurar',
     'descripcion' => 'Pega un texto largo o una lista de correos y Kaptor saca todos los correos que lleve dentro, sin repetidos y filtrados por la terminación de dominio que elijas.',
-    'activo'      => 'depurar',
 ]);
 ?>
 
@@ -163,14 +163,14 @@ cr_cabecera([
          los filtros de un modo no sirven para el otro. -->
     <div class="modo-depurar">
       <a class="modo-opcion <?= $modo === 'correos' ? 'activa' : '' ?>"
-         href="<?= e(cr_url('depurar.php')) ?>?modo=correos" <?= $modo === 'correos' ? 'aria-current="page"' : '' ?>>
+         href="<?= e(cr_url('depurar.php')) ?>" <?= $modo === 'correos' ? 'aria-current="page"' : '' ?>>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 7.6 5.1a1.6 1.6 0 0 0 1.8 0l7.6-5.1"/>
         </svg>
         <span><b>Correos</b><i>info@colegio.edu.gt</i></span>
       </a>
       <a class="modo-opcion <?= $modo === 'webs' ? 'activa' : '' ?>"
-         href="<?= e(cr_url('depurar.php')) ?>?modo=webs" <?= $modo === 'webs' ? 'aria-current="page"' : '' ?>>
+         href="<?= e(cr_url('dominios.php')) ?>" <?= $modo === 'webs' ? 'aria-current="page"' : '' ?>>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"/>
         </svg>

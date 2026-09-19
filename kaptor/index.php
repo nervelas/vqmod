@@ -141,8 +141,10 @@ cr_cabecera([
 
       <!-- El otro camino: no hay web que rastrear, ya se tiene el texto. -->
       <p class="atajo-texto">
-        ¿Ya tienes el texto o la lista y solo quieres sacarle los correos?
-        <a href="<?= e(cr_url('depurar.php')) ?>">Extraer correos de un texto →</a>
+        ¿Ya tienes el texto y no hay web que rastrear?
+        <a href="<?= e(cr_url('depurar.php')) ?>">Extraer correos →</a>
+        <span class="atajo-sep" aria-hidden="true">·</span>
+        <a href="<?= e(cr_url('dominios.php')) ?>">Extraer dominios →</a>
       </p>
     </div>
 

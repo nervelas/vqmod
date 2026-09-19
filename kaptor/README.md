@@ -1,4 +1,4 @@
-# Kaptor 3.0
+# Kaptor 3.1
 
 Extractor profesional de **correos electrónicos y números de WhatsApp** a partir
 de una URL, con **módulo de campañas de correo** incluido: extraes, filtras y
@@ -58,6 +58,17 @@ diseño se puede revisar, ajustar o quitar sin tocar el funcionamiento.
 catorce páginas sin desbordes a 390, 768 y 1440 px, todo lo pulsable de 44 px o
 más en el teléfono, anillo de foco en el recorrido completo con teclado, y
 `prefers-reduced-motion` detiene hasta la luz de fondo.
+
+---
+
+## Cómo saber qué versión está instalada
+
+En el pie de cualquier página, a la derecha del aviso, aparece el número de
+versión: **v3.1.0**. Si después de subir un ZIP nuevo el pie sigue enseñando el
+número anterior, es que los archivos no se han reemplazado —no que el diseño no
+haya cambiado—. Si el número es el nuevo pero se sigue viendo lo de antes,
+entonces es la caché del navegador: recarga con Ctrl+F5 (o mantén pulsado el
+botón de recargar en el teléfono).
 
 ---
 
@@ -155,9 +166,10 @@ Se pueden pedir varias a la vez (`.edu.gt, .gob.gt`). Vacío = todos los dominio
 
 ---
 
-## Extraer páginas web de un texto
+## Extraer dominios de un texto
 
-Mismo menú, pestaña **Páginas web**. Sirve para lo contrario que la otra: en vez
+Menú **Extraer dominios**, en `dominios.php`: su propia página, porque sacar
+correos y sacar webs son dos trabajos distintos. Sirve para lo contrario que la otra: en vez
 de sacar correos, saca **dominios**. Se pega el listado que sea —el JSON de
 `crt.sh`, unos resultados de búsqueda, un directorio copiado— y devuelve una
 lista limpia, lista para pegarla en la caja de extracción:
@@ -184,9 +196,9 @@ https://crt.sh/?q=%.org.gt&output=json
 
 ---
 
-## Extraer correos de un texto (y depurar listas)
+## Extraer correos de un texto
 
-Menú **Extraer de un texto**. No hace falta que haya una web que rastrear: se
+Menú **Extraer correos**. No hace falta que haya una web que rastrear: se
 pega directamente el texto y Kaptor saca los correos que lleve dentro. Da igual
 lo que sea —un artículo, un PDF copiado, un correo reenviado con cien firmas,
 una columna de Excel, un CSV entero o una lista suelta— y sale una lista limpia:

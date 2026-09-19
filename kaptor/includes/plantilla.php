@@ -97,7 +97,8 @@ function cr_cabecera(array $opciones = []): void
         <!-- Kaptor es privado: sin sesión no se enseñan destinos que solo
              llevarían de vuelta al acceso. -->
         <a href="<?= e(cr_url('index.php')) ?>" class="enlace-extraer <?= $activo === 'inicio' ? 'activo' : '' ?>">Extraer</a>
-        <a href="<?= e(cr_url('depurar.php')) ?>" class="<?= $activo === 'depurar' ? 'activo' : '' ?>">Extraer de un texto</a>
+        <a href="<?= e(cr_url('depurar.php')) ?>" class="<?= $activo === 'depurar' ? 'activo' : '' ?>">Extraer correos</a>
+        <a href="<?= e(cr_url('dominios.php')) ?>" class="<?= $activo === 'dominios' ? 'activo' : '' ?>">Extraer dominios</a>
         <a href="<?= e(cr_url('mis-extracciones.php')) ?>" class="<?= $activo === 'mias' ? 'activo' : '' ?>">Mis extracciones</a>
         <?php if (Auth::esAdmin()): ?>
           <a href="<?= e(cr_url('admin/index.php')) ?>">Panel</a>
@@ -135,11 +136,14 @@ function cr_pie(bool $conJs = true): void
 
 <footer class="pie">
   <div class="contenedor pie-int">
-    <span><?= e(Ajustes::obtener('pie_texto')) ?></span>
+    <span><?= e(Ajustes::obtener('pie_texto')) ?>
+      <span class="pie-version" title="Versión instalada de Kaptor">v<?= e(CR_VERSION) ?></span>
+    </span>
     <span>
       <?php if (Auth::autenticado()): ?>
         <a href="<?= e(cr_url('index.php')) ?>">Inicio</a> ·
-        <a href="<?= e(cr_url('depurar.php')) ?>">Extraer de un texto</a> ·
+        <a href="<?= e(cr_url('depurar.php')) ?>">Extraer correos</a> ·
+        <a href="<?= e(cr_url('dominios.php')) ?>">Extraer dominios</a> ·
         <a href="<?= e(cr_url('logout.php')) ?>">Salir</a>
       <?php else: ?>
         <a href="<?= e(cr_url('login.php')) ?>">Acceder</a>

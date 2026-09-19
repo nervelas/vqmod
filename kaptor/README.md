@@ -1,9 +1,29 @@
-# Kaptor 1.7
+# Kaptor 1.8
 
 Extractor profesional de **correos electrónicos y números de WhatsApp** a partir
 de una URL, con **módulo de campañas de correo** incluido: extraes, filtras y
 envías desde tu propio dominio, todo en la misma herramienta.
 PHP 8.0+ · MySQL/MariaDB · sin Composer · listo para subir a `public_html`.
+
+
+---
+
+## Instalarlo como aplicación
+
+Kaptor es una aplicación instalable (PWA). Al entrar en la web aparece abajo
+un aviso para instalarla; también se puede hacer desde el navegador:
+
+- **Android (Chrome):** el aviso sale solo. Si no, menú ⋮ → *Instalar aplicación*.
+- **iPhone y iPad (Safari):** botón Compartir → *Añadir a pantalla de inicio*.
+- **Windows, macOS y Linux (Chrome o Edge):** icono de instalar en la barra de
+  direcciones, o el aviso de la propia web.
+
+Una vez instalada abre a pantalla completa, con su icono propio, y el listado
+de resultados sigue disponible aunque se pierda la conexión.
+
+> **Requisito:** el navegador solo permite instalar sitios servidos por HTTPS.
+> Activa el certificado SSL gratuito de tu hosting (cPanel → SSL/TLS Status)
+> antes de probarlo. Sin HTTPS la web funciona igual, pero no se instala.
 
 ---
 

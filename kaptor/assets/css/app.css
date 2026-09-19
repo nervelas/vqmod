@@ -820,3 +820,35 @@ html[data-tema="claro"] .aurora{opacity:.3;filter:blur(40px)}
 
 /* Nada puede provocar desplazamiento lateral de la página. */
 html,body{max-width:100%;overflow-x:hidden}
+
+/* ==========================================================================
+   13. Aviso para instalar la aplicación
+   Aparece abajo (o arriba a la derecha en pantallas grandes) cuando el
+   navegador permite instalar Kaptor.
+   ========================================================================== */
+.instalar-app{
+  position:fixed;z-index:80;left:12px;right:12px;bottom:12px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:14px 16px;border-radius:var(--r-lg);
+  background:color-mix(in srgb,var(--panel-solido) 96%,transparent);
+  border:1px solid var(--borde-fuerte);
+  box-shadow:var(--sombra-alta);
+  backdrop-filter:blur(16px);
+  transform:translateY(18px);opacity:0;
+  transition:transform .32s var(--transicion),opacity .32s ease;
+}
+.instalar-app.visible{transform:none;opacity:1}
+.instalar-app[hidden]{display:none}
+.instalar-app img{width:46px;height:46px;border-radius:12px;flex:none}
+.instalar-txt{flex:1;min-width:150px;line-height:1.35}
+.instalar-txt b{display:block;font-size:.98rem;margin-bottom:2px}
+.instalar-txt span{font-size:.83rem;color:var(--suave)}
+.instalar-botones{display:flex;gap:8px;flex:none}
+
+@media (min-width:900px){
+  .instalar-app{left:auto;right:20px;bottom:20px;max-width:430px}
+}
+@media (max-width:480px){
+  .instalar-botones{width:100%}
+  .instalar-botones .btn{flex:1;justify-content:center}
+}

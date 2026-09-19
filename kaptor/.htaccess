@@ -77,11 +77,25 @@ RedirectMatch 403 ^/(config|includes|storage|database)(/.*)?$
   </FilesMatch>
 </IfModule>
 
+# ------------------------------------------------- Aplicación instalable
+#  El service worker no debe quedarse cacheado: si el navegador sirve una
+#  copia vieja, la app no se actualiza. El manifiesto lleva su propio tipo.
+<IfModule mod_headers.c>
+  <FilesMatch "^sw\.js$">
+    Header always set Cache-Control "no-cache, must-revalidate"
+    Header always set Service-Worker-Allowed "/"
+  </FilesMatch>
+</IfModule>
+<IfModule mod_expires.c>
+  ExpiresByType application/manifest+json "access plus 0 seconds"
+</IfModule>
+
 # ------------------------------------------------- Tipos MIME correctos
 <IfModule mod_mime.c>
   AddType font/woff2 .woff2
   AddType image/svg+xml .svg
   AddType application/json .json
+  AddType application/manifest+json .webmanifest
 </IfModule>
 
 # ------------------------------------------------- UTF-8 por defecto

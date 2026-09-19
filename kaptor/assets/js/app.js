@@ -749,3 +749,91 @@
     conectar();
   }
 })();
+
+/* ===========================================================================
+   13. Aplicación instalable (PWA)
+   Registra el service worker y ofrece la instalación nada más entrar, sin
+   que haya que buscarla en el menú del navegador.
+   =========================================================================== */
+(function () {
+  var CR = window.CR || {};
+
+  /* --- Service worker: hace que la app se pueda instalar y abra sin red --- */
+  /* Los service workers solo funcionan en contextos seguros: HTTPS, o
+     localhost durante las pruebas. */
+  if ('serviceWorker' in navigator && CR.sw && window.isSecureContext) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register(CR.sw, { scope: CR.base || './' })
+        .catch(function () { /* sin service worker la web sigue funcionando */ });
+    });
+  }
+
+  var caja = document.getElementById('instalar-app');
+  if (!caja) { return; }
+
+  var CLAVE = 'kaptor-instalar-oculto';
+  var boton = document.getElementById('instalar-si');
+  var luego = document.getElementById('instalar-no');
+  var pista = document.getElementById('instalar-pista');
+  var evento = null;
+
+  function yaInstalada() {
+    return window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+  }
+
+  function descartada() {
+    try {
+      var hasta = parseInt(localStorage.getItem(CLAVE) || '0', 10);
+      return hasta > Date.now();
+    } catch (e) { return false; }
+  }
+
+  function ocultar(dias) {
+    caja.hidden = true;
+    if (dias) {
+      try { localStorage.setItem(CLAVE, String(Date.now() + dias * 86400000)); } catch (e) {}
+    }
+  }
+
+  function mostrar() {
+    if (yaInstalada() || descartada()) { return; }
+    caja.hidden = false;
+    requestAnimationFrame(function () { caja.classList.add('visible'); });
+  }
+
+  /* Android, Windows, macOS y Linux con Chrome o Edge. */
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    evento = e;
+    if (boton) { boton.hidden = false; }
+    mostrar();
+  });
+
+  if (boton) {
+    boton.addEventListener('click', function () {
+      if (!evento) { return; }
+      evento.prompt();
+      evento.userChoice.then(function (r) {
+        ocultar(r && r.outcome === 'accepted' ? 365 : 7);
+        evento = null;
+      });
+    });
+  }
+  if (luego) { luego.addEventListener('click', function () { ocultar(7); }); }
+
+  window.addEventListener('appinstalled', function () { ocultar(365); });
+
+  /* iPhone y iPad: Safari no ofrece instalación automática, hay que explicar
+     los dos toques. Se muestra solo en Safari, no dentro de otras apps. */
+  var esIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+           || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var esSafari = /^((?!chrome|android|crios|fxios|edgios).)*safari/i.test(navigator.userAgent);
+  if (esIOS && esSafari && !yaInstalada() && !descartada()) {
+    if (boton) { boton.hidden = true; }
+    if (pista) {
+      pista.textContent = 'Toca el botón Compartir y elige «Añadir a pantalla de inicio».';
+    }
+    setTimeout(mostrar, 1200);
+  }
+})();

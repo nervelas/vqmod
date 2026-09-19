@@ -41,6 +41,14 @@ function cr_cabecera(array $opciones = []): void
 <link rel="icon" href="<?= e(cr_url('assets/img/favicon.svg')) ?>" type="image/svg+xml">
 <link rel="alternate icon" href="<?= e(cr_url('assets/img/favicon.png')) ?>">
 <link rel="apple-touch-icon" href="<?= e(cr_url('assets/img/apple-touch-icon.png')) ?>">
+
+<!-- Aplicación instalable (PWA): manifiesto e indicaciones para iOS. -->
+<link rel="manifest" href="<?= e(cr_url('manifest.php')) ?>">
+<meta name="application-name" content="<?= e(Ajustes::obtener('sitio_nombre', 'Kaptor')) ?>">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="<?= e(Ajustes::obtener('sitio_nombre', 'Kaptor')) ?>">
 <meta property="og:type" content="website">
 <meta property="og:title" content="<?= e($titulo) ?>">
 <meta property="og:description" content="<?= e($descripcion) ?>">
@@ -138,6 +146,20 @@ function cr_pie(bool $conJs = true): void
   <span></span>
 </div>
 
+<!-- Aviso para instalar la aplicación. Aparece solo cuando el navegador
+     admite la instalación y todavía no está instalada. -->
+<div class="instalar-app" id="instalar-app" hidden>
+  <img src="<?= e(cr_url('assets/img/icono-192.png')) ?>" alt="" width="46" height="46">
+  <div class="instalar-txt">
+    <b>Instalar <?= e(Ajustes::obtener('sitio_nombre', 'Kaptor')) ?></b>
+    <span id="instalar-pista">Añádelo a tu pantalla de inicio y ábrelo como una aplicación.</span>
+  </div>
+  <div class="instalar-botones">
+    <button type="button" class="btn btn-peq" id="instalar-si">Instalar</button>
+    <button type="button" class="btn btn-fantasma btn-peq" id="instalar-no" aria-label="Ahora no">Ahora no</button>
+  </div>
+</div>
+
 <?php if ($conJs): ?>
 <script>
   window.CR = {
@@ -145,7 +167,9 @@ function cr_pie(bool $conJs = true): void
     apiEscaneo: <?= ejs(cr_url('api/escaneo.php')) ?>,
     apiExportar: <?= ejs(cr_url('api/exportar.php')) ?>,
     urlLogin: <?= ejs(cr_url('login.php')) ?>,
-    temaPorDefecto: <?= ejs(Ajustes::obtener('tema_por_defecto', 'oscuro')) ?>
+    temaPorDefecto: <?= ejs(Ajustes::obtener('tema_por_defecto', 'oscuro')) ?>,
+    sw: <?= ejs(cr_url('sw.js')) ?>,
+    base: <?= ejs(rtrim(cr_url_base(), '/') . '/') ?>
   };
 </script>
 <script src="<?= e(cr_url('assets/js/app.js')) ?>?v=<?= e(CR_VERSION) ?>" defer></script>

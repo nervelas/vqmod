@@ -1,9 +1,13 @@
 <?php
 /**
- * Kaptor - Depurar una lista de correos.
+ * Kaptor - Extraer correos de un texto y depurar listas.
  *
- * Se pega cualquier texto con correos dentro (una lista, un CSV, una columna
- * de Excel, un montón de firmas...) y devuelve la lista limpia:
+ * Dos usos con el mismo motor:
+ *   1. Pegar un TEXTO LARGO cualquiera (un artículo, un PDF copiado, un correo
+ *      reenviado con cien firmas dentro) y sacar los correos que lleve dentro.
+ *   2. Pegar una LISTA de correos y depurarla.
+ *
+ * En ambos casos devuelve la lista limpia:
  *   · sin repetidos
  *   · solo con las extensiones de dominio que se pidan (.com, .com.gt, .edu.gt…)
  *   · sin buzones basura si se marcan las casillas correspondientes
@@ -84,8 +88,8 @@ if ($resultado && $resultado['extensiones']) {
 }
 
 cr_cabecera([
-    'titulo'      => 'Depurar una lista de correos',
-    'descripcion' => 'Pega una lista de correos y obtén una lista limpia, sin repetidos y filtrada por las extensiones de dominio que elijas.',
+    'titulo'      => 'Extraer correos de un texto',
+    'descripcion' => 'Pega un texto largo o una lista de correos y Kaptor saca todos los correos que lleve dentro, sin repetidos y filtrados por la terminación de dominio que elijas.',
     'activo'      => 'depurar',
 ]);
 ?>
@@ -93,12 +97,13 @@ cr_cabecera([
 <section class="contenedor seccion-depurar">
 
   <header class="depurar-cab">
-    <span class="insignia"><span class="punto"></span> Higiene de listas</span>
-    <h1>Depurar una lista de correos</h1>
+    <span class="insignia"><span class="punto"></span> Sin salir a internet</span>
+    <h1>Extraer correos de un texto</h1>
     <p class="portada-sub">
-      Pega lo que sea: una lista, una columna de Excel, un CSV entero o mil firmas de correo.
-      Kaptor saca los correos, los pone en minúsculas, <b>quita los repetidos</b> y te deja solo
-      las extensiones que pidas.
+      Pega <b>cualquier cosa</b> y Kaptor saca los correos que lleve dentro: un texto largo, un
+      artículo, un PDF copiado, un correo reenviado con cien firmas, una columna de Excel, un CSV
+      entero o una lista suelta. Los pone en minúsculas, <b>quita los repetidos</b> y te deja solo
+      los que terminen como tú digas.
     </p>
   </header>
 
@@ -111,7 +116,7 @@ cr_cabecera([
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
         <circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/>
       </svg>
-      <span>Para depurar listas necesitas una cuenta. <a href="<?= e(cr_url('login.php')) ?>">Inicia sesión</a>.</span>
+      <span>Para extraer correos de un texto necesitas una cuenta. <a href="<?= e(cr_url('login.php')) ?>">Inicia sesión</a>.</span>
     </div>
   <?php endif; ?>
 
@@ -119,9 +124,9 @@ cr_cabecera([
     <?= Seguridad::campoCsrf() ?>
     <input type="hidden" name="descargar" id="descargar" value="">
 
-    <label class="caja-etiqueta" for="lista">Pega aquí tu lista</label>
+    <label class="caja-etiqueta" for="lista">Pega aquí tu texto o tu lista</label>
     <textarea name="lista" id="lista" class="campo area-lista" rows="9" spellcheck="false" <?= $puedeUsar ? "" : "disabled" ?>
-      placeholder="juan@colegio.edu.gt&#10;info@empresa.com.gt&#10;ventas@tienda.com, contacto@otra.org&#10;…también vale pegar un CSV o una columna entera de Excel"><?= e($texto) ?></textarea>
+      placeholder="Pega aquí el texto entero. Da igual cómo vengan los correos:&#10;&#10;«Escríbenos a info@colegio.edu.gt o a direccion (at) liceo (dot) edu (dot) gt»&#10;juan.perez@empresa.com.gt&#10;&quot;Ventas&quot;;&quot;ventas@tienda.com&quot;;&quot;5022200&quot;&#10;&#10;…un artículo, un PDF copiado, un correo reenviado, un CSV o una columna de Excel."><?= e($texto) ?></textarea>
 
     <div class="depurar-filtros">
 
@@ -183,7 +188,7 @@ cr_cabecera([
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M3 5h18l-7 8v6l-4 2v-8Z"/>
         </svg>
-        Depurar lista
+        Extraer los correos
       </button>
       <button type="reset" class="btn btn-fantasma" id="btn-limpiar-todo">Vaciar</button>
     </div>

@@ -1002,3 +1002,37 @@ table.tabla.tabla-compacta tbody tr:hover{background:color-mix(in srgb,var(--oro
   .caja-objetivo .chip-ext{flex:1 1 auto;justify-content:center;min-height:36px}
   .caja-objetivo .campo{font-size:16px}   /* evita el zoom de iOS */
 }
+
+/* ------- Elegir qué descargar por terminación del dominio (resultados) ----- */
+.caja-filtro-ext{
+  border:1px solid color-mix(in srgb,var(--oro) 34%,var(--borde));
+  background:color-mix(in srgb,var(--oro) 6%,transparent);
+  border-radius:var(--r-md);padding:14px 16px;margin:0 0 16px;
+}
+.filtro-ext-cab{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;margin-bottom:10px}
+.filtro-ext-cab label{display:flex;align-items:center;gap:8px;font-size:.88rem;font-weight:600;color:var(--texto)}
+.filtro-ext-cab label svg{width:16px;height:16px;color:var(--oro);flex:none}
+.filtro-ext-estado{font-size:.78rem;color:var(--neon);font-variant-numeric:tabular-nums}
+.caja-filtro-ext .campo-ext{width:100%;min-width:0}
+.caja-filtro-ext .chips-ext{margin:11px 0 0}
+.chip-ext u{
+  text-decoration:none;font-size:.64rem;opacity:.75;
+  padding-left:6px;border-left:1px solid var(--borde);
+}
+.chip-ext.activo u{border-left-color:color-mix(in srgb,var(--neon) 45%,transparent)}
+.btn .n-bajar{font-weight:600;opacity:.75;font-variant-numeric:tabular-nums}
+@media (max-width:760px){
+  .caja-filtro-ext{padding:13px}
+  .filtro-ext-cab{flex-direction:column;gap:4px}
+  .caja-filtro-ext .campo-ext{font-size:16px}   /* evita el zoom de iOS */
+  .chip-ext u{display:none}                      /* en el móvil basta la cuenta */
+}
+
+/* Atajo de la portada hacia la extracción desde un texto pegado. */
+.atajo-texto{
+  margin:16px auto 0;max-width:980px;text-align:center;
+  font-size:.88rem;color:var(--suave);
+}
+.atajo-texto a{color:var(--oro);font-weight:600;white-space:nowrap}
+.atajo-texto a:hover{color:var(--oro2)}
+@media (max-width:560px){ .atajo-texto a{display:block;margin-top:4px} }

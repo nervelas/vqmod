@@ -105,6 +105,12 @@ cr_cabecera([
       </div>
     </form>
 
+    <!-- El otro camino: no hay web que rastrear, ya se tiene el texto. -->
+    <p class="atajo-texto">
+      ¿Ya tienes el texto o la lista y solo quieres sacarle los correos?
+      <a href="<?= e(cr_url('depurar.php')) ?>">Extraer correos de un texto →</a>
+    </p>
+
     <?php if (!$puedeExtraer): ?>
       <div class="aviso aviso-info" style="max-width:760px;margin:20px auto 0;text-align:left">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
@@ -217,8 +223,6 @@ cr_cabecera([
         </svg>
         <input type="search" id="buscar" class="campo" placeholder="Buscar correo, dominio o método…" aria-label="Buscar en los correos">
       </div>
-      <input type="text" id="filtro-ext" class="campo campo-ext" autocomplete="off" spellcheck="false"
-             placeholder="Extensiones: .com, .com.gt, .edu.gt…" aria-label="Filtrar por extensión de dominio">
       <select id="filtro-tipo" class="campo" aria-label="Filtrar por tipo de correo">
         <option value="">Todos los tipos</option>
         <option value="generico">Genéricos (info@, ventas@…)</option>
@@ -227,8 +231,29 @@ cr_cabecera([
       <button type="button" class="btn btn-fantasma btn-peq" id="btn-vista" aria-pressed="false">Ver detalles</button>
     </div>
 
-    <!-- Extensiones encontradas: se pulsan para filtrar sin escribir nada. -->
-    <div class="chips-ext" id="chips-ext-res" hidden></div>
+    <!-- ============ ELEGIR QUÉ DESCARGAR, POR TERMINACIÓN DEL DOMINIO ============
+         No se filtra dominio por dominio: se filtra por cómo TERMINA el dominio.
+         Pulsar «.edu.gt» deja todos los correos de todos los dominios que acaben
+         así (colegio1.edu.gt, liceo.edu.gt, sub.universidad.edu.gt...). -->
+    <div class="caja-filtro-ext">
+      <div class="filtro-ext-cab">
+        <label for="filtro-ext">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 5h18l-7 8v6l-4 2v-8Z"/>
+          </svg>
+          Quiero solo los correos que terminen en:
+        </label>
+        <span class="filtro-ext-estado" id="filtro-ext-estado"></span>
+      </div>
+
+      <input type="text" id="filtro-ext" class="campo campo-ext" autocomplete="off" spellcheck="false"
+             placeholder="Escríbelo o púlsalo abajo: .edu.gt, .com.gt, .com…   ·   vacío = todos"
+             aria-label="Filtrar por terminación del dominio">
+
+      <!-- Terminaciones encontradas, con cuántos correos y cuántos dominios
+           distintos tiene cada una. Se pulsan para filtrar sin escribir. -->
+      <div class="chips-ext" id="chips-ext-res" hidden></div>
+    </div>
 
     <div class="exportar">
       <button type="button" class="btn btn-fantasma btn-peq" id="btn-copiar">
@@ -240,9 +265,9 @@ cr_cabecera([
       <span class="neon pequeno" id="n-seleccionados"></span>
       <span class="pequeno suave" id="n-filtrados"></span>
       <span style="flex:1"></span>
-      <button type="button" class="btn btn-peq" data-exportar="txt" data-datos="correos">TXT</button>
-      <button type="button" class="btn btn-peq" data-exportar="csv" data-datos="correos">CSV</button>
-      <button type="button" class="btn btn-neon btn-peq" data-exportar="xlsx" data-datos="correos">Excel</button>
+      <button type="button" class="btn btn-peq" data-exportar="txt" data-datos="correos">TXT <b class="n-bajar"></b></button>
+      <button type="button" class="btn btn-peq" data-exportar="csv" data-datos="correos">CSV <b class="n-bajar"></b></button>
+      <button type="button" class="btn btn-neon btn-peq" data-exportar="xlsx" data-datos="correos">Excel <b class="n-bajar"></b></button>
     </div>
 
     <div class="tabla-caja">

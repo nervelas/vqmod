@@ -20,6 +20,21 @@ PHP 8.0+ · MySQL/MariaDB · sin Composer · listo para subir a `public_html`.
 - **Facebook e Instagram.** Pega la dirección de una página o un perfil: lee la
   ficha de contacto y la biografía, y sigue la web que el negocio publica ahí.
 
+### Filtrar la descarga por terminación de dominio
+
+En la tabla de resultados, encima de los botones de descarga, hay un bloque que
+dice **«Quiero solo los correos que terminen en:»**. Se escribe `.edu.gt` o se
+pulsa su ficha, y la tabla y la descarga se quedan con **todos los correos de
+todos los dominios que acaben así** —`colegio1.edu.gt`, `liceo.edu.gt`,
+`sub.universidad.edu.gt`…—, no con un dominio concreto. Cada ficha dice cuántos
+correos reúne y de cuántos dominios distintos salen, y los botones de descarga
+llevan escrita la cuenta: `TXT (19)`.
+
+Se pueden pedir varias a la vez (`.edu.gt, .com.gt`) y `.gt` recoge todas las
+terminaciones guatemaltecas de golpe.
+
+---
+
 ### Búsqueda inteligente: "solo quiero correos .edu.gt"
 
 Debajo de la caja principal hay un campo llamado **Búsqueda inteligente**. Se
@@ -36,15 +51,18 @@ Se pueden pedir varias a la vez (`.edu.gt, .gob.gt`). Vacío = todos los dominio
 
 ---
 
-## Depurar una lista de correos
+## Extraer correos de un texto (y depurar listas)
 
-Menú **Depurar lista**. Se pega cualquier texto con correos dentro —una lista
-suelta, una columna de Excel, un CSV entero, mil firmas de correo— y sale una
-lista limpia:
+Menú **Extraer de un texto**. No hace falta que haya una web que rastrear: se
+pega directamente el texto y Kaptor saca los correos que lleve dentro. Da igual
+lo que sea —un artículo, un PDF copiado, un correo reenviado con cien firmas,
+una columna de Excel, un CSV entero o una lista suelta— y sale una lista limpia:
 
 - **Sin repetidos.** Se normaliza a minúsculas y se deduplica.
-- **Solo las extensiones que se pidan.** Se escriben a mano (`.com, .com.gt,
-  .edu.gt`) o se pulsan los botones. Vacío o `TODOS` = sin filtro.
+- **Solo las terminaciones que se pidan.** Se escriben a mano (`.com, .com.gt,
+  .edu.gt`) o se pulsan los botones. Vacío o `TODOS` = sin filtro. El filtro es
+  por *terminación*, no por dominio suelto: `.edu.gt` recoge los correos de
+  todos los dominios acabados así, sean diez o mil.
 - **Extensiones que no se quieren** (`.ru, .cn, .xyz`) en su propio campo.
 - **Solo genéricos** (info@, ventas@) o **solo personales**, a elegir.
 - Quita `noreply@`, correos temporales de usar y tirar, y los que estén en la

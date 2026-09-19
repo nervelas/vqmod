@@ -225,6 +225,9 @@
 
     actualizarChipsExt();
     actualizarResumen();
+    // Las filas nuevas también obedecen al filtro que ya esté puesto, y las
+    // cuentas de descarga se mantienen al día mientras el escaneo avanza.
+    aplicarFiltros();
   }
 
   function crearFila(c, conPing) {
@@ -490,24 +493,41 @@
     return false;
   }
 
-  /* Botones con las extensiones realmente encontradas: filtrar sin escribir. */
+  /**
+   * Botones con las terminaciones de dominio realmente encontradas.
+   *
+   * Importante: se agrupa por TERMINACIÓN, no por dominio. Una sola ficha
+   * «.edu.gt» reúne colegio1.edu.gt, liceo.edu.gt, sub.universidad.edu.gt y
+   * cuantos dominios haya acabados así; por eso cada ficha enseña los correos
+   * y, entre paréntesis, de cuántos dominios distintos salen.
+   */
   function actualizarChipsExt() {
     var caja = $('#chips-ext-res');
     if (!caja) { return; }
 
-    var cuenta = {};
+    var cuenta = {};     // terminación -> nº de correos
+    var dominios = {};   // terminación -> { dominio: true }
     estado.correos.forEach(function (c) {
       var x = extensionDe(c.dominio);
-      if (x) { cuenta[x] = (cuenta[x] || 0) + 1; }
+      if (!x) { return; }
+      cuenta[x] = (cuenta[x] || 0) + 1;
+      if (!dominios[x]) { dominios[x] = {}; }
+      dominios[x][c.dominio] = true;
     });
 
     var claves = Object.keys(cuenta).sort(function (a, b) { return cuenta[b] - cuenta[a] || a.localeCompare(b); });
-    if (claves.length < 2) { caja.hidden = true; caja.innerHTML = ''; return; }
+    if (!claves.length) { caja.hidden = true; caja.innerHTML = ''; return; }
 
     caja.hidden = false;
     caja.innerHTML = '<button type="button" class="chip-ext chip-todos" data-ext="">Todas (' + estado.correos.length + ')</button>' +
-      claves.slice(0, 14).map(function (x) {
-        return '<button type="button" class="chip-ext" data-ext="' + esc(x) + '">.' + esc(x) + ' <i>' + cuenta[x] + '</i></button>';
+      claves.slice(0, 20).map(function (x) {
+        var nDom = Object.keys(dominios[x]).length;
+        var titulo = cuenta[x] + ' correo' + (cuenta[x] === 1 ? '' : 's') + ' de ' + nDom +
+                     ' dominio' + (nDom === 1 ? '' : 's') + ' distinto' + (nDom === 1 ? '' : 's') +
+                     ': ' + Object.keys(dominios[x]).slice(0, 8).join(', ');
+        return '<button type="button" class="chip-ext" data-ext="' + esc(x) + '" title="' + esc(titulo) + '">' +
+               '.' + esc(x) + ' <i>' + cuenta[x] + '</i>' +
+               (nDom > 1 ? '<u>' + nDom + ' dominios</u>' : '') + '</button>';
       }).join('');
 
     marcarChipsActivos();
@@ -585,13 +605,38 @@
     var vacio = $('#sin-coincidencias');
     if (vacio) { vacio.classList.toggle('oculto', visibles > 0 || !estado.correos.length); }
 
-    // La descarga sigue a lo que se ve: se avisa de cuántos saldrían.
+    // La descarga sigue exactamente a lo que se ve: se dice cuántos saldrían
+    // y de cuántos dominios distintos, que es la duda de siempre.
+    var dominiosVistos = {};
+    $$('#tabla-cuerpo tr').forEach(function (tr) {
+      if (tr.style.display !== 'none') { dominiosVistos[tr.dataset.dominio] = true; }
+    });
+    var nDom = Object.keys(dominiosVistos).length;
+
     var aviso = $('#n-filtrados');
     if (aviso) {
       aviso.textContent = (exts.length || tipo || texto)
         ? visibles + ' de ' + estado.correos.length + ' tras el filtro'
         : '';
     }
+
+    var estadoExt = $('#filtro-ext-estado');
+    if (estadoExt) {
+      if (!estado.correos.length) {
+        estadoExt.textContent = '';
+      } else if (exts.length) {
+        estadoExt.textContent = 'Se descargarán ' + visibles + ' correo' + (visibles === 1 ? '' : 's') +
+          ' de ' + nDom + ' dominio' + (nDom === 1 ? '' : 's') + ' acabado' + (nDom === 1 ? '' : 's') +
+          ' en ' + exts.map(function (x) { return '.' + x; }).join(', ');
+      } else {
+        estadoExt.textContent = 'Se descargarán los ' + visibles + ' correos de ' + nDom +
+          ' dominio' + (nDom === 1 ? '' : 's') + ' (todas las terminaciones)';
+      }
+    }
+
+    // Los botones de descarga llevan escrito cuántos correos se llevan.
+    $$('.n-bajar').forEach(function (b) { b.textContent = estado.correos.length ? '(' + visibles + ')' : ''; });
+
     return visibles;
   }
 

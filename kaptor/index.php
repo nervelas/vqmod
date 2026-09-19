@@ -32,14 +32,20 @@ cr_cabecera([
     <h1><?= e(Ajustes::obtener('hero_titulo')) ?></h1>
     <p class="portada-sub"><?= e(Ajustes::obtener('hero_subtitulo')) ?></p>
 
+    <p class="aviso-busqueda" id="aviso-busqueda" hidden></p>
+
     <!-- ================= LA CAJA: todo en 1 clic ================= -->
     <form class="caja-radar" id="form-radar" autocomplete="off" novalidate>
       <label class="caja-etiqueta" for="url"><?= e(Ajustes::obtener('hero_etiqueta', 'Pega tu enlace')) ?></label>
 
       <div class="caja-fila">
-        <input type="url" id="url" name="url" class="caja-url" inputmode="url" spellcheck="false"
+        <!-- Un solo campo para las tres cosas: una web, una lista de webs o
+             una búsqueda. Es un textarea para que quepan varias líneas y para
+             que en el móvil la dirección se parta en lugar de salirse. -->
+        <textarea id="url" name="url" class="caja-url" rows="1" spellcheck="false"
+               inputmode="url" enterkeyhint="go"
                placeholder="<?= e(Ajustes::obtener('hero_placeholder')) ?>"
-               <?= $puedeExtraer ? '' : 'disabled' ?> required>
+               <?= $puedeExtraer ? '' : 'disabled' ?> required></textarea>
         <button type="submit" class="btn caja-boton" id="btn-extraer" <?= $puedeExtraer ? '' : 'disabled' ?>>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
@@ -47,6 +53,14 @@ cr_cabecera([
           <?= e(Ajustes::obtener('hero_boton')) ?>
         </button>
       </div>
+
+      <?php if (Ajustes::activo('buscar_activo', true)): ?>
+      <div class="caja-modos">
+        <button type="button" class="modo" data-ejemplo="https://www.colegio.edu.gt">Una web</button>
+        <button type="button" class="modo" data-ejemplo="colegio1.edu.gt&#10;colegio2.edu.gt&#10;colegio3.edu.gt">Lista de webs</button>
+        <button type="button" class="modo" data-ejemplo="colegios privados Guatemala correo">Buscar en Google</button>
+      </div>
+      <?php endif; ?>
 
       <div class="caja-pie">
         <?php if ($rastreoActivo): ?>

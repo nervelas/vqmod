@@ -108,7 +108,11 @@
 
     var campo = $('#url');
     var url = (campo.value || '').trim();
-    if (!url) { campo.focus(); brindis('Pega primero el enlace de una web.', 'error'); return; }
+    if (!url) {
+      campo.focus();
+      brindis('Pega una web, una lista de webs o unas palabras para buscar.', 'error');
+      return;
+    }
 
     var profundo = $('#profundo') ? $('#profundo').checked : false;
 
@@ -134,6 +138,13 @@
 
         $('#panel-progreso').classList.remove('oculto');
         $('#destino').textContent = r.url;
+
+        // "31 webs encontradas en DuckDuckGo para «colegios Guatemala»"
+        var avisoB = $('#aviso-busqueda');
+        if (avisoB) {
+          if (r.aviso) { avisoB.textContent = r.aviso; avisoB.hidden = false; }
+          else { avisoB.hidden = true; }
+        }
         if (r.aviso_js) { mostrarAvisoJs(r.aviso_js); }
 
         $('#panel-progreso').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -836,4 +847,43 @@
     }
     setTimeout(mostrar, 1200);
   }
+})();
+
+/* ===========================================================================
+   15. Campo de entrada múltiple
+   El mismo campo admite una web, una lista de webs (una por línea) o unas
+   palabras para buscar. Crece solo según lo que se escriba.
+   =========================================================================== */
+(function () {
+  var campo = document.getElementById('url');
+  if (!campo || campo.tagName !== 'TEXTAREA') { return; }
+
+  function ajustarAlto() {
+    campo.style.height = 'auto';
+    var alto = Math.min(campo.scrollHeight, 260);
+    campo.style.height = Math.max(54, alto) + 'px';
+  }
+
+  campo.addEventListener('input', ajustarAlto);
+  campo.addEventListener('paste', function () { setTimeout(ajustarAlto, 0); });
+  ajustarAlto();
+
+  /* Enter envía; Mayúsculas+Enter añade otra línea para seguir la lista. */
+  campo.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      var form = document.getElementById('form-radar');
+      if (form) { form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true })); }
+    }
+  });
+
+  /* Los tres botones de ejemplo rellenan el campo para enseñar cómo se usa. */
+  Array.prototype.forEach.call(document.querySelectorAll('.caja-modos .modo'), function (b) {
+    b.addEventListener('click', function () {
+      campo.value = b.dataset.ejemplo || '';
+      ajustarAlto();
+      campo.focus();
+      campo.setSelectionRange(campo.value.length, campo.value.length);
+    });
+  });
 })();

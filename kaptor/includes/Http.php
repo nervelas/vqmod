@@ -18,9 +18,22 @@ final class Http
     public const MAX_SALTOS = 6;
 
     /**
+     * Códigos de cURL que indican un problema con el certificado.
+     *
+     * Se escriben con su número y no con la constante de PHP porque algunas
+     * de esas constantes no existen en todas las versiones ni en todas las
+     * compilaciones: usarlas directamente tumbaba la petición con un error
+     * fatal en cuanto un sitio tenía el certificado mal.
+     *   51 = el certificado del servidor no se pudo verificar
+     *   60 = no se pudo verificar con el paquete de certificados local
+     *   77 = el archivo de certificados del servidor no se puede leer
+     */
+    private const ERRORES_SSL = [51, 60, 77];
+
+    /**
      * Descarga una URL.
      *
-     * @param array{timeout?:int,max_bytes?:int,agente?:string,permitir_privadas?:bool,solo_cabeceras?:bool,referer?:string} $opciones
+     * @param array{timeout?:int,max_bytes?:int,agente?:string,permitir_privadas?:bool,solo_cabeceras?:bool,referer?:string,cabeceras?:string[]} $opciones
      * @return array{ok:bool,código:int,url_final:string,tipo:string,cuerpo:string,bytes:int,ms:int,error:string,saltos:int}
      */
     public static function obtener(string $url, array $opciones = []): array
@@ -41,6 +54,16 @@ final class Http
             return $resultado;
         }
 
+        // Cabeceras de la petición. Quien llama puede sustituirlas: los
+        // buscadores, por ejemplo, necesitan las suyas para no devolver un muro.
+        $cabecerasEnvio = $opciones['cabeceras'] ?? [
+            'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language: es-ES,es;q=0.9,en;q=0.8',
+            'Cache-Control: no-cache',
+            'Pragma: no-cache',
+            'Upgrade-Insecure-Requests: 1',
+        ];
+
         $actual = $url;
         for ($salto = 0; $salto <= self::MAX_SALTOS; $salto++) {
             // 1) Cada salto se válida de nuevo: protege frente a redirecciones maliciosas.
@@ -53,7 +76,7 @@ final class Http
             }
             $actual = $val['url'];
 
-            $respuesta = self::peticion($actual, $timeout, $maxBytes, $agente, (string) ($opciones['referer'] ?? ''));
+            $respuesta = self::peticion($actual, $timeout, $maxBytes, $agente, (string) ($opciones['referer'] ?? ''), $cabecerasEnvio);
             $resultado['codigo']    = $respuesta['codigo'];
             $resultado['url_final'] = $actual;
             $resultado['saltos']    = $salto;
@@ -93,9 +116,12 @@ final class Http
     /**
      * Petición cURL individual (sin seguir redirecciones).
      *
+     * @param string[] $cabecerasEnvio Cabeceras de la petición; las fija quien
+     *                                 llama, porque los buscadores necesitan
+     *                                 las suyas para no devolver un muro.
      * @return array{código:int,cuerpo:string,tipo:string,ubicación:string,error:string}
      */
-    private static function peticion(string $url, int $timeout, int $maxBytes, string $agente, string $referer): array
+    private static function peticion(string $url, int $timeout, int $maxBytes, string $agente, string $referer, array $cabecerasEnvio = []): array
     {
         $salida = ['codigo' => 0, 'cuerpo' => '', 'tipo' => '', 'ubicacion' => '', 'error' => ''];
 
@@ -113,13 +139,7 @@ final class Http
             CURLOPT_ENCODING       => '',             // acepta gzip, deflate y brotli
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,
-            CURLOPT_HTTPHEADER     => [
-                'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-                'Accept-Language: es-ES,es;q=0.9,en;q=0.8',
-                'Cache-Control: no-cache',
-                'Pragma: no-cache',
-                'Upgrade-Insecure-Requests: 1',
-            ],
+            CURLOPT_HTTPHEADER     => $cabecerasEnvio ?: ['Accept: */*'],
             CURLOPT_HEADERFUNCTION => static function ($ch, string $linea) use (&$cabeceras) {
                 $cabeceras .= $linea;
                 return strlen($linea);
@@ -152,8 +172,7 @@ final class Http
             $mensaje = curl_error($ch);
             // Muchos hosting compartidos tienen el paquete de certificados desactualizado:
             // si el ajuste lo permite, se reintenta sin verificar el certificado.
-            if (in_array($errno, [CURLE_SSL_CACERT, CURLE_PEER_FAILED_VERIFICATION, CURLE_SSL_CACERT_BADFILE], true)
-                && !Ajustes::activo('ssl_estricto')) {
+            if (in_array($errno, self::ERRORES_SSL, true) && !Ajustes::activo('ssl_estricto')) {
                 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                 curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
                 $cuerpo = ''; $cabeceras = '';
@@ -188,13 +207,15 @@ final class Http
     /** Traduce los errores de cURL a mensajes claros en español. */
     private static function mensajeCurl(int $errno, string $bruto): string
     {
+        // Por número, no por constante: hay constantes de cURL que no existen
+        // en todas las versiones de PHP y usarlas provocaba un error fatal.
         return match ($errno) {
-            CURLE_OPERATION_TIMEDOUT   => 'La página tardo demasiado en responder (tiempo de espera agotado).',
-            CURLE_COULDNT_RESOLVE_HOST => 'No se pudo resolver el nombre del dominio.',
-            CURLE_COULDNT_CONNECT      => 'No se pudo conectar con el servidor.',
-            CURLE_TOO_MANY_REDIRECTS   => 'Demasiadas redirecciones.',
-            CURLE_SSL_CACERT,
-            CURLE_PEER_FAILED_VERIFICATION => 'El certificado HTTPS del sitio no se pudo verificar.',
+            28 => 'La página tardó demasiado en responder (tiempo de espera agotado).',
+            6  => 'No se pudo resolver el nombre del dominio.',
+            7  => 'No se pudo conectar con el servidor.',
+            47 => 'Demasiadas redirecciones.',
+            51, 60, 77 => 'El certificado HTTPS del sitio no se pudo verificar.',
+            35 => 'Fallo al establecer la conexión segura (HTTPS).',
             default => 'No se pudo descargar la página (' . ($bruto !== '' ? $bruto : 'error ' . $errno) . ').',
         };
     }

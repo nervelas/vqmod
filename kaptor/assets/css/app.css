@@ -852,3 +852,38 @@ html,body{max-width:100%;overflow-x:hidden}
   .instalar-botones{width:100%}
   .instalar-botones .btn{flex:1;justify-content:center}
 }
+
+/* ==========================================================================
+   14. Campo de entrada múltiple y selector de modo
+   El campo admite una web, una lista o una búsqueda. Al ser un textarea, en
+   el móvil las direcciones largas se parten en lugar de salirse de pantalla.
+   ========================================================================== */
+textarea.caja-url{
+  resize:none;overflow:hidden;min-height:54px;line-height:1.45;
+  font-family:inherit;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;
+}
+textarea.caja-url::placeholder{white-space:pre-wrap}
+
+.caja-modos{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.caja-modos .modo{
+  border:1px solid var(--borde);background:transparent;color:var(--suave);
+  border-radius:var(--r-full);padding:7px 14px;font:inherit;font-size:.8rem;
+  cursor:pointer;transition:border-color var(--transicion),color var(--transicion);
+}
+.caja-modos .modo:hover{border-color:var(--oro);color:var(--texto)}
+.caja-modos .modo:focus-visible{outline:2px solid var(--oro);outline-offset:2px}
+
+/* Aviso de "23 webs encontradas en DuckDuckGo…" */
+.aviso-busqueda{
+  margin:14px auto 0;max-width:980px;
+  padding:11px 15px;border-radius:var(--r-md);font-size:.86rem;
+  border:1px solid color-mix(in srgb,var(--neon) 34%,transparent);
+  background:color-mix(in srgb,var(--neon) 10%,transparent);
+  color:var(--texto);
+}
+.aviso-busqueda[hidden]{display:none}
+
+@media (max-width:560px){
+  .caja-modos .modo{flex:1;min-width:0;text-align:center;min-height:40px}
+  textarea.caja-url{font-size:16px}   /* evita el zoom automático de iOS */
+}

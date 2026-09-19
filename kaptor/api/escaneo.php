@@ -34,10 +34,42 @@ switch ($accion) {
             ], 429);
         }
 
-        $url      = trim((string) ($datos['url'] ?? ''));
+        $entrada  = trim((string) ($datos['url'] ?? ''));
         $profundo = !empty($datos['profundo']);
 
-        $res = Rastreador::iniciar($url, $profundo, Auth::id());
+        // ¿Qué ha pegado el usuario? Una web, una lista de webs, el enlace de
+        // una búsqueda de Google, o directamente unas palabras para buscar.
+        $lineas = preg_split('~[\r\n,;]+~', $entrada) ?: [];
+        $lineas = array_values(array_filter(array_map('trim', $lineas), static fn($l) => $l !== ''));
+
+        $consulta = Buscador::consultaDeUrl($entrada);
+        $aviso    = null;
+
+        if ($consulta === '' && count($lineas) === 1 && Buscador::pareceConsulta($entrada)) {
+            $consulta = $entrada;                       // son palabras de búsqueda
+        }
+
+        if ($consulta !== '') {
+            if (!Ajustes::activo('buscar_activo', true)) {
+                cr_json(['ok' => false, 'error' => 'La búsqueda por palabras está desactivada en los ajustes.'], 400);
+            }
+            $hallazgo = Buscador::buscar($consulta, Ajustes::entero('buscador_max', 100, 10, 300));
+            if (!$hallazgo['ok']) {
+                cr_json(['ok' => false, 'error' => $hallazgo['error']], 502);
+            }
+            $res = Rastreador::iniciarVarias(
+                $hallazgo['urls'], $profundo, Auth::id(), 'Búsqueda: ' . $consulta
+            );
+            $aviso = count($hallazgo['urls']) . ' webs encontradas en ' . $hallazgo['motor']
+                   . ' para «' . $consulta . '».';
+        } elseif (count($lineas) > 1) {
+            $res   = Rastreador::iniciarVarias($lineas, $profundo, Auth::id(), count($lineas) . ' webs');
+            $aviso = ($res['aceptadas'] ?? 0) . ' webs en la lista'
+                   . (!empty($res['descartadas']) ? ', ' . $res['descartadas'] . ' descartadas por no ser válidas' : '') . '.';
+        } else {
+            $res = Rastreador::iniciar($entrada, $profundo, Auth::id());
+        }
+
         if (!$res['ok']) {
             cr_json(['ok' => false, 'error' => $res['error']], 400);
         }
@@ -54,6 +86,8 @@ switch ($accion) {
             'profundo'   => (int) $escaneo['profundo'] === 1,
             'max_paginas'=> (int) $escaneo['max_paginas'],
             'aviso_js'   => Headless::aviso(),
+            'aviso'      => $aviso,
+            'sitios'     => $res['aceptadas'] ?? 1,
         ]);
         // no se alcanza
 

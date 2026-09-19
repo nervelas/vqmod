@@ -47,6 +47,74 @@ final class Rastreador
      *
      * @return array{ok:bool,error?:string,escaneo?:array}
      */
+    /**
+     * Arranca un escaneo sobre VARIAS webs a la vez.
+     *
+     * Se usa tanto para una lista pegada a mano como para los resultados de
+     * una búsqueda. El escaneo se marca con el host "*", y así el rastreador
+     * sabe que cada dirección es un sitio distinto y no debe mezclar los
+     * enlaces de unos con los de otros.
+     *
+     * @param string[] $urls
+     * @return array{ok:bool,escaneo?:array,error?:string,aceptadas?:int,descartadas?:int}
+     */
+    public static function iniciarVarias(array $urls, bool $profundo, int $usuarioId = 0, string $etiqueta = ''): array
+    {
+        $privadas = Ajustes::activo('permitir_privadas');
+        $tope     = Ajustes::entero('max_sitios_lote', 100, 1, 500);
+
+        $buenas = [];
+        $malas  = 0;
+        foreach ($urls as $u) {
+            $u = trim((string) $u);
+            if ($u === '') { continue; }
+            if (!preg_match('~^https?://~i', $u)) { $u = 'https://' . ltrim($u, '/'); }
+
+            $val = Seguridad::validarUrl($u, $privadas);
+            if (!$val['ok']) { $malas++; continue; }
+
+            $buenas[$val['url']] = $val['host'];
+            if (count($buenas) >= $tope) { break; }
+        }
+
+        if (!$buenas) {
+            return ['ok' => false, 'error' => 'Ninguna de las direcciones es válida.'];
+        }
+
+        $profundo = $profundo && Ajustes::activo('rastreo_profundo', true);
+        // El tope de páginas se reparte entre los sitios, con un mínimo por sitio.
+        $porSitio = $profundo ? Ajustes::entero('paginas_por_sitio', 4, 1, 50) : 1;
+        $maxPag   = min(2000, count($buenas) * $porSitio + 10);
+
+        $primera = array_key_first($buenas);
+        $id = BD::insertar('cr_escaneos', [
+            'token'           => cr_aleatorio(16),
+            'usuario_id'      => $usuarioId > 0 ? $usuarioId : null,
+            'url_origen'      => mb_substr($etiqueta !== '' ? $etiqueta : $primera, 0, 1000),
+            'host'            => '*',
+            'profundo'        => $profundo ? 1 : 0,
+            'max_paginas'     => $maxPag,
+            'max_profundidad' => $profundo ? Ajustes::entero('max_profundidad', 2, 0, 10) : 0,
+            'estado'          => 'ejecutando',
+            'ip'              => cr_ip(),
+            'agente'          => mb_substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255),
+            'inicio'          => date('Y-m-d H:i:s'),
+        ]);
+
+        foreach (array_keys($buenas) as $u) {
+            self::encolar($id, $u, 0, 0, 'pagina');
+        }
+
+        Seguridad::registrarPeticion('escaneo');
+
+        return [
+            'ok'          => true,
+            'escaneo'     => self::escaneo($id),
+            'aceptadas'   => count($buenas),
+            'descartadas' => $malas,
+        ];
+    }
+
     public static function iniciar(string $url, bool $profundo, int $usuarioId = 0): array
     {
         $privadas = Ajustes::activo('permitir_privadas');
@@ -191,7 +259,11 @@ final class Rastreador
             return ['correos' => [], 'telefonos' => []];
         }
 
-        $extractor = new Extractor((string) $escaneo['host']);
+        // En un escaneo de varias webs cada dirección es su propio sitio, así
+        // que el ámbito de los enlaces es el host de la página que toca.
+        $hostAmbito = (string) $escaneo['host'];
+        if ($hostAmbito === '*') { $hostAmbito = cr_host_de_url($url); }
+        $extractor = new Extractor($hostAmbito);
 
         if ($esSitemap) {
             // robots.txt también puede apuntar a otros sitemaps.

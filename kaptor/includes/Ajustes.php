@@ -34,9 +34,9 @@ final class Ajustes
             // --- Textos de la portada --------------------------------------
             'hero_titulo'         => 'Capta cada correo y WhatsApp de cualquier web',
             'hero_subtitulo'      => 'Pega un enlace y Kaptor barre el código, los enlaces mailto, las ofuscaciones y hasta los correos protegidos por Cloudflare.',
-            'hero_placeholder'    => 'https://ejemplo.com/contacto',
+            'hero_placeholder'    => 'https://ejemplo.com  ·  varias webs, una por línea  ·  o unas palabras para buscar',
             'hero_boton'          => 'Capturar contactos',
-            'hero_etiqueta'       => 'Pega tu enlace',
+            'hero_etiqueta'       => 'Pega una web, una lista o una búsqueda',
             'aviso_legal'         => 'Usa Kaptor solo sobre sitios propios o con autorización. No envíes correo no solicitado.',
 
             // --- Paleta "Radar de lujo" ------------------------------------
@@ -62,6 +62,12 @@ final class Ajustes
             'max_profundidad'     => '2',     // niveles de enlaces internos
             'max_correos'         => '1000',  // tope de correos por escaneo
             'max_telefonos'       => '500',   // tope de teléfonos por escaneo
+            // --- Búsqueda y lotes -----------------------------------------
+            'buscar_activo'       => '1',     // permite buscar por palabras
+            'buscador_motor'      => 'auto',  // auto | duckduckgo | bing | google
+            'buscador_max'        => '100',   // webs que se traen de la búsqueda
+            'max_sitios_lote'     => '100',   // webs por escaneo en lote
+            'paginas_por_sitio'   => '4',     // páginas que se miran de cada web
             'buscar_whatsapp'     => '1',     // detectar WhatsApp y teléfonos
             'prefijo_pais'        => '',      // p. ej. 502; permite leer números locales
             'max_bytes'           => '3000000',

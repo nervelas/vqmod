@@ -15,6 +15,7 @@ Auth::exigirAdmin();
 
 /** Campos de texto libre que se guardan tal cual. */
 const CAMPOS_TEXTO = [
+    'buscador_motor',
     'sitio_nombre', 'sitio_lema', 'sitio_descripcion', 'pie_texto',
     'hero_titulo', 'hero_subtitulo', 'hero_placeholder', 'hero_boton', 'hero_etiqueta', 'aviso_legal',
     'user_agent', 'headless_binario', 'dominios_excluidos', 'prefijo_pais',
@@ -25,7 +26,7 @@ const CAMPOS_BOOL = [
     'rastreo_profundo', 'analizar_js_css', 'analizar_sitemap', 'analizar_json',
     'verificar_mx', 'tld_estricto', 'permitir_privadas', 'ssl_estricto', 'headless_activo', 'buscar_whatsapp',
     'campanas_activas', 'seguimiento_aperturas', 'seguimiento_clics',
-    'acceso_publico', 'guardar_historial',
+    'acceso_publico', 'guardar_historial', 'buscar_activo',
 ];
 /** Números con su rango permitido: clave => [mínimo, máximo]. */
 const CAMPOS_NUM = [
@@ -40,6 +41,9 @@ const CAMPOS_NUM = [
     'retencion_dias'  => [0, 3650],
     'smtp_timeout'    => [5, 120],
     'lote_envio'      => [1, 500],
+    'buscador_max'      => [10, 300],
+    'max_sitios_lote'   => [1, 500],
+    'paginas_por_sitio' => [1, 50],
 ];
 /** Colores en formato #RRGGBB. */
 const CAMPOS_COLOR = [
@@ -447,6 +451,28 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
 
     fila('Páginas por rastreo', 'Tope de páginas que se revisan en un rastreo profundo.',
         '<input type="number" name="max_paginas" class="campo" style="max-width:140px" min="1" max="1000" value="' . e($a['max_paginas']) . '">');
+
+    fila('Buscar por palabras', 'Permite escribir unas palabras, o pegar el enlace de una búsqueda de Google, y extraer de todas las webs que salgan.',
+        interruptor('buscar_activo', Ajustes::activo('buscar_activo', true), 'Búsqueda activada'));
+
+    fila('Webs por búsqueda', 'Cuántos resultados se traen del buscador antes de empezar a extraer.',
+        '<input type="number" name="buscador_max" class="campo" style="max-width:140px" min="10" max="300" value="' . e($a['buscador_max'] ?? '100') . '">');
+
+    fila('Buscador', 'Cuál se consulta primero. Con "automático" prueba DuckDuckGo, luego Bing y por último Google, que es el que más bloquea.',
+        '<select name="buscador_motor" class="campo" style="max-width:220px">'
+        . implode('', array_map(
+            static fn(string $v, string $t): string =>
+                '<option value="' . e($v) . '"' . (($a['buscador_motor'] ?? 'auto') === $v ? ' selected' : '') . '>' . e($t) . '</option>',
+            ['auto', 'duckduckgo', 'bing', 'google'],
+            ['Automático (recomendado)', 'DuckDuckGo', 'Bing', 'Google']
+        ))
+        . '</select>');
+
+    fila('Webs por lote', 'Tope de direcciones que admite una lista pegada de una vez.',
+        '<input type="number" name="max_sitios_lote" class="campo" style="max-width:140px" min="1" max="500" value="' . e($a['max_sitios_lote'] ?? '100') . '">');
+
+    fila('Páginas de cada web', 'En una búsqueda o una lista, cuántas páginas se miran de cada web (portada, contacto, nosotros...).',
+        '<input type="number" name="paginas_por_sitio" class="campo" style="max-width:140px" min="1" max="50" value="' . e($a['paginas_por_sitio'] ?? '4') . '">');
 
     fila('Profundidad', 'Cuántos niveles de enlaces internos se siguen desde la página inicial.',
         '<input type="number" name="max_profundidad" class="campo" style="max-width:140px" min="0" max="10" value="' . e($a['max_profundidad']) . '">');

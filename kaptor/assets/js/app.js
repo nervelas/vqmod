@@ -130,7 +130,11 @@
             window.location.href = CR.urlLogin;
             return;
           }
-          throw new Error(r.error || 'No se pudo iniciar la extracción.');
+          var msg = r.error || 'No se pudo iniciar la extracción.';
+          // El detalle dice qué contestó cada buscador: sin eso, un fallo de
+          // búsqueda no hay manera de diagnosticarlo.
+          if (r.detalle) { msg += '\n\nRespuesta de cada buscador — ' + r.detalle; }
+          throw new Error(msg);
         }
         estado.id    = r.escaneo_id;
         estado.token = r.token;

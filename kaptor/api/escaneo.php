@@ -55,7 +55,11 @@ switch ($accion) {
             }
             $hallazgo = Buscador::buscar($consulta, Ajustes::entero('buscador_max', 100, 10, 300));
             if (!$hallazgo['ok']) {
-                cr_json(['ok' => false, 'error' => $hallazgo['error']], 502);
+                cr_json([
+                    'ok'      => false,
+                    'error'   => $hallazgo['error'],
+                    'detalle' => $hallazgo['detalle'] ?? null,
+                ], 502);
             }
             // En una búsqueda hay que entrar en cada web: el correo casi nunca
             // está en la portada, sino en "Contacto" o "Nosotros". Por eso el

@@ -77,44 +77,73 @@ final class Buscador
      *
      * @return array{ok:bool,urls?:string[],motor?:string,error?:string,paginas?:int}
      */
+    /**
+     * Motores, en el orden en que se prueban.
+     *
+     * Van primero los que responden HTML sencillo y admiten que se les
+     * consulte sin navegador. El RSS de Bing es el más fiable de todos: no
+     * lleva JavaScript, no cambia de formato y rara vez bloquea.
+     *
+     * @var array<string,string>
+     */
+    private const MOTORES = [
+        'ddg_lite'  => 'DuckDuckGo',
+        'ddg_html'  => 'DuckDuckGo (HTML)',
+        'bing_rss'  => 'Bing (RSS)',
+        'bing'      => 'Bing',
+        'mojeek'    => 'Mojeek',
+        'google'    => 'Google',
+    ];
+
+    /**
+     * Busca y devuelve las webs encontradas.
+     *
+     * @return array{ok:bool,urls?:string[],motor?:string,error?:string,detalle?:string}
+     */
     public static function buscar(string $consulta, int $resultados = 50): array
     {
         $consulta = trim($consulta);
+        if ($consulta === '') {
+            return ['ok' => false, 'error' => 'Escribe qué quieres buscar.'];
+        }
 
         // Si la consulta apunta expresamente a una red (site:facebook.com,
         // "instagram colegios"...), sus perfiles dejan de descartarse: es
         // justo lo que se está buscando.
         self::$conRedes = Ajustes::activo('buscar_redes')
             || (bool) preg_match('~\b(site:\s*)?(www\.)?(facebook|instagram|fb)\.(com|me)\b~i', $consulta);
-        if ($consulta === '') {
-            return ['ok' => false, 'error' => 'Escribe qué quieres buscar.'];
-        }
 
         $resultados = max(10, min($resultados, Ajustes::entero('buscador_max', 100, 10, 300)));
         $paginas    = (int) ceil($resultados / self::POR_PAGINA);
 
-        $motores = ['duckduckgo' => 'DuckDuckGo', 'bing' => 'Bing', 'google' => 'Google'];
+        $motores   = self::MOTORES;
         $preferido = (string) Ajustes::obtener('buscador_motor', 'auto');
-        if (isset($motores[$preferido])) {
-            $motores = [$preferido => $motores[$preferido]] + $motores;
+        $alias     = ['duckduckgo' => 'ddg_lite', 'bing' => 'bing_rss', 'google' => 'google', 'mojeek' => 'mojeek'];
+        if (isset($alias[$preferido]) && isset($motores[$alias[$preferido]])) {
+            $clave   = $alias[$preferido];
+            $motores = [$clave => $motores[$clave]] + $motores;
         }
 
-        $fallos = [];
+        $diagnostico = [];
         foreach ($motores as $motor => $nombre) {
             $urls = [];
-            $bloqueado = false;
 
             for ($pagina = 0; $pagina < $paginas; $pagina++) {
-                $resp = Http::obtener(self::url($motor, $consulta, $pagina), [
-                    'timeout'  => Ajustes::entero('timeout', 20, 3, 180),
+                $peticion = self::peticion($motor, $consulta, $pagina);
+                $resp = Http::obtener($peticion['url'], [
+                    'timeout'   => Ajustes::entero('timeout', 20, 3, 180),
                     'cabeceras' => self::cabeceras(),
+                    'datos'     => $peticion['datos'] ?? null,
+                    'referer'   => $peticion['referer'] ?? '',
                 ]);
 
-                if (!$resp['ok'] || $resp['cuerpo'] === '') {
-                    if (in_array((int) $resp['codigo'], [429, 403, 503], true)) { $bloqueado = true; }
-                    break;
+                // Diagnóstico honesto: qué contestó exactamente cada motor.
+                if ($pagina === 0) {
+                    $diagnostico[] = $nombre . ': ' . self::resumen($resp);
                 }
-                if (self::pareceBloqueo($resp['cuerpo'])) { $bloqueado = true; break; }
+
+                if (!$resp['ok'] || $resp['cuerpo'] === '')  { break; }
+                if (self::pareceBloqueo($resp['cuerpo']))    { break; }
 
                 $nuevas = self::enlaces($motor, $resp['cuerpo']);
                 if (!$nuevas) { break; }
@@ -122,39 +151,72 @@ final class Buscador
                 foreach ($nuevas as $u) { $urls[$u] = true; }
                 if (count($urls) >= $resultados) { break; }
 
-                // Un respiro entre páginas: ser educado evita bloqueos.
-                usleep(350000);
+                usleep(400000);   // un respiro entre páginas
             }
 
             $urls = array_slice(array_keys($urls), 0, $resultados);
             if ($urls) {
-                return ['ok' => true, 'urls' => $urls, 'motor' => $nombre, 'paginas' => $paginas];
+                return ['ok' => true, 'urls' => $urls, 'motor' => $nombre];
             }
-            $fallos[] = $nombre . ($bloqueado ? ' (bloqueó la consulta)' : ' (sin resultados)');
         }
 
         return [
-            'ok'    => false,
-            'error' => 'Ningún buscador devolvió resultados: ' . implode(', ', $fallos)
-                     . '. Los buscadores bloquean las consultas automáticas desde servidores; '
-                     . 'prueba de nuevo en unos minutos o pega directamente la lista de webs.',
+            'ok'      => false,
+            'error'   => 'Ningún buscador devolvió resultados. Prueba de nuevo en unos minutos, '
+                       . 'cambia de buscador en Ajustes → Motor, o pega directamente la lista de webs.',
+            'detalle' => implode(' · ', $diagnostico),
         ];
     }
 
-    /** Dirección de consulta de cada buscador. */
-    private static function url(string $motor, string $consulta, int $pagina): string
+    /** Resume en una línea qué contestó un buscador. */
+    private static function resumen(array $resp): string
     {
-        $q = rawurlencode($consulta);
+        if ($resp['error'] !== '' && (int) $resp['codigo'] === 0) {
+            return 'no se pudo conectar (' . $resp['error'] . ')';
+        }
+        $codigo = (int) $resp['codigo'];
+        if ($codigo === 0)                    { return 'sin respuesta'; }
+        if (in_array($codigo, [429, 403], true)) { return 'HTTP ' . $codigo . ', bloqueó la consulta'; }
+        if ($codigo >= 400)                   { return 'HTTP ' . $codigo; }
+        if ((int) $resp['bytes'] < 1000)      { return 'HTTP ' . $codigo . ', respuesta vacía'; }
+        return 'HTTP ' . $codigo . ', ' . number_format((int) $resp['bytes'] / 1024, 0) . ' KB sin enlaces reconocibles';
+    }
+
+    /**
+     * Dirección, método y datos de cada motor.
+     *
+     * @return array{url:string,datos?:array<string,string>,referer?:string}
+     */
+    private static function peticion(string $motor, string $consulta, int $pagina): array
+    {
+        $q      = rawurlencode($consulta);
+        $desde  = $pagina * self::POR_PAGINA;
+
         switch ($motor) {
+            // DuckDuckGo solo contesta de verdad por POST a sus versiones
+            // sencillas; por GET devuelve una página vacía.
+            case 'ddg_lite':
+                return [
+                    'url'     => 'https://lite.duckduckgo.com/lite/',
+                    'datos'   => ['q' => $consulta, 'kl' => 'es-es'] + ($pagina > 0 ? ['s' => (string) ($pagina * 30), 'dc' => (string) ($pagina * 30 + 1)] : []),
+                    'referer' => 'https://lite.duckduckgo.com/',
+                ];
+            case 'ddg_html':
+                return [
+                    'url'     => 'https://html.duckduckgo.com/html/',
+                    'datos'   => ['q' => $consulta, 'kl' => 'es-es'] + ($pagina > 0 ? ['s' => (string) ($pagina * 30), 'dc' => (string) ($pagina * 30 + 1)] : []),
+                    'referer' => 'https://html.duckduckgo.com/',
+                ];
+            // El RSS de Bing devuelve XML limpio: es el más fiable.
+            case 'bing_rss':
+                return ['url' => 'https://www.bing.com/search?q=' . $q . '&format=rss&count=' . self::POR_PAGINA . '&first=' . ($desde + 1) . '&setlang=es'];
             case 'bing':
-                return 'https://www.bing.com/search?q=' . $q . '&first=' . ($pagina * self::POR_PAGINA + 1) . '&setlang=es';
+                return ['url' => 'https://www.bing.com/search?q=' . $q . '&first=' . ($desde + 1) . '&setlang=es', 'referer' => 'https://www.bing.com/'];
+            case 'mojeek':
+                return ['url' => 'https://www.mojeek.com/search?q=' . $q . '&s=' . $desde];
             case 'google':
-                return 'https://www.google.com/search?q=' . $q . '&start=' . ($pagina * self::POR_PAGINA) . '&hl=es&num=' . self::POR_PAGINA;
-            case 'duckduckgo':
             default:
-                $url = 'https://html.duckduckgo.com/html/?q=' . $q . '&kl=es-es';
-                if ($pagina > 0) { $url .= '&s=' . ($pagina * 30) . '&dc=' . ($pagina * 30 + 1); }
-                return $url;
+                return ['url' => 'https://www.google.com/search?q=' . $q . '&start=' . $desde . '&hl=es&num=' . self::POR_PAGINA];
         }
     }
 
@@ -192,6 +254,13 @@ final class Buscador
     {
         $encontradas = [];
 
+        // RSS de Bing: los enlaces van dentro de <link> en el XML.
+        if (str_contains($motor, 'rss') || str_contains(mb_substr($html, 0, 500), '<rss')) {
+            if (preg_match_all('~<link>\s*(?:<!\[CDATA\[)?\s*(https?://[^<\]\s]+)~i', $html, $mr)) {
+                foreach ($mr[1] as $u) { $encontradas[] = $u; }
+            }
+        }
+
         // DuckDuckGo envuelve los enlaces en /l/?uddg=<url codificada>.
         if (preg_match_all('~uddg=([^&"\']+)~i', $html, $m)) {
             foreach ($m[1] as $codificada) {
@@ -204,6 +273,16 @@ final class Buscador
                 $encontradas[] = rawurldecode($codificada);
             }
         }
+        // Bing a veces entrega sus resultados a través de un redirector propio:
+        // .../ck/a?...&u=a1<url en base64url>. Se descifra para quedarse con
+        // la dirección de verdad.
+        if (preg_match_all('~[?&]u=a1([A-Za-z0-9_\-]+)~', $html, $mb)) {
+            foreach ($mb[1] as $codificada) {
+                $plano = base64_decode(strtr($codificada, '-_', '+/') . str_repeat('=', (4 - strlen($codificada) % 4) % 4), true);
+                if (is_string($plano) && preg_match('~^https?://~i', $plano)) { $encontradas[] = $plano; }
+            }
+        }
+
         // Bing y el resto: enlaces normales dentro de los resultados.
         if (preg_match_all('~<a[^>]+href="(https?://[^"]+)"~i', $html, $m)) {
             foreach ($m[1] as $u) { $encontradas[] = html_entity_decode($u, ENT_QUOTES | ENT_HTML5, 'UTF-8'); }

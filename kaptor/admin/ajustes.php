@@ -471,13 +471,13 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
     fila('Webs por búsqueda', 'Cuántos resultados se traen del buscador antes de empezar a extraer.',
         '<input type="number" name="buscador_max" class="campo" style="max-width:140px" min="10" max="300" value="' . e($a['buscador_max'] ?? '100') . '">');
 
-    fila('Buscador', 'Cuál se consulta primero. Con "automático" prueba DuckDuckGo, luego Bing y por último Google, que es el que más bloquea.',
+    fila('Buscador', 'Cuál se consulta primero. Con "automático" se prueban en cadena DuckDuckGo, el RSS de Bing, Mojeek y Google, y se usa el primero que conteste. Google es el que más bloquea.',
         '<select name="buscador_motor" class="campo" style="max-width:220px">'
         . implode('', array_map(
             static fn(string $v, string $t): string =>
                 '<option value="' . e($v) . '"' . (($a['buscador_motor'] ?? 'auto') === $v ? ' selected' : '') . '>' . e($t) . '</option>',
-            ['auto', 'duckduckgo', 'bing', 'google'],
-            ['Automático (recomendado)', 'DuckDuckGo', 'Bing', 'Google']
+            ['auto', 'duckduckgo', 'bing', 'mojeek', 'google'],
+            ['Automático (recomendado)', 'DuckDuckGo', 'Bing (RSS)', 'Mojeek', 'Google']
         ))
         . '</select>');
 

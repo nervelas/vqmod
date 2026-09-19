@@ -33,7 +33,7 @@ final class Http
     /**
      * Descarga una URL.
      *
-     * @param array{timeout?:int,max_bytes?:int,agente?:string,permitir_privadas?:bool,solo_cabeceras?:bool,referer?:string,cabeceras?:string[]} $opciones
+     * @param array{timeout?:int,max_bytes?:int,agente?:string,permitir_privadas?:bool,solo_cabeceras?:bool,referer?:string,cabeceras?:string[],datos?:array|string} $opciones
      * @return array{ok:bool,código:int,url_final:string,tipo:string,cuerpo:string,bytes:int,ms:int,error:string,saltos:int}
      */
     public static function obtener(string $url, array $opciones = []): array
@@ -64,6 +64,10 @@ final class Http
             'Upgrade-Insecure-Requests: 1',
         ];
 
+        // Envío por POST, para los buscadores que solo responden así.
+        $datosPost = $opciones['datos'] ?? null;
+        if (is_array($datosPost)) { $datosPost = http_build_query($datosPost); }
+
         $actual = $url;
         for ($salto = 0; $salto <= self::MAX_SALTOS; $salto++) {
             // 1) Cada salto se válida de nuevo: protege frente a redirecciones maliciosas.
@@ -76,7 +80,7 @@ final class Http
             }
             $actual = $val['url'];
 
-            $respuesta = self::peticion($actual, $timeout, $maxBytes, $agente, (string) ($opciones['referer'] ?? ''), $cabecerasEnvio);
+            $respuesta = self::peticion($actual, $timeout, $maxBytes, $agente, (string) ($opciones['referer'] ?? ''), $cabecerasEnvio, $datosPost);
             $resultado['codigo']    = $respuesta['codigo'];
             $resultado['url_final'] = $actual;
             $resultado['saltos']    = $salto;
@@ -121,7 +125,7 @@ final class Http
      *                                 las suyas para no devolver un muro.
      * @return array{código:int,cuerpo:string,tipo:string,ubicación:string,error:string}
      */
-    private static function peticion(string $url, int $timeout, int $maxBytes, string $agente, string $referer, array $cabecerasEnvio = []): array
+    private static function peticion(string $url, int $timeout, int $maxBytes, string $agente, string $referer, array $cabecerasEnvio = [], ?string $datosPost = null): array
     {
         $salida = ['codigo' => 0, 'cuerpo' => '', 'tipo' => '', 'ubicacion' => '', 'error' => ''];
 
@@ -158,6 +162,10 @@ final class Http
         }
         if (defined('CURL_HTTP_VERSION_2TLS')) {
             curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2TLS);
+        }
+        if ($datosPost !== null && $datosPost !== '') {
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $datosPost);
         }
         if ($referer !== '') { curl_setopt($ch, CURLOPT_REFERER, $referer); }
         if (defined('CR_PROXY') && CR_PROXY !== '') { curl_setopt($ch, CURLOPT_PROXY, CR_PROXY); }

@@ -887,3 +887,7 @@ textarea.caja-url::placeholder{white-space:pre-wrap}
   .caja-modos .modo{flex:1;min-width:0;text-align:center;min-height:40px}
   textarea.caja-url{font-size:16px}   /* evita el zoom automático de iOS */
 }
+
+/* El aviso de error respeta los saltos de línea: el diagnóstico de los
+   buscadores va en su propio renglón para poder leerlo. */
+.aviso-error span{white-space:pre-line}

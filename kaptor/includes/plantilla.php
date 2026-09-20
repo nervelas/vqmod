@@ -92,7 +92,14 @@ function cr_cabecera(array $opciones = []): void
       <span class="marca-txt"><?= cr_logotipo($nombre) ?></span>
     </a>
 
-    <nav aria-label="Navegación principal">
+    <!-- Botón del menú: en el teléfono cinco enlaces no caben en una línea.
+         Solo se ve por debajo de 900 px; con el teclado funciona igual. -->
+    <button type="button" class="menu-movil" id="menu-movil"
+            aria-label="Abrir el menú" aria-expanded="false" aria-controls="menu-principal">
+      <span class="menu-barras" aria-hidden="true"><i></i><i></i><i></i></span>
+    </button>
+
+    <nav id="menu-principal" aria-label="Navegación principal">
       <?php if (Auth::autenticado()): ?>
         <!-- Kaptor es privado: sin sesión no se enseñan destinos que solo
              llevarían de vuelta al acceso. -->

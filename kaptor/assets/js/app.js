@@ -1315,3 +1315,52 @@
   if (consulta.addEventListener) { consulta.addEventListener('change', ajustar); }
   else if (consulta.addListener) { consulta.addListener(ajustar); }
 })();
+
+/* ==========================================================================
+   19. El menú del teléfono
+   Abre y cierra el panel de navegación. Se cierra solo al pulsar un enlace,
+   al tocar fuera, con la tecla Escape y al ensanchar la ventana, para que
+   nunca quede un panel abierto donde ya no hace falta.
+   ========================================================================== */
+(function () {
+  'use strict';
+
+  var boton = document.getElementById('menu-movil');
+  var menu  = document.getElementById('menu-principal');
+  if (!boton || !menu) { return; }
+
+  function abrir(si) {
+    menu.classList.toggle('abierto', si);
+    boton.setAttribute('aria-expanded', si ? 'true' : 'false');
+    boton.setAttribute('aria-label', si ? 'Cerrar el menú' : 'Abrir el menú');
+    document.body.classList.toggle('menu-abierto', si);
+  }
+
+  boton.addEventListener('click', function (e) {
+    e.stopPropagation();
+    abrir(boton.getAttribute('aria-expanded') !== 'true');
+  });
+
+  // Pulsar un enlace cierra el panel: si no, se queda abierto sobre la
+  // página nueva durante un instante y parece que algo falla.
+  menu.addEventListener('click', function (e) {
+    if (e.target.closest('a')) { abrir(false); }
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!menu.classList.contains('abierto')) { return; }
+    if (!menu.contains(e.target) && e.target !== boton) { abrir(false); }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && menu.classList.contains('abierto')) {
+      abrir(false);
+      boton.focus();
+    }
+  });
+
+  var ancha = window.matchMedia('(min-width: 901px)');
+  var alCambiar = function () { if (ancha.matches) { abrir(false); } };
+  if (ancha.addEventListener) { ancha.addEventListener('change', alCambiar); }
+  else if (ancha.addListener) { ancha.addListener(alCambiar); }
+})();

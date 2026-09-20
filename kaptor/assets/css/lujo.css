@@ -758,8 +758,8 @@ table.tabla tbody tr.ping{animation:entrarFila .42s var(--exp) both}
     padding-inline:var(--esp-caja, 18px);
     padding-block:2px;
     /* Difumina los extremos: avisa de que hay más a los lados. */
-    -webkit-mask:linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 18px), transparent);
-    mask:linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 18px), transparent);
+    -webkit-mask:linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 34px), transparent);
+    mask:linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 34px), transparent);
   }
   .caja-modos::-webkit-scrollbar{display:none}
   .caja-modos .modo{
@@ -980,7 +980,12 @@ table.tabla thead th{font-family:var(--mono);letter-spacing:.12em}
 .lectura-pie .mono{font-size:.75rem}
 /* "Salir" en el móvil se quedaba en 28 px de ancho. Los enlaces del menú
    eran de línea, así que el ancho mínimo no les hacía nada. */
-.barra nav a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:40px}
+.barra nav a{
+  display:inline-flex;align-items:center;justify-content:center;
+  flex:0 0 auto;              /* nunca se encogen: es lo que los montaba */
+  white-space:nowrap;
+  min-height:40px;padding-inline:10px;
+}
 
 /* --- La versión instalada, a la vista en el pie ------------------------- */
 /* Sin esto no hay manera de saber si el ZIP se subió de verdad o el
@@ -994,3 +999,88 @@ table.tabla thead th{font-family:var(--mono);letter-spacing:.12em}
   box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--oro) 26%, transparent);
 }
 .atajo-sep{margin:0 8px;opacity:.5}
+
+/* ==========================================================================
+   24. El menú en el teléfono
+   Cinco enlaces no caben en 390 px. Antes se encogían hasta pisarse unos a
+   otros; ahora, por debajo de 900 px, se recogen en un panel que se abre
+   con su botón, con objetivos grandes y un enlace por renglón.
+   ========================================================================== */
+
+.menu-movil{
+  display:none;
+  width:44px;height:44px;flex:none;
+  align-items:center;justify-content:center;
+  border:1px solid var(--borde);border-radius:12px;
+  background:color-mix(in srgb, var(--texto) 5%, transparent);
+  color:var(--texto);cursor:pointer;
+  transition:border-color var(--t-media), background var(--t-media), transform var(--t-rapida);
+}
+.menu-movil:hover{border-color:color-mix(in srgb, var(--oro) 46%, transparent)}
+.menu-movil:active{transform:scale(.94)}
+
+.menu-barras{display:block;width:18px;height:13px;position:relative}
+.menu-barras i{
+  position:absolute;left:0;right:0;height:1.5px;border-radius:2px;
+  background:currentColor;
+  transition:transform var(--t-media), opacity var(--t-rapida);
+}
+.menu-barras i:nth-child(1){top:0}
+.menu-barras i:nth-child(2){top:50%;margin-top:-.75px}
+.menu-barras i:nth-child(3){bottom:0}
+/* Abierto: las barras se cruzan en aspa. */
+.menu-movil[aria-expanded="true"] .menu-barras i:nth-child(1){transform:translateY(5.75px) rotate(45deg)}
+.menu-movil[aria-expanded="true"] .menu-barras i:nth-child(2){opacity:0}
+.menu-movil[aria-expanded="true"] .menu-barras i:nth-child(3){transform:translateY(-5.75px) rotate(-45deg)}
+
+@media (max-width:900px){
+  .menu-movil{display:inline-flex}
+
+  /* El menú deja de ser una fila y pasa a ser un panel bajo la barra.
+     Va anclado a la barra ENTERA, no a su contenedor interior: si no, el
+     primer enlace queda escondido detrás del propio encabezado.
+     Y va OPACO: con transparencia se leía la página por debajo. */
+  .barra{position:sticky}
+  .barra .barra-int > nav{
+    position:absolute;top:100%;left:0;right:0;
+    display:flex;flex-direction:column;align-items:stretch;gap:3px;
+    padding:10px;margin:0;
+    background:var(--panel-solido);
+    border-bottom:1px solid var(--borde);
+    box-shadow:0 24px 50px -22px rgba(0,0,0,.85);
+    max-height:calc(100vh - 100%);
+    overflow-y:auto;
+    /* Cerrado: plegado hacia arriba y fuera del alcance del teclado. */
+    transform:translateY(-10px);
+    opacity:0;visibility:hidden;pointer-events:none;
+    transition:opacity var(--t-media), transform var(--t-media), visibility var(--t-media);
+    z-index:80;
+  }
+  [data-tema="claro"] .barra .barra-int > nav{background:#FFFFFF}
+  .barra .barra-int > nav.abierto{
+    transform:none;opacity:1;visibility:visible;pointer-events:auto;
+  }
+
+  .barra nav a{
+    justify-content:flex-start;
+    min-height:50px;padding:0 14px;
+    border-radius:10px;
+    font-size:1rem;
+  }
+  /* En una lista vertical caben todos: el enlace a Extraer, que la hoja base
+     escondía para que la fila no se desbordara, vuelve a su sitio. */
+  .barra nav a.enlace-extraer{display:inline-flex}
+  .barra nav a.activo{background:color-mix(in srgb, var(--oro) 13%, transparent)}
+  /* El subrayado del escritorio no pinta nada en una lista vertical. */
+  .barra nav a::after{display:none}
+
+  /* La barra es el marco del panel; su interior ya no. */
+  .barra-int{position:static}
+}
+
+/* Con el menú abierto, la página de detrás no se desplaza. */
+body.menu-abierto{overflow:hidden}
+
+@media (max-width:900px) and (prefers-reduced-motion: reduce){
+  .barra .barra-int > nav{transition:none}
+}

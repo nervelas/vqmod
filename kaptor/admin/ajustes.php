@@ -15,7 +15,7 @@ Auth::exigirAdmin();
 
 /** Campos de texto libre que se guardan tal cual. */
 const CAMPOS_TEXTO = [
-    'buscador_motor',
+    'buscador_motor', 'buscador_pais', 'buscador_idioma',
     'sitio_nombre', 'sitio_lema', 'sitio_descripcion', 'pie_texto',
     'hero_titulo', 'hero_subtitulo', 'hero_placeholder', 'hero_boton', 'hero_etiqueta', 'aviso_legal',
     'user_agent', 'headless_binario', 'dominios_excluidos', 'prefijo_pais',
@@ -473,6 +473,15 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
 
     fila('Perfiles sociales en las búsquedas', 'Normalmente se descartan de los resultados porque suelen acabar en muro de acceso y gastan el escaneo.',
         interruptor('buscar_redes', Ajustes::activo('buscar_redes'), 'Incluir perfiles sociales'));
+
+    fila('País de la búsqueda',
+        'Desde dónde se busca, en dos letras: <b>gt</b> Guatemala, <b>mx</b> México, <b>sv</b> El Salvador, <b>hn</b> Honduras, <b>cr</b> Costa Rica, <b>us</b> Estados Unidos. Los buscadores dan resultados muy distintos según el país desde el que se les pregunta: si esto no cuadra, buscar &laquo;clínicas dentales Guatemala&raquo; puede devolver páginas de otro continente.',
+        '<input type="text" name="buscador_pais" class="campo" style="max-width:110px" maxlength="2" '
+        . 'spellcheck="false" autocomplete="off" value="' . e($a['buscador_pais'] ?? 'gt') . '" placeholder="gt">');
+
+    fila('Idioma de los resultados', 'También en dos letras: <b>es</b> español, <b>en</b> inglés.',
+        '<input type="text" name="buscador_idioma" class="campo" style="max-width:110px" maxlength="2" '
+        . 'spellcheck="false" autocomplete="off" value="' . e($a['buscador_idioma'] ?? 'es') . '" placeholder="es">');
 
     fila('Webs por búsqueda', 'Cuántos resultados se traen del buscador antes de empezar a extraer.',
         '<input type="number" name="buscador_max" class="campo" style="max-width:140px" min="10" max="300" value="' . e($a['buscador_max'] ?? '100') . '">');

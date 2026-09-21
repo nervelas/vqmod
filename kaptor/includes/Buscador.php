@@ -247,41 +247,74 @@ final class Buscador
     {
         $q      = rawurlencode($consulta);
         $desde  = $pagina * self::POR_PAGINA;
+        $pais   = self::pais();       // 'gt'
+        $idioma = self::idioma();     // 'es'
 
         switch ($motor) {
             // DuckDuckGo solo contesta de verdad por POST a sus versiones
             // sencillas; por GET devuelve una página vacía.
+            //
+            // `kl` es la región, y va como país-idioma ("gt-es"). Aquí estaba
+            // fijo en "es-es", o sea España: buscar un negocio de Guatemala
+            // devolvía resultados de otro continente.
             case 'ddg_lite':
                 return [
                     'url'     => 'https://lite.duckduckgo.com/lite/',
-                    'datos'   => ['q' => $consulta, 'kl' => 'es-es'] + ($pagina > 0 ? ['s' => (string) ($pagina * 30), 'dc' => (string) ($pagina * 30 + 1)] : []),
+                    'datos'   => ['q' => $consulta, 'kl' => $pais . '-' . $idioma] + ($pagina > 0 ? ['s' => (string) ($pagina * 30), 'dc' => (string) ($pagina * 30 + 1)] : []),
                     'referer' => 'https://lite.duckduckgo.com/',
                 ];
             case 'ddg_html':
                 return [
                     'url'     => 'https://html.duckduckgo.com/html/',
-                    'datos'   => ['q' => $consulta, 'kl' => 'es-es'] + ($pagina > 0 ? ['s' => (string) ($pagina * 30), 'dc' => (string) ($pagina * 30 + 1)] : []),
+                    'datos'   => ['q' => $consulta, 'kl' => $pais . '-' . $idioma] + ($pagina > 0 ? ['s' => (string) ($pagina * 30), 'dc' => (string) ($pagina * 30 + 1)] : []),
                     'referer' => 'https://html.duckduckgo.com/',
                 ];
             // El RSS de Bing devuelve XML limpio: es el más fiable.
+            // `cc` es el país; `setlang` solo era el idioma, que no basta.
             case 'bing_rss':
-                return ['url' => 'https://www.bing.com/search?q=' . $q . '&format=rss&count=' . self::POR_PAGINA . '&first=' . ($desde + 1) . '&setlang=es'];
+                return ['url' => 'https://www.bing.com/search?q=' . $q . '&format=rss&count=' . self::POR_PAGINA
+                    . '&first=' . ($desde + 1) . '&setlang=' . $idioma . '&cc=' . strtoupper($pais)];
             case 'bing':
-                return ['url' => 'https://www.bing.com/search?q=' . $q . '&first=' . ($desde + 1) . '&setlang=es', 'referer' => 'https://www.bing.com/'];
+                return [
+                    'url'     => 'https://www.bing.com/search?q=' . $q . '&first=' . ($desde + 1)
+                        . '&setlang=' . $idioma . '&cc=' . strtoupper($pais),
+                    'referer' => 'https://www.bing.com/',
+                ];
             case 'mojeek':
-                return ['url' => 'https://www.mojeek.com/search?q=' . $q . '&s=' . $desde];
+                return ['url' => 'https://www.mojeek.com/search?q=' . $q . '&s=' . $desde . '&arc=' . $pais];
+            // `gl` es el país desde el que se busca; `hl` solo el idioma.
             case 'google':
             default:
-                return ['url' => 'https://www.google.com/search?q=' . $q . '&start=' . $desde . '&hl=es&num=' . self::POR_PAGINA];
+                return ['url' => 'https://www.google.com/search?q=' . $q . '&start=' . $desde
+                    . '&hl=' . $idioma . '&gl=' . $pais . '&num=' . self::POR_PAGINA];
         }
+    }
+
+    /** País desde el que se busca, en ISO de dos letras y en minúsculas. */
+    private static function pais(): string
+    {
+        $p = strtolower(trim((string) Ajustes::obtener('buscador_pais', 'gt')));
+        return preg_match('~^[a-z]{2}$~', $p) ? $p : 'gt';
+    }
+
+    /** Idioma de los resultados. */
+    private static function idioma(): string
+    {
+        $i = strtolower(trim((string) Ajustes::obtener('buscador_idioma', 'es')));
+        return preg_match('~^[a-z]{2}$~', $i) ? $i : 'es';
     }
 
     /** Cabeceras de navegador: sin ellas los buscadores responden con un muro. */
     private static function cabeceras(): array
     {
+        // El idioma también lleva el país. Iba fijo en es-ES y los buscadores
+        // se lo toman en serio: pedir en español de España trae resultados de
+        // España, por mucho que la consulta diga "Guatemala".
+        $local = self::idioma() . '-' . strtoupper(self::pais());
+
         return [
             'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language: es-ES,es;q=0.9,en;q=0.7',
+            'Accept-Language: ' . $local . ',' . self::idioma() . ';q=0.9,en;q=0.7',
             'Sec-Fetch-Dest: document',
             'Sec-Fetch-Mode: navigate',
             'Sec-Fetch-Site: none',

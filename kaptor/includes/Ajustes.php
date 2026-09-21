@@ -69,6 +69,8 @@ final class Ajustes
             'buscar_activo'       => '1',     // permite buscar por palabras
             'buscador_motor'      => 'auto',  // auto | duckduckgo | bing | google
             'buscador_max'        => '100',   // webs que se traen de la búsqueda
+            'buscador_pais'       => 'gt',    // país desde el que se busca (ISO de 2 letras)
+            'buscador_idioma'     => 'es',    // idioma de los resultados
             'max_sitios_lote'     => '300',   // webs por escaneo en lote
             'paginas_por_sitio'   => '4',     // páginas que se miran de cada web
             'buscar_whatsapp'     => '1',     // detectar WhatsApp y teléfonos

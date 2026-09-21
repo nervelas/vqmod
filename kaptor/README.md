@@ -98,6 +98,12 @@ la primera vez que se abre una página.
 - **Una búsqueda.** Escribe unas palabras (`colegios privados Guatemala`) o
   pega el enlace de una búsqueda ya hecha en Google, Bing o DuckDuckGo: Kaptor
   entra en cada web de los resultados y rastrea por dentro.
+
+  > **El país importa, y mucho.** Los buscadores devuelven cosas muy distintas
+  > según desde dónde se les pregunte. Se elige en *Panel → Ajustes → Motor →
+  > País de la búsqueda*, en dos letras (`gt`, `mx`, `sv`, `hn`, `cr`…). Viene
+  > puesto en `gt`. Si los resultados salen de otro país o en otro idioma, eso
+  > es lo primero que hay que mirar.
 - **Facebook e Instagram.** Pega la dirección de una página o un perfil: lee la
   ficha de contacto y la biografía, y sigue la web que el negocio publica ahí.
 

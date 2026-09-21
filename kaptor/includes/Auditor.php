@@ -55,10 +55,16 @@ final class Auditor
     public const MAX_ESTILOS  = 4;
     public const MAX_ENLACES  = 10;
 
-    /** Cuántas páginas se recorren y cuántos enlaces se comprueban a fondo. */
-    public const MAX_PAGINAS_SEO   = 25;
-    public const MAX_VINCULOS      = 150;
-    public const MAX_ARCHIVOS_JS   = 10;
+    /**
+     * Cuántas páginas se recorren y cuántos enlaces se comprueban a fondo.
+     *
+     * Cien páginas de fábrica cubren entero el sitio de casi cualquier negocio,
+     * y el tope se puede subir a 500 desde Ajustes. Las fases se reanudan solas
+     * entre llamadas, así que un sitio grande tarda más pero no se corta.
+     */
+    public const MAX_PAGINAS_SEO   = 100;
+    public const MAX_VINCULOS      = 600;
+    public const MAX_ARCHIVOS_JS   = 25;
 
     // =====================================================================
     //  Alta y avance
@@ -329,17 +335,23 @@ final class Auditor
             'texto'  => $rob['ok'] ? mb_substr($rob['cuerpo'], 0, 20000) : '',
         ];
 
-        // Mapa del sitio: vale el que declare robots.txt o el de la ruta de siempre.
-        $mapa = '';
-        if (preg_match('~^\s*sitemap:\s*(\S+)~mi', $datos['robots']['texto'], $m)) {
-            $mapa = trim($m[1]);
-        }
-        $candidatos = array_values(array_filter([$mapa, $raiz . '/sitemap.xml', $raiz . '/sitemap_index.xml']));
-        $datos['sitemap'] = ['existe' => false, 'url' => ''];
-        foreach ($candidatos as $cand) {
-            $s = Http::obtener($cand, ['timeout' => 10, 'solo_cabeceras' => true]);
-            if ($s['ok']) { $datos['sitemap'] = ['existe' => true, 'url' => $cand]; break; }
-        }
+        // Mapa del sitio. Se buscan los índices además de los mapas sueltos y
+        // se siguen: un sitio grande no tiene un mapa, tiene un índice que
+        // apunta a diez. Quedarse en el primero es ver el 10 % del sitio.
+        $tope = Ajustes::entero('seo_max_paginas', self::MAX_PAGINAS_SEO, 5, 500);
+        $mapa = Mapa::descubrir($raiz, (string) $datos['robots']['texto'], max(600, $tope * 6));
+
+        $datos['sitemap'] = [
+            'existe'     => $mapa['existe'],
+            'url'        => $mapa['mapas'][0] ?? '',
+            'mapas'      => $mapa['mapas'],
+            'declaradas' => $mapa['declaradas'],
+            'origen'     => $mapa['origen'],
+            'recortado'  => $mapa['recortado'],
+        ];
+        // La lista completa se guarda aparte: la usa el rastreo para llegar a
+        // TODAS las páginas, no solo a las que cuelgan de la portada.
+        $datos['_del_mapa'] = $mapa['urls'];
 
         $llms = Http::obtener($raiz . '/llms.txt', ['timeout' => 8, 'solo_cabeceras' => true]);
         $datos['llms'] = ['existe' => $llms['ok']];
@@ -415,39 +427,46 @@ final class Auditor
      */
     private static function faseRastreo(array $fila, array $datos, string $modo): array
     {
-        $tope = $modo === 'seo'
-            ? Ajustes::entero('seo_max_paginas', self::MAX_PAGINAS_SEO, 3, 120)
-            : min(12, Ajustes::entero('seo_max_paginas', self::MAX_PAGINAS_SEO, 3, 120));
+        $tope = Ajustes::entero('seo_max_paginas', self::MAX_PAGINAS_SEO, 5, 500);
 
-        $raiz  = self::raiz((string) ($datos['url'] ?? $fila['url']));
+        $raiz   = self::raiz((string) ($datos['url'] ?? $fila['url']));
         $inicio = (string) ($datos['url'] ?? $fila['url']);
 
-        // La portada ya está descargada: se aprovecha en vez de pedirla otra vez.
         $paginas = $datos['paginas'] ?? [];
         $cola    = $datos['_cola']   ?? null;
-        $vistas  = $datos['_vistas'] ?? null;
+        $vistas  = $datos['_vistas'] ?? [];
 
+        // --- Primera vuelta: se prepara la cola -----------------------------
         if ($cola === null) {
+            // La portada ya está descargada de la fase anterior.
             $p0 = new Pagina((string) ($datos['html'] ?? ''), $inicio);
             $paginas[] = self::fichaPagina($inicio, 200, $p0, (int) ($datos['bytes'] ?? 0), (int) ($datos['tiempos']['total'] ?? 0), 0);
 
             $vistas = [self::claveUrl($inicio) => true];
             $cola   = [];
+
+            // 1) Lo que cuelga de la portada, por enlaces.
+            $datos['_alcanzadas'] = [self::claveUrl($inicio) => true];
             foreach (self::internosDe($p0, $raiz) as $u) {
                 $k = self::claveUrl($u);
+                $datos['_alcanzadas'][$k] = true;
                 if (!isset($vistas[$k])) { $vistas[$k] = true; $cola[] = ['url' => $u, 'nivel' => 1]; }
             }
-            // Lo que diga el mapa del sitio entra también: así se descubren las
-            // páginas a las que no apunta ningún enlace (las huérfanas).
-            $datos['_del_mapa'] = self::urlsDelMapa((string) ($datos['sitemap']['url'] ?? ''), $raiz);
-            foreach ($datos['_del_mapa'] as $u) {
+
+            // 2) Y TODO lo que declare el mapa del sitio. Esto es lo que hace
+            //    que el análisis cubra el sitio entero y no solo la parte bien
+            //    enlazada, que es justo donde nunca están los problemas.
+            //    Entran al final de la cola: primero lo que se alcanza
+            //    navegando, que es lo que de verdad ve un visitante.
+            $delMapa = $datos['_del_mapa'] ?? [];
+            foreach ($delMapa as $u) {
                 $k = self::claveUrl($u);
                 if (!isset($vistas[$k])) { $vistas[$k] = true; $cola[] = ['url' => $u, 'nivel' => 9]; }
             }
+            $datos['_mapa_claves'] = array_map([self::class, 'claveUrl'], $delMapa);
         }
 
-        // Se rastrea lo que dé el tiempo; lo que falte queda para la siguiente
-        // llamada, con la cola guardada tal cual.
+        // --- Rastreo, hasta donde dé el tiempo de esta llamada ---------------
         $hasta = microtime(true) + 4.5;
         while ($cola && count($paginas) < $tope && microtime(true) < $hasta) {
             $item = array_shift($cola);
@@ -461,27 +480,70 @@ final class Auditor
             $pg = new Pagina($r['cuerpo'], $r['url_final']);
             $paginas[] = self::fichaPagina($r['url_final'], $r['codigo'], $pg, $r['bytes'], $r['ms'], $item['nivel']);
 
-            // Para el análisis de código hace falta guardar el HTML de cada página.
-            if ($modo === 'malware') {
-                $datos['_htmls'][] = mb_substr($r['cuerpo'], 0, 300000);
+            // En el modo de virus se guarda el HTML de cada página: el código
+            // inyectado casi nunca está solo en la portada.
+            if ($modo === 'malware' && count($datos['_htmls'] ?? []) < 30) {
+                $datos['_htmls'][] = mb_substr($r['cuerpo'], 0, 260000);
             }
 
-            if ($item['nivel'] < 3) {
-                foreach (self::internosDe($pg, $raiz) as $u) {
-                    $k = self::claveUrl($u);
-                    if (!isset($vistas[$k])) {
-                        $vistas[$k] = true;
-                        $cola[] = ['url' => $u, 'nivel' => $item['nivel'] + 1];
+            // Los enlaces de esta página: sirven para dos cosas a la vez, para
+            // seguir rastreando y para saber a qué páginas SÍ llega alguien
+            // navegando. Lo segundo es lo que separa una página huérfana de
+            // una normal, y hay que apuntarlo aunque la página ya se conozca.
+            foreach (self::internosDe($pg, $raiz) as $u) {
+                $k = self::claveUrl($u);
+                $datos['_alcanzadas'][$k] = true;
+
+                if (isset($vistas[$k])) {
+                    // Ya estaba en la cola por el mapa: se le corrige el nivel,
+                    // porque ahora sabemos que sí se llega navegando.
+                    foreach ($cola as $i => $c) {
+                        if (self::claveUrl($c['url']) === $k && $c['nivel'] === 9) {
+                            $cola[$i]['nivel'] = min(9, $item['nivel'] + 1);
+                            break;
+                        }
                     }
+                    continue;
+                }
+                if ($item['nivel'] < 9) {
+                    $vistas[$k] = true;
+                    $cola[] = ['url' => $u, 'nivel' => $item['nivel'] + 1];
                 }
             }
         }
 
+        // --- Lo aprendido se guarda para la siguiente vuelta ------------------
         $datos['paginas'] = $paginas;
         $datos['_cola']   = $cola;
         $datos['_vistas'] = $vistas;
-        // Mientras quede cola y quepan páginas, la fase se repite.
+
+        // Cuánto del sitio se llegó a ver: el informe lo dice tal cual, sin
+        // dar a entender que se analizó todo cuando se analizó una parte.
+        $datos['cobertura'] = [
+            'analizadas' => count($paginas),
+            'declaradas' => (int) ($datos['sitemap']['declaradas'] ?? 0),
+            'en_cola'    => count($cola),
+            'tope'       => $tope,
+        ];
+
         $datos['_rastreo_listo'] = !$cola || count($paginas) >= $tope;
+
+        // Al terminar, las huérfanas: están en el mapa y no las enlaza nadie.
+        if ($datos['_rastreo_listo']) {
+            $alcanzadas = $datos['_alcanzadas'] ?? [];
+            $huerfanas  = [];
+            foreach (($datos['_mapa_claves'] ?? []) as $k) {
+                if (!isset($alcanzadas[$k])) { $huerfanas[$k] = true; }
+            }
+            // Y se marca cada página analizada con lo que de verdad es.
+            foreach ($datos['paginas'] as $i => $p) {
+                $k = self::claveUrl((string) $p['url']);
+                $datos['paginas'][$i]['huerfana'] = isset($huerfanas[$k]);
+                if (isset($huerfanas[$k])) { $datos['paginas'][$i]['nivel'] = 9; }
+                elseif (($p['nivel'] ?? 0) === 9) { $datos['paginas'][$i]['nivel'] = 2; }
+            }
+            $datos['huerfanas_total'] = count($huerfanas);
+        }
 
         return $datos;
     }
@@ -549,31 +611,6 @@ final class Auditor
     }
 
     /**
-     * Direcciones listadas en el mapa del sitio.
-     *
-     * Sirven para encontrar las páginas huérfanas: las que Google conoce por
-     * el mapa pero a las que no llega ningún enlace desde dentro del sitio.
-     */
-    private static function urlsDelMapa(string $url, string $raiz): array
-    {
-        if ($url === '') { return []; }
-
-        $r = Http::obtener($url, ['timeout' => 12, 'max_bytes' => 2000000]);
-        if (!$r['ok']) { return []; }
-
-        $urls = [];
-        if (preg_match_all('~<loc>\s*([^<]+?)\s*</loc>~i', $r['cuerpo'], $m)) {
-            foreach ($m[1] as $u) {
-                $u = html_entity_decode(trim($u), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-                // Un índice de mapas apunta a otros mapas: se sigue solo un nivel.
-                if (preg_match('~\.xml(\.gz)?$~i', $u) && count($urls) < 3) { continue; }
-                if (stripos($u, $raiz) === 0) { $urls[] = $u; }
-            }
-        }
-        return array_slice(array_values(array_unique($urls)), 0, 200);
-    }
-
-    /**
      * Comprobación de TODOS los enlaces, por dentro y por fuera.
      *
      * Un enlace roto hacia fuera molesta; uno hacia dentro se lleva por delante
@@ -588,15 +625,26 @@ final class Auditor
         // Se juntan todos los enlaces de todas las páginas rastreadas.
         if (!isset($datos['_porRevisar'])) {
             $todos = [];
+
+            // 1) Cada página que se llegó a abrir ya se sabe si responde.
             foreach (($datos['paginas'] ?? []) as $pag) {
                 if (!empty($pag['error'])) { continue; }
-                $todos[$pag['url']] = true;
+                $todos[(string) $pag['url']] = true;
             }
-            // Y los de la portada, con su texto, para poder señalar cuál falla.
+
+            // 2) Y todos los enlaces que salen de la portada, incluidos los
+            //    que apuntan fuera: un enlace roto hacia otro sitio también da
+            //    sensación de abandono.
             $p0 = new Pagina((string) ($datos['html'] ?? ''), (string) ($datos['url'] ?? ''));
             foreach ($p0->enlaces() as $e) {
                 if (stripos($e['url'], 'http') === 0) { $todos[$e['url']] = true; }
             }
+
+            // 3) Y lo que declare el mapa, aunque no se haya llegado a abrir:
+            //    una dirección del mapa que devuelve 404 es de los fallos que
+            //    más molestan a Google, y solo se ve comprobándolas.
+            foreach (($datos['_del_mapa'] ?? []) as $u) { $todos[$u] = true; }
+
             $datos['_porRevisar'] = array_slice(array_keys($todos), 0, self::MAX_VINCULOS);
             $datos['vinculos'] = ['revisados' => 0, 'rotos' => [], 'redirigidos' => [], 'externos' => 0, 'internos' => 0];
         }
@@ -638,9 +686,19 @@ final class Auditor
         $raiz = self::raiz((string) ($datos['url'] ?? $fila['url']));
 
         if (!isset($datos['_js'])) {
+            // Los de la portada y los de todas las páginas que se rastrearon:
+            // el código inyectado suele estar en una plantilla interior, no en
+            // la portada, que es la única que el dueño mira.
+            $urls = [];
             $p0 = new Pagina((string) ($datos['html'] ?? ''), (string) ($datos['url'] ?? ''));
-            $sc = $p0->scripts();
-            $datos['_js'] = array_slice(array_values(array_unique($sc['urls'])), 0, self::MAX_ARCHIVOS_JS);
+            foreach ($p0->scripts()['urls'] as $u) { $urls[$u] = true; }
+
+            foreach (($datos['_htmls'] ?? []) as $html) {
+                $pg = new Pagina($html, (string) ($datos['url'] ?? ''));
+                foreach ($pg->scripts()['urls'] as $u) { $urls[$u] = true; }
+            }
+
+            $datos['_js'] = array_slice(array_keys($urls), 0, self::MAX_ARCHIVOS_JS);
             $datos['archivos_js'] = [];
         }
 

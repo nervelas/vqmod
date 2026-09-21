@@ -48,6 +48,7 @@ final class Seo
         if (count($paginas) < 2) { return []; }
 
         return array_merge(
+            self::cobertura($d, $paginas),
             self::duplicados($paginas),
             self::contenido($paginas),
             self::estructura($paginas),
@@ -77,6 +78,51 @@ final class Seo
             $cuenta[$v] = ($cuenta[$v] ?? 0) + 1;
         }
         return array_filter($cuenta, static fn($n) => $n > 1);
+    }
+
+    // =====================================================================
+    //  Cuánto del sitio se llegó a ver
+    // =====================================================================
+
+    /**
+     * Hasta dónde llegó el análisis.
+     *
+     * No puntúa: no es un fallo del sitio, es información sobre el análisis.
+     * Va delante de todo porque quien lee el informe tiene derecho a saber si
+     * se miró el sitio entero o una parte, antes de creerse ningún número.
+     */
+    private static function cobertura(array $d, array $paginas): array
+    {
+        $c = $d['cobertura'] ?? [];
+        $mapa = $d['sitemap'] ?? [];
+
+        $analizadas = count($paginas);
+        $declaradas = (int) ($mapa['declaradas'] ?? 0);
+        $pendientes = (int) ($c['en_cola'] ?? 0);
+
+        if ($declaradas > 0) {
+            $completo = $pendientes === 0 && $analizadas >= $declaradas;
+            $texto = $completo
+                ? 'Se analizó el sitio entero: ' . $analizadas . ' páginas'
+                : 'Se analizaron ' . $analizadas . ' de las ' . number_format($declaradas, 0, ',', '.')
+                  . ' páginas que declara el mapa del sitio';
+            $arreglo = $completo ? '' :
+                'Para cubrirlo entero, sube el tope de páginas en Ajustes → Auditor. '
+                . 'Los fallos encontrados suelen repetirse en las demás páginas, así que '
+                . 'lo que sale aquí vale igual: solo cambia el recuento.';
+
+            return [self::h('cobertura', Chequeos::NA, 0, $texto, '', $arreglo,
+                $analizadas . ' de ' . number_format($declaradas, 0, ',', '.')
+                . ($mapa['origen'] ? ' · mapa hallado por ' . $mapa['origen'] : ''))];
+        }
+
+        // Sin mapa, lo único seguro es lo que se alcanzó navegando.
+        return [self::h('cobertura', Chequeos::NA, 0,
+            'Se analizaron ' . $analizadas . ' páginas siguiendo los enlaces del sitio',
+            '',
+            'Sin mapa del sitio, el análisis solo llega a lo que está enlazado. '
+            . 'Crear un sitemap.xml haría que se cubriera entero, y de paso que Google lo encuentre todo.',
+            'sin mapa del sitio')];
     }
 
     // =====================================================================
@@ -335,9 +381,9 @@ final class Seo
         }
 
         // --- Huérfanas: en el mapa pero sin un solo enlace que lleve a ellas ------
-        $huerfanas = array_values(array_filter($paginas, static fn($p) => (int) $p['nivel'] === 9));
+        $huerfanas = array_values(array_filter($paginas, static fn($p) => !empty($p['huerfana'])));
         if ($huerfanas) {
-            $r[] = self::h('huerfanas', Chequeos::AVISO, 7,
+            $r[] = self::h('huerfanas', count($huerfanas) > 5 ? Chequeos::MAL : Chequeos::AVISO, 7,
                 count($huerfanas) . ' páginas están en el mapa pero no las enlaza nadie',
                 'Google las conoce por el mapa del sitio, pero como no hay ningún enlace que lleve a ellas, las trata como de segunda: las visita poco y casi no les da fuerza. Para un visitante, sencillamente no existen.',
                 'Enlázalas desde el menú, desde la portada o desde las páginas con las que tengan que ver.',

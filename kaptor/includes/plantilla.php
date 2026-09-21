@@ -150,17 +150,28 @@ foreach ((array) ($opciones['css'] ?? []) as $hoja): ?>
              siete enlaces y no cabían; agrupadas son tres, y además dicen de
              un vistazo que Kaptor hace dos cosas: sacar datos y analizarlos. -->
         <?php
+        // Todo lo que hace Kaptor, agrupado por para qué sirve. Nada de esto
+        // vive escondido en el panel: si la herramienta existe, se ve.
         cr_menu_grupo('Extraer', $activo, [
-            ['inicio',   'index.php',    'De una web',        'Correos y WhatsApp de una web o de una lista'],
-            ['depurar',  'depurar.php',  'Correos de un texto', 'Pega un texto y saca los correos'],
-            ['whatsapp', 'whatsapp.php', 'WhatsApp de un texto', 'Pega un texto y saca los números'],
-            ['dominios', 'dominios.php', 'Dominios de un texto', 'Pega un listado y saca las webs'],
+            ['inicio',   'index.php',    'Extractor de una web',  'Correos y WhatsApp de una web, una lista o una búsqueda'],
+            ['depurar',  'depurar.php',  'Extractor de correos',  'Saca los correos de un texto pegado'],
+            ['whatsapp', 'whatsapp.php', 'Extractor de WhatsApp', 'Saca los números de un texto pegado'],
+            ['dominios', 'dominios.php', 'Extractor de dominios', 'Saca las páginas web de un listado'],
         ]);
         cr_menu_grupo('Analizar', $activo, [
-            ['auditor', 'auditor.php',       'Auditoría completa', 'Las siete áreas de un sitio, con informe'],
-            ['seo',     'seo.php',           'Análisis SEO',       'Nota real y qué cambiar para llegar al 100 %'],
-            ['malware', 'malware.php',       'Buscar virus',       'Código malicioso, listas negras y spam oculto'],
+            ['auditor', 'auditor.php', 'Auditor de sitios web', 'Las siete áreas del sitio, con informe de marca'],
+            ['seo',     'seo.php',     'Análisis SEO',          'Recorre el sitio entero y dice qué falta para el 100 %'],
+            ['malware', 'malware.php', 'Análisis de virus',     'Código malicioso, listas negras y spam escondido'],
         ]);
+        if (Auth::esAdmin()) {
+            cr_menu_grupo('Campañas', $activo, [
+                ['campanas',   'admin/campanas.php',   'Campañas de correo',  'Crear, programar y seguir los envíos'],
+                ['listas',     'admin/listas.php',     'Listas de contactos', 'A quién se le escribe'],
+                ['plantillas', 'admin/plantillas.php', 'Plantillas',          'Los mensajes que se envían'],
+                ['remitentes', 'admin/remitentes.php', 'Remitentes',          'Los buzones desde los que sale el correo'],
+                ['supresion',  'admin/supresion.php',  'Bajas y supresión',   'Quién no vuelve a recibir nada'],
+            ]);
+        }
         ?>
         <a href="<?= e(cr_url('mis-extracciones.php')) ?>" class="<?= $activo === 'mias' ? 'activo' : '' ?>">Mis extracciones</a>
         <?php if (Auth::esAdmin()): ?>

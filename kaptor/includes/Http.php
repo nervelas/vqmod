@@ -135,7 +135,12 @@ final class Http
             }
 
             // 3) Respuesta final.
-            $cuerpo = self::aUtf8($respuesta['cuerpo'], $respuesta['tipo']);
+            // Un cuerpo BINARIO no se convierte a UTF-8: hacerlo lo destroza.
+            // Pasaba con los mapas del sitio comprimidos (.xml.gz), que
+            // llegaban intactos y salían de aquí hechos papilla.
+            $cuerpo = self::esBinario($respuesta['cuerpo'], $respuesta['tipo'])
+                ? $respuesta['cuerpo']
+                : self::aUtf8($respuesta['cuerpo'], $respuesta['tipo']);
             $resultado['ok']     = $respuesta['codigo'] >= 200 && $respuesta['codigo'] < 300;
             $resultado['tipo']   = $respuesta['tipo'];
             $resultado['cuerpo'] = $cuerpo;
@@ -434,6 +439,36 @@ final class Http
             $segmentos[] = $seg;
         }
         return $raiz . '/' . implode('/', $segmentos);
+    }
+
+    /**
+     * ¿Esto es un archivo binario?
+     *
+     * Se mira primero la firma de los primeros bytes, que no miente, y luego
+     * el tipo declarado. El orden importa: hay servidores que sirven un .gz
+     * diciendo que es texto.
+     */
+    private static function esBinario(string $cuerpo, string $tipo): bool
+    {
+        if ($cuerpo === '') { return false; }
+
+        $firmas = [
+            "\x1f\x8b",         // gzip
+            "PK\x03\x04",       // zip (y de paso docx, xlsx...)
+            "\x89PNG",
+            "\xff\xd8\xff",    // jpeg
+            "%PDF",
+            "GIF8",
+            "BZh",
+        ];
+        foreach ($firmas as $firma) {
+            if (str_starts_with($cuerpo, $firma)) { return true; }
+        }
+
+        return (bool) preg_match(
+            '~^(?:image|audio|video|font)/|application/(?:zip|gzip|x-gzip|octet-stream|pdf|x-bzip)~i',
+            $tipo
+        );
     }
 
     /** Convierte el contenido descargado a UTF-8. */

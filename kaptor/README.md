@@ -1,4 +1,4 @@
-# Kaptor 5.0
+# Kaptor 5.1
 
 Caja de herramientas para vender servicios web. Dos mitades:
 
@@ -204,17 +204,60 @@ https://crt.sh/?q=%.org.gt&output=json
 
 ## Cómo está organizado
 
-El menú tiene dos grupos y tres entradas sueltas:
+En el menú está **todo lo que Kaptor hace**, agrupado por para qué sirve. Tres
+grupos que se despliegan y tres entradas sueltas:
 
-| | |
+| Grupo | Qué hay dentro |
 |---|---|
-| **Extraer** | De una web · Correos de un texto · WhatsApp de un texto · Dominios de un texto |
-| **Analizar** | Auditoría completa · Análisis SEO · Buscar virus |
+| **Extraer** | Extractor de una web · Extractor de correos · Extractor de WhatsApp · Extractor de dominios |
+| **Analizar** | Auditor de sitios web · Análisis SEO · Análisis de virus |
+| **Campañas** (solo administrador) | Campañas de correo · Listas de contactos · Plantillas · Remitentes · Bajas y supresión |
 | | Mis extracciones · Panel · Salir |
+
+Cada entrada lleva debajo, en letra pequeña, qué hace: no hace falta entrar
+para saber si es la que buscas. En el ordenador los grupos se abren al pasar el
+ratón; en el teléfono, tocando el título, y se despliegan dentro del panel.
+
+El módulo de campañas existía desde la 3.0 pero estaba escondido dentro del
+panel de administración, donde no lo encontraba nadie. Ahora está en el menú,
+como lo demás.
 
 Los tres análisis son **el mismo motor** con tres profundidades, no tres
 programas distintos. El completo da la foto de las siete áreas quedándose en la
-portada; los otros dos recorren el sitio y aprietan en su terreno.
+portada; los otros dos **recorren el sitio entero** y aprietan en su terreno.
+
+### El sitio entero, no solo la portada
+
+Analizar solo la portada es mirar el escaparate y dar por hecho que la tienda
+está bien. En **Análisis SEO** y en **Análisis de virus** basta con pegar la
+dirección: Kaptor busca solo el **mapa del sitio** (el `sitemap.xml`, la lista
+que la página le entrega a Google) y analiza **cada una de esas direcciones**.
+
+Cómo lo busca, que es donde fallan la mayoría de las herramientas:
+
+- **Primero lo que diga `robots.txt`**, que es donde el sitio lo declara de
+  verdad. Si no dice nada, prueba las nueve rutas de siempre: la de Yoast, la
+  de RankMath, la de WordPress, la del propio gestor…
+- **Sigue los índices.** Un sitio serio no tiene un mapa: tiene un índice que
+  apunta a diez mapas, y cada uno con cientos de direcciones. Quien lee el
+  primero y para se queda con el 10 % del sitio. Kaptor baja hasta tres niveles
+  de índices.
+- **Descomprime los `.xml.gz`**, que es como los sirve media Internet.
+
+Con esa lista en la mano hace dos cosas que solo se pueden hacer teniendo el
+sitio completo:
+
+- **Encuentra las páginas huérfanas**: las que están en el mapa pero a las que
+  no se llega con ningún enlace desde dentro. Google las ve, tus visitas no.
+  Suelen ser promociones viejas y borradores que nadie recuerda.
+- **Dice cuánto ha visto**: el informe empieza diciendo, por ejemplo, «se
+  analizaron 47 de las 47 páginas que declara el sitio». Si el sitio es enorme
+  y hubo que recortar, lo dice también en vez de callarse.
+
+Topes de serie: **100 páginas** analizadas, **600 enlaces** comprobados y **25
+archivos de JavaScript** revisados. Las páginas se pueden subir hasta 500 desde
+*Panel → Ajustes*. Si el sitio no tiene mapa, el rastreo sigue funcionando
+enlace a enlace desde la portada, como antes.
 
 ## Auditor web
 
@@ -256,6 +299,12 @@ WordPress **no se le enseña al visitante**: se le enseña solo a Google (para
 colocar spam en su nombre) o solo a quien entra desde el teléfono (para
 mandarlo a otro sitio). El dueño entra a su página desde la computadora, la ve
 perfecta, y puede pasar meses sin enterarse de nada.
+
+En el modo **Análisis de virus** esa triple petición no se queda en la portada:
+Kaptor lee el mapa del sitio y revisa **todas las páginas que el sitio
+declara**, con sus archivos de JavaScript incluidos. Importa porque una
+inyección casi nunca está en la portada —que es la que el dueño mira todos los
+días— sino en una entrada vieja del blog que no abre nadie.
 
 Qué se detecta:
 
@@ -345,9 +394,10 @@ lema, tus datos de contacto y el párrafo de cierre) se configura en
 ## Análisis SEO
 
 Entra por **Analizar → Análisis SEO**. A diferencia de la auditoría completa,
-aquí Kaptor **recorre el sitio**: abre hasta 25 páginas siguiendo los enlaces
-internos (en anchura, como rastrea Google), comprueba **todos los enlaces uno a
-uno** —internos y externos— y compara las páginas entre sí.
+aquí Kaptor **recorre el sitio entero**: lee el mapa del sitio, abre hasta 100
+páginas (las del mapa más las que encuentre siguiendo enlaces, en anchura, como
+rastrea Google), comprueba **600 enlaces uno a uno** —internos y externos— y
+compara las páginas entre sí.
 
 Eso saca a la luz lo que mirando una sola página no se ve:
 
@@ -357,9 +407,14 @@ Eso saca a la luz lo que mirando una sola página no se ve:
 - **Enlaces rotos**, separando los internos (graves) de los externos.
 - **Cadenas de redirección**: enlaces que pasan por saltos de más.
 - **Páginas huérfanas**: están en el mapa del sitio pero no las enlaza nadie.
+  Se sabe de verdad porque se compara el mapa completo contra todo lo que se
+  alcanzó enlace a enlace, no porque se suponga.
 - **Profundidad de clic**: lo que queda a más de tres clics de la portada.
 - Titulares principales, canonical, `noindex`, datos estructurados, imágenes
   sin describir. Todo contado sobre el sitio entero, no sobre una página.
+- **Cobertura**: cuántas de las páginas que el sitio declara se llegaron a
+  analizar. Va el primero del informe, para que el resto se lea sabiendo sobre
+  cuánto sitio se está hablando.
 
 ### El porcentaje real, y el camino al 100 %
 
@@ -709,14 +764,17 @@ Es lo normal y lo sano: con tres buzones baja a menos de dos días.
 ## Estructura de carpetas
 
 ```
-/                     index.php, login.php, registro.php, install.php,
+/                     index.php, depurar.php, whatsapp.php, dominios.php,
+                      auditor.php, seo.php, malware.php, correcciones.php,
+                      informe.php, login.php, registro.php, install.php,
                       baja.php, cron.php, .htaccess
 /admin                panel de administración
 /api                  escaneo.php, exportar.php, campana.php, pixel.php, clic.php
 /assets               css, js, fuentes propias, imágenes y subidas
 /config               config.php (lo genera el instalador)
 /database             schema.sql
-/includes             el motor: Extractor, Validador, Rastreador, Http, Seguridad…
+/includes             el motor: Extractor, Rastreador, Auditor, Mapa, Seo,
+                      Malware, Chequeos, Correcciones, Http, Seguridad…
 /storage              registros, caché y sesiones (no accesible por web)
 ```
 

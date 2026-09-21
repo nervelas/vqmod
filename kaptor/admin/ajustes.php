@@ -48,7 +48,7 @@ const CAMPOS_NUM = [
     'max_sitios_lote'   => [1, 2000],
     'paginas_por_sitio' => [1, 50],
     'auditor_timeout'   => [5, 90],
-    'seo_max_paginas'   => [5, 500],
+    'seo_max_paginas'   => [Auditor::MIN_PAGINAS, Auditor::TOPE_PAGINAS],
     'auditor_max_lote'  => [1, 300],
 ];
 /** Colores en formato #RRGGBB. */
@@ -635,8 +635,8 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
         '<input type="text" name="vt_clave" class="campo" maxlength="120" autocomplete="off" spellcheck="false" value="' . e($a['vt_clave'] ?? '') . '">');
 
     fila('Páginas que recorre el análisis del sitio',
-        'Se usa en el análisis SEO y en el de virus. Kaptor busca el mapa del sitio (siguiendo los índices y los .xml.gz) y recorre desde ahí, así que cubre también las páginas a las que no llega ningún enlace. Con 100 se cubre entero el sitio de casi cualquier negocio; súbelo para sitios grandes, a costa de que tarde más.',
-        '<input type="number" name="seo_max_paginas" class="campo" min="5" max="500" value="' . e((string) Ajustes::entero('seo_max_paginas', 100, 5, 500)) . '">');
+        'Se usa en el análisis SEO y en el de virus. Kaptor busca el mapa del sitio (siguiendo los índices y los .xml.gz) y recorre desde ahí, así que cubre también las páginas a las que no llega ningún enlace. Con <b>100</b> se cubre entero el sitio de casi cualquier negocio. Se puede subir hasta <b>' . Auditor::TOPE_PAGINAS . '</b> para tiendas y periódicos, a costa del tiempo: cada página es una descarga, así que mil páginas son del orden de diez minutos con la pestaña abierta. El análisis se reanuda solo entre llamadas y no se corta, pero si cierras la pestaña se queda a medias.',
+        '<input type="number" name="seo_max_paginas" class="campo" min="' . Auditor::MIN_PAGINAS . '" max="' . Auditor::TOPE_PAGINAS . '" value="' . e((string) Auditor::topePaginas()) . '">');
 
     fila('Tiempo de espera por página', 'Segundos que se le dan a cada sitio antes de darlo por caído.',
         '<input type="number" name="auditor_timeout" class="campo" min="5" max="90" value="' . e((string) Ajustes::entero('auditor_timeout', 25, 5, 90)) . '">');

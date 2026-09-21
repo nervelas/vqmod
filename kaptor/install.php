@@ -14,7 +14,7 @@ ini_set('display_errors', '1');
 @set_time_limit(180);
 
 define('CR_RAIZ', __DIR__);
-define('CR_VERSION', '5.1.0');
+define('CR_VERSION', '5.2.0');
 const PHP_MINIMO = '8.0.0';
 
 $rutaConfig = CR_RAIZ . '/config/config.php';

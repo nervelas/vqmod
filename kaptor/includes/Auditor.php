@@ -59,12 +59,42 @@ final class Auditor
      * Cuántas páginas se recorren y cuántos enlaces se comprueban a fondo.
      *
      * Cien páginas de fábrica cubren entero el sitio de casi cualquier negocio,
-     * y el tope se puede subir a 500 desde Ajustes. Las fases se reanudan solas
-     * entre llamadas, así que un sitio grande tarda más pero no se corta.
+     * y el tope se puede subir hasta TOPE_PAGINAS desde Ajustes. Las fases se
+     * reanudan solas entre llamadas, así que un sitio grande tarda más pero no
+     * se corta.
      */
     public const MAX_PAGINAS_SEO   = 100;
-    public const MAX_VINCULOS      = 600;
     public const MAX_ARCHIVOS_JS   = 25;
+
+    /** Techo de lo que se puede pedir desde Ajustes. */
+    public const MIN_PAGINAS  = 5;
+    public const TOPE_PAGINAS = 2000;
+
+    /**
+     * Enlaces que se comprueban uno a uno.
+     *
+     * No puede ser un número fijo: con el tope en 1.500 páginas, revisar solo
+     * 600 enlaces dejaría sin comprobar la mayor parte de las direcciones del
+     * mapa, que es justo lo que se quería mirar. Va con el presupuesto de
+     * páginas, con un suelo para los sitios pequeños y un techo para que no se
+     * dispare.
+     */
+    public const MAX_VINCULOS  = 600;
+    public const TOPE_VINCULOS = 6000;
+
+    /** Cuántas páginas pide el usuario, dentro de lo razonable. */
+    public static function topePaginas(): int
+    {
+        return Ajustes::entero(
+            'seo_max_paginas', self::MAX_PAGINAS_SEO, self::MIN_PAGINAS, self::TOPE_PAGINAS
+        );
+    }
+
+    /** Enlaces a comprobar para ese presupuesto de páginas. */
+    public static function topeVinculos(int $paginas): int
+    {
+        return max(self::MAX_VINCULOS, min(self::TOPE_VINCULOS, $paginas * 3));
+    }
 
     // =====================================================================
     //  Alta y avance
@@ -338,7 +368,7 @@ final class Auditor
         // Mapa del sitio. Se buscan los índices además de los mapas sueltos y
         // se siguen: un sitio grande no tiene un mapa, tiene un índice que
         // apunta a diez. Quedarse en el primero es ver el 10 % del sitio.
-        $tope = Ajustes::entero('seo_max_paginas', self::MAX_PAGINAS_SEO, 5, 500);
+        $tope = self::topePaginas();
         $mapa = Mapa::descubrir($raiz, (string) $datos['robots']['texto'], max(600, $tope * 6));
 
         $datos['sitemap'] = [
@@ -427,7 +457,7 @@ final class Auditor
      */
     private static function faseRastreo(array $fila, array $datos, string $modo): array
     {
-        $tope = Ajustes::entero('seo_max_paginas', self::MAX_PAGINAS_SEO, 5, 500);
+        $tope = self::topePaginas();
 
         $raiz   = self::raiz((string) ($datos['url'] ?? $fila['url']));
         $inicio = (string) ($datos['url'] ?? $fila['url']);
@@ -466,10 +496,17 @@ final class Auditor
             $datos['_mapa_claves'] = array_map([self::class, 'claveUrl'], $delMapa);
         }
 
+        // Dónde está cada dirección dentro de la cola. Se rehace en cada llamada
+        // porque la cola viaja en la base de datos entre una y otra.
+        $indice = [];
+        foreach ($cola as $i => $c) { $indice[self::claveUrl($c['url'])] = $i; }
+
         // --- Rastreo, hasta donde dé el tiempo de esta llamada ---------------
         $hasta = microtime(true) + 4.5;
         while ($cola && count($paginas) < $tope && microtime(true) < $hasta) {
-            $item = array_shift($cola);
+            $clave0 = array_key_first($cola);
+            $item   = $cola[$clave0];
+            unset($cola[$clave0]);
             $r = Http::obtener($item['url'], ['timeout' => 12, 'max_bytes' => 1500000]);
 
             if (!$r['ok']) {
@@ -497,22 +534,30 @@ final class Auditor
                 if (isset($vistas[$k])) {
                     // Ya estaba en la cola por el mapa: se le corrige el nivel,
                     // porque ahora sabemos que sí se llega navegando.
-                    foreach ($cola as $i => $c) {
-                        if (self::claveUrl($c['url']) === $k && $c['nivel'] === 9) {
-                            $cola[$i]['nivel'] = min(9, $item['nivel'] + 1);
-                            break;
-                        }
+                    //
+                    // Esto antes recorría media cola por cada enlace de cada
+                    // página. Con cien páginas no se nota; con mil quinientas
+                    // y un menú largo son cientos de millones de vueltas, del
+                    // orden de medio minuto de puro buscar. Ahora va directo.
+                    $pos = $indice[$k] ?? null;
+                    if ($pos !== null && isset($cola[$pos]) && $cola[$pos]['nivel'] === 9) {
+                        $cola[$pos]['nivel'] = min(9, $item['nivel'] + 1);
                     }
                     continue;
                 }
                 if ($item['nivel'] < 9) {
                     $vistas[$k] = true;
-                    $cola[] = ['url' => $u, 'nivel' => $item['nivel'] + 1];
+                    $cola[]     = ['url' => $u, 'nivel' => $item['nivel'] + 1];
+                    $indice[$k] = array_key_last($cola);
                 }
             }
         }
 
         // --- Lo aprendido se guarda para la siguiente vuelta ------------------
+        // array_values: al sacar de la cola con unset quedan huecos en los
+        // índices, y json_encode convertiría el array en un objeto.
+        $cola = array_values($cola);
+
         $datos['paginas'] = $paginas;
         $datos['_cola']   = $cola;
         $datos['_vistas'] = $vistas;
@@ -645,7 +690,7 @@ final class Auditor
             //    más molestan a Google, y solo se ve comprobándolas.
             foreach (($datos['_del_mapa'] ?? []) as $u) { $todos[$u] = true; }
 
-            $datos['_porRevisar'] = array_slice(array_keys($todos), 0, self::MAX_VINCULOS);
+            $datos['_porRevisar'] = array_slice(array_keys($todos), 0, self::topeVinculos(self::topePaginas()));
             $datos['vinculos'] = ['revisados' => 0, 'rotos' => [], 'redirigidos' => [], 'externos' => 0, 'internos' => 0];
         }
 
@@ -894,13 +939,16 @@ final class Auditor
         // El HTML crudo no se guarda: ya se exprimió y ocuparía megas por fila.
         // Lo que solo servía para trabajar se tira: el HTML de cada página y
         // las colas del rastreo ocupan megas y ya no hacen falta.
+        //
+        // Se tira TODO lo que empieza por guion bajo, que es la marca de
+        // "esto es andamio". Antes iban uno a uno y se colaban los que se
+        // añadían después: en un sitio de mil páginas, las listas de control
+        // del rastreo eran las dos terceras partes de la fila guardada.
         $guardar = $datos;
-        unset(
-            $guardar['html'], $guardar['html_google'], $guardar['_htmls'],
-            $guardar['_cola'], $guardar['_vistas'], $guardar['_porRevisar'],
-            $guardar['_js'], $guardar['_del_mapa'], $guardar['_imagenes'],
-            $guardar['_estilos'], $guardar['_enlaces']
-        );
+        unset($guardar['html'], $guardar['html_google']);
+        foreach (array_keys($guardar) as $k) {
+            if ($k !== '' && $k[0] === '_') { unset($guardar[$k]); }
+        }
 
         BD::actualizar('cr_auditorias', [
             'estado'      => 'listo',

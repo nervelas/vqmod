@@ -1,4 +1,4 @@
-# Kaptor 5.1
+# Kaptor 5.2
 
 Caja de herramientas para vender servicios web. Dos mitades:
 
@@ -255,9 +255,19 @@ sitio completo:
   y hubo que recortar, lo dice también en vez de callarse.
 
 Topes de serie: **100 páginas** analizadas, **600 enlaces** comprobados y **25
-archivos de JavaScript** revisados. Las páginas se pueden subir hasta 500 desde
-*Panel → Ajustes*. Si el sitio no tiene mapa, el rastreo sigue funcionando
-enlace a enlace desde la portada, como antes.
+archivos de JavaScript** revisados. Las páginas se suben hasta **2.000** desde
+*Panel → Ajustes*, y los enlaces acompañan solos (tres por página, con techo en
+6.000): de nada sirve recorrer mil quinientas páginas y comprobar seiscientos
+enlaces.
+
+Lo que cuesta subirlo, dicho claro: cada página es una descarga. Mil páginas
+son del orden de **diez minutos** con la pestaña abierta. El análisis se reanuda
+solo entre llamadas y no se corta por tiempo de servidor, pero si cierras la
+pestaña se queda a medias. Para el sitio de un negocio normal, 100 sigue siendo
+lo sensato; 1.500 es para tiendas y periódicos.
+
+Si el sitio no tiene mapa, el rastreo sigue funcionando enlace a enlace desde la
+portada, como antes.
 
 ## Auditor web
 
@@ -395,9 +405,9 @@ lema, tus datos de contacto y el párrafo de cierre) se configura en
 
 Entra por **Analizar → Análisis SEO**. A diferencia de la auditoría completa,
 aquí Kaptor **recorre el sitio entero**: lee el mapa del sitio, abre hasta 100
-páginas (las del mapa más las que encuentre siguiendo enlaces, en anchura, como
-rastrea Google), comprueba **600 enlaces uno a uno** —internos y externos— y
-compara las páginas entre sí.
+páginas de serie y hasta 2.000 si se sube el tope (las del mapa más las que
+encuentre siguiendo enlaces, en anchura, como rastrea Google), comprueba los
+enlaces **uno a uno** —internos y externos— y compara las páginas entre sí.
 
 Eso saca a la luz lo que mirando una sola página no se ve:
 

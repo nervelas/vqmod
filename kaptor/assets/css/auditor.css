@@ -1,0 +1,396 @@
+/* =========================================================================
+   Kaptor - Auditor web e informe.
+
+   Se carga DESPUÉS de app.css y lujo.css, y solo en las dos páginas del
+   auditor. Reutiliza las variables --cr-* que ya inyecta el PHP, así que
+   respeta la paleta elegida en el panel y los dos temas.
+
+   La última sección es la de impresión: es la que convierte el informe en
+   un PDF presentable sin necesidad de ninguna librería en el servidor.
+   ========================================================================= */
+
+/* ----------------------------------------------- 0. Los tres colores --- */
+/* El semáforo del informe. Van aquí y no en app.css porque solo los usa el
+   auditor, y con un valor distinto por tema: sobre fondo oscuro hace falta
+   subir el brillo, y sobre papel blanco bajarlo, para que en los dos casos
+   el texto se lea con holgura (todos pasan de 6:1 sobre su fondo). */
+:root{
+  --verde:#3DD68C;
+  --ambar:#F2B441;
+  --rojo:#FF8080;
+}
+[data-tema="claro"]{
+  --verde:#106B45;
+  --ambar:#845B0C;
+  --rojo:#B3261E;
+}
+
+/* ------------------------------------------------------ 1. La página --- */
+.seccion-auditor,
+.seccion-informe{padding-top:40px;padding-bottom:80px}
+
+.aud-intro{max-width:720px;margin-bottom:30px}
+.aud-intro h1{margin:10px 0 12px}
+.aud-intro .sub{color:var(--suave);font-size:1.02rem;line-height:1.6;max-width:62ch}
+
+/* ------------------------------------------------- 2. El formulario ---- */
+.aud-cuadro{
+  border:1px solid var(--borde);border-radius:var(--r-lg,18px);
+  background:var(--panel);padding:26px;
+  box-shadow:0 30px 60px -40px rgba(0,0,0,.6);
+}
+.paso-bloque{display:flex;gap:16px;padding:18px 0;border-bottom:1px dashed var(--borde)}
+.paso-bloque:first-child{padding-top:0}
+.paso-bloque:last-of-type{border-bottom:0}
+.paso-cuerpo{flex:1 1 auto;min-width:0}
+.paso-titulo{
+  display:block;font-weight:600;margin-bottom:10px;font-size:1.02rem;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+}
+.opcional{
+  font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;font-weight:600;
+  color:var(--suave);border:1px solid var(--borde);border-radius:999px;padding:2px 9px;
+}
+.paso-nota{color:var(--suave);font-size:.86rem;margin-top:8px;line-height:1.5}
+.seccion-auditor textarea{
+  width:100%;resize:vertical;min-height:84px;
+  font-family:var(--mono,ui-monospace,monospace);font-size:.92rem;line-height:1.55;
+}
+.aud-acciones{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:22px}
+.aud-consejo{
+  margin-top:18px;padding:12px 14px;border-radius:12px;font-size:.88rem;line-height:1.55;
+  background:color-mix(in srgb, var(--oro) 9%, transparent);
+  border:1px solid color-mix(in srgb, var(--oro) 26%, transparent);
+  color:var(--texto);
+}
+
+/* -------------------------------------------- 3. Progreso y resultados - */
+.aud-panel{margin-top:34px}
+.aud-panel-cab{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.aud-panel-cab h2{margin:0;font-size:1.3rem}
+.aud-aviso{
+  color:var(--suave);font-size:.88rem;margin:0;
+  padding:8px 12px;border-radius:10px;
+  background:color-mix(in srgb, var(--oro) 8%, transparent);
+  border:1px solid color-mix(in srgb, var(--oro) 22%, transparent);
+}
+.aud-historial{margin-top:48px}
+.aud-historial h2{font-size:1.2rem;margin-bottom:14px}
+
+.aud-lista{display:flex;flex-direction:column;gap:10px}
+.aud-fila{
+  display:flex;align-items:center;gap:16px;
+  border:1px solid var(--borde);border-radius:14px;background:var(--panel);
+  padding:12px 14px;
+  transition:border-color var(--transicion,.2s ease);
+}
+.aud-fila:hover{border-color:var(--borde-fuerte)}
+.aud-rival{margin-left:26px;opacity:.9}
+.aud-rival .aud-nota{width:44px;height:44px;font-size:1.05rem}
+
+.aud-nota{
+  flex:0 0 auto;width:54px;height:54px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:1.28rem;font-variant-numeric:tabular-nums;
+  border:1.5px solid currentColor;
+}
+.aud-verde{color:var(--verde,#22A06B);background:color-mix(in srgb,var(--verde,#22A06B) 13%,transparent)}
+.aud-ambar{color:var(--ambar,#C98A1A);background:color-mix(in srgb,var(--ambar,#C98A1A) 13%,transparent)}
+.aud-rojo {color:var(--rojo,#D64545); background:color-mix(in srgb,var(--rojo,#D64545) 13%,transparent)}
+.aud-gris {color:var(--suave);background:transparent}
+
+.aud-datos{flex:1 1 auto;min-width:0}
+.aud-host{margin:0;font-weight:600;overflow-wrap:anywhere}
+.aud-meta{margin:3px 0 0;color:var(--suave);font-size:.85rem}
+.aud-meta-error{color:var(--rojo,#D64545)}
+.aud-botones{flex:0 0 auto}
+.aud-estado{color:var(--suave);font-size:.82rem}
+
+.aud-barra{
+  height:4px;border-radius:999px;margin-top:8px;overflow:hidden;
+  background:color-mix(in srgb, var(--texto) 10%, transparent);
+}
+.aud-barra span{
+  display:block;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--oro),var(--neon,var(--oro)));
+  transition:width .4s ease;
+}
+
+/* ======================================================================
+   4. EL INFORME
+   ====================================================================== */
+.contenedor-informe{max-width:940px}
+
+.inf-acciones{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:26px}
+.inf-acciones-der{display:flex;gap:10px;flex-wrap:wrap}
+
+.inf-cabecera{
+  display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;
+  padding-bottom:18px;border-bottom:2px solid var(--borde-fuerte,var(--borde));
+}
+.inf-marca{display:flex;align-items:center;gap:13px}
+.inf-logo{max-height:42px;width:auto}
+.inf-marca-nombre{margin:0;font-weight:700;font-size:1.12rem;letter-spacing:-.01em}
+.inf-marca-lema{margin:2px 0 0;color:var(--suave);font-size:.84rem}
+.inf-fecha{margin:0;color:var(--suave);font-size:.84rem}
+
+/* --- Nota global ------------------------------------------------------- */
+.inf-veredicto{
+  display:flex;gap:32px;align-items:center;flex-wrap:wrap;
+  padding:32px 0;
+}
+.inf-nota-caja{flex:0 0 auto;text-align:center;color:var(--texto)}
+.anillo-nota{display:block}
+.inf-nota-etiqueta{margin:4px 0 0;font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:.8rem}
+.inf-verde .inf-nota-etiqueta{color:var(--verde,#22A06B)}
+.inf-ambar .inf-nota-etiqueta{color:var(--ambar,#C98A1A)}
+.inf-rojo  .inf-nota-etiqueta{color:var(--rojo,#D64545)}
+
+.inf-veredicto-txt{flex:1 1 320px;min-width:0}
+.inf-sitio{
+  margin:0;color:var(--oro);font-family:var(--mono,monospace);font-size:.88rem;
+  letter-spacing:.02em;overflow-wrap:anywhere;
+}
+.inf-veredicto-txt h1{margin:6px 0 12px;font-size:clamp(1.5rem,3.6vw,2.1rem);line-height:1.2}
+.inf-resumen{margin:0;color:var(--texto);line-height:1.65;font-size:1rem;max-width:62ch}
+
+.inf-recuento{list-style:none;display:flex;gap:22px;flex-wrap:wrap;margin:18px 0 0;padding:0}
+.inf-recuento li{color:var(--suave);font-size:.88rem}
+.inf-recuento strong{font-size:1.35rem;display:block;font-variant-numeric:tabular-nums}
+.n-mal{color:var(--rojo,#D64545)}
+.n-aviso{color:var(--ambar,#C98A1A)}
+.n-bien{color:var(--verde,#22A06B)}
+
+/* --- Notas por área ------------------------------------------------------ */
+/* Las seis áreas en una sola fila. Con auto-fit se partían 5 + 1 y la
+   huérfana del final quedaba fea; el número de columnas se fija a mano. */
+.inf-areas{
+  display:grid;grid-template-columns:repeat(6,1fr);gap:12px;
+  margin:10px 0 44px;
+}
+@media (max-width:900px){ .inf-areas{grid-template-columns:repeat(3,1fr)} }
+.inf-area{
+  border:1px solid var(--borde);border-radius:14px;padding:15px 14px;background:var(--panel);
+}
+.inf-area-icono{display:block;width:21px;height:21px;color:var(--oro);margin-bottom:9px}
+.inf-area-icono svg{width:100%;height:100%;display:block}
+/* Dos renglones reservados: "Contacto y ventas" parte en dos y sin esto
+   empujaba su número hacia abajo, descuadrando la fila de tarjetas. */
+.inf-area-nombre{margin:0;font-size:.82rem;color:var(--suave);line-height:1.3;min-height:2.6em}
+.inf-area-nota{margin:5px 0 9px;font-size:1.6rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.inf-area-nota small{font-size:.7rem;font-weight:500;color:var(--suave);margin-left:2px}
+.inf-verde .inf-area-nota{color:var(--verde,#22A06B)}
+.inf-ambar .inf-area-nota{color:var(--ambar,#C98A1A)}
+.inf-rojo  .inf-area-nota{color:var(--rojo,#D64545)}
+.inf-barra{height:4px;border-radius:999px;overflow:hidden;background:color-mix(in srgb,var(--texto) 11%,transparent)}
+.inf-barra span{display:block;height:100%;border-radius:999px;background:currentColor}
+.inf-verde .inf-barra span{background:var(--verde,#22A06B)}
+.inf-ambar .inf-barra span{background:var(--ambar,#C98A1A)}
+.inf-rojo  .inf-barra span{background:var(--rojo,#D64545)}
+
+/* --- Secciones ------------------------------------------------------------ */
+.seccion-informe h2{font-size:1.32rem;margin:0 0 6px}
+.inf-sub{color:var(--suave);font-size:.9rem;margin:0 0 20px;line-height:1.55}
+
+.inf-urgente,
+.inf-comparativa,
+.inf-detalle,
+.inf-tecnico{margin-bottom:46px}
+
+/* --- Lo primero que hay que arreglar --------------------------------------- */
+.inf-urgente-lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+.inf-urgente-lista li{
+  display:flex;gap:16px;
+  border:1px solid color-mix(in srgb,var(--rojo,#D64545) 30%,var(--borde));
+  border-left:4px solid var(--rojo,#D64545);
+  border-radius:14px;background:var(--panel);padding:17px 19px;
+}
+.inf-orden{
+  flex:0 0 auto;width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:.92rem;
+  background:var(--rojo,#D64545);color:#fff;
+}
+.inf-urgente-lista h3{margin:2px 0 8px;font-size:1.04rem;line-height:1.35}
+.inf-cuesta{margin:0;color:var(--texto);line-height:1.62;font-size:.93rem}
+.inf-arreglo{margin:10px 0 0;color:var(--suave);line-height:1.55;font-size:.88rem}
+.inf-arreglo strong{color:var(--oro)}
+
+/* --- Comparativa ------------------------------------------------------------- */
+.inf-tabla{width:100%;border-collapse:collapse;font-size:.9rem}
+.inf-tabla th,.inf-tabla td{
+  padding:11px 12px;text-align:left;border-bottom:1px solid var(--borde);
+}
+.inf-tabla thead th{
+  font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--suave);font-weight:600;white-space:nowrap;
+}
+.inf-tabla .col-mia{background:color-mix(in srgb,var(--oro) 8%,transparent)}
+.inf-tabla thead .col-mia{color:var(--oro)}
+.td-area{font-weight:600}
+.pastilla{
+  display:inline-block;min-width:38px;text-align:center;
+  padding:3px 9px;border-radius:999px;font-weight:700;font-size:.84rem;
+  font-variant-numeric:tabular-nums;border:1px solid currentColor;
+}
+.p-verde{color:var(--verde,#22A06B);background:color-mix(in srgb,var(--verde,#22A06B) 13%,transparent)}
+.p-ambar{color:var(--ambar,#C98A1A);background:color-mix(in srgb,var(--ambar,#C98A1A) 13%,transparent)}
+.p-rojo {color:var(--rojo,#D64545); background:color-mix(in srgb,var(--rojo,#D64545) 13%,transparent)}
+.td-veredicto{font-size:.85rem;font-weight:600;white-space:nowrap}
+.td-veredicto.gana{color:var(--verde,#22A06B)}
+.td-veredicto.pierde{color:var(--rojo,#D64545)}
+
+/* --- Detalle ------------------------------------------------------------------- */
+.inf-grupo{margin-bottom:26px;border:1px solid var(--borde);border-radius:15px;overflow:hidden;background:var(--panel)}
+.inf-grupo-cab{
+  display:flex;align-items:center;gap:11px;
+  padding:13px 17px;border-bottom:1px solid var(--borde);
+  background:color-mix(in srgb,var(--texto) 3%,transparent);
+}
+.inf-grupo-cab h3{margin:0;font-size:1.01rem;flex:1 1 auto}
+.inf-grupo-cab .inf-area-icono{width:19px;height:19px;margin:0}
+
+.inf-items{list-style:none;margin:0;padding:0}
+.inf-item{display:flex;gap:13px;padding:14px 17px;border-bottom:1px solid var(--borde)}
+.inf-item:last-child{border-bottom:0}
+.inf-marca-estado{
+  flex:0 0 auto;width:9px;height:9px;border-radius:50%;margin-top:7px;
+}
+.est-bien  .inf-marca-estado{background:var(--verde,#22A06B)}
+.est-aviso .inf-marca-estado{background:var(--ambar,#C98A1A)}
+.est-mal   .inf-marca-estado{background:var(--rojo,#D64545)}
+.inf-item-cuerpo{flex:1 1 auto;min-width:0}
+.inf-item-titulo{
+  margin:0;font-weight:600;font-size:.95rem;line-height:1.45;
+  display:flex;gap:10px;align-items:baseline;justify-content:space-between;flex-wrap:wrap;
+}
+.est-bien .inf-item-titulo{font-weight:500;color:var(--suave)}
+.inf-valor{
+  flex:0 0 auto;font-family:var(--mono,monospace);font-size:.78rem;font-weight:500;
+  color:var(--suave);background:color-mix(in srgb,var(--texto) 6%,transparent);
+  padding:2px 8px;border-radius:7px;overflow-wrap:anywhere;
+}
+.inf-item-cuesta{margin:8px 0 0;font-size:.89rem;line-height:1.6;color:var(--texto)}
+.inf-item-arreglo{margin:6px 0 0;font-size:.85rem;line-height:1.5;color:var(--suave)}
+.inf-item-arreglo::before{content:'→ ';color:var(--oro)}
+
+/* --- Datos medidos ----------------------------------------------------------------- */
+.inf-dl{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:1px;
+  margin:0;border:1px solid var(--borde);border-radius:14px;overflow:hidden;
+  background:var(--borde);
+}
+.inf-dl > div{background:var(--panel);padding:14px 16px}
+.inf-dl dt{font-size:.77rem;text-transform:uppercase;letter-spacing:.05em;color:var(--suave);margin-bottom:5px}
+.inf-dl dd{margin:0;font-weight:600;font-size:.93rem;overflow-wrap:anywhere}
+.inf-nota-pie{margin-top:12px;font-size:.83rem;color:var(--suave)}
+
+/* --- Cierre ------------------------------------------------------------------------- */
+.inf-cierre{
+  border:1px solid color-mix(in srgb,var(--oro) 32%,transparent);
+  background:color-mix(in srgb,var(--oro) 8%,transparent);
+  border-radius:16px;padding:26px 28px;margin-bottom:34px;
+}
+.inf-cta{margin:0;font-size:1.08rem;font-weight:600;line-height:1.55}
+.inf-contacto{margin:12px 0 0;color:var(--suave);line-height:1.6;font-size:.93rem}
+
+.inf-pie{border-top:1px solid var(--borde);padding-top:18px;color:var(--suave);font-size:.82rem}
+.inf-pie p{margin:0 0 5px}
+.inf-pie-nota{font-size:.78rem;line-height:1.5;max-width:70ch}
+
+/* ------------------------------------------------------- 5. Pantallas pequeñas -- */
+@media (max-width:620px){
+  .seccion-auditor,.seccion-informe{padding-top:26px;padding-bottom:56px}
+  .aud-cuadro{padding:18px}
+  .paso-bloque{flex-direction:column;gap:10px}
+  .paso-n{align-self:flex-start}
+  .aud-acciones .btn{width:100%;justify-content:center}
+
+  .inf-veredicto{gap:20px;padding:24px 0}
+  .inf-nota-caja{margin-inline:auto}
+  .inf-areas{grid-template-columns:repeat(2,1fr)}
+  .inf-urgente-lista li{padding:15px}
+  .inf-item{padding:13px 14px}
+  .inf-grupo-cab{padding:12px 14px}
+  .inf-acciones{flex-direction:column;align-items:stretch}
+  .inf-acciones-der{flex-direction:column}
+  .inf-acciones .btn{width:100%;justify-content:center}
+  .aud-rival{margin-left:12px}
+}
+
+/* ============================================================================
+   6. IMPRESIÓN — aquí es donde el informe se convierte en el PDF que se entrega.
+
+   El sitio es oscuro; el papel, no. Todo el documento se fuerza a tinta negra
+   sobre blanco, porque un PDF con fondo oscuro gasta tóner, se lee peor y no
+   parece profesional. Los colores del semáforo se conservan con
+   print-color-adjust, que es lo único que de verdad hace falta que se imprima.
+   ============================================================================ */
+@media print{
+  @page{margin:14mm 12mm}
+
+  /* Fuera todo lo que no es el documento. */
+  .barra,.pie,.no-imprimir,.menu-movil,.aviso-instalar,
+  .aud-intro,.aud-cuadro,.aud-panel,.aud-historial{display:none !important}
+
+  html,body{
+    background:#fff !important;color:#14171C !important;
+    font-size:10.5pt;
+  }
+  body::before,body::after{display:none !important}
+
+  .seccion-informe{padding:0 !important}
+  .contenedor,.contenedor-informe{max-width:none !important;width:auto !important;padding:0 !important;margin:0 !important}
+
+  /* Tinta sobre papel: se anulan los paneles y los degradados. */
+  .inf-area,.inf-grupo,.inf-dl > div,.aud-fila,.inf-urgente-lista li,.inf-cierre{
+    background:#fff !important;
+    box-shadow:none !important;
+  }
+  .inf-grupo-cab{background:#F4F5F7 !important}
+  .inf-dl{background:#DADDE2 !important}
+  .inf-cierre{background:#FAF6EC !important;border-color:#C9A227 !important}
+  .inf-tabla .col-mia{background:#FAF6EC !important}
+
+  .inf-area,.inf-grupo,.inf-dl,.inf-cierre,.inf-urgente-lista li{border-color:#C7CBD2 !important}
+  .inf-item,.inf-tabla th,.inf-tabla td,.inf-grupo-cab,.inf-pie{border-color:#DFE2E7 !important}
+  .inf-cabecera{border-bottom-color:#14171C !important}
+
+  h1,h2,h3,.inf-item-titulo,.inf-dl dd,.inf-cta{color:#14171C !important}
+  .inf-sub,.inf-marca-lema,.inf-fecha,.inf-dl dt,.inf-pie,.inf-item-arreglo,
+  .inf-recuento li,.inf-contacto{color:#5A6170 !important}
+  .inf-resumen,.inf-cuesta,.inf-item-cuesta{color:#2A2F38 !important}
+  .inf-sitio{color:#8A6D1F !important}
+  .inf-valor{background:#F1F3F6 !important;color:#4A5160 !important}
+  .inf-arreglo strong,.inf-item-arreglo::before{color:#8A6D1F !important}
+
+  /* El semáforo SÍ se imprime: es la mitad del mensaje. */
+  .anillo-nota,.pastilla,.inf-marca-estado,.inf-barra span,.inf-orden,
+  .inf-area-nota,.n-mal,.n-aviso,.n-bien,.td-veredicto,.inf-nota-etiqueta{
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+  .inf-area-icono{color:#8A6D1F !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+  /* Nada de cortar un hallazgo por la mitad entre dos hojas. */
+  .inf-grupo,.inf-item,.inf-urgente-lista li,.inf-cierre,.inf-dl > div,
+  .inf-veredicto,.inf-areas{break-inside:avoid;page-break-inside:avoid}
+  h2,h3{break-after:avoid;page-break-after:avoid}
+  .inf-detalle,.inf-comparativa{break-before:auto}
+
+  .inf-areas{grid-template-columns:repeat(6,1fr) !important;gap:7px}
+  .inf-area{padding:10px 9px}
+  .inf-area-nota{font-size:1.25rem}
+  .inf-area-nombre{font-size:.68rem}
+
+  /* El logotipo propio se dibuja con degradados SVG y con los colores del
+     tema oscuro. Al imprimir, Chrome NO resuelve las referencias url(#...) a
+     un degradado, así que los trazos desaparecían y solo quedaba media antena
+     suelta. Se sustituyen por tinta plana, que además se lee mejor en papel. */
+  .inf-cabecera{--oro:#8A6D1F;--oro-claro:#B08D2A;--neon:#8A6D1F;--fondo:#FFFFFF}
+  .inf-cabecera .marca-logo{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .inf-cabecera .marca-logo [stroke]{stroke:#8A6D1F !important;opacity:1 !important}
+  .inf-cabecera .marca-logo [fill^="url("]{fill:#8A6D1F !important;opacity:.18 !important}
+
+  a{text-decoration:none;color:inherit}
+  .tabla-envoltorio{overflow:visible !important}
+}

@@ -74,6 +74,17 @@ final class Ajustes
             'buscar_whatsapp'     => '1',     // detectar WhatsApp y teléfonos
             'prefijo_pais'        => '',      // p. ej. 502; permite leer números locales
             'max_bytes'           => '3000000',
+
+            // --- Auditor web ------------------------------------------------
+            'auditor_activo'      => '1',
+            'auditor_timeout'     => '25',    // segundos por página auditada
+            'auditor_max_lote'    => '50',    // sitios por tanda
+            'psi_activo'          => '1',     // pedir la nota a Google
+            'psi_clave'           => '',      // clave propia: 25.000 al día
+            'informe_lema'        => 'Diagnóstico técnico de tu sitio web',
+            'informe_contacto'    => '',      // lo que aparece al pie del informe
+            'informe_cta'         => 'Podemos corregir todo esto. Escríbenos y te decimos cuánto cuesta y cuánto tarda.',
+
             'rastreo_profundo'    => '1',
             'analizar_js_css'     => '1',
             'analizar_sitemap'    => '1',

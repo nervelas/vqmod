@@ -18,7 +18,7 @@ function cr_logo_url(): string
 /**
  * Imprime la cabecera completa de una página pública.
  *
- * @param array{título?:string,descripción?:string,activo?:string,clase?:string} $opciones
+ * @param array{título?:string,descripción?:string,activo?:string,clase?:string,css?:string[]} $opciones
  */
 function cr_cabecera(array $opciones = []): void
 {
@@ -58,6 +58,11 @@ function cr_cabecera(array $opciones = []): void
 <link rel="preload" href="<?= e(cr_url('assets/fonts/inter-var-latin.woff2')) ?>" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="<?= e(cr_url('assets/css/app.css')) ?>?v=<?= e(CR_VERSION) ?>">
 <link rel="stylesheet" href="<?= e(cr_url('assets/css/lujo.css')) ?>?v=<?= e(CR_VERSION) ?>">
+<?php // Hojas propias de una página, si la página las pide. Van al final para
+      // que puedan ajustar lo anterior sin pelearse por la especificidad.
+foreach ((array) ($opciones['css'] ?? []) as $hoja): ?>
+<link rel="stylesheet" href="<?= e(cr_url('assets/css/' . $hoja)) ?>?v=<?= e(CR_VERSION) ?>">
+<?php endforeach; ?>
 <style>
   /* Paleta configurada desde el panel de administración */
   :root{
@@ -106,6 +111,7 @@ function cr_cabecera(array $opciones = []): void
         <a href="<?= e(cr_url('index.php')) ?>" class="enlace-extraer <?= $activo === 'inicio' ? 'activo' : '' ?>">Extraer</a>
         <a href="<?= e(cr_url('depurar.php')) ?>" class="<?= $activo === 'depurar' ? 'activo' : '' ?>">Extraer correos</a>
         <a href="<?= e(cr_url('dominios.php')) ?>" class="<?= $activo === 'dominios' ? 'activo' : '' ?>">Extraer dominios</a>
+        <a href="<?= e(cr_url('auditor.php')) ?>" class="<?= $activo === 'auditor' ? 'activo' : '' ?>">Auditar web</a>
         <a href="<?= e(cr_url('mis-extracciones.php')) ?>" class="<?= $activo === 'mias' ? 'activo' : '' ?>">Mis extracciones</a>
         <?php if (Auth::esAdmin()): ?>
           <a href="<?= e(cr_url('admin/index.php')) ?>">Panel</a>

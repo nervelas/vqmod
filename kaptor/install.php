@@ -14,7 +14,7 @@ ini_set('display_errors', '1');
 @set_time_limit(180);
 
 define('CR_RAIZ', __DIR__);
-define('CR_VERSION', '3.2.0');
+define('CR_VERSION', '4.0.0');
 const PHP_MINIMO = '8.0.0';
 
 $rutaConfig = CR_RAIZ . '/config/config.php';
@@ -54,7 +54,7 @@ function cr_requisitos(): array
             'critico' => true,
         ];
     }
-    foreach (['zip' => 'Exportación a Excel (.xlsx)', 'openssl' => 'Descarga de webs con HTTPS', 'dom' => 'Análisis avanzado de HTML'] as $ext => $para) {
+    foreach (['zip' => 'Exportación a Excel (.xlsx)', 'openssl' => 'Descarga de webs con HTTPS', 'dom' => 'Análisis de HTML y auditor web'] as $ext => $para) {
         $r[] = [
             'nombre'  => 'Extensión ' . $ext,
             'ok'      => extension_loaded($ext),

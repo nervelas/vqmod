@@ -20,6 +20,7 @@ const CAMPOS_TEXTO = [
     'hero_titulo', 'hero_subtitulo', 'hero_placeholder', 'hero_boton', 'hero_etiqueta', 'aviso_legal',
     'user_agent', 'headless_binario', 'dominios_excluidos', 'prefijo_pais',
     'remitente_postal', 'cron_clave',
+    'psi_clave', 'informe_lema', 'informe_contacto', 'informe_cta',
 ];
 /** Interruptores (se guardan como 1 o 0). */
 const CAMPOS_BOOL = [
@@ -28,6 +29,7 @@ const CAMPOS_BOOL = [
     'campanas_activas', 'seguimiento_aperturas', 'seguimiento_clics',
     'guardar_historial', 'buscar_activo',
     'redes_sociales', 'seguir_redes', 'buscar_redes',
+    'auditor_activo', 'psi_activo',
 ];
 /** Números con su rango permitido: clave => [mínimo, máximo]. */
 const CAMPOS_NUM = [
@@ -45,6 +47,8 @@ const CAMPOS_NUM = [
     'buscador_max'      => [10, 300],
     'max_sitios_lote'   => [1, 2000],
     'paginas_por_sitio' => [1, 50],
+    'auditor_timeout'   => [5, 90],
+    'auditor_max_lote'  => [1, 300],
 ];
 /** Colores en formato #RRGGBB. */
 const CAMPOS_COLOR = [
@@ -270,6 +274,7 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
     <button type="button" data-hoja="h-motor">Motor</button>
     <button type="button" data-hoja="h-acceso">Acceso y límites</button>
     <button type="button" data-hoja="h-campanas">Campañas</button>
+    <button type="button" data-hoja="h-auditor">Auditor</button>
   </div>
 
   <!-- ====================== IDENTIDAD ====================== -->
@@ -604,6 +609,50 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
       <span>
         <b>Antes de tu primera campaña:</b> configura SPF, DKIM y DMARC en tu dominio (cPanel &rarr; Autenticación de correo),
         envía una prueba a tu propio correo y empieza con 20–30 mensajes al día por buzón durante la primera semana.
+      </span>
+    </div>
+  </div>
+
+  <!-- ====================== AUDITOR ====================== -->
+  <div class="hoja tarjeta" id="h-auditor">
+    <?php
+    fila('Auditor web', 'Permite analizar sitios y generar informes.',
+        interruptor('auditor_activo', Ajustes::activo('auditor_activo', true), 'El auditor está disponible'));
+
+    fila('Nota de velocidad de Google', 'Añade al informe la puntuación oficial de PageSpeed Insights y los datos de usuarios reales. Si se apaga, el auditor sigue midiendo por su cuenta.',
+        interruptor('psi_activo', Ajustes::activo('psi_activo', true), 'Consultar a Google'));
+
+    fila('Clave de Google (PageSpeed Insights)',
+        'Gratuita y muy recomendable: son 25.000 consultas al día. Se saca en <b>console.cloud.google.com</b> &rarr; crear proyecto &rarr; activar «PageSpeed Insights API» &rarr; Credenciales &rarr; Crear clave de API. Sin clave, Google casi siempre responde que la cuota está agotada.',
+        '<input type="text" name="psi_clave" class="campo" maxlength="120" autocomplete="off" spellcheck="false" value="' . e($a['psi_clave'] ?? '') . '" placeholder="AIza...">');
+
+    fila('Tiempo de espera por página', 'Segundos que se le dan a cada sitio antes de darlo por caído.',
+        '<input type="number" name="auditor_timeout" class="campo" min="5" max="90" value="' . e((string) Ajustes::entero('auditor_timeout', 25, 5, 90)) . '">');
+
+    fila('Sitios por tanda', 'Cuántas direcciones se aceptan de una sola vez.',
+        '<input type="number" name="auditor_max_lote" class="campo" min="1" max="300" value="' . e((string) Ajustes::entero('auditor_max_lote', 50, 1, 300)) . '">');
+    ?>
+
+    <h3 style="margin:26px 0 4px">El informe que recibe tu cliente</h3>
+    <p class="pequeno suave" style="margin-bottom:16px">
+      El informe sale con el nombre y el logotipo que configuraste en «Identidad». Aquí se ajusta el resto.
+    </p>
+    <?php
+    fila('Lema del informe', 'Va bajo tu nombre en la cabecera del documento.',
+        '<input type="text" name="informe_lema" class="campo" maxlength="120" value="' . e($a['informe_lema'] ?? '') . '">');
+
+    fila('Cierre del informe', 'El párrafo destacado del final: es lo que convierte el diagnóstico en una venta.',
+        '<textarea name="informe_cta" class="campo" rows="2" maxlength="400">' . e($a['informe_cta'] ?? '') . '</textarea>');
+
+    fila('Tus datos de contacto', 'Aparecen al pie del informe. Teléfono, WhatsApp, correo, lo que quieras.',
+        '<textarea name="informe_contacto" class="campo" rows="3" maxlength="400" placeholder="Servicom&#10;WhatsApp: +502 0000 0000&#10;correo@dominio.com">' . e($a['informe_contacto'] ?? '') . '</textarea>');
+    ?>
+
+    <div class="aviso aviso-info" style="margin-top:18px">
+      <span>
+        <b>Cómo se usa:</b> audita el sitio de un posible cliente, abre el informe y pulsa
+        «Copiar enlace para el cliente». Ese enlace se puede enviar por correo o por WhatsApp y
+        se abre sin necesidad de entrar a Kaptor. Desde el propio informe también se descarga en PDF.
       </span>
     </div>
   </div>

@@ -1,8 +1,9 @@
-# Kaptor 3.1
+# Kaptor 4.0
 
 Extractor profesional de **correos electrónicos y números de WhatsApp** a partir
-de una URL, con **módulo de campañas de correo** incluido: extraes, filtras y
-envías desde tu propio dominio, todo en la misma herramienta.
+de una URL, con **módulo de campañas de correo** y **auditor web** incluidos:
+extraes, revisas, filtras y envías desde tu propio dominio, todo en la misma
+herramienta.
 PHP 8.0+ · MySQL/MariaDB · sin Composer · listo para subir a `public_html`.
 
 ## De uso privado
@@ -195,6 +196,70 @@ https://crt.sh/?q=%.org.gt&output=json
 ```
 
 ---
+
+## Auditor web
+
+Analiza cualquier sitio y genera un **informe con tu marca**, listo para
+enviárselo al dueño del negocio. Es la pieza que convierte una lista de
+dominios en una conversación de venta: en vez de escribir «hacemos páginas
+web», llegas con el diagnóstico de SU sitio en la mano.
+
+Se llega desde **Auditar web** en el menú, o directamente desde el botón
+«Auditar estas» que aparece al terminar de extraer dominios.
+
+### Qué revisa
+
+Unas 45 comprobaciones repartidas en seis áreas, cada una con su nota de 0 a
+100 y con un peso distinto en la nota global:
+
+| Área | Peso | Algunos de los puntos |
+|---|---|---|
+| Velocidad | 22 | Respuesta del servidor, compresión, caché, HTTP/2, peso real de las imágenes, código que frena el dibujado |
+| Celular | 20 | Etiqueta *viewport*, si los estilos se adaptan de verdad, anchos fijos, bloqueo del zoom |
+| Google | 20 | `noindex`, título, descripción, encabezados, texto alternativo, canonical, robots.txt, mapa del sitio, enlaces rotos, cómo se ve al compartir por WhatsApp |
+| Seguridad | 16 | HTTPS, **días que faltan para que venza el certificado**, redirección desde `http://`, contenido mixto, formularios sin cifrar, cabeceras de protección, versiones a la vista |
+| Contacto y ventas | 14 | Botón de WhatsApp, teléfono que se marca de un toque, formulario, dirección y mapa, redes, llamado a la acción, si el sitio mide sus visitas |
+| Visibilidad en IA | 8 | Si el `robots.txt` **bloquea a ChatGPT, Claude, Perplexity o Gemini**, datos estructurados, ficha del negocio, preguntas frecuentes, `llms.txt` |
+
+Cada hallazgo no se queda en lo técnico: dice **qué le cuesta eso al negocio**
+y **cómo se arregla**. Un informe que dice «falta la meta description» no mueve
+a nadie; uno que dice «Google se está inventando el texto que aparece bajo tu
+nombre en los resultados» sí.
+
+### La nota de Google (opcional pero muy recomendable)
+
+Si pones tu **clave gratuita de PageSpeed Insights** en *Ajustes → Auditor*, el
+informe añade la puntuación oficial de Google y los tiempos de los usuarios
+reales del sitio. Son **25.000 consultas al día sin coste**:
+
+1. Entra en `console.cloud.google.com` y crea un proyecto.
+2. Activa el servicio **PageSpeed Insights API**.
+3. *Credenciales → Crear credenciales → Clave de API*.
+4. Pega la clave en *Ajustes → Auditor*.
+
+Sin clave el auditor sigue funcionando con sus propias mediciones; lo único que
+pasa es que Google suele responder que la cuota compartida está agotada.
+
+### Comparativa con la competencia
+
+Al auditar **un** sitio se pueden añadir hasta tres competidores. El informe
+incluye entonces una tabla área por área con quién va por delante. Es lo que
+cierra la venta.
+
+### Cómo se entrega
+
+Desde el informe hay dos botones:
+
+- **Copiar enlace para el cliente.** Da una dirección con una clave aleatoria
+  que se puede mandar por correo o por WhatsApp; se abre sin necesidad de entrar
+  a Kaptor y solo enseña ese informe.
+- **Descargar PDF.** El informe está maquetado para imprimirse: sale en blanco,
+  con los colores del semáforo, sin cortar ningún bloque por la mitad y sin
+  menús ni botones.
+
+Lo que aparece en la cabecera y en el cierre del documento (tu logotipo, tu
+lema, tus datos de contacto y el párrafo de cierre) se configura en
+*Ajustes → Auditor*.
 
 ## Extraer correos de un texto
 

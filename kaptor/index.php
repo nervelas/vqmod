@@ -174,6 +174,7 @@ cr_cabecera([
         <li><b>Rastreo profundo</b> por contacto, nosotros y equipo, con el sitemap incluido.</li>
         <li><b>Nivel educativo</b> de cada centro, leído en su propia web.</li>
         <li><b>TXT, CSV y Excel</b>, filtrados por la terminación que elijas.</li>
+        <li><b>Auditor web</b>: revisa cualquier sitio y saca un informe con tu marca, listo para enviar.</li>
       </ol>
 
       <?php if ($resumen['ultimo'] !== ''): ?>

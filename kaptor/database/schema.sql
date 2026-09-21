@@ -108,6 +108,35 @@ CREATE TABLE IF NOT EXISTS `cr_sitios` (
   KEY `idx_escaneo` (`escaneo_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Auditor web: un renglón por sitio analizado. Lo medido y los hallazgos van
+-- como JSON en la misma fila, porque una auditoría se escribe de golpe y se
+-- lee entera. `lote` agrupa un sitio con sus competidores y `token` permite
+-- enseñar el informe a un cliente con un enlace, sin darle acceso al panel.
+CREATE TABLE IF NOT EXISTS `cr_auditorias` (
+  `id`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `usuario_id`  INT UNSIGNED NULL,
+  `lote`        VARCHAR(40) NOT NULL DEFAULT '',
+  `papel`       VARCHAR(12) NOT NULL DEFAULT 'principal',
+  `url`         VARCHAR(500) NOT NULL,
+  `host`        VARCHAR(190) NOT NULL DEFAULT '',
+  `titulo`      VARCHAR(255) NULL,
+  `estado`      VARCHAR(16) NOT NULL DEFAULT 'cola',
+  `fase`        VARCHAR(20) NOT NULL DEFAULT 'portada',
+  `nota`        TINYINT UNSIGNED NULL,
+  `notas_area`  VARCHAR(255) NOT NULL DEFAULT '',
+  `error`       VARCHAR(255) NOT NULL DEFAULT '',
+  `datos`       LONGTEXT NULL,
+  `hallazgos`   LONGTEXT NULL,
+  `token`       CHAR(32) NOT NULL,
+  `creado`      DATETIME NOT NULL,
+  `actualizado` DATETIME NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_token` (`token`),
+  KEY `idx_lote` (`lote`),
+  KEY `idx_usuario` (`usuario_id`, `id`),
+  KEY `idx_host` (`host`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `cr_correos` (
   `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `escaneo_id` INT UNSIGNED NOT NULL,

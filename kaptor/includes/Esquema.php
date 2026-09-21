@@ -14,7 +14,7 @@ declare(strict_types=1);
 final class Esquema
 {
     /** Se sube de uno en uno cada vez que cambia la estructura. */
-    public const VERSION = 5;
+    public const VERSION = 6;
 
     /** Aplica los cambios pendientes. Se llama desde bootstrap.php. */
     public static function actualizar(): void
@@ -47,6 +47,9 @@ final class Esquema
             // 5: Kaptor pasa a ser privado. Si alguien tenía el acceso libre
             //    encendido, se apaga: ahora hace falta sesión siempre.
             if ($actual < 5) { Ajustes::guardar('acceso_publico', '0'); }
+
+            // 6: auditor web.
+            if ($actual < 6) { self::tablaAuditorias(); }
 
             Ajustes::guardar('esquema', (string) self::VERSION);
         } catch (Throwable $e) {
@@ -126,6 +129,46 @@ final class Esquema
               PRIMARY KEY (`id`),
               UNIQUE KEY `uq_sitio` (`escaneo_id`, `host`),
               KEY `idx_escaneo` (`escaneo_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+        );
+    }
+
+    /**
+     * Tabla del auditor web: un renglón por sitio analizado.
+     *
+     * Lo medido y los hallazgos se guardan como JSON en la misma fila en vez
+     * de repartirlos en tablas aparte. Una auditoría se escribe una vez y se
+     * lee entera cada vez, así que partirla solo añadiría consultas.
+     *
+     * `lote` agrupa un sitio con sus competidores; `token` permite enseñarle
+     * el informe a un cliente con un enlace, sin darle acceso al panel.
+     */
+    private static function tablaAuditorias(): void
+    {
+        BD::ejecutar(
+            'CREATE TABLE IF NOT EXISTS `cr_auditorias` (
+              `id`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+              `usuario_id`  INT UNSIGNED NULL,
+              `lote`        VARCHAR(40) NOT NULL DEFAULT \'\',
+              `papel`       VARCHAR(12) NOT NULL DEFAULT \'principal\',
+              `url`         VARCHAR(500) NOT NULL,
+              `host`        VARCHAR(190) NOT NULL DEFAULT \'\',
+              `titulo`      VARCHAR(255) NULL,
+              `estado`      VARCHAR(16) NOT NULL DEFAULT \'cola\',
+              `fase`        VARCHAR(20) NOT NULL DEFAULT \'portada\',
+              `nota`        TINYINT UNSIGNED NULL,
+              `notas_area`  VARCHAR(255) NOT NULL DEFAULT \'\',
+              `error`       VARCHAR(255) NOT NULL DEFAULT \'\',
+              `datos`       LONGTEXT NULL,
+              `hallazgos`   LONGTEXT NULL,
+              `token`       CHAR(32) NOT NULL,
+              `creado`      DATETIME NOT NULL,
+              `actualizado` DATETIME NOT NULL,
+              PRIMARY KEY (`id`),
+              UNIQUE KEY `uq_token` (`token`),
+              KEY `idx_lote` (`lote`),
+              KEY `idx_usuario` (`usuario_id`, `id`),
+              KEY `idx_host` (`host`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
         );
     }

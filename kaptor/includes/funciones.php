@@ -331,3 +331,57 @@ function cr_resumen_usuario(): array
         return $vacio;
     }
 }
+
+/**
+ * El anillo con la nota del informe, dibujado en SVG.
+ *
+ * Va en SVG y no con CSS porque este dibujo tiene que sobrevivir a la
+ * impresión a PDF, y los navegadores descartan los fondos y los degradados
+ * de CSS al imprimir salvo que el usuario los active a mano.
+ */
+function cr_anillo_nota(int $nota, int $tam = 132): string
+{
+    $nota = max(0, min(100, $nota));
+    $r    = 54;                                  // radio del trazo
+    $vuelta = 2 * M_PI * $r;
+    $pintado = $vuelta * ($nota / 100);
+
+    $color = match (true) {
+        $nota >= 80 => '#22A06B',
+        $nota >= 55 => '#C98A1A',
+        default     => '#D64545',
+    };
+
+    return '<svg class="anillo-nota" viewBox="0 0 128 128" width="' . $tam . '" height="' . $tam . '" role="img"'
+        . ' aria-label="Nota: ' . $nota . ' sobre 100">'
+        . '<circle cx="64" cy="64" r="' . $r . '" fill="none" stroke="currentColor" stroke-opacity=".16" stroke-width="11"/>'
+        . '<circle cx="64" cy="64" r="' . $r . '" fill="none" stroke="' . $color . '" stroke-width="11"'
+        . ' stroke-linecap="round" stroke-dasharray="' . round($pintado, 2) . ' ' . round($vuelta, 2) . '"'
+        . ' transform="rotate(-90 64 64)"/>'
+        . '<text x="64" y="72" text-anchor="middle" font-size="40" font-weight="700" fill="' . $color . '">' . $nota . '</text>'
+        . '</svg>';
+}
+
+/** Icono de cada área del informe. */
+function cr_icono_area(string $area): string
+{
+    $trazos = [
+        // Velocidad: un rayo.
+        'velocidad' => '<path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2Z"/>',
+        // Celular: un teléfono.
+        'movil'     => '<rect x="7" y="2.5" width="10" height="19" rx="2.4"/><path d="M10.6 18.6h2.8"/>',
+        // Google: una lupa.
+        'seo'       => '<circle cx="10.8" cy="10.8" r="6.8"/><path d="m15.8 15.8 4.4 4.4"/>',
+        // Seguridad: un escudo.
+        'seguridad' => '<path d="M12 2.6 4.8 5.6v6c0 4.4 3 8.2 7.2 9.8 4.2-1.6 7.2-5.4 7.2-9.8v-6L12 2.6Z"/>',
+        // Contacto: un globo de conversación.
+        'negocio'   => '<path d="M20.5 12.2c0 4-3.8 7.2-8.5 7.2-1 0-2-.15-2.9-.4L4 21l1.4-3.8C4 15.9 3.5 14.1 3.5 12.2c0-4 3.8-7.2 8.5-7.2s8.5 3.2 8.5 7.2Z"/>',
+        // IA: una chispa.
+        'ia'        => '<path d="M12 2.8 13.9 9l6.2 1.9-6.2 1.9L12 19l-1.9-6.2L3.9 10.9 10.1 9 12 2.8Z"/><path d="M18.8 16.2 19.6 18.6l2.4.8-2.4.8-.8 2.4-.8-2.4-2.4-.8 2.4-.8.8-2.4Z"/>',
+    ];
+
+    $d = $trazos[$area] ?? '<circle cx="12" cy="12" r="8"/>';
+
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"'
+        . ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $d . '</svg>';
+}

@@ -305,6 +305,23 @@ cr_cabecera([
           </svg>
           Copiar los <?= (int) $r['final'] ?>
         </button>
+
+        <?php if ($modo === 'webs'):
+          // De la lista limpia al auditor sin pasos intermedios: es el camino
+          // natural (sacar los dominios, revisarlos, y escribirle a cada uno
+          // con su diagnóstico en la mano). Se mandan los primeros que quepan
+          // en la dirección; para más, está el copiar y pegar.
+          $tope    = Ajustes::entero('auditor_max_lote', 50, 1, 300);
+          $aAudita = array_slice(array_column($filas, 'web'), 0, $tope); ?>
+          <a class="btn btn-fantasma btn-peq"
+             href="<?= e(cr_url('auditor.php?sitios=' . rawurlencode(implode("\n", $aAudita)))) ?>">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="5.4"/><path d="M12 3.2v2.2M12 18.6v2.2M3.2 12h2.2M18.6 12h2.2"/>
+            </svg>
+            Auditar <?= count($aAudita) < (int) $r['final'] ? 'las primeras ' . count($aAudita) : 'estas ' . count($aAudita) ?>
+          </a>
+        <?php endif; ?>
+
         <span style="flex:1"></span>
         <button type="button" class="btn btn-peq" data-bajar="txt">TXT</button>
         <button type="button" class="btn btn-peq" data-bajar="csv">CSV</button>

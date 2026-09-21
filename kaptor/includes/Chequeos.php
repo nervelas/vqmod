@@ -20,14 +20,15 @@ declare(strict_types=1);
 
 final class Chequeos
 {
-    /** Las seis áreas y lo que pesa cada una en la nota global (suma 100). */
+    /** Las siete áreas y lo que pesa cada una en la nota global (suma 100). */
     public const AREAS = [
-        'velocidad'  => ['nombre' => 'Velocidad',           'peso' => 22, 'icono' => 'rayo'],
-        'movil'      => ['nombre' => 'Celular',             'peso' => 20, 'icono' => 'movil'],
-        'seo'        => ['nombre' => 'Google',              'peso' => 20, 'icono' => 'lupa'],
-        'seguridad'  => ['nombre' => 'Seguridad',           'peso' => 16, 'icono' => 'escudo'],
-        'negocio'    => ['nombre' => 'Contacto y ventas',   'peso' => 14, 'icono' => 'chat'],
-        'ia'         => ['nombre' => 'Visibilidad en IA',   'peso' =>  8, 'icono' => 'chispa'],
+        'velocidad'  => ['nombre' => 'Velocidad',           'peso' => 19, 'icono' => 'rayo'],
+        'movil'      => ['nombre' => 'Celular',             'peso' => 18, 'icono' => 'movil'],
+        'seo'        => ['nombre' => 'Google',              'peso' => 18, 'icono' => 'lupa'],
+        'malware'    => ['nombre' => 'Código malicioso',    'peso' => 14, 'icono' => 'virus'],
+        'seguridad'  => ['nombre' => 'Seguridad',           'peso' => 13, 'icono' => 'escudo'],
+        'negocio'    => ['nombre' => 'Contacto y ventas',   'peso' => 12, 'icono' => 'chat'],
+        'ia'         => ['nombre' => 'Visibilidad en IA',   'peso' =>  6, 'icono' => 'chispa'],
     ];
 
     /** Estados posibles de un hallazgo. */
@@ -50,18 +51,24 @@ final class Chequeos
             self::seguridad($d, $p),
             self::seo($d, $p),
             self::negocio($d, $p),
-            self::ia($d, $p)
+            self::ia($d, $p),
+            self::malware($d, $p)
         );
     }
 
     /** Arma un hallazgo. */
     private static function h(
         string $clave, string $area, string $estado, int $peso,
-        string $titulo, string $cuesta = '', string $arreglo = '', string $valor = ''
+        string $titulo, string $cuesta = '', string $arreglo = '', string $valor = '',
+        bool $critico = false
     ): array {
         return [
             'clave' => $clave, 'area' => $area, 'estado' => $estado, 'peso' => $peso,
             'titulo' => $titulo, 'cuesta' => $cuesta, 'arreglo' => $arreglo, 'valor' => $valor,
+            // Un hallazgo crítico no se promedia con lo demás: si el sitio
+            // está infectado, da igual lo bonita que sea su descripción para
+            // Google. Informe tapa la nota global cuando hay alguno.
+            'critico' => $critico,
         ];
     }
 
@@ -845,6 +852,163 @@ final class Chequeos
             'Es un resumen del negocio pensado para que lo lean las IA. Todavía es pronto para saber cuánto ayuda de verdad, así que cuenta poco en la nota: es un extra, no una urgencia.',
             'Crea un archivo llms.txt en la raíz con quién eres, qué vendes y los enlaces importantes.',
             $llms ? 'presente' : 'ausente');
+
+        return $r;
+    }
+
+    // =====================================================================
+    //  7. CÓDIGO MALICIOSO
+    // =====================================================================
+
+    /**
+     * Lo que se puede saber mirando el sitio desde fuera.
+     *
+     * Aquí la redacción se cuida más que en ningún otro sitio: decirle a un
+     * posible cliente que tiene un virus que no tiene cuesta la relación
+     * entera. Por eso nada dice "está infectado" salvo cuando lo afirma Google;
+     * lo demás se enuncia como lo que es, código que hay que mirar.
+     */
+    private static function malware(array $d, Pagina $p): array
+    {
+        $r = [];
+        $s = Malware::senales($d, $p);
+
+        // --- Lo que dice Google ------------------------------------------
+        $ln = $s['lista_negra'];
+        if (!empty($ln['consultado'])) {
+            if (!empty($ln['marcado'])) {
+                $r[] = self::h('lista_negra', 'malware', self::MAL, 30,
+                    'GOOGLE TIENE ESTE SITIO MARCADO COMO PELIGROSO',
+                    'Chrome, Firefox y Safari enseñan una pantalla roja a toda página antes de dejar entrar, y casi nadie pasa de ahí. El sitio está caído a efectos comerciales aunque el servidor funcione, y el correo que salga del dominio se va a la carpeta de no deseado. Esto no espera: cada día así son clientes que se van con la competencia.',
+                    'Hay que limpiar el sitio, cambiar todas las contraseñas y después pedirle a Google la revisión desde Search Console. Mientras no se limpie, volver a pedir la revisión no sirve de nada.',
+                    implode(' · ', (array) $ln['tipos']), true);
+            } else {
+                $r[] = self::h('lista_negra', 'malware', self::BIEN, 30,
+                    'Google no tiene el sitio marcado como peligroso', '', '', 'limpio en la lista de Google');
+            }
+        } else {
+            // Sin clave de Google no se puede preguntar. Se dice, y no se
+            // puntúa: no se puede suspender a nadie por algo que no se miró.
+            $r[] = self::h('lista_negra', 'malware', self::NA, 30,
+                'No se pudo consultar la lista de sitios peligrosos de Google',
+                '', 'Añade tu clave gratuita de Google en Ajustes y activa «Safe Browsing API» en el mismo proyecto.',
+                (string) ($ln['error'] ?? 'sin clave de Google'));
+        }
+
+        // --- Contenido distinto para Google (encubrimiento) ----------------
+        $ck = $s['cloaking'];
+        if (!empty($ck['consultado'])) {
+            if (!empty($ck['distinto'])) {
+                $r[] = self::h('cloaking', 'malware', self::MAL, 22,
+                    'El sitio le enseña a Google algo distinto que a las personas',
+                    'Es la infección más difícil de ver y la más dañina: el dueño entra a su página, la ve perfecta, y no se entera de nada. Mientras tanto a Google se le sirve spam en su nombre. Acaba siempre igual: el sitio desaparece de las búsquedas y recuperar la posición cuesta meses.',
+                    'El sitio está comprometido. Hay que revisar los archivos del servidor, buscar código añadido y cambiar todas las contraseñas.',
+                    (string) $ck['detalle'], true);
+            } else {
+                $r[] = self::h('cloaking', 'malware', self::BIEN, 22,
+                    'A Google se le sirve lo mismo que a las personas', '', '', 'sin encubrimiento');
+            }
+        }
+
+        // --- Redirección solo para celulares -------------------------------
+        $mv = $s['movil'];
+        if (!empty($mv['consultado'])) {
+            $destino = (string) ($mv['destino'] ?? '');
+            if ($destino !== '') {
+                $r[] = self::h('redirige_movil', 'malware', self::MAL, 20,
+                    'Quien entra desde el celular acaba en otro sitio web',
+                    'Siete de cada diez visitas llegan desde un teléfono, y a todas se las está mandando a otra parte. Desde la computadora no se nota nada, así que el dueño puede llevar meses regalando sus visitas sin saberlo.',
+                    'Es código metido por alguien. Hay que revisar el archivo .htaccess y los archivos del sitio, y cambiar las contraseñas.',
+                    mb_substr($destino, 0, 70), true);
+            } else {
+                $r[] = self::h('redirige_movil', 'malware', self::BIEN, 20,
+                    'Desde el celular se llega al sitio correcto', '', '', 'sin redirección extraña');
+            }
+        }
+
+        // --- Enlaces de spam escondidos -------------------------------------
+        $oc = $s['ocultos'];
+        if ((int) $oc['bloques'] > 0) {
+            $detalle = $oc['enlaces'] . ' enlaces';
+            if ($oc['dominios']) { $detalle .= ' hacia ' . implode(', ', array_slice($oc['dominios'], 0, 3)); }
+            $r[] = self::h('enlaces_ocultos', 'malware', self::MAL, 20,
+                'Hay ' . $oc['enlaces'] . ' enlaces escondidos que llevan fuera del sitio',
+                'Alguien está usando el prestigio del dominio para colocar enlaces invisibles hacia sitios de apuestas o de farmacia. El visitante no ve nada; Google sí, y lo castiga como si el dueño lo hubiera hecho a propósito.',
+                'Hay que encontrar y quitar esos bloques del código, y averiguar por dónde entraron: si no, vuelven solos en unos días.',
+                $detalle, true);
+        } else {
+            $r[] = self::h('enlaces_ocultos', 'malware', self::BIEN, 20,
+                'No hay bloques de enlaces escondidos', '', '', 'ninguno');
+        }
+
+        // --- Marcos invisibles -----------------------------------------------
+        $ifr = $s['iframes'];
+        if ($ifr) {
+            $primero = $ifr[0];
+            $r[] = self::h('iframes_ocultos', 'malware', self::MAL, 18,
+                count($ifr) === 1 ? 'Hay un marco invisible que carga otro sitio'
+                                  : 'Hay ' . count($ifr) . ' marcos invisibles que cargan otros sitios',
+                'Un marco de tamaño cero apuntando fuera es la forma clásica de colgar contenido ajeno de una página sin que el dueño lo note. Suele servir para repartir programas maliciosos entre los visitantes.',
+                'Quitar esos marcos del código y revisar cómo llegaron ahí.',
+                mb_substr((string) $primero['src'], 0, 60) . ' (' . $primero['motivo'] . ')', true);
+        } else {
+            $r[] = self::h('iframes_ocultos', 'malware', self::BIEN, 18,
+                'No hay marcos invisibles cargando otros sitios', '', '', 'ninguno');
+        }
+
+        // --- Minero de criptomonedas -------------------------------------------
+        if (!empty($s['minero']['encontrado'])) {
+            $r[] = self::h('minero', 'malware', self::MAL, 16,
+                'La página pone a trabajar la computadora del visitante',
+                'Es un minero de criptomonedas metido en el sitio: usa el procesador y la batería de quien entra para generarle dinero a otro. Al visitante se le calienta el teléfono y se va pensando que la página está rota.',
+                'Quitar ese código y revisar por dónde entró.',
+                (string) $s['minero']['cual'], true);
+        }
+
+        // --- Página tomada -----------------------------------------------------
+        if (!empty($s['defacement']['encontrado'])) {
+            $r[] = self::h('defacement', 'malware', self::MAL, 16,
+                'La página parece haber sido tomada por alguien',
+                'El texto del sitio contiene la firma que suelen dejar quienes entran a una página ajena. Si es así, lo que ven los clientes ahora mismo no es lo que el dueño puso.',
+                'Restaurar desde una copia de seguridad limpia y cambiar todas las contraseñas antes de volver a publicar.',
+                (string) $s['defacement']['cual'], true);
+        }
+
+        // --- Spam en el título o la descripción ----------------------------------
+        if (!empty($s['spam']['encontrado'])) {
+            $r[] = self::h('spam_titulo', 'malware', self::MAL, 14,
+                'El título o la descripción contienen palabras de spam',
+                'Es lo que Google enseña de este sitio en sus resultados. Con esas palabras ahí, el negocio aparece asociado a farmacias o a apuestas delante de sus propios clientes.',
+                'Revisar el código del sitio: ese texto lo puso algo que no debería estar ahí.',
+                (string) $s['spam']['cual'], true);
+        }
+
+        // --- Código escrito para no entenderse -------------------------------------
+        $of = $s['ofuscado'];
+        if ((int) $of['n'] > 0) {
+            // Aquí NO se afirma que haya una infección: hay librerías viejas y
+            // algún plugin que también hacen esto. Se señala para que se mire.
+            $estado = (int) $of['n'] >= 2 ? self::MAL : self::AVISO;
+            $r[] = self::h('ofuscado', 'malware', $estado, 14,
+                'Hay código escrito para que no se entienda al leerlo',
+                'Nadie ofusca el código de su propia página de contacto. Cuando aparece, suele ser algo metido por alguien de fuera; alguna vez es un plugin viejo que lo hace por costumbre. En cualquiera de los dos casos hay que mirarlo antes de descartarlo.',
+                'Que alguien revise esos bloques de código y confirme qué son. Si no se reconocen, el sitio está comprometido.',
+                implode(' · ', (array) $of['muestras']));
+        } else {
+            $r[] = self::h('ofuscado', 'malware', self::BIEN, 14,
+                'No hay código oculto ni ofuscado', '', '', 'limpio');
+        }
+
+        // --- De quién se fía el sitio -------------------------------------------------
+        $t = $s['terceros'];
+        if ((int) $t['n'] > 0) {
+            $estado = (int) $t['n'] > 8 ? self::AVISO : self::BIEN;
+            $r[] = self::h('terceros', 'malware', $estado, 8,
+                'El sitio carga código de ' . $t['n'] . ' ' . ($t['n'] === 1 ? 'dominio ajeno' : 'dominios ajenos'),
+                'No es malo por sí mismo (Google, Facebook y las tipografías vienen de fuera), pero cada uno de esos dominios puede cambiar mañana lo que envía. Cuantos más haya, más puertas hay que vigilar.',
+                'Quitar los que ya no se usen. Cada plugin desinstalado que deja su código atrás es una puerta abierta de balde.',
+                implode(', ', array_slice((array) $t['dominios'], 0, 4)));
+        }
 
         return $r;
     }

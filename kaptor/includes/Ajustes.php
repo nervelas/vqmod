@@ -80,6 +80,7 @@ final class Ajustes
             'auditor_timeout'     => '25',    // segundos por página auditada
             'auditor_max_lote'    => '50',    // sitios por tanda
             'psi_activo'          => '1',     // pedir la nota a Google
+            'malware_activo'      => '1',     // buscar código malicioso
             'psi_clave'           => '',      // clave propia: 25.000 al día
             'informe_lema'        => 'Diagnóstico técnico de tu sitio web',
             'informe_contacto'    => '',      // lo que aparece al pie del informe

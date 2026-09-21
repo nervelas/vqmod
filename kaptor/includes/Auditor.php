@@ -16,7 +16,7 @@ declare(strict_types=1);
 final class Auditor
 {
     /** Orden de las fases. La última calcula la nota y cierra. */
-    public const FASES = ['portada', 'archivos', 'recursos', 'enlaces', 'psi', 'cerrar'];
+    public const FASES = ['portada', 'archivos', 'recursos', 'enlaces', 'malware', 'psi', 'cerrar'];
 
     /** Cuánto se enseña de cada fase mientras corre. */
     public const ETIQUETAS = [
@@ -24,6 +24,7 @@ final class Auditor
         'archivos' => 'Buscando robots.txt y el mapa del sitio',
         'recursos' => 'Pesando imágenes y estilos',
         'enlaces'  => 'Comprobando enlaces',
+        'malware'  => 'Buscando código malicioso',
         'psi'      => 'Pidiendo a Google la nota de velocidad',
         'cerrar'   => 'Calculando la nota',
     ];
@@ -195,6 +196,7 @@ final class Auditor
             'archivos' => self::faseArchivos($fila, $datos),
             'recursos' => self::faseRecursos($fila, $datos),
             'enlaces'  => self::faseEnlaces($fila, $datos),
+            'malware'  => self::faseMalware($fila, $datos),
             'psi'      => self::fasePsi($fila, $datos),
             default    => $datos,
         };
@@ -411,7 +413,65 @@ final class Auditor
         return $datos;
     }
 
-    /** 5. La nota de Google (opcional). */
+    /**
+     * 5. Código malicioso.
+     *
+     * La página se vuelve a pedir dos veces más, haciéndose pasar por el robot
+     * de Google y por un celular. La infección más común en los sitios hechos
+     * con WordPress no se le enseña al visitante: se le enseña SOLO a Google
+     * (para colocar spam) o SOLO a quien entra desde el teléfono (para
+     * mandarlo a otro sitio). Sin comparar las tres respuestas no se ve.
+     */
+    private static function faseMalware(array $fila, array $datos): array
+    {
+        if (!Ajustes::activo('malware_activo', true)) { return $datos; }
+
+        $url = (string) ($datos['url'] ?? $fila['url']);
+
+        // --- Como el robot de Google ---------------------------------------
+        $g = Http::obtener($url, [
+            'timeout'   => 18,
+            'agente'    => 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+            'cabeceras' => ['Accept: text/html,application/xhtml+xml', 'Accept-Language: es-ES,es;q=0.9'],
+        ]);
+        $datos['google_consultado'] = $g['ok'];
+        if ($g['ok']) { $datos['html_google'] = $g['cuerpo']; }
+
+        // --- Como un celular, sin seguir la redirección --------------------
+        // Interesa saber SI redirige y adónde, no adónde acaba llegando.
+        $m = Http::obtener($url, [
+            'timeout'           => 15,
+            'solo_cabeceras'    => true,
+            'sin_redirecciones' => true,
+            'agente'            => 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 '
+                                 . '(KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+            'cabeceras'         => ['Accept: text/html,application/xhtml+xml', 'Accept-Language: es-ES,es;q=0.9'],
+        ]);
+
+        $destino = (string) ($m['redirige'] ?? '');
+        $fuera   = '';
+        if ($destino !== '') {
+            $hostDestino = strtolower((string) parse_url($destino, PHP_URL_HOST));
+            $hostPropio  = strtolower((string) ($datos['host'] ?? ''));
+            // Redirigir dentro del propio sitio es normal (a /es, a /inicio...).
+            // Mandar al celular a OTRO dominio no lo es nunca.
+            $mismo = $hostDestino === '' || $hostDestino === $hostPropio
+                  || str_ends_with($hostDestino, '.' . $hostPropio)
+                  || str_ends_with($hostPropio, '.' . $hostDestino);
+            if (!$mismo) { $fuera = $destino; }
+        }
+        $datos['redirige_movil'] = [
+            'consultado' => $m['codigo'] > 0,
+            'destino'    => $fuera,
+        ];
+
+        // --- ¿Google tiene el dominio marcado? ------------------------------
+        $datos['lista_negra'] = Malware::listaNegra($url);
+
+        return $datos;
+    }
+
+    /** 6. La nota de Google (opcional). */
     private static function fasePsi(array $fila, array $datos): array
     {
         $psi = Psi::analizar((string) ($datos['url'] ?? $fila['url']));
@@ -446,7 +506,7 @@ final class Auditor
 
         // El HTML crudo no se guarda: ya se exprimió y ocuparía megas por fila.
         $guardar = $datos;
-        unset($guardar['html']);
+        unset($guardar['html'], $guardar['html_google']);
 
         BD::actualizar('cr_auditorias', [
             'estado'      => 'listo',

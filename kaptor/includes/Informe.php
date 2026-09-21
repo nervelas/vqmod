@@ -15,6 +15,13 @@ declare(strict_types=1);
 final class Informe
 {
     /**
+     * Techo de la nota cuando el sitio tiene algo grave (código malicioso,
+     * contenido encubierto, marcado por Google). Por encima de esto, la nota
+     * transmitiría tranquilidad donde no la hay.
+     */
+    public const TOPE_CRITICO = 30;
+
+    /**
      * Notas de 0 a 100.
      *
      * Un hallazgo 'bien' suma su peso entero; uno 'aviso', la mitad; uno 'mal',
@@ -58,10 +65,32 @@ final class Informe
             $pesoTotal += $info['peso'];
         }
 
-        return [
-            'global' => $pesoTotal > 0 ? (int) round($acum / $pesoTotal) : 0,
-            'areas'  => $areas,
-        ];
+        $global = $pesoTotal > 0 ? (int) round($acum / $pesoTotal) : 0;
+
+        // Un sitio infectado no puede sacar buena nota por tener bien puestas
+        // las etiquetas. Cuando hay un hallazgo crítico la nota global se tapa,
+        // porque promediarlo con lo demás daría una cifra que miente.
+        if (self::hayCritico($hallazgos)) { $global = min($global, self::TOPE_CRITICO); }
+
+        return ['global' => $global, 'areas' => $areas];
+    }
+
+    /** ¿Hay algún hallazgo crítico sin resolver? */
+    public static function hayCritico(array $hallazgos): bool
+    {
+        foreach ($hallazgos as $h) {
+            if (!empty($h['critico']) && ($h['estado'] ?? '') === Chequeos::MAL) { return true; }
+        }
+        return false;
+    }
+
+    /** Los críticos, para el aviso de arriba del informe. */
+    public static function criticos(array $hallazgos): array
+    {
+        return array_values(array_filter(
+            $hallazgos,
+            static fn($h) => !empty($h['critico']) && ($h['estado'] ?? '') === Chequeos::MAL
+        ));
     }
 
     /**
@@ -80,6 +109,11 @@ final class Informe
         ));
 
         usort($malos, static function ($a, $b) {
+            // Lo crítico manda sobre todo lo demás.
+            $ca = !empty($a['critico']) && $a['estado'] === Chequeos::MAL ? 0 : 1;
+            $cb = !empty($b['critico']) && $b['estado'] === Chequeos::MAL ? 0 : 1;
+            if ($ca !== $cb) { return $ca <=> $cb; }
+
             // 'mal' siempre antes que 'aviso'.
             $ra = $a['estado'] === Chequeos::MAL ? 0 : 1;
             $rb = $b['estado'] === Chequeos::MAL ? 0 : 1;
@@ -171,6 +205,15 @@ final class Informe
     {
         $r = self::recuento($hallazgos);
         $graves = $r[Chequeos::MAL];
+
+        // Con algo crítico encima, lo demás no es la noticia.
+        $criticos = self::criticos($hallazgos);
+        if ($criticos) {
+            return 'El sitio tiene un problema grave que hay que atender antes que cualquier otra cosa: '
+                . mb_strtolower(mb_substr($criticos[0]['titulo'], 0, 1), 'UTF-8')
+                . mb_substr($criticos[0]['titulo'], 1) . '. '
+                . 'Mientras eso siga así, ninguna mejora de diseño ni de publicidad va a servir de nada.';
+        }
 
         if ($nota >= 90) {
             return 'El sitio está en muy buen estado. Lo que queda son detalles de afinado, no problemas.';

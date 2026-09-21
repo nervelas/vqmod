@@ -52,6 +52,7 @@ $nota      = (int) $fila['nota'];
 $areas     = Informe::areasDe($fila);
 $recuento  = Informe::recuento($hallazgos);
 $urgentes  = Informe::problemas($hallazgos, 3);
+$criticos  = Informe::criticos($hallazgos);
 $problemas = Informe::problemas($hallazgos);
 $porArea   = Informe::porArea($hallazgos);
 
@@ -110,6 +111,28 @@ cr_cabecera([
       </div>
       <p class="inf-fecha">Informe del <?= e(cr_fecha($fila['creado'], false)) ?></p>
     </header>
+
+    <!-- Aviso grave: va antes que nada, incluso antes de la nota --------- -->
+    <?php if ($criticos): ?>
+      <section class="inf-alarma" role="alert">
+        <span class="inf-alarma-icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3.2 1.8 20.8h20.4L12 3.2Z"/><path d="M12 9.6v4.6"/><path d="M12 17.4h.01"/>
+          </svg>
+        </span>
+        <div>
+          <h2><?= count($criticos) === 1 ? 'Atención: hay un problema grave' : 'Atención: hay ' . e((string) count($criticos)) . ' problemas graves' ?></h2>
+          <ul>
+            <?php foreach ($criticos as $c): ?>
+              <li><strong><?= e($c['titulo']) ?></strong><?= $c['valor'] !== '' ? ' — ' . e($c['valor']) : '' ?></li>
+            <?php endforeach; ?>
+          </ul>
+          <p class="inf-alarma-nota">
+            Hasta que esto se resuelva, cualquier otra mejora del sitio no va a notarse.
+          </p>
+        </div>
+      </section>
+    <?php endif; ?>
 
     <!-- Nota global -------------------------------------------------------- -->
     <section class="inf-veredicto">
@@ -279,6 +302,10 @@ cr_cabecera([
       <p class="inf-pie-nota">
         Las mediciones se tomaron en el momento indicado sobre la página de inicio del sitio.
         Los valores de velocidad pueden variar según la conexión y la hora.
+        La búsqueda de código malicioso se hace desde fuera, sobre lo que el sitio sirve
+        al público: detecta lo que llega al navegador del visitante, pero no puede ver los
+        archivos del servidor. No encontrar nada aquí no equivale a un certificado de
+        que el sitio esté limpio por dentro.
       </p>
     </footer>
 

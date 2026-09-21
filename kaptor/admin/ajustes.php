@@ -29,7 +29,7 @@ const CAMPOS_BOOL = [
     'campanas_activas', 'seguimiento_aperturas', 'seguimiento_clics',
     'guardar_historial', 'buscar_activo',
     'redes_sociales', 'seguir_redes', 'buscar_redes',
-    'auditor_activo', 'psi_activo',
+    'auditor_activo', 'psi_activo', 'malware_activo',
 ];
 /** Números con su rango permitido: clave => [mínimo, máximo]. */
 const CAMPOS_NUM = [
@@ -622,8 +622,11 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
     fila('Nota de velocidad de Google', 'Añade al informe la puntuación oficial de PageSpeed Insights y los datos de usuarios reales. Si se apaga, el auditor sigue midiendo por su cuenta.',
         interruptor('psi_activo', Ajustes::activo('psi_activo', true), 'Consultar a Google'));
 
-    fila('Clave de Google (PageSpeed Insights)',
-        'Gratuita y muy recomendable: son 25.000 consultas al día. Se saca en <b>console.cloud.google.com</b> &rarr; crear proyecto &rarr; activar «PageSpeed Insights API» &rarr; Credenciales &rarr; Crear clave de API. Sin clave, Google casi siempre responde que la cuota está agotada.',
+    fila('Buscar código malicioso', 'Revisa si el sitio tiene virus, enlaces de spam escondidos o si Google lo tiene marcado como peligroso. Pide la página tres veces (como visitante, como Google y como celular) para pillar las infecciones que solo se le enseñan a uno de los tres.',
+        interruptor('malware_activo', Ajustes::activo('malware_activo', true), 'Buscar código malicioso'));
+
+    fila('Clave de Google (PageSpeed y listas de seguridad)',
+        'Gratuita y muy recomendable. Se saca en <b>console.cloud.google.com</b> &rarr; crear proyecto &rarr; Credenciales &rarr; Crear clave de API. Con la MISMA clave, activa los dos servicios: <b>PageSpeed Insights API</b> (nota de velocidad) y <b>Safe Browsing API</b> (saber si Google tiene el sitio marcado como peligroso). Sin clave, ni lo uno ni lo otro.',
         '<input type="text" name="psi_clave" class="campo" maxlength="120" autocomplete="off" spellcheck="false" value="' . e($a['psi_clave'] ?? '') . '" placeholder="AIza...">');
 
     fila('Tiempo de espera por página', 'Segundos que se le dan a cada sitio antes de darlo por caído.',

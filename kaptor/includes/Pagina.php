@@ -408,6 +408,112 @@ final class Pagina
         return $r;
     }
 
+    /**
+     * Marcos incrustados, diciendo si están escondidos y por qué.
+     *
+     * Lo usa la búsqueda de código malicioso: un marco de tamaño cero que carga
+     * otro sitio es la forma clásica de colgar contenido ajeno de una página
+     * sin que el dueño se entere.
+     *
+     * @return array<int,array{src:string,oculto:bool,motivo:string}>
+     */
+    public function iframes(): array
+    {
+        $salida = [];
+
+        $mirar = function (string $src, string $estilo, string $ancho, string $alto) use (&$salida): void {
+            if ($src === '') { return; }
+            $abs = Http::urlAbsoluta($src, $this->base);
+            if ($abs === '') { return; }
+
+            $motivo = '';
+            $e = strtolower(preg_replace('~\s+~', '', $estilo) ?? '');
+
+            if ($ancho !== '' && (int) $ancho <= 2 && $alto !== '' && (int) $alto <= 2) {
+                $motivo = 'mide ' . (int) $ancho . '×' . (int) $alto . ' píxeles';
+            } elseif (str_contains($e, 'display:none')) {
+                $motivo = 'está oculto con display:none';
+            } elseif (str_contains($e, 'visibility:hidden')) {
+                $motivo = 'está oculto con visibility:hidden';
+            } elseif (preg_match('~(width|height):0(px|%)?(;|$)~', $e)) {
+                $motivo = 'tiene tamaño cero';
+            } elseif (preg_match('~(left|top):-\d{3,}~', $e)) {
+                $motivo = 'está colocado fuera de la pantalla';
+            } elseif (str_contains($e, 'opacity:0')) {
+                $motivo = 'es completamente transparente';
+            }
+
+            $salida[] = ['src' => $abs, 'oculto' => $motivo !== '', 'motivo' => $motivo];
+        };
+
+        if ($this->xp) {
+            foreach ($this->xp->query('//iframe') ?: [] as $f) {
+                /** @var DOMElement $f */
+                $mirar(trim($f->getAttribute('src')), $f->getAttribute('style'),
+                       $f->getAttribute('width'), $f->getAttribute('height'));
+            }
+            return $salida;
+        }
+
+        if (preg_match_all('~<iframe\b([^>]*)>~i', $this->html, $m)) {
+            foreach ($m[1] as $attrs) {
+                $at = static fn(string $n): string
+                    => preg_match('~\b' . $n . '\s*=\s*["\']([^"\']*)~i', $attrs, $x) ? $x[1] : '';
+                $mirar($at('src'), $at('style'), $at('width'), $at('height'));
+            }
+        }
+        return $salida;
+    }
+
+    /**
+     * Bloques escondidos a la vista, con los enlaces que llevan dentro.
+     *
+     * Esconder cosas es de lo más normal (menús desplegables, ventanas,
+     * pestañas), así que esto NO significa nada por sí solo: quien lo usa
+     * decide si importa mirando cuántos enlaces hacia fuera hay dentro.
+     *
+     * @return array<int,array{enlaces:string[],texto:string,motivo:string}>
+     */
+    public function bloquesOcultos(): array
+    {
+        if (!$this->xp) { return []; }
+
+        $salida = [];
+        // Solo los contenedores: mirar cada etiqueta escondida del documento
+        // costaría un mundo y devolvería lo mismo repetido.
+        foreach ($this->xp->query('//div[@style] | //span[@style] | //p[@style] | //section[@style]') ?: [] as $nodo) {
+            /** @var DOMElement $nodo */
+            $e = strtolower(preg_replace('~\s+~', '', $nodo->getAttribute('style')) ?? '');
+
+            $motivo = '';
+            if (str_contains($e, 'display:none'))            { $motivo = 'display:none'; }
+            elseif (str_contains($e, 'visibility:hidden'))   { $motivo = 'visibility:hidden'; }
+            elseif (preg_match('~text-indent:-\d{3,}~', $e)) { $motivo = 'texto desplazado fuera'; }
+            elseif (preg_match('~(left|top|margin-left|margin-top):-\d{4,}~', $e)) { $motivo = 'colocado fuera de la pantalla'; }
+            elseif (preg_match('~font-size:0(px|em|rem)?(;|$)~', $e)) { $motivo = 'letra de tamaño cero'; }
+            elseif (preg_match('~height:0(px)?;?.*overflow:hidden~', $e)) { $motivo = 'alto cero con desbordamiento oculto'; }
+
+            if ($motivo === '') { continue; }
+
+            $enlaces = [];
+            foreach ($this->xp->query('.//a[@href]', $nodo) ?: [] as $a) {
+                /** @var DOMElement $a */
+                $abs = Http::urlAbsoluta($a->getAttribute('href'), $this->base);
+                if ($abs !== '') { $enlaces[] = $abs; }
+            }
+            if (!$enlaces) { continue; }
+
+            $salida[] = [
+                'enlaces' => $enlaces,
+                'texto'   => self::limpiar(mb_substr($nodo->textContent, 0, 1500)),
+                'motivo'  => $motivo,
+            ];
+            // Con unos pocos bloques basta para saber si el sitio está infectado.
+            if (count($salida) >= 12) { break; }
+        }
+        return $salida;
+    }
+
     /** Número de tablas y de listas: es lo que una IA cita con facilidad. */
     public function tablasYListas(): array
     {

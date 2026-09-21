@@ -134,6 +134,21 @@
 .inf-marca-lema{margin:2px 0 0;color:var(--suave);font-size:.84rem}
 .inf-fecha{margin:0;color:var(--suave);font-size:.84rem}
 
+/* --- Aviso grave: lo primero que se ve ---------------------------------- */
+.inf-alarma{
+  display:flex;gap:16px;align-items:flex-start;
+  margin-top:24px;padding:20px 22px;border-radius:16px;
+  background:color-mix(in srgb, var(--rojo) 12%, transparent);
+  border:1px solid color-mix(in srgb, var(--rojo) 46%, transparent);
+  border-left:5px solid var(--rojo);
+}
+.inf-alarma-icono{flex:0 0 auto;width:28px;height:28px;color:var(--rojo);margin-top:2px}
+.inf-alarma-icono svg{width:100%;height:100%;display:block}
+.inf-alarma h2{margin:0 0 10px;font-size:1.12rem;color:var(--rojo)}
+.inf-alarma ul{margin:0;padding-left:20px}
+.inf-alarma li{margin-bottom:6px;line-height:1.5;font-size:.95rem}
+.inf-alarma-nota{margin:12px 0 0;font-size:.88rem;color:var(--suave);line-height:1.5}
+
 /* --- Nota global ------------------------------------------------------- */
 .inf-veredicto{
   display:flex;gap:32px;align-items:center;flex-wrap:wrap;
@@ -165,7 +180,7 @@
 /* Las seis áreas en una sola fila. Con auto-fit se partían 5 + 1 y la
    huérfana del final quedaba fea; el número de columnas se fija a mano. */
 .inf-areas{
-  display:grid;grid-template-columns:repeat(6,1fr);gap:12px;
+  display:grid;grid-template-columns:repeat(7,1fr);gap:10px;
   margin:10px 0 44px;
 }
 @media (max-width:900px){ .inf-areas{grid-template-columns:repeat(3,1fr)} }
@@ -348,6 +363,12 @@
     box-shadow:none !important;
   }
   .inf-grupo-cab{background:#F4F5F7 !important}
+  .inf-alarma{
+    background:#FDF2F2 !important;border-color:#D64545 !important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+  .inf-alarma h2,.inf-alarma-icono{color:#B3261E !important}
+  .inf-alarma li{color:#2A2F38 !important}
   .inf-dl{background:#DADDE2 !important}
   .inf-cierre{background:#FAF6EC !important;border-color:#C9A227 !important}
   .inf-tabla .col-mia{background:#FAF6EC !important}
@@ -373,11 +394,11 @@
 
   /* Nada de cortar un hallazgo por la mitad entre dos hojas. */
   .inf-grupo,.inf-item,.inf-urgente-lista li,.inf-cierre,.inf-dl > div,
-  .inf-veredicto,.inf-areas{break-inside:avoid;page-break-inside:avoid}
+  .inf-veredicto,.inf-areas,.inf-alarma{break-inside:avoid;page-break-inside:avoid}
   h2,h3{break-after:avoid;page-break-after:avoid}
   .inf-detalle,.inf-comparativa{break-before:auto}
 
-  .inf-areas{grid-template-columns:repeat(6,1fr) !important;gap:7px}
+  .inf-areas{grid-template-columns:repeat(7,1fr) !important;gap:6px}
   .inf-area{padding:10px 9px}
   .inf-area-nota{font-size:1.25rem}
   .inf-area-nombre{font-size:.68rem}

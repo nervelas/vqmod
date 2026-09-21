@@ -1,4 +1,4 @@
-# Kaptor 4.0
+# Kaptor 4.1
 
 Extractor profesional de **correos electrónicos y números de WhatsApp** a partir
 de una URL, con **módulo de campañas de correo** y **auditor web** incluidos:
@@ -209,22 +209,68 @@ Se llega desde **Auditar web** en el menú, o directamente desde el botón
 
 ### Qué revisa
 
-Unas 45 comprobaciones repartidas en seis áreas, cada una con su nota de 0 a
+Más de 50 comprobaciones repartidas en siete áreas, cada una con su nota de 0 a
 100 y con un peso distinto en la nota global:
 
 | Área | Peso | Algunos de los puntos |
 |---|---|---|
-| Velocidad | 22 | Respuesta del servidor, compresión, caché, HTTP/2, peso real de las imágenes, código que frena el dibujado |
-| Celular | 20 | Etiqueta *viewport*, si los estilos se adaptan de verdad, anchos fijos, bloqueo del zoom |
-| Google | 20 | `noindex`, título, descripción, encabezados, texto alternativo, canonical, robots.txt, mapa del sitio, enlaces rotos, cómo se ve al compartir por WhatsApp |
-| Seguridad | 16 | HTTPS, **días que faltan para que venza el certificado**, redirección desde `http://`, contenido mixto, formularios sin cifrar, cabeceras de protección, versiones a la vista |
-| Contacto y ventas | 14 | Botón de WhatsApp, teléfono que se marca de un toque, formulario, dirección y mapa, redes, llamado a la acción, si el sitio mide sus visitas |
-| Visibilidad en IA | 8 | Si el `robots.txt` **bloquea a ChatGPT, Claude, Perplexity o Gemini**, datos estructurados, ficha del negocio, preguntas frecuentes, `llms.txt` |
+| Velocidad | 19 | Respuesta del servidor, compresión, caché, HTTP/2, peso real de las imágenes, código que frena el dibujado |
+| Celular | 18 | Etiqueta *viewport*, si los estilos se adaptan de verdad, anchos fijos, bloqueo del zoom |
+| Google | 18 | `noindex`, título, descripción, encabezados, texto alternativo, canonical, robots.txt, mapa del sitio, enlaces rotos, cómo se ve al compartir por WhatsApp |
+| **Código malicioso** | 14 | Ver la sección siguiente |
+| Seguridad | 13 | HTTPS, **días que faltan para que venza el certificado**, redirección desde `http://`, contenido mixto, formularios sin cifrar, cabeceras de protección, versiones a la vista |
+| Contacto y ventas | 12 | Botón de WhatsApp, teléfono que se marca de un toque, formulario, dirección y mapa, redes, llamado a la acción, si el sitio mide sus visitas |
+| Visibilidad en IA | 6 | Si el `robots.txt` **bloquea a ChatGPT, Claude, Perplexity o Gemini**, datos estructurados, ficha del negocio, preguntas frecuentes, `llms.txt` |
 
 Cada hallazgo no se queda en lo técnico: dice **qué le cuesta eso al negocio**
 y **cómo se arregla**. Un informe que dice «falta la meta description» no mueve
 a nadie; uno que dice «Google se está inventando el texto que aparece bajo tu
 nombre en los resultados» sí.
+
+### Búsqueda de código malicioso
+
+El sitio se pide **tres veces**: como visitante, como el robot de Google y como
+un celular. Luego se comparan las tres respuestas.
+
+Esto no es un capricho. La infección más frecuente en los sitios hechos con
+WordPress **no se le enseña al visitante**: se le enseña solo a Google (para
+colocar spam en su nombre) o solo a quien entra desde el teléfono (para
+mandarlo a otro sitio). El dueño entra a su página desde la computadora, la ve
+perfecta, y puede pasar meses sin enterarse de nada.
+
+Qué se detecta:
+
+- **Si Google tiene el dominio marcado como peligroso.** Es el dato de más peso
+  del informe entero y el único que viene de una autoridad. Cuando Google marca
+  un sitio, Chrome, Firefox y Safari enseñan una pantalla roja a toda página
+  antes de dejar entrar.
+- **Contenido encubierto**: a Google se le sirve algo distinto que a las personas.
+- **Redirección solo para celulares** hacia otro dominio.
+- **Enlaces de spam escondidos** (bloques invisibles llenos de enlaces a sitios
+  de apuestas o de farmacia, para aprovechar el prestigio del dominio).
+- **Marcos invisibles** que cargan otros sitios.
+- **Mineros de criptomonedas** metidos en la página.
+- **Código ofuscado**, escrito para que no se entienda al leerlo.
+- **Defacements** y palabras de spam en el título o la descripción.
+- De cuántos **dominios ajenos** carga código el sitio.
+
+Cuando aparece algo de esto, el informe cambia de tono: sale un aviso rojo
+antes que nada, la nota global se tapa en 30 por alto (un sitio infectado no
+puede sacar buena nota por tener bien puestas las etiquetas) y el veredicto lo
+dice en la primera línea.
+
+**Qué NO puede ver, y conviene tenerlo claro antes de prometerle nada a un
+cliente:** Kaptor mira el sitio desde fuera, como un visitante cualquiera. Ve
+lo que el servidor le sirve al público, que es donde acaba casi todo el código
+malicioso. **No** ve puertas traseras en los archivos PHP del servidor, ni
+bases de datos comprometidas, ni correo saliendo de un buzón robado. Por eso el
+informe nunca afirma que un sitio esté limpio: dice que no se encontró nada
+desde fuera, que es lo único que se puede sostener. Esa advertencia va impresa
+al pie de cada informe.
+
+Para consultar la lista de Google hay que activar **Safe Browsing API** en el
+mismo proyecto y con la misma clave que PageSpeed (ver abajo). Sin clave, todo
+lo demás se sigue revisando; solo falta la consulta a la lista.
 
 ### La nota de Google (opcional pero muy recomendable)
 
@@ -233,9 +279,10 @@ informe añade la puntuación oficial de Google y los tiempos de los usuarios
 reales del sitio. Son **25.000 consultas al día sin coste**:
 
 1. Entra en `console.cloud.google.com` y crea un proyecto.
-2. Activa el servicio **PageSpeed Insights API**.
+2. Activa **dos** servicios en ese proyecto: **PageSpeed Insights API** (nota de
+   velocidad) y **Safe Browsing API** (lista de sitios peligrosos).
 3. *Credenciales → Crear credenciales → Clave de API*.
-4. Pega la clave en *Ajustes → Auditor*.
+4. Pega la clave en *Ajustes → Auditor*. La misma clave sirve para los dos.
 
 Sin clave el auditor sigue funcionando con sus propias mediciones; lo único que
 pasa es que Google suele responder que la cuota compartida está agotada.

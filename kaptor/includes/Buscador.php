@@ -101,7 +101,7 @@ final class Buscador
     /**
      * Busca y devuelve las webs encontradas.
      *
-     * @return array{ok:bool,urls?:string[],motor?:string,error?:string,detalle?:string}
+     * @return array{ok:bool,urls?:string[],motor?:string,pais?:string,error?:string,detalle?:string}
      */
     public static function buscar(string $consulta, int $resultados = 50, array $extensiones = []): array
     {
@@ -155,10 +155,10 @@ final class Buscador
 
                 // Si el motor no responde o pide captcha, no tiene sentido
                 // probar con él las demás consultas dirigidas.
-                if (!$resp['ok'] || $resp['cuerpo'] === '')  { $caido = true; break; }
-                if (self::pareceBloqueo($resp['cuerpo']))    { $caido = true; break; }
+                $leido = self::leerRespuesta($motor, $resp);
+                if ($leido['caido']) { $caido = true; break; }
 
-                $nuevas = self::enlaces($motor, $resp['cuerpo']);
+                $nuevas = $leido['urls'];
                 if (!$nuevas) { break; }
 
                 foreach ($nuevas as $u) { $urls[$u] = true; }
@@ -183,7 +183,10 @@ final class Buscador
 
             $urls = array_slice($lista, 0, $resultados);
             if ($urls) {
-                return ['ok' => true, 'urls' => $urls, 'motor' => $nombre];
+                // El país se devuelve para poder decirlo en pantalla: si los
+                // resultados salen de otro sitio, es lo primero que hay que
+                // mirar, y el usuario no tiene por qué adivinarlo.
+                return ['ok' => true, 'urls' => $urls, 'motor' => $nombre, 'pais' => self::pais()];
             }
         }
 
@@ -192,7 +195,34 @@ final class Buscador
             'error'   => 'Ningún buscador devolvió resultados. Prueba de nuevo en unos minutos, '
                        . 'cambia de buscador en Ajustes → Motor, o pega directamente la lista de webs.',
             'detalle' => implode(' · ', $diagnostico),
+            'pais'    => self::pais(),
         ];
+    }
+
+    /**
+     * Qué hacer con lo que contestó un buscador.
+     *
+     * Está aparte por dos razones. Una, que el bucle de arriba se lee de un
+     * vistazo. Y otra más importante: así esta decisión —la que separa "aquí
+     * hay webs" de "este motor está caído"— se puede probar con respuestas
+     * de mentira, sin depender de que un buscador real conteste.
+     *
+     * `caido` significa "no insistas con este motor": ni con otra página ni
+     * con otra consulta. Una página de captcha es exactamente eso, y además
+     * nunca debe leerse como lista de webs: lleva enlaces, pero son suyos.
+     *
+     * @param array{ok:bool,cuerpo:string,codigo:int} $resp
+     * @return array{caido:bool,urls:string[]}
+     */
+    private static function leerRespuesta(string $motor, array $resp): array
+    {
+        if (empty($resp['ok']) || ($resp['cuerpo'] ?? '') === '') {
+            return ['caido' => true, 'urls' => []];
+        }
+        if (self::pareceBloqueo((string) $resp['cuerpo'])) {
+            return ['caido' => true, 'urls' => []];
+        }
+        return ['caido' => false, 'urls' => self::enlaces($motor, (string) $resp['cuerpo'])];
     }
 
     /** Resume en una línea qué contestó un buscador. */
@@ -337,48 +367,170 @@ final class Buscador
     /**
      * Saca las webs de una página de resultados.
      *
+     * Cada buscador tiene su propio lector, acotado a la zona de resultados.
+     * Esto antes era un solo `preg_match_all` de todos los `<a href>` de la
+     * página, y se tragaba el menú, el pie, los anuncios, las "búsquedas
+     * relacionadas" y los recuadros de diccionario que Bing pone al lado. Una
+     * búsqueda de clínicas dentales devolvía dictionary.com y el formulario de
+     * acceso de Microsoft antes que la primera clínica.
+     *
+     * El orden importa y se respeta: el buscador ya los puso por relevancia.
+     *
      * @return string[]
      */
     private static function enlaces(string $motor, string $html): array
     {
-        $encontradas = [];
-
-        // RSS de Bing: los enlaces van dentro de <link> en el XML.
+        // El RSS se reconoce por el cuerpo, no solo por el nombre del motor:
+        // Bing responde en XML también cuando se le pide por otra vía.
         if (str_contains($motor, 'rss') || str_contains(mb_substr($html, 0, 500), '<rss')) {
-            if (preg_match_all('~<link>\s*(?:<!\[CDATA\[)?\s*(https?://[^<\]\s]+)~i', $html, $mr)) {
-                foreach ($mr[1] as $u) { $encontradas[] = $u; }
-            }
+            $crudas = self::deRss($html);
+        } else {
+            $crudas = match (true) {
+                str_starts_with($motor, 'ddg')  => self::deDuckDuckGo($html),
+                str_starts_with($motor, 'bing') => self::deBing($html),
+                $motor === 'mojeek'             => self::deMojeek($html),
+                default                         => self::deGoogle($html),
+            };
         }
 
-        // DuckDuckGo envuelve los enlaces en /l/?uddg=<url codificada>.
-        if (preg_match_all('~uddg=([^&"\']+)~i', $html, $m)) {
-            foreach ($m[1] as $codificada) {
-                $encontradas[] = rawurldecode($codificada);
-            }
-        }
-        // Google, en su HTML sin JavaScript, usa /url?q=<url>&sa=...
-        if (preg_match_all('~/url\?q=(https?[^&"\']+)~i', $html, $m)) {
-            foreach ($m[1] as $codificada) {
-                $encontradas[] = rawurldecode($codificada);
-            }
-        }
-        // Bing a veces entrega sus resultados a través de un redirector propio:
-        // .../ck/a?...&u=a1<url en base64url>. Se descifra para quedarse con
-        // la dirección de verdad.
-        if (preg_match_all('~[?&]u=a1([A-Za-z0-9_\-]+)~', $html, $mb)) {
-            foreach ($mb[1] as $codificada) {
-                $plano = base64_decode(strtr($codificada, '-_', '+/') . str_repeat('=', (4 - strlen($codificada) % 4) % 4), true);
-                if (is_string($plano) && preg_match('~^https?://~i', $plano)) { $encontradas[] = $plano; }
-            }
-        }
+        // Si el lector propio no reconoce nada, el buscador cambió de formato.
+        // Antes que devolver la página entera se prueba una regla estrecha: los
+        // enlaces que son el título de un resultado, que en todos los
+        // buscadores van dentro de un <h2> o un <h3>.
+        if (!$crudas) { $crudas = self::deTitulares($html); }
 
-        // Bing y el resto: enlaces normales dentro de los resultados.
-        if (preg_match_all('~<a[^>]+href="(https?://[^"]+)"~i', $html, $m)) {
-            foreach ($m[1] as $u) { $encontradas[] = html_entity_decode($u, ENT_QUOTES | ENT_HTML5, 'UTF-8'); }
-        }
+        return self::depurar($crudas);
+    }
 
+    /** Bing en RSS: una dirección por <item>, sin la del propio canal. */
+    private static function deRss(string $xml): array
+    {
+        $urls = [];
+        if (preg_match_all('~<item\b.*?</item>~is', $xml, $items)) {
+            foreach ($items[0] as $item) {
+                if (preg_match('~<link>\s*(?:<!\[CDATA\[)?\s*(https?://[^<\]\s]+)~i', $item, $m)) {
+                    $urls[] = html_entity_decode($m[1], ENT_QUOTES | ENT_XML1 | ENT_HTML5, 'UTF-8');
+                }
+            }
+        }
+        return $urls;
+    }
+
+    /**
+     * DuckDuckGo: todos sus resultados pasan por /l/?uddg=<dirección>.
+     *
+     * Es el caso cómodo: ese envoltorio solo lo llevan los resultados, así que
+     * basta con leerlo para no coger nada de fuera.
+     */
+    private static function deDuckDuckGo(string $html): array
+    {
+        $urls = [];
+        if (preg_match_all('~uddg=([^&"\'\s]+)~i', $html, $m)) {
+            foreach ($m[1] as $cod) { $urls[] = rawurldecode($cod); }
+        }
+        // La versión "lite" a veces enlaza directo, con su clase propia.
+        if (preg_match_all('~<a[^>]+class="[^"]*result(?:-link|__a)[^"]*"[^>]+href="(https?://[^"]+)"~i', $html, $m2)) {
+            foreach ($m2[1] as $u) { $urls[] = html_entity_decode($u, ENT_QUOTES | ENT_HTML5, 'UTF-8'); }
+        }
+        return $urls;
+    }
+
+    /**
+     * Bing: cada resultado es un <li class="b_algo">, y dentro el titular.
+     *
+     * Los <li class="b_ad"> son anuncios y se quedan fuera: el que paga por
+     * estar arriba no es el que mejor responde a la búsqueda.
+     */
+    private static function deBing(string $html): array
+    {
+        $urls = [];
+        if (!preg_match_all('~<li[^>]+class="[^"]*\bb_algo\b[^"]*".*?</li>~is', $html, $bloques)) {
+            return $urls;
+        }
+        foreach ($bloques[0] as $bloque) {
+            // Bing entrega parte de sus resultados por un redirector propio,
+            // .../ck/a?...&u=a1<dirección en base64url>.
+            if (preg_match('~[?&]u=a1([A-Za-z0-9_\-]+)~', $bloque, $mb)) {
+                $plano = self::deBase64Url($mb[1]);
+                if ($plano !== '') { $urls[] = $plano; continue; }
+            }
+            if (preg_match('~<h2[^>]*>.*?<a[^>]+href="(https?://[^"]+)"~is', $bloque, $m)) {
+                $urls[] = html_entity_decode($m[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            }
+        }
+        return $urls;
+    }
+
+    /** Mojeek: resultados en <ul class="results-standard">, titular en <h2>. */
+    private static function deMojeek(string $html): array
+    {
+        $urls = [];
+        $zona = $html;
+        if (preg_match('~<ul[^>]+class="[^"]*results-standard[^"]*".*?</ul>~is', $html, $mz)) {
+            $zona = $mz[0];
+        }
+        if (preg_match_all('~<h2[^>]*>\s*<a[^>]+href="(https?://[^"]+)"~i', $zona, $m)) {
+            foreach ($m[1] as $u) { $urls[] = html_entity_decode($u, ENT_QUOTES | ENT_HTML5, 'UTF-8'); }
+        }
+        return $urls;
+    }
+
+    /**
+     * Google: en su HTML sin JavaScript los resultados van por /url?q=.
+     *
+     * Los anuncios pasan por /aclk? y no por /url?q=, así que no entran solos.
+     */
+    private static function deGoogle(string $html): array
+    {
+        $urls = [];
+        if (preg_match_all('~/url\?q=(https?[^&"\'\s]+)~i', $html, $m)) {
+            foreach ($m[1] as $cod) { $urls[] = rawurldecode($cod); }
+        }
+        // Google también sirve una versión con el enlace directo y el titular
+        // dentro, en un <h3>.
+        if (preg_match_all('~<a[^>]+href="(https?://[^"]+)"[^>]*>\s*(?:<[^>]+>\s*)*<h3~i', $html, $m2)) {
+            foreach ($m2[1] as $u) { $urls[] = html_entity_decode($u, ENT_QUOTES | ENT_HTML5, 'UTF-8'); }
+        }
+        return $urls;
+    }
+
+    /**
+     * Red de seguridad: el enlace que es el título de un resultado.
+     *
+     * Solo se usa cuando el lector del motor no reconoce nada, que es lo que
+     * pasa cuando un buscador cambia su HTML. Sigue siendo estrecha: un menú
+     * o un pie de página no van dentro de un <h2> ni de un <h3>.
+     */
+    private static function deTitulares(string $html): array
+    {
+        $urls = [];
+        if (preg_match_all('~<h[23][^>]*>\s*(?:<[^>]+>\s*)*<a[^>]+href="(https?://[^"]+)"~i', $html, $m)) {
+            foreach ($m[1] as $u) { $urls[] = html_entity_decode($u, ENT_QUOTES | ENT_HTML5, 'UTF-8'); }
+        }
+        if (preg_match_all('~<a[^>]+href="(https?://[^"]+)"[^>]*>\s*(?:<[^>]+>\s*)*<h[23]~i', $html, $m2)) {
+            foreach ($m2[1] as $u) { $urls[] = html_entity_decode($u, ENT_QUOTES | ENT_HTML5, 'UTF-8'); }
+        }
+        return $urls;
+    }
+
+    /** Descifra la dirección que Bing esconde en base64url. */
+    private static function deBase64Url(string $cod): string
+    {
+        $plano = base64_decode(strtr($cod, '-_', '+/') . str_repeat('=', (4 - strlen($cod) % 4) % 4), true);
+        return is_string($plano) && preg_match('~^https?://~i', $plano) ? $plano : '';
+    }
+
+    /**
+     * Quita lo que no sirve y deja una sola dirección por web.
+     *
+     * @param string[] $encontradas
+     * @return string[]
+     */
+    private static function depurar(array $encontradas): array
+    {
         $limpias = [];
         $porHost = [];
+
         foreach ($encontradas as $u) {
             $u = trim($u);
             if ($u === '' || !preg_match('~^https?://~i', $u)) { continue; }

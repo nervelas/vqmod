@@ -72,8 +72,17 @@ switch ($accion) {
             $res = Rastreador::iniciarVarias(
                 $hallazgo['urls'], true, Auth::id(), 'Búsqueda: ' . $consulta, $objetivoTxt
             );
-            $aviso = count($hallazgo['urls']) . ' webs encontradas en ' . $hallazgo['motor']
-                   . ' para «' . $consulta . '».';
+            // Se dice quién contestó y desde qué país. Sin esto, una búsqueda
+            // que devuelve webs de otro continente parece que funciona, y el
+            // usuario no tiene forma de saber dónde mirar.
+            $cuantas = count($hallazgo['urls']);
+            $aviso   = $cuantas . ' webs encontradas en ' . $hallazgo['motor']
+                     . ', buscando desde ' . strtoupper((string) ($hallazgo['pais'] ?? '?'))
+                     . ', para «' . $consulta . '».';
+            if ($cuantas < 5) {
+                $aviso .= ' Son pocas: si no son del país que esperabas, revísalo en'
+                        . ' Ajustes → Motor → «País de la búsqueda».';
+            }
         } elseif (count($lineas) > 1) {
             $res   = Rastreador::iniciarVarias($lineas, true, Auth::id(), count($lineas) . ' webs', $objetivoTxt);
             $aviso = ($res['aceptadas'] ?? 0) . ' webs en la lista'

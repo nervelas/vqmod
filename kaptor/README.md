@@ -1,4 +1,4 @@
-# Kaptor 5.2
+# Kaptor 5.3
 
 Caja de herramientas para vender servicios web. Dos mitades:
 
@@ -98,6 +98,10 @@ la primera vez que se abre una página.
 - **Una búsqueda.** Escribe unas palabras (`colegios privados Guatemala`) o
   pega el enlace de una búsqueda ya hecha en Google, Bing o DuckDuckGo: Kaptor
   entra en cada web de los resultados y rastrea por dentro.
+
+  Kaptor dice siempre **qué buscador contestó, desde qué país y cuántas webs
+  trajo**. Y si ninguno contesta, dice exactamente qué respondió cada uno
+  (bloqueo, captcha, sin conexión) en vez de dejar una lista vacía sin explicar.
 
   > **El país importa, y mucho.** Los buscadores devuelven cosas muy distintas
   > según desde dónde se les pregunte. Se elige en *Panel → Ajustes → Motor →

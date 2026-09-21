@@ -231,6 +231,106 @@
 .inf-arreglo{margin:10px 0 0;color:var(--suave);line-height:1.55;font-size:.88rem}
 .inf-arreglo strong{color:var(--oro)}
 
+/* --- El camino al 100 % ------------------------------------------------------- */
+.inf-modo{
+  display:inline-block;margin-left:10px;padding:2px 9px;border-radius:999px;
+  /* 0,75rem = 12 px. Es el suelo de legibilidad del proyecto y no se baja
+     de ahí ni en las etiquetas pequeñas. */
+  font-family:var(--fuente,inherit);font-size:.75rem;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;
+  background:color-mix(in srgb, var(--oro) 16%, transparent);
+  border:1px solid color-mix(in srgb, var(--oro) 40%, transparent);
+}
+.inf-plan{margin-bottom:46px}
+.plan-barra{
+  height:10px;border-radius:999px;overflow:hidden;margin:4px 0 12px;
+  background:color-mix(in srgb, var(--texto) 11%, transparent);
+}
+.plan-hecho{
+  display:block;height:100%;border-radius:999px;
+  background:linear-gradient(90deg, var(--oro), var(--neon, var(--oro)));
+}
+.plan-cuenta{
+  display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;
+  margin:0 0 22px;color:var(--suave);font-size:.9rem;
+}
+.plan-cuenta strong{font-size:1.25rem;color:var(--texto);font-variant-numeric:tabular-nums}
+.plan-cuenta span{color:var(--suave);font-weight:600}
+.plan-meta{color:var(--verde) !important}
+
+.plan-lista{list-style:none;margin:0;padding:0;counter-reset:paso}
+.plan-paso{
+  display:flex;gap:15px;align-items:flex-start;
+  padding:13px 15px;border:1px solid var(--borde);border-radius:13px;
+  background:var(--panel);margin-bottom:9px;
+}
+.plan-paso.est-mal{border-left:4px solid var(--rojo)}
+.plan-paso.est-aviso{border-left:4px solid var(--ambar)}
+.plan-critico{border-color:color-mix(in srgb, var(--rojo) 46%, transparent)}
+.plan-puntos{
+  flex:0 0 auto;min-width:56px;text-align:center;
+  padding:5px 9px;border-radius:9px;
+  font-weight:700;font-size:1rem;font-variant-numeric:tabular-nums;
+  color:var(--verde);
+  background:color-mix(in srgb, var(--verde) 13%, transparent);
+  border:1px solid color-mix(in srgb, var(--verde) 34%, transparent);
+}
+.plan-cuerpo{flex:1 1 auto;min-width:0}
+.plan-titulo{margin:0;font-weight:600;font-size:.95rem;line-height:1.45}
+.plan-arreglo{margin:5px 0 0;font-size:.86rem;line-height:1.5;color:var(--suave)}
+
+/* --- El archivo de correcciones ----------------------------------------------- */
+.corr-intro{margin:28px 0 34px}
+.corr-intro h1{margin:0 0 10px;font-size:clamp(1.5rem,3.6vw,2.1rem)}
+.corr-bloque{margin-bottom:44px}
+.corr-cab{display:flex;gap:14px;align-items:flex-start;margin-bottom:18px}
+.corr-n{
+  flex:0 0 auto;width:32px;height:32px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:1.02rem;
+  color:var(--oro);
+  background:color-mix(in srgb, var(--oro) 14%, transparent);
+  border:1px solid color-mix(in srgb, var(--oro) 36%, transparent);
+}
+.corr-cab h2{margin:2px 0 4px;font-size:1.22rem}
+.corr-cab .inf-sub{margin:0}
+
+.corr-item{
+  border:1px solid var(--borde);border-radius:15px;background:var(--panel);
+  padding:17px 19px;margin-bottom:14px;
+}
+.corr-item h3{margin:0 0 6px;font-size:1.02rem;line-height:1.35}
+.corr-donde{margin:0 0 12px;font-size:.87rem;color:var(--suave)}
+.corr-nota{margin:11px 0 0;font-size:.86rem;line-height:1.55;color:var(--suave)}
+.corr-nota::before{content:'→ ';color:var(--oro)}
+
+.corr-codigo{position:relative}
+.corr-codigo pre{
+  margin:0;padding:15px 16px;overflow-x:auto;
+  border:1px solid var(--borde);border-radius:12px;
+  background:color-mix(in srgb, var(--texto) 5%, transparent);
+  font-family:var(--mono,ui-monospace,monospace);font-size:.82rem;line-height:1.6;
+  white-space:pre;
+}
+[data-tema="claro"] .corr-codigo pre{background:#F6F7F9}
+.corr-codigo code{font:inherit;color:var(--texto);background:none;padding:0}
+.corr-copiar{position:absolute;top:9px;right:9px;z-index:2}
+
+.corr-manual{list-style:none;margin:0;padding:0}
+.corr-manual li{
+  border:1px solid var(--borde);border-left:4px solid var(--oro);
+  border-radius:13px;background:var(--panel);
+  padding:15px 18px;margin-bottom:11px;
+}
+.corr-manual h3{margin:0 0 6px;font-size:1rem}
+.corr-manual p{margin:0;font-size:.9rem;line-height:1.6;color:var(--suave)}
+
+@media (max-width:620px){
+  .corr-codigo pre{font-size:.75rem;padding:13px 12px;padding-top:44px}
+  .corr-copiar{top:8px;right:8px}
+  .corr-item{padding:14px}
+}
+
 /* --- Comparativa ------------------------------------------------------------- */
 .inf-tabla{width:100%;border-collapse:collapse;font-size:.9rem}
 .inf-tabla th,.inf-tabla td{
@@ -331,6 +431,9 @@
   .inf-acciones-der{flex-direction:column}
   .inf-acciones .btn{width:100%;justify-content:center}
   .aud-rival{margin-left:12px}
+  .plan-paso{padding:12px 13px;gap:11px}
+  .plan-puntos{min-width:48px;font-size:.92rem}
+  .plan-cuenta strong{font-size:1.1rem}
 }
 
 /* ============================================================================
@@ -394,7 +497,14 @@
 
   /* Nada de cortar un hallazgo por la mitad entre dos hojas. */
   .inf-grupo,.inf-item,.inf-urgente-lista li,.inf-cierre,.inf-dl > div,
-  .inf-veredicto,.inf-areas,.inf-alarma{break-inside:avoid;page-break-inside:avoid}
+  .inf-veredicto,.inf-areas,.inf-alarma,.plan-paso{break-inside:avoid;page-break-inside:avoid}
+  .plan-paso{background:#fff !important;border-color:#C7CBD2 !important}
+  .plan-puntos,.plan-hecho,.plan-meta,.inf-modo{
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+  .plan-arreglo{color:#5A6170 !important}
+  .plan-titulo{color:#14171C !important}
+  .plan-barra{background:#E3E6EA !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   h2,h3{break-after:avoid;page-break-after:avoid}
   .inf-detalle,.inf-comparativa{break-before:auto}
 

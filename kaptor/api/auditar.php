@@ -39,6 +39,8 @@ switch ($accion) {
 
         $entrada = trim((string) ($datos['sitios'] ?? ''));
         $rivales = trim((string) ($datos['rivales'] ?? ''));
+        $modo    = (string) ($datos['modo'] ?? 'completo');
+        if (!in_array($modo, Auditor::MODOS, true)) { $modo = 'completo'; }
 
         $lineas = preg_split('~[\r\n,;]+~', $entrada) ?: [];
         $lineas = array_values(array_unique(array_filter(array_map('trim', $lineas), static fn($l) => $l !== '')));
@@ -47,7 +49,7 @@ switch ($accion) {
             cr_json(['ok' => false, 'error' => 'Escribe al menos una dirección web.'], 400);
         }
 
-        $tope = Ajustes::entero('auditor_max_lote', 50, 1, 300);
+        $tope = $modo === 'completo' ? Ajustes::entero('auditor_max_lote', 50, 1, 300) : 8;
         $recortadas = 0;
         if (count($lineas) > $tope) {
             $recortadas = count($lineas) - $tope;
@@ -57,7 +59,7 @@ switch ($accion) {
         // La comparativa solo tiene sentido cuando se audita UN sitio: si se
         // pegan cincuenta, no hay contra quién compararlos uno a uno.
         $listaRivales = [];
-        if (count($lineas) === 1 && $rivales !== '') {
+        if ($modo === 'completo' && count($lineas) === 1 && $rivales !== '') {
             $listaRivales = array_slice(array_values(array_unique(array_filter(
                 array_map('trim', preg_split('~[\r\n,;]+~', $rivales) ?: []),
                 static fn($l) => $l !== ''
@@ -70,14 +72,14 @@ switch ($accion) {
 
         foreach ($lineas as $sitio) {
             $lote = bin2hex(random_bytes(8));
-            $c = Auditor::crear($sitio, $lote, 'principal', $usuarioId);
+            $c = Auditor::crear($sitio, $lote, 'principal', $usuarioId, $modo);
             if (!$c['ok']) { $fallos[] = $sitio . ': ' . $c['error']; continue; }
 
             $creadas[] = ['id' => $c['id'], 'lote' => $lote, 'sitio' => $sitio];
             $todos[]   = $c['id'];
 
             foreach ($listaRivales as $rival) {
-                $cr = Auditor::crear($rival, $lote, 'competidor', $usuarioId);
+                $cr = Auditor::crear($rival, $lote, 'competidor', $usuarioId, $modo);
                 if ($cr['ok']) { $todos[] = $cr['id']; }
                 else { $fallos[] = $rival . ': ' . $cr['error']; }
             }
@@ -139,16 +141,17 @@ switch ($accion) {
         // por dueño también aquí: si no, bastaría con probar números de id para
         // ir leyendo las auditorías de otro usuario.
         $estados = BD::todos(
-            "SELECT `id`,`host`,`estado`,`fase`,`nota`,`error`,`papel`,`lote`,`token`
+            "SELECT `id`,`host`,`estado`,`fase`,`nota`,`error`,`papel`,`lote`,`token`,`modo`
                FROM `cr_auditorias` WHERE `id` IN ($marcas) AND `usuario_id` = ?",
             array_merge($ids, [$usuarioId])
         );
 
         $salida = [];
         foreach ($estados as $e) {
-            $fase = (string) $e['fase'];
-            $i = array_search($fase, Auditor::FASES, true);
-            $pct = $i === false ? 0 : (int) round((($i + 1) / count(Auditor::FASES)) * 100);
+            $fase  = (string) $e['fase'];
+            $fases = Auditor::fasesDe((string) ($e['modo'] ?? 'completo'));
+            $i     = array_search($fase, $fases, true);
+            $pct   = $i === false ? 0 : (int) round((($i + 1) / count($fases)) * 100);
             $salida[] = [
                 'id'       => (int) $e['id'],
                 'host'     => (string) $e['host'],

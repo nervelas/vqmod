@@ -50,6 +50,13 @@ $hallazgos = Informe::hallazgosDe($fila);
 $datos     = Informe::datosDe($fila);
 $nota      = (int) $fila['nota'];
 $areas     = Informe::areasDe($fila);
+$modo      = (string) ($fila['modo'] ?? 'completo');
+$global    = (int) ($areas['_global'] ?? $nota);
+unset($areas['_global']);
+
+// El camino al 100 %: cada arreglo con los puntos que devuelve. En los modos a
+// fondo solo cuenta su área; en el completo, todo.
+$plan = Seo::plan($hallazgos, Informe::areasDeModo($modo));
 $recuento  = Informe::recuento($hallazgos);
 $urgentes  = Informe::problemas($hallazgos, 3);
 $criticos  = Informe::criticos($hallazgos);
@@ -87,6 +94,9 @@ cr_cabecera([
       <?php endif; ?>
       <div class="inf-acciones-der">
         <?php if (!$compartido): ?>
+          <a class="btn btn-fantasma btn-fino" href="<?= e(cr_url('correcciones.php?id=' . (int) $fila['id'])) ?>">
+            Generar correcciones
+          </a>
           <button type="button" class="btn btn-fantasma btn-fino" id="btn-enlace"
                   data-enlace="<?= e(cr_url('informe.php?t=' . $fila['token'])) ?>">
             Copiar enlace para el cliente
@@ -141,13 +151,18 @@ cr_cabecera([
         <p class="inf-nota-etiqueta"><?= e(Informe::etiqueta($nota)) ?></p>
       </div>
       <div class="inf-veredicto-txt">
-        <p class="inf-sitio"><?= e($fila['host']) ?></p>
+        <p class="inf-sitio"><?= e($fila['host']) ?><?php if ($modo !== 'completo'): ?>
+          <span class="inf-modo"><?= e(Informe::nombreNota($modo)) ?></span>
+        <?php endif; ?></p>
         <h1><?= e($fila['titulo'] ?: $fila['host']) ?></h1>
         <p class="inf-resumen"><?= e(Informe::veredicto($nota, $hallazgos)) ?></p>
         <ul class="inf-recuento">
           <li><strong class="n-mal"><?= e((string) $recuento['mal']) ?></strong> por corregir</li>
           <li><strong class="n-aviso"><?= e((string) $recuento['aviso']) ?></strong> mejorables</li>
           <li><strong class="n-bien"><?= e((string) $recuento['bien']) ?></strong> correctos</li>
+          <?php if ($modo !== 'completo'): ?>
+            <li><strong><?= e((string) $global) ?></strong> nota global del sitio</li>
+          <?php endif; ?>
         </ul>
       </div>
     </section>
@@ -178,6 +193,42 @@ cr_cabecera([
                 <h3><?= e($h['titulo']) ?></h3>
                 <?php if ($h['cuesta'] !== ''): ?><p class="inf-cuesta"><?= e($h['cuesta']) ?></p><?php endif; ?>
                 <?php if ($h['arreglo'] !== ''): ?><p class="inf-arreglo"><strong>Solución:</strong> <?= e($h['arreglo']) ?></p><?php endif; ?>
+              </div>
+            </li>
+          <?php endforeach; ?>
+        </ol>
+      </section>
+    <?php endif; ?>
+
+    <!-- El camino al 100 % ------------------------------------------------- -->
+    <?php if ($plan): $faltan = array_sum(array_column($plan, 'puntos')); ?>
+      <section class="inf-plan">
+        <h2>Qué hay que cambiar para llegar al 100 %</h2>
+        <p class="inf-sub">
+          Cada arreglo con los puntos que devuelve. Están ordenados por lo que más suben la nota,
+          así que haciendo los de arriba se avanza más con menos trabajo.
+        </p>
+
+        <div class="plan-barra" aria-hidden="true">
+          <span class="plan-hecho" style="width:<?= e((string) max(1, min(100, $nota))) ?>%"></span>
+        </div>
+        <p class="plan-cuenta">
+          <strong><?= e((string) $nota) ?></strong> ahora
+          <span>+</span>
+          <strong><?= e(number_format($faltan, 1, ',', '.')) ?></strong> que se pueden recuperar
+          <span>=</span>
+          <strong class="plan-meta">100</strong>
+        </p>
+
+        <ol class="plan-lista">
+          <?php foreach ($plan as $paso): ?>
+            <li class="plan-paso est-<?= e($paso['estado']) ?><?= $paso['critico'] ? ' plan-critico' : '' ?>">
+              <span class="plan-puntos">+<?= e(rtrim(rtrim(number_format($paso['puntos'], 1, ',', '.'), '0'), ',')) ?></span>
+              <div class="plan-cuerpo">
+                <p class="plan-titulo"><?= e($paso['titulo']) ?></p>
+                <?php if ($paso['arreglo'] !== ''): ?>
+                  <p class="plan-arreglo"><?= e($paso['arreglo']) ?></p>
+                <?php endif; ?>
               </div>
             </li>
           <?php endforeach; ?>
@@ -279,6 +330,20 @@ cr_cabecera([
         <?php endif; ?>
         <?php if (!empty($datos['psi']['rendimiento'])): ?>
           <div><dt>Nota de Google (celular)</dt><dd><?= e((string) $datos['psi']['rendimiento']) ?>/100</dd></div>
+        <?php endif; ?>
+        <?php if (!empty($datos['paginas'])): ?>
+          <div><dt>Páginas recorridas</dt><dd><?= e((string) count($datos['paginas'])) ?></dd></div>
+        <?php endif; ?>
+        <?php if (!empty($datos['vinculos']['revisados'])): ?>
+          <div><dt>Enlaces comprobados</dt><dd><?= e((string) (int) $datos['vinculos']['revisados']) ?>
+            <span class="suave">(<?= e((string) (int) $datos['vinculos']['internos']) ?> internos)</span></dd></div>
+        <?php endif; ?>
+        <?php if (!empty($datos['archivos_js'])): ?>
+          <div><dt>Archivos de código abiertos</dt><dd><?= e((string) count($datos['archivos_js'])) ?></dd></div>
+        <?php endif; ?>
+        <?php if (!empty($datos['virustotal']['motores'])): ?>
+          <div><dt>Motores antivirus</dt><dd><?= e((string) (int) $datos['virustotal']['detectan']) ?>
+            de <?= e((string) (int) $datos['virustotal']['motores']) ?> lo marcan</dd></div>
         <?php endif; ?>
         <?php if (!empty($datos['psi']['real']['lcp'])): ?>
           <div><dt>Usuarios reales · carga</dt><dd><?= e(number_format(((int) $datos['psi']['real']['lcp']) / 1000, 1, ',', '.')) ?> s</dd></div>

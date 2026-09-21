@@ -1078,6 +1078,96 @@ table.tabla thead th{font-family:var(--mono);letter-spacing:.12em}
   .barra-int{position:static}
 }
 
+/* ==========================================================================
+   25. Los grupos del menú
+
+   Son <details> nativos: se abren solos con el teclado y sin JavaScript. En
+   escritorio se comportan como un menú de siempre (se abren al pasar el ratón
+   y flotan sobre la página); en el teléfono se quedan como lo que son, una
+   lista que se despliega dentro del panel.
+   ========================================================================== */
+.menu-grupo{position:relative}
+.menu-grupo > summary{
+  display:inline-flex;align-items:center;gap:6px;
+  list-style:none;cursor:pointer;white-space:nowrap;
+  min-height:40px;padding-inline:10px;border-radius:10px;
+  color:var(--suave);font-weight:500;font-size:.95rem;
+  transition:color var(--t-corta,.16s ease), background var(--t-corta,.16s ease);
+  -webkit-tap-highlight-color:transparent;
+}
+.menu-grupo > summary::-webkit-details-marker{display:none}
+.menu-grupo > summary::marker{content:''}
+.menu-grupo > summary:hover{color:var(--texto)}
+.menu-grupo.activo > summary{color:var(--oro)}
+.menu-flecha{width:14px;height:14px;flex:0 0 auto;transition:transform var(--t-corta,.16s ease)}
+.menu-grupo[open] > summary .menu-flecha{transform:rotate(180deg)}
+
+/* OJO: aquí NO se pone display. Un <details> cerrado esconde su contenido
+   porque el navegador le pone display:none, y escribir display:flex aquí
+   anulaba esa regla: el menú del teléfono salía siempre desplegado. Se
+   declara solo cuando está abierto, y en escritorio aparte (allí se esconde
+   con opacidad para poder animarlo). */
+.menu-grupo[open] > .menu-desplegable{display:flex;flex-direction:column}
+.menu-desplegable a{
+  display:flex;flex-direction:column;align-items:flex-start;gap:2px;
+  padding:10px 12px;border-radius:10px;min-height:0;
+}
+.menu-nombre{font-weight:600;font-size:.94rem;color:var(--texto);line-height:1.3}
+.menu-pista{font-size:.78rem;color:var(--suave);line-height:1.35;white-space:normal}
+.menu-desplegable a.activo .menu-nombre{color:var(--oro)}
+.menu-desplegable a:hover{background:color-mix(in srgb, var(--texto) 7%, transparent)}
+.menu-desplegable a::after{display:none}
+
+/* --- En escritorio: un menú flotante de los de toda la vida --------------- */
+@media (min-width:901px){
+  .menu-grupo > .menu-desplegable{
+    display:flex;flex-direction:column;
+    position:absolute;top:calc(100% + 8px);left:0;z-index:90;
+    min-width:268px;padding:8px;
+    background:var(--panel-solido);
+    border:1px solid var(--borde);border-radius:14px;
+    box-shadow:0 26px 54px -26px rgba(0,0,0,.8);
+    /* Cerrado no se quita del flujo con display:none, para poder animarlo. */
+    opacity:0;visibility:hidden;transform:translateY(-6px);
+    transition:opacity var(--t-corta,.16s ease), transform var(--t-corta,.16s ease), visibility var(--t-corta,.16s ease);
+  }
+  [data-tema="claro"] .menu-grupo > .menu-desplegable{background:#FFFFFF}
+
+  /* Una sola verdad: el atributo `open`. Antes esto dependía también de
+     :hover en CSS y resultaba que no se abría —el puntero entraba, el estilo
+     no cambiaba—, así que abrir al pasar el ratón lo hace ahora el JavaScript
+     poniendo `open`. Con una sola condición es más fácil de razonar y se
+     puede comprobar en una prueba. */
+  .menu-grupo[open] > .menu-desplegable{
+    opacity:1;visibility:visible;transform:none;
+  }
+  /* Un puente invisible: sin él, el ratón cruza el hueco entre el botón y el
+     panel, pierde el :hover y el menú se cierra en las narices. */
+  .menu-grupo::after{
+    content:'';position:absolute;top:100%;left:0;right:0;height:10px;
+  }
+}
+
+/* --- En el teléfono: una lista dentro del panel --------------------------- */
+@media (max-width:900px){
+  .barra nav .menu-grupo{width:100%}
+  .barra nav .menu-grupo > summary{
+    width:100%;justify-content:space-between;
+    min-height:50px;padding:0 14px;font-size:1rem;
+  }
+  .menu-desplegable{
+    padding:2px 0 8px 12px;margin-left:10px;
+    border-left:2px solid var(--borde);
+  }
+  /* La regla general de los enlaces de la barra los centra, y en una lista
+     vertical eso deja el texto flotando en medio. Hace falta más peso que
+     `.barra nav a` para volver a alinearlos a la izquierda. */
+  .barra nav .menu-desplegable a{
+    min-height:44px;padding:8px 12px;
+    align-items:flex-start;text-align:left;justify-content:flex-start;
+  }
+}
+
 /* Con el menú abierto, la página de detrás no se desplaza. */
 body.menu-abierto{overflow:hidden}
 

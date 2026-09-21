@@ -1364,3 +1364,81 @@
   if (ancha.addEventListener) { ancha.addEventListener('change', alCambiar); }
   else if (ancha.addListener) { ancha.addListener(alCambiar); }
 })();
+
+/* ---------------------------------------------------------------------------
+   20. Los grupos del menú.
+
+   Los <details> ya se abren y se cierran solos: esto solo añade los detalles
+   que un menú de verdad necesita y que el navegador no da de fábrica —que al
+   abrir uno se cierre el otro, que un clic fuera los cierre y que Escape
+   devuelva el foco donde estaba—. Si este archivo no llegara a cargarse, el
+   menú seguiría funcionando; solo perdería estos remates.
+--------------------------------------------------------------------------- */
+(function () {
+  'use strict';
+
+  var grupos = Array.prototype.slice.call(document.querySelectorAll('.menu-grupo'));
+  if (!grupos.length) { return; }
+
+  function cerrarTodos(menos) {
+    grupos.forEach(function (g) { if (g !== menos) { g.open = false; } });
+  }
+
+  grupos.forEach(function (g) {
+    g.addEventListener('toggle', function () {
+      if (g.open) { cerrarTodos(g); }
+    });
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.menu-grupo')) { cerrarTodos(null); }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') { return; }
+    var abierto = grupos.filter(function (g) { return g.open; })[0];
+    if (!abierto) { return; }
+    // Escape aquí no debe llegar al panel del teléfono y cerrarlo entero:
+    // primero se cierra el grupo y el foco vuelve a su botón.
+    e.stopPropagation();
+    abierto.open = false;
+    var s = abierto.querySelector('summary');
+    if (s) { s.focus(); }
+  }, true);
+
+  // En escritorio, el grupo se abre al pasar el ratón y se cierra al salir,
+  // como cualquier menú de toda la vida. Se hace aquí y no con :hover en el
+  // CSS porque así hay una sola condición que mande —el atributo `open`— y
+  // porque el CSS a secas no llegaba a abrirlo.
+  //
+  // En el teléfono no se toca: allí se abre tocando, y un "pasar el ratón"
+  // simulado por el navegador táctil dejaría todo desplegado.
+  var ancha = window.matchMedia('(min-width: 901px)');
+  var fino  = window.matchMedia('(hover: hover) and (pointer: fine)');
+
+  grupos.forEach(function (g) {
+    g.addEventListener('mouseenter', function () {
+      if (ancha.matches && fino.matches) { g.open = true; }
+    });
+    g.addEventListener('mouseleave', function () {
+      if (ancha.matches && fino.matches) { g.open = false; }
+    });
+
+    // En escritorio, el clic sobre el título NO debe cerrar lo que el ratón
+    // acaba de abrir: pasas por encima, se despliega, haces clic en el título
+    // y se te cierra en las narices. Con el ratón manda el ratón, así que el
+    // clic no hace nada. En el teléfono y con el teclado sigue funcionando
+    // como siempre, que es la única forma de abrirlo que hay allí.
+    var titulo = g.querySelector('summary');
+    if (titulo) {
+      titulo.addEventListener('click', function (ev) {
+        // Pulsar Intro sobre el título también dispara un 'click', y ese SÍ
+        // tiene que abrirlo: es la única forma que tiene quien navega con
+        // teclado. Se distinguen por `detail`, que vale 0 cuando el clic no
+        // viene de un ratón de verdad.
+        if (ev.detail === 0) { return; }
+        if (ancha.matches && fino.matches) { ev.preventDefault(); }
+      });
+    }
+  });
+})();

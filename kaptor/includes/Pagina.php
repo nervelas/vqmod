@@ -35,6 +35,12 @@ final class Pagina
         }
     }
 
+    /** El HTML tal cual, por si alguien necesita buscar algo a mano. */
+    public function html(): string
+    {
+        return $this->html;
+    }
+
     /** ¿Se pudo leer el documento con DOM? */
     public function conDom(): bool
     {

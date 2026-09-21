@@ -14,7 +14,7 @@ declare(strict_types=1);
 final class Esquema
 {
     /** Se sube de uno en uno cada vez que cambia la estructura. */
-    public const VERSION = 6;
+    public const VERSION = 7;
 
     /** Aplica los cambios pendientes. Se llama desde bootstrap.php. */
     public static function actualizar(): void
@@ -50,6 +50,13 @@ final class Esquema
 
             // 6: auditor web.
             if ($actual < 6) { self::tablaAuditorias(); }
+
+            // 7: el auditor gana modos (completo, SEO, malware) y guarda el
+            //    rastreo de páginas que necesitan los dos análisis a fondo.
+            if ($actual < 7) {
+                self::tablaAuditorias();   // por si se instaló justo en la 6
+                self::columna('cr_auditorias', 'modo', "VARCHAR(12) NOT NULL DEFAULT 'completo' AFTER `papel`");
+            }
 
             Ajustes::guardar('esquema', (string) self::VERSION);
         } catch (Throwable $e) {
@@ -151,6 +158,7 @@ final class Esquema
               `usuario_id`  INT UNSIGNED NULL,
               `lote`        VARCHAR(40) NOT NULL DEFAULT \'\',
               `papel`       VARCHAR(12) NOT NULL DEFAULT \'principal\',
+              `modo`        VARCHAR(12) NOT NULL DEFAULT \'completo\',
               `url`         VARCHAR(500) NOT NULL,
               `host`        VARCHAR(190) NOT NULL DEFAULT \'\',
               `titulo`      VARCHAR(255) NULL,

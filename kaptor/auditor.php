@@ -17,19 +17,61 @@ require_once CR_INCLUDES . '/plantilla.php';
 
 cr_exigir_sesion();
 
+// La misma página sirve para los tres análisis: lo que cambia son los textos
+// y el modo con el que se crea la auditoría. seo.php y malware.php entran por
+// aquí fijando $modo antes de incluir este archivo.
+$modo = $modo ?? (string) ($_GET['modo'] ?? 'completo');
+if (!in_array($modo, Auditor::MODOS, true)) { $modo = 'completo'; }
+
+$copia = [
+    'completo' => [
+        'activo'  => 'auditor',
+        'titulo'  => 'Auditor web',
+        'etiqueta' => 'Diagnóstico técnico',
+        'h1'      => 'Audita cualquier web y entrega el informe',
+        'sub'     => 'Pega una dirección y Kaptor revisa velocidad, celular, Google, seguridad, '
+                   . 'contacto, código malicioso y visibilidad en las inteligencias artificiales. '
+                   . 'Sale un informe con tu marca, listo para enviar.',
+        'boton'   => 'Auditar',
+        'paso1'   => '¿Qué sitios quieres revisar?',
+    ],
+    'seo' => [
+        'activo'  => 'seo',
+        'titulo'  => 'Análisis SEO',
+        'etiqueta' => 'Posicionamiento en Google',
+        'h1'      => 'Cuánto SEO tiene y qué falta para el 100 %',
+        'sub'     => 'Kaptor recorre las páginas del sitio, comprueba TODOS sus enlaces uno a uno '
+                   . 'y compara las páginas entre sí. Al final da la nota real y la lista exacta '
+                   . 'de qué cambiar, con los puntos que devuelve cada arreglo.',
+        'boton'   => 'Analizar el SEO',
+        'paso1'   => '¿Qué sitio quieres analizar?',
+    ],
+    'malware' => [
+        'activo'  => 'malware',
+        'titulo'  => 'Buscar virus',
+        'etiqueta' => 'Seguridad del sitio',
+        'h1'      => 'Busca virus y código malicioso',
+        'sub'     => 'Kaptor recorre el sitio, abre sus archivos de código uno a uno y pide la '
+                   . 'página haciéndose pasar por Google y por un celular, que es donde se esconde '
+                   . 'lo que un vistazo normal no ve. Y pregunta a los motores antivirus.',
+        'boton'   => 'Buscar virus',
+        'paso1'   => '¿Qué sitios quieres revisar?',
+    ],
+][$modo];
+
 $activo = Ajustes::activo('auditor_activo', true);
 $sinPsi = trim(Ajustes::obtener('psi_clave')) === '' && Ajustes::activo('psi_activo', true);
 
 // Últimas auditorías del usuario, para volver a un informe sin buscarlo.
-$historial = Auditor::historial(Auth::id(), 12);
+$historial = Auditor::historial(Auth::id(), 12, $modo);
 
 // Se puede llegar desde otra página con las direcciones ya puestas.
 $precargado = trim((string) ($_GET['sitios'] ?? ''));
 
 cr_cabecera([
-    'titulo'      => 'Auditor web',
+    'titulo'      => $copia['titulo'],
     'descripcion' => 'Analiza cualquier sitio web y genera un informe con tu marca.',
-    'activo'      => 'auditor',
+    'activo'      => $copia['activo'],
     'css'         => ['auditor.css'],
 ]);
 ?>
@@ -38,13 +80,9 @@ cr_cabecera([
   <div class="contenedor">
 
     <header class="aud-intro">
-      <p class="etiqueta-seccion"><span class="punto"></span> Diagnóstico técnico</p>
-      <h1><?= cr_titulo_brillo('Audita cualquier web y entrega el informe') ?></h1>
-      <p class="sub">
-        Pega una dirección y Kaptor revisa velocidad, celular, Google, seguridad,
-        contacto y visibilidad en las inteligencias artificiales. Sale un informe
-        con tu marca, listo para enviar.
-      </p>
+      <p class="etiqueta-seccion"><span class="punto"></span> <?= e($copia['etiqueta']) ?></p>
+      <h1><?= cr_titulo_brillo($copia['h1']) ?></h1>
+      <p class="sub"><?= e($copia['sub']) ?></p>
     </header>
 
     <?php if (!$activo): ?>
@@ -54,17 +92,19 @@ cr_cabecera([
     <div class="aud-cuadro">
       <form id="form-auditor" autocomplete="off" novalidate>
         <?= Seguridad::campoCsrf() ?>
+        <input type="hidden" name="modo" id="aud-modo" value="<?= e($modo) ?>">
 
         <div class="paso-bloque">
           <span class="paso-n">01</span>
           <div class="paso-cuerpo">
-            <label for="sitios" class="paso-titulo">¿Qué sitios quieres revisar?</label>
+            <label for="sitios" class="paso-titulo"><?= e($copia['paso1']) ?></label>
             <textarea id="sitios" name="sitios" rows="4" spellcheck="false"
                       placeholder="colegio.edu.gt&#10;otraempresa.com&#10;&#10;Una por línea. Puedes pegar la lista completa que sacaste con el extractor."><?= e($precargado) ?></textarea>
             <p class="paso-nota">Hasta <?= e((string) Ajustes::entero('auditor_max_lote', 50, 1, 300)) ?> sitios por tanda. No hace falta escribir «https://».</p>
           </div>
         </div>
 
+        <?php if ($modo === 'completo'): ?>
         <div class="paso-bloque">
           <span class="paso-n">02</span>
           <div class="paso-cuerpo">
@@ -80,13 +120,14 @@ cr_cabecera([
             </p>
           </div>
         </div>
+        <?php endif; ?>
 
         <div class="aud-acciones">
           <button type="submit" class="btn btn-oro btn-grande" id="btn-auditar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
               <path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="5.2"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/>
             </svg>
-            Auditar
+            <?= e($copia['boton']) ?>
           </button>
           <button type="button" class="btn btn-fantasma oculto" id="btn-parar">Detener</button>
         </div>

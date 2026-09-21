@@ -183,6 +183,8 @@ final class Exportador
     /** Columnas de una lista de páginas web. */
     private const COL_WEBS = ['Página web', 'Extensión', 'Para pegar en el navegador'];
 
+    private const COL_LISTA_TEL = ['Número', 'Formato', 'País', 'WhatsApp', 'Abrir el chat', 'Veces'];
+
     /**
      * Exporta una lista de páginas web (la que devuelve Depurador::webs).
      *
@@ -216,6 +218,48 @@ final class Exportador
 
         $salida = fopen('php://temp', 'r+');
         fputcsv($salida, self::COL_WEBS, ';', '"', '');
+        foreach ($filas as $fila) { fputcsv($salida, $fila, ';', '"', ''); }
+        rewind($salida);
+        $contenido = (string) stream_get_contents($salida);
+        fclose($salida);
+
+        return "\xEF\xBB\xBF" . $contenido;
+    }
+
+    /**
+     * Lista de teléfonos ya depurada, lista para descargar.
+     *
+     * En TXT salen los números a pelo, uno por línea, que es lo que se pega
+     * en cualquier otra herramienta. En CSV y Excel van con su país y con el
+     * enlace de WhatsApp ya montado, para poder abrir la conversación con un
+     * clic desde la hoja de cálculo.
+     */
+    public static function listaTelefonos(array $telefonos, string $formato): string
+    {
+        if ($formato === 'txt') {
+            return implode("\r\n", array_column($telefonos, 'numero')) . "\r\n";
+        }
+
+        $filas = [];
+        foreach ($telefonos as $t) {
+            $filas[] = [
+                (string) $t['numero'],
+                (string) $t['formato'],
+                (string) $t['pais'],
+                !empty($t['whatsapp']) ? 'Sí' : 'No',
+                Telefono::enlaceWhatsapp((string) $t['numero']),
+                (string) (int) ($t['veces'] ?? 1),
+            ];
+        }
+
+        if ($formato === 'xlsx') {
+            $libro = new XlsxEscritor('Kaptor · teléfonos');
+            $libro->agregarHoja('Teléfonos', self::COL_LISTA_TEL, $filas, [17, 19, 24, 11, 40, 8]);
+            return $libro->generar();
+        }
+
+        $salida = fopen('php://temp', 'r+');
+        fputcsv($salida, self::COL_TELEFONOS, ';', '"', '');
         foreach ($filas as $fila) { fputcsv($salida, $fila, ';', '"', ''); }
         rewind($salida);
         $contenido = (string) stream_get_contents($salida);

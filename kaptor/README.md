@@ -1,9 +1,14 @@
-# Kaptor 4.1
+# Kaptor 5.0
 
-Extractor profesional de **correos electrónicos y números de WhatsApp** a partir
-de una URL, con **módulo de campañas de correo** y **auditor web** incluidos:
-extraes, revisas, filtras y envías desde tu propio dominio, todo en la misma
-herramienta.
+Caja de herramientas para vender servicios web. Dos mitades:
+
+**Sacar datos** — correos y números de WhatsApp de cualquier web, de un texto
+pegado o de una lista, más un módulo de campañas para escribirles desde tu
+propio dominio.
+
+**Analizar sitios** — auditoría completa en siete áreas, análisis de SEO con
+rastreo del sitio entero, y búsqueda de virus y código malicioso. De cada una
+sale un informe con tu marca y un archivo de correcciones listo para pegar.
 PHP 8.0+ · MySQL/MariaDB · sin Composer · listo para subir a `public_html`.
 
 ## De uso privado
@@ -197,6 +202,20 @@ https://crt.sh/?q=%.org.gt&output=json
 
 ---
 
+## Cómo está organizado
+
+El menú tiene dos grupos y tres entradas sueltas:
+
+| | |
+|---|---|
+| **Extraer** | De una web · Correos de un texto · WhatsApp de un texto · Dominios de un texto |
+| **Analizar** | Auditoría completa · Análisis SEO · Buscar virus |
+| | Mis extracciones · Panel · Salir |
+
+Los tres análisis son **el mismo motor** con tres profundidades, no tres
+programas distintos. El completo da la foto de las siete áreas quedándose en la
+portada; los otros dos recorren el sitio y aprietan en su terreno.
+
 ## Auditor web
 
 Analiza cualquier sitio y genera un **informe con tu marca**, listo para
@@ -254,6 +273,21 @@ Qué se detecta:
 - **Defacements** y palabras de spam en el título o la descripción.
 - De cuántos **dominios ajenos** carga código el sitio.
 
+**Los archivos de JavaScript, abiertos uno a uno.** Es lo que separa un vistazo
+de un análisis de verdad: casi todo el código malicioso de hoy no está en el
+HTML sino en un archivo `.js` aparte, que desde la página solo se ve como una
+línea inocente. Kaptor los descarga y los mira por dentro, buscando el rastro
+de las campañas que de verdad circulan (wp-VCD, Balada Injector, SocGholish,
+el hack de palabras japonesas, robo de tarjetas tipo Magecart, puertas
+traseras). Reconocer una de esas firmas no es una sospecha por la pinta del
+código: es una coincidencia con una campaña concreta.
+
+**Unos setenta motores antivirus a la vez.** Google Safe Browsing es la opinión
+más importante, pero es una sola. Poniendo una clave gratuita de **VirusTotal**
+en Ajustes, el informe añade lo que dicen unos setenta motores independientes.
+Cuando varios coinciden, ya no es una sospecha. Son 500 consultas al día sin
+coste; si se agota, el resto del análisis sigue funcionando igual.
+
 Cuando aparece algo de esto, el informe cambia de tono: sale un aviso rojo
 antes que nada, la nota global se tapa en 30 por alto (un sitio infectado no
 puede sacar buena nota por tener bien puestas las etiquetas) y el veredicto lo
@@ -307,6 +341,75 @@ Desde el informe hay dos botones:
 Lo que aparece en la cabecera y en el cierre del documento (tu logotipo, tu
 lema, tus datos de contacto y el párrafo de cierre) se configura en
 *Ajustes → Auditor*.
+
+## Análisis SEO
+
+Entra por **Analizar → Análisis SEO**. A diferencia de la auditoría completa,
+aquí Kaptor **recorre el sitio**: abre hasta 25 páginas siguiendo los enlaces
+internos (en anchura, como rastrea Google), comprueba **todos los enlaces uno a
+uno** —internos y externos— y compara las páginas entre sí.
+
+Eso saca a la luz lo que mirando una sola página no se ve:
+
+- **Títulos y descripciones repetidos.** El fallo más caro y más común de un
+  sitio hecho con plantilla: las páginas compiten entre ellas en vez de sumar.
+- **Contenido pobre**: páginas por debajo de 300 palabras.
+- **Enlaces rotos**, separando los internos (graves) de los externos.
+- **Cadenas de redirección**: enlaces que pasan por saltos de más.
+- **Páginas huérfanas**: están en el mapa del sitio pero no las enlaza nadie.
+- **Profundidad de clic**: lo que queda a más de tres clics de la portada.
+- Titulares principales, canonical, `noindex`, datos estructurados, imágenes
+  sin describir. Todo contado sobre el sitio entero, no sobre una página.
+
+### El porcentaje real, y el camino al 100 %
+
+La nota que manda en este modo es **la de SEO**, no la global: si preguntaste
+por el SEO, el número que quieres ver no puede incluir la velocidad ni el botón
+de WhatsApp.
+
+Y debajo va lo que ninguna herramienta del mercado da masticado: **cuántos
+puntos devuelve cada arreglo**. No una lista de problemas, sino su precio en
+puntos, ordenados de mayor a menor. La cuenta cuadra siempre:
+
+```
+43 ahora  +  57,6 que se pueden recuperar  =  100
+```
+
+Así se sabe por dónde empezar para avanzar más con menos trabajo, y se puede
+presupuestar por tramos.
+
+## El archivo de correcciones
+
+En cualquier informe, el botón **«Generar correcciones»** arma el código que
+hay que pegar para arreglar lo que se encontró, **ya relleno con los datos de
+ese sitio**. Solo sale lo que de verdad le falta: si ya tiene la compresión
+activada, la compresión no aparece.
+
+Viene en tres partes, de lo más barato a lo más caro:
+
+1. **El archivo `.htaccess`.** Se pega en el hosting y no toca el sitio. Arregla
+   de golpe la compresión, la caché, la redirección a `https` y las cabeceras de
+   seguridad. Es lo que más rinde de todo el paquete.
+2. **Código para las páginas.** Botón de WhatsApp, etiquetas de Open Graph,
+   ficha del negocio, medición de visitas, `viewport`, canonical… cada trozo
+   dice dónde va y trae un botón de copiar.
+3. **Lo que no se arregla pegando código.** El certificado, las imágenes, el
+   diseño que no se adapta, el contenido. Aquí no hay atajo: es trabajo, y es
+   donde está el presupuesto.
+
+Todo junto se descarga en un archivo de texto para adjuntarlo a un correo.
+
+## Extraer WhatsApp de un texto
+
+Igual que el extractor de correos pero para números. Se le pega una lista de
+contactos, un directorio copiado, un grupo de WhatsApp exportado o una columna
+de Excel, y salen los números sin repetidos, en formato internacional y con el
+**enlace de chat ya montado**.
+
+Usa la misma validación del extractor, así que descarta fechas, NIT, precios y
+números de factura, que es lo que ensucia cualquier listado. Se puede filtrar
+por país (por prefijo, `502`, o por código, `gt`) y quedarse solo con los que
+tienen **WhatsApp confirmado**, que son los que aparecen en un enlace `wa.me`.
 
 ## Extraer correos de un texto
 

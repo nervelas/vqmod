@@ -390,3 +390,17 @@ function cr_icono_area(string $area): string
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"'
         . ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $d . '</svg>';
 }
+
+/** Traduce a castellano el motivo por el que se descartó un número. */
+function cr_motivo_telefono(string $motivo): string
+{
+    return match ($motivo) {
+        'vacio'        => 'no tenía dígitos',
+        'longitud'     => 'demasiados dígitos o demasiado pocos',
+        'falso'        => 'parece una fecha, un NIT, un precio o un número de factura',
+        'sin_prefijo'  => 'sin prefijo de país (ponlo en Ajustes o marca la casilla)',
+        'pais'         => 'el prefijo no es de ningún país conocido',
+        'longitud_pais' => 'no tiene los dígitos que le tocan a ese país',
+        default        => $motivo !== '' ? $motivo : 'no válido',
+    };
+}

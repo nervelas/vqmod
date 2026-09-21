@@ -15,7 +15,25 @@ declare(strict_types=1);
 
 final class Auditor
 {
-    /** Orden de las fases. La última calcula la nota y cierra. */
+    /**
+     * Los tres modos de análisis.
+     *
+     * Es el mismo motor: lo que cambia es hasta dónde llega. El modo completo
+     * da una foto de las siete áreas quedándose en la portada; los otros dos
+     * recorren el sitio y aprietan en su terreno. Tener un solo motor con tres
+     * profundidades, en vez de tres programas distintos, es lo que mantiene
+     * esto manejable.
+     */
+    public const MODOS = ['completo', 'seo', 'malware'];
+
+    /** Orden de las fases de cada modo. La última calcula la nota y cierra. */
+    public const FASES_POR_MODO = [
+        'completo' => ['portada', 'archivos', 'recursos', 'enlaces', 'malware', 'psi', 'cerrar'],
+        'seo'      => ['portada', 'archivos', 'rastreo', 'vinculos', 'recursos', 'psi', 'cerrar'],
+        'malware'  => ['portada', 'archivos', 'rastreo', 'codigo', 'malware', 'cerrar'],
+    ];
+
+    /** Fases del modo completo, que es el de siempre. */
     public const FASES = ['portada', 'archivos', 'recursos', 'enlaces', 'malware', 'psi', 'cerrar'];
 
     /** Cuánto se enseña de cada fase mientras corre. */
@@ -25,6 +43,9 @@ final class Auditor
         'recursos' => 'Pesando imágenes y estilos',
         'enlaces'  => 'Comprobando enlaces',
         'malware'  => 'Buscando código malicioso',
+        'rastreo'  => 'Recorriendo las páginas del sitio',
+        'vinculos' => 'Comprobando todos los enlaces',
+        'codigo'   => 'Analizando los archivos de código',
         'psi'      => 'Pidiendo a Google la nota de velocidad',
         'cerrar'   => 'Calculando la nota',
     ];
@@ -33,6 +54,11 @@ final class Auditor
     public const MAX_IMAGENES = 12;
     public const MAX_ESTILOS  = 4;
     public const MAX_ENLACES  = 10;
+
+    /** Cuántas páginas se recorren y cuántos enlaces se comprueban a fondo. */
+    public const MAX_PAGINAS_SEO   = 25;
+    public const MAX_VINCULOS      = 150;
+    public const MAX_ARCHIVOS_JS   = 10;
 
     // =====================================================================
     //  Alta y avance
@@ -44,8 +70,10 @@ final class Auditor
      * @param string $papel 'principal' o 'competidor'
      * @return array{ok:bool,id?:int,error?:string}
      */
-    public static function crear(string $url, string $lote, string $papel = 'principal', ?int $usuarioId = null): array
+    public static function crear(string $url, string $lote, string $papel = 'principal', ?int $usuarioId = null, string $modo = 'completo'): array
     {
+        $modo = in_array($modo, self::MODOS, true) ? $modo : 'completo';
+
         $url = self::normalizar($url);
         if ($url === '') {
             return ['ok' => false, 'error' => 'Esa dirección no se entiende.'];
@@ -63,6 +91,7 @@ final class Auditor
             'usuario_id'  => $usuarioId,
             'lote'        => $lote,
             'papel'       => $papel === 'competidor' ? 'competidor' : 'principal',
+            'modo'        => $modo,
             'url'         => mb_substr($val['url'], 0, 500),
             'host'        => mb_substr((string) parse_url($val['url'], PHP_URL_HOST), 0, 190),
             'estado'      => 'cola',
@@ -111,12 +140,14 @@ final class Auditor
         if (!is_array($datos)) { $datos = []; }
 
         $fase = (string) $fila['fase'];
+        $modo = (string) ($fila['modo'] ?? 'completo');
+        if (!in_array($modo, self::MODOS, true)) { $modo = 'completo'; }
 
         // Se encadenan fases mientras quede presupuesto: en un servidor rápido
         // una sola llamada puede terminar la auditoría entera.
         while (microtime(true) < $fin) {
             try {
-                $datos = self::ejecutarFase($fase, $fila, $datos);
+                $datos = self::ejecutarFase($fase, $fila, $datos, $modo);
             } catch (Throwable $e) {
                 error_log('Kaptor / auditor fase ' . $fase . ': ' . $e->getMessage());
                 // Una fase que revienta no tumba la auditoría: se salta y se
@@ -124,7 +155,7 @@ final class Auditor
                 $datos['fallos'][$fase] = $e->getMessage();
             }
 
-            $siguiente = self::siguienteFase($fase);
+            $siguiente = self::siguienteFase($fase, $modo);
 
             if ($fase === 'cerrar') {
                 self::cerrar($id, $fila, $datos);
@@ -136,6 +167,21 @@ final class Auditor
             if ($fase === 'portada' && empty($datos['portada_ok'])) {
                 $fase = 'cerrar';
                 continue;
+            }
+
+            // Hay fases que no caben en una sola llamada: el rastreo de un
+            // sitio de cincuenta páginas, la comprobación de ciento cincuenta
+            // enlaces. Esas se quedan donde están hasta que avisan de que
+            // terminaron, y mientras tanto el navegador va pidiendo más.
+            $bandera = ['rastreo' => '_rastreo_listo', 'vinculos' => '_vinculos_listo', 'codigo' => '_codigo_listo'];
+            if (isset($bandera[$fase]) && empty($datos[$bandera[$fase]])) {
+                BD::actualizar('cr_auditorias', [
+                    'estado' => 'midiendo', 'fase' => $fase, 'datos' => json_encode($datos),
+                    'actualizado' => date('Y-m-d H:i:s'),
+                ], '`id` = ?', [$id]);
+                $fila['estado'] = 'midiendo';
+                $fila['fase']   = $fase;
+                return self::progreso($fila);
             }
 
             $fase = $siguiente;
@@ -158,18 +204,26 @@ final class Auditor
         return self::progreso($fila);
     }
 
-    private static function siguienteFase(string $fase): string
+    /** Las fases que le tocan a este modo. */
+    public static function fasesDe(string $modo): array
     {
-        $i = array_search($fase, self::FASES, true);
-        return $i === false || $i + 1 >= count(self::FASES) ? 'cerrar' : self::FASES[$i + 1];
+        return self::FASES_POR_MODO[$modo] ?? self::FASES_POR_MODO['completo'];
+    }
+
+    private static function siguienteFase(string $fase, string $modo = 'completo'): string
+    {
+        $fases = self::fasesDe($modo);
+        $i = array_search($fase, $fases, true);
+        return $i === false || $i + 1 >= count($fases) ? 'cerrar' : $fases[$i + 1];
     }
 
     /** Resumen de estado para el navegador. */
     private static function progreso(array $fila): array
     {
-        $fase = (string) ($fila['fase'] ?? 'portada');
-        $i    = array_search($fase, self::FASES, true);
-        $pct  = $i === false ? 0 : (int) round((($i + 1) / count(self::FASES)) * 100);
+        $fase  = (string) ($fila['fase'] ?? 'portada');
+        $fases = self::fasesDe((string) ($fila['modo'] ?? 'completo'));
+        $i     = array_search($fase, $fases, true);
+        $pct   = $i === false ? 0 : (int) round((($i + 1) / count($fases)) * 100);
         $estado = (string) ($fila['estado'] ?? 'cola');
 
         return [
@@ -189,7 +243,7 @@ final class Auditor
     //  Las fases
     // =====================================================================
 
-    private static function ejecutarFase(string $fase, array $fila, array $datos): array
+    private static function ejecutarFase(string $fase, array $fila, array $datos, string $modo = 'completo'): array
     {
         return match ($fase) {
             'portada'  => self::fasePortada($fila, $datos),
@@ -198,6 +252,9 @@ final class Auditor
             'enlaces'  => self::faseEnlaces($fila, $datos),
             'malware'  => self::faseMalware($fila, $datos),
             'psi'      => self::fasePsi($fila, $datos),
+            'rastreo'  => self::faseRastreo($fila, $datos, $modo),
+            'vinculos' => self::faseVinculos($fila, $datos),
+            'codigo'   => self::faseCodigo($fila, $datos),
             default    => $datos,
         };
     }
@@ -344,6 +401,270 @@ final class Auditor
     }
 
     /**
+     * Rastreo del sitio: se recorren las páginas siguiendo los enlaces internos.
+     *
+     * Quedarse en la portada da una foto bonita y poco más. Los problemas que
+     * de verdad hunden un sitio —títulos repetidos en veinte páginas, contenido
+     * de cuatro frases, páginas a las que no llega nadie— solo salen mirando
+     * varias a la vez.
+     *
+     * Va en anchura y no en profundidad, que es como rastrea Google: primero
+     * todo lo que cuelga de la portada, luego el siguiente nivel. Así, si el
+     * presupuesto se acaba, lo visto es lo más importante del sitio y no una
+     * rama perdida.
+     */
+    private static function faseRastreo(array $fila, array $datos, string $modo): array
+    {
+        $tope = $modo === 'seo'
+            ? Ajustes::entero('seo_max_paginas', self::MAX_PAGINAS_SEO, 3, 120)
+            : min(12, Ajustes::entero('seo_max_paginas', self::MAX_PAGINAS_SEO, 3, 120));
+
+        $raiz  = self::raiz((string) ($datos['url'] ?? $fila['url']));
+        $inicio = (string) ($datos['url'] ?? $fila['url']);
+
+        // La portada ya está descargada: se aprovecha en vez de pedirla otra vez.
+        $paginas = $datos['paginas'] ?? [];
+        $cola    = $datos['_cola']   ?? null;
+        $vistas  = $datos['_vistas'] ?? null;
+
+        if ($cola === null) {
+            $p0 = new Pagina((string) ($datos['html'] ?? ''), $inicio);
+            $paginas[] = self::fichaPagina($inicio, 200, $p0, (int) ($datos['bytes'] ?? 0), (int) ($datos['tiempos']['total'] ?? 0), 0);
+
+            $vistas = [self::claveUrl($inicio) => true];
+            $cola   = [];
+            foreach (self::internosDe($p0, $raiz) as $u) {
+                $k = self::claveUrl($u);
+                if (!isset($vistas[$k])) { $vistas[$k] = true; $cola[] = ['url' => $u, 'nivel' => 1]; }
+            }
+            // Lo que diga el mapa del sitio entra también: así se descubren las
+            // páginas a las que no apunta ningún enlace (las huérfanas).
+            $datos['_del_mapa'] = self::urlsDelMapa((string) ($datos['sitemap']['url'] ?? ''), $raiz);
+            foreach ($datos['_del_mapa'] as $u) {
+                $k = self::claveUrl($u);
+                if (!isset($vistas[$k])) { $vistas[$k] = true; $cola[] = ['url' => $u, 'nivel' => 9]; }
+            }
+        }
+
+        // Se rastrea lo que dé el tiempo; lo que falte queda para la siguiente
+        // llamada, con la cola guardada tal cual.
+        $hasta = microtime(true) + 4.5;
+        while ($cola && count($paginas) < $tope && microtime(true) < $hasta) {
+            $item = array_shift($cola);
+            $r = Http::obtener($item['url'], ['timeout' => 12, 'max_bytes' => 1500000]);
+
+            if (!$r['ok']) {
+                $paginas[] = ['url' => $item['url'], 'codigo' => $r['codigo'], 'error' => true, 'nivel' => $item['nivel']];
+                continue;
+            }
+
+            $pg = new Pagina($r['cuerpo'], $r['url_final']);
+            $paginas[] = self::fichaPagina($r['url_final'], $r['codigo'], $pg, $r['bytes'], $r['ms'], $item['nivel']);
+
+            // Para el análisis de código hace falta guardar el HTML de cada página.
+            if ($modo === 'malware') {
+                $datos['_htmls'][] = mb_substr($r['cuerpo'], 0, 300000);
+            }
+
+            if ($item['nivel'] < 3) {
+                foreach (self::internosDe($pg, $raiz) as $u) {
+                    $k = self::claveUrl($u);
+                    if (!isset($vistas[$k])) {
+                        $vistas[$k] = true;
+                        $cola[] = ['url' => $u, 'nivel' => $item['nivel'] + 1];
+                    }
+                }
+            }
+        }
+
+        $datos['paginas'] = $paginas;
+        $datos['_cola']   = $cola;
+        $datos['_vistas'] = $vistas;
+        // Mientras quede cola y quepan páginas, la fase se repite.
+        $datos['_rastreo_listo'] = !$cola || count($paginas) >= $tope;
+
+        return $datos;
+    }
+
+    /** Ficha de una página rastreada: lo que hace falta para el análisis. */
+    private static function fichaPagina(string $url, int $codigo, Pagina $p, int $bytes, int $ms, int $nivel): array
+    {
+        $enc  = $p->encabezados();
+        $imgs = $p->imagenes();
+
+        $canonical = '';
+        if (preg_match('~<link[^>]+rel\s*=\s*["\']canonical["\'][^>]*href\s*=\s*["\']([^"\']+)~i', $p->html(), $m)) {
+            $canonical = trim($m[1]);
+        }
+        $robots = strtolower($p->meta('robots'));
+
+        $internos = 0; $externos = 0;
+        foreach ($p->enlaces() as $e) {
+            if ($e['interno']) { $internos++; } elseif ($e['externo']) { $externos++; }
+        }
+
+        return [
+            'url'         => $url,
+            'codigo'      => $codigo,
+            'error'       => false,
+            'nivel'       => $nivel,
+            'titulo'      => $p->titulo(),
+            'descripcion' => $p->meta('description'),
+            'h1'          => count($enc[1]),
+            'h1_texto'    => $enc[1][0] ?? '',
+            'h2'          => count($enc[2]),
+            'palabras'    => $p->palabras(),
+            'canonical'   => $canonical,
+            'noindex'     => str_contains($robots, 'noindex'),
+            'imgs'        => count($imgs),
+            'imgs_sin_alt' => count(array_filter($imgs, static fn($i) => empty($i['alt']))),
+            'internos'    => $internos,
+            'externos'    => $externos,
+            'bytes'       => $bytes,
+            'ms'          => $ms,
+            'og'          => $p->meta('og:title') !== '',
+            'schema'      => count($p->tiposSchema()),
+        ];
+    }
+
+    /** Enlaces internos navegables de una página. */
+    private static function internosDe(Pagina $p, string $raiz): array
+    {
+        $salida = [];
+        foreach ($p->enlaces() as $e) {
+            if (!$e['interno'] || stripos($e['url'], 'http') !== 0) { continue; }
+            // Fuera archivos que no son páginas.
+            if (preg_match('~\.(jpe?g|png|gif|webp|avif|svg|ico|css|js|pdf|zip|rar|docx?|xlsx?|mp[34]|avi|mov)(\?|$)~i', $e['url'])) { continue; }
+            if (stripos($e['url'], $raiz) !== 0) { continue; }
+            $salida[] = $e['url'];
+        }
+        return array_values(array_unique($salida));
+    }
+
+    /** Dos direcciones que solo cambian en la barra final son la misma página. */
+    private static function claveUrl(string $url): string
+    {
+        $sin = (string) preg_replace('~[#?].*$~', '', $url);
+        return rtrim(strtolower($sin), '/');
+    }
+
+    /**
+     * Direcciones listadas en el mapa del sitio.
+     *
+     * Sirven para encontrar las páginas huérfanas: las que Google conoce por
+     * el mapa pero a las que no llega ningún enlace desde dentro del sitio.
+     */
+    private static function urlsDelMapa(string $url, string $raiz): array
+    {
+        if ($url === '') { return []; }
+
+        $r = Http::obtener($url, ['timeout' => 12, 'max_bytes' => 2000000]);
+        if (!$r['ok']) { return []; }
+
+        $urls = [];
+        if (preg_match_all('~<loc>\s*([^<]+?)\s*</loc>~i', $r['cuerpo'], $m)) {
+            foreach ($m[1] as $u) {
+                $u = html_entity_decode(trim($u), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                // Un índice de mapas apunta a otros mapas: se sigue solo un nivel.
+                if (preg_match('~\.xml(\.gz)?$~i', $u) && count($urls) < 3) { continue; }
+                if (stripos($u, $raiz) === 0) { $urls[] = $u; }
+            }
+        }
+        return array_slice(array_values(array_unique($urls)), 0, 200);
+    }
+
+    /**
+     * Comprobación de TODOS los enlaces, por dentro y por fuera.
+     *
+     * Un enlace roto hacia fuera molesta; uno hacia dentro se lleva por delante
+     * el rastreo de Google y manda al visitante a una página de error. Aquí se
+     * miran los dos, y además se apunta si un enlace pasa por una cadena de
+     * redirecciones, que es tiempo perdido en cada visita.
+     */
+    private static function faseVinculos(array $fila, array $datos): array
+    {
+        $raiz = self::raiz((string) ($datos['url'] ?? $fila['url']));
+
+        // Se juntan todos los enlaces de todas las páginas rastreadas.
+        if (!isset($datos['_porRevisar'])) {
+            $todos = [];
+            foreach (($datos['paginas'] ?? []) as $pag) {
+                if (!empty($pag['error'])) { continue; }
+                $todos[$pag['url']] = true;
+            }
+            // Y los de la portada, con su texto, para poder señalar cuál falla.
+            $p0 = new Pagina((string) ($datos['html'] ?? ''), (string) ($datos['url'] ?? ''));
+            foreach ($p0->enlaces() as $e) {
+                if (stripos($e['url'], 'http') === 0) { $todos[$e['url']] = true; }
+            }
+            $datos['_porRevisar'] = array_slice(array_keys($todos), 0, self::MAX_VINCULOS);
+            $datos['vinculos'] = ['revisados' => 0, 'rotos' => [], 'redirigidos' => [], 'externos' => 0, 'internos' => 0];
+        }
+
+        $hasta = microtime(true) + 4.5;
+        $v = $datos['vinculos'];
+
+        while ($datos['_porRevisar'] && microtime(true) < $hasta) {
+            $url = array_shift($datos['_porRevisar']);
+            $interno = stripos($url, $raiz) === 0;
+
+            $r = Http::obtener($url, ['timeout' => 8, 'solo_cabeceras' => true, 'sin_redirecciones' => true]);
+            $v['revisados']++;
+            if ($interno) { $v['internos']++; } else { $v['externos']++; }
+
+            // 405 = el servidor no admite HEAD; no es un enlace roto.
+            if ($r['codigo'] >= 400 && $r['codigo'] !== 405 && count($v['rotos']) < 60) {
+                $v['rotos'][] = ['url' => $url, 'codigo' => $r['codigo'], 'interno' => $interno];
+            } elseif (!empty($r['redirige']) && count($v['redirigidos']) < 40) {
+                $v['redirigidos'][] = ['url' => $url, 'a' => (string) $r['redirige'], 'interno' => $interno];
+            }
+        }
+
+        $datos['vinculos'] = $v;
+        $datos['_vinculos_listo'] = !$datos['_porRevisar'];
+        return $datos;
+    }
+
+    /**
+     * Descarga y analiza los archivos de JavaScript del sitio.
+     *
+     * Es lo que separa un vistazo de un análisis de verdad: casi todo el código
+     * malicioso de hoy no está en el HTML sino en un archivo .js aparte, que
+     * desde la página solo se ve como una línea inocente. Los buenos escáneres
+     * del mercado los abren uno a uno; aquí también.
+     */
+    private static function faseCodigo(array $fila, array $datos): array
+    {
+        $raiz = self::raiz((string) ($datos['url'] ?? $fila['url']));
+
+        if (!isset($datos['_js'])) {
+            $p0 = new Pagina((string) ($datos['html'] ?? ''), (string) ($datos['url'] ?? ''));
+            $sc = $p0->scripts();
+            $datos['_js'] = array_slice(array_values(array_unique($sc['urls'])), 0, self::MAX_ARCHIVOS_JS);
+            $datos['archivos_js'] = [];
+        }
+
+        $hasta = microtime(true) + 4.5;
+        while ($datos['_js'] && microtime(true) < $hasta) {
+            $url = array_shift($datos['_js']);
+            $r = Http::obtener($url, ['timeout' => 12, 'max_bytes' => 1200000]);
+            if (!$r['ok'] || $r['cuerpo'] === '') { continue; }
+
+            $datos['archivos_js'][] = [
+                'url'     => $url,
+                'propio'  => stripos($url, $raiz) === 0,
+                'bytes'   => $r['bytes'],
+                // Solo se guarda el veredicto, no el archivo: guardar megas de
+                // código en la base de datos por cada auditoría no tiene sentido.
+                'senales' => Malware::analizarCodigo($r['cuerpo'], $url),
+            ];
+        }
+
+        $datos['_codigo_listo'] = !$datos['_js'];
+        return $datos;
+    }
+
+    /**
      * Cuánto pesa un archivo, sin descargarlo entero.
      *
      * Se intentan tres cosas, de la más barata a la más cara, porque no todos
@@ -468,6 +789,9 @@ final class Auditor
         // --- ¿Google tiene el dominio marcado? ------------------------------
         $datos['lista_negra'] = Malware::listaNegra($url);
 
+        // --- Y los setenta motores de VirusTotal ----------------------------
+        $datos['virustotal'] = Malware::virusTotal($url);
+
         return $datos;
     }
 
@@ -503,16 +827,28 @@ final class Auditor
         $pagina    = new Pagina((string) ($datos['html'] ?? ''), (string) ($datos['url'] ?? ''));
         $hallazgos = Chequeos::todos($datos, $pagina);
         $notas     = Informe::notas($hallazgos);
+        $modo      = (string) ($fila['modo'] ?? 'completo');
+
+        // En los modos a fondo la nota que se guarda es la de SU área: es la
+        // que el usuario pidió y la que tiene que salir en las listas.
+        $notaModo = Informe::notaDeModo($modo, $notas['global'], $notas['areas']);
 
         // El HTML crudo no se guarda: ya se exprimió y ocuparía megas por fila.
+        // Lo que solo servía para trabajar se tira: el HTML de cada página y
+        // las colas del rastreo ocupan megas y ya no hacen falta.
         $guardar = $datos;
-        unset($guardar['html'], $guardar['html_google']);
+        unset(
+            $guardar['html'], $guardar['html_google'], $guardar['_htmls'],
+            $guardar['_cola'], $guardar['_vistas'], $guardar['_porRevisar'],
+            $guardar['_js'], $guardar['_del_mapa'], $guardar['_imagenes'],
+            $guardar['_estilos'], $guardar['_enlaces']
+        );
 
         BD::actualizar('cr_auditorias', [
             'estado'      => 'listo',
             'fase'        => 'cerrar',
-            'nota'        => $notas['global'],
-            'notas_area'  => json_encode($notas['areas']),
+            'nota'        => $notaModo,
+            'notas_area'  => json_encode($notas['areas'] + ['_global' => $notas['global']]),
             'titulo'      => mb_substr((string) ($datos['titulo'] ?? ''), 0, 255),
             'error'       => '',
             'datos'       => json_encode($guardar),
@@ -558,12 +894,13 @@ final class Auditor
     }
 
     /** Historial del usuario (solo las principales). */
-    public static function historial(?int $usuarioId, int $limite = 50): array
+    public static function historial(?int $usuarioId, int $limite = 50, string $modo = ''): array
     {
-        $sql = "SELECT `id`,`url`,`host`,`titulo`,`estado`,`nota`,`notas_area`,`lote`,`token`,`creado`
+        $sql = "SELECT `id`,`url`,`host`,`titulo`,`estado`,`nota`,`notas_area`,`lote`,`token`,`modo`,`creado`
                   FROM `cr_auditorias` WHERE `papel` = 'principal'";
         $par = [];
         if ($usuarioId !== null) { $sql .= ' AND `usuario_id` = ?'; $par[] = $usuarioId; }
+        if ($modo !== '' && in_array($modo, self::MODOS, true)) { $sql .= ' AND `modo` = ?'; $par[] = $modo; }
         $sql .= ' ORDER BY `id` DESC LIMIT ' . max(1, min(200, $limite));
         return BD::todos($sql, $par);
     }

@@ -207,9 +207,12 @@
     mostrarAviso('');
     texto(titulo, 'Preparando…');
 
+    var campoModo = document.getElementById('aud-modo');
+
     pedir({
       accion: 'iniciar',
       sitios: valor,
+      modo: campoModo ? campoModo.value : 'completo',
       rivales: (rivales && rivales.value || '').trim()
     }).then(function (r) {
       if (!r.ok) {

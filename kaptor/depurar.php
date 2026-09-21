@@ -169,6 +169,12 @@ cr_cabecera([
         </svg>
         <span><b>Correos</b><i>info@colegio.edu.gt</i></span>
       </a>
+      <a class="modo-opcion" href="<?= e(cr_url('whatsapp.php')) ?>">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20.5 12.2c0 4-3.8 7.2-8.5 7.2-1 0-2-.15-2.9-.4L4 21l1.4-3.8C4 15.9 3.5 14.1 3.5 12.2c0-4 3.8-7.2 8.5-7.2s8.5 3.2 8.5 7.2Z"/>
+        </svg>
+        <span><b>WhatsApp</b><i>+502 5555 1234</i></span>
+      </a>
       <a class="modo-opcion <?= $modo === 'webs' ? 'activa' : '' ?>"
          href="<?= e(cr_url('dominios.php')) ?>" <?= $modo === 'webs' ? 'aria-current="page"' : '' ?>>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

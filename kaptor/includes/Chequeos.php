@@ -52,7 +52,10 @@ final class Chequeos
             self::seo($d, $p),
             self::negocio($d, $p),
             self::ia($d, $p),
-            self::malware($d, $p)
+            self::malware($d, $p),
+            // Y, cuando hubo rastreo, lo que solo se ve comparando páginas
+            // entre sí: títulos repetidos, contenido pobre, enlaces rotos...
+            Seo::chequeos($d)
         );
     }
 
@@ -893,6 +896,50 @@ final class Chequeos
                 'No se pudo consultar la lista de sitios peligrosos de Google',
                 '', 'Añade tu clave gratuita de Google en Ajustes y activa «Safe Browsing API» en el mismo proyecto.',
                 (string) ($ln['error'] ?? 'sin clave de Google'));
+        }
+
+        // --- Lo que dicen los demás motores antivirus ----------------------
+        $vt = $s['virustotal'];
+        if (!empty($vt['consultado'])) {
+            $n = (int) $vt['detectan'];
+            if ($n > 0) {
+                $r[] = self::h('virustotal', 'malware', self::MAL, 26,
+                    $n . ' de ' . (int) $vt['motores'] . ' motores antivirus marcan este sitio',
+                    'No es una sospecha de una sola herramienta: son motores independientes que coinciden. Cuando varios señalan lo mismo, el sitio tiene algo, y los navegadores y los filtros de correo acaban haciéndoles caso.',
+                    'Hay que limpiar el sitio y luego pedir la revisión a cada servicio que lo tenga marcado.',
+                    $vt['cuales'] ? implode(', ', array_slice((array) $vt['cuales'], 0, 4)) : (string) $n . ' motores', true);
+            } else {
+                $r[] = self::h('virustotal', 'malware', self::BIEN, 26,
+                    'Los ' . (int) $vt['motores'] . ' motores antivirus consultados lo dan por limpio',
+                    '', '', 'sin detecciones');
+            }
+        } elseif (!empty($vt['error'])) {
+            $r[] = self::h('virustotal', 'malware', self::NA, 26,
+                'No se pudo consultar a los motores antivirus',
+                '', 'Pon tu clave gratuita de VirusTotal en Ajustes: son setenta motores de una sola consulta.',
+                (string) $vt['error']);
+        }
+
+        // --- Los archivos de código, abiertos uno a uno ---------------------
+        $cod = $s['codigo'];
+        if ((int) ($cod['revisados'] ?? 0) > 0) {
+            if (!empty($cod['familias'])) {
+                $r[] = self::h('familias', 'malware', self::MAL, 28,
+                    'Se reconoció código de una campaña conocida: ' . implode(', ', (array) $cod['familias']),
+                    'No es una sospecha por la pinta del código: coincide con el rastro que deja una campaña concreta, de las que han infectado cientos de miles de sitios. Si está esto, casi con seguridad hay también una puerta trasera en el servidor que no se ve desde fuera.',
+                    'Hay que limpiar el sitio a fondo desde el servidor, cambiar TODAS las contraseñas (hosting, base de datos, administradores) y actualizar los plugins. Restaurar una copia anterior sin cerrar por dónde entraron solo retrasa el problema.',
+                    implode(' · ', (array) $cod['familias']), true);
+            } elseif ((int) $cod['ofuscados'] > 0) {
+                $r[] = self::h('familias', 'malware', self::AVISO, 28,
+                    (int) $cod['ofuscados'] . ' de ' . (int) $cod['revisados'] . ' archivos de código llevan partes ofuscadas',
+                    'Ofuscar es escribir el código para que no se entienda al leerlo. Hay librerías viejas y algún plugin de pago que lo hacen por costumbre, así que no es una condena; pero tampoco es normal, y hay que mirarlo antes de descartarlo.',
+                    'Que alguien revise esos archivos y confirme qué son. Si no se reconocen, el sitio está comprometido.',
+                    (string) ($cod['peor']['url'] ?? ''));
+            } else {
+                $r[] = self::h('familias', 'malware', self::BIEN, 28,
+                    'Se abrieron ' . (int) $cod['revisados'] . ' archivos de código y ninguno trae nada raro',
+                    '', '', (int) $cod['revisados'] . ' archivos revisados');
+            }
         }
 
         // --- Contenido distinto para Google (encubrimiento) ----------------

@@ -178,6 +178,50 @@ final class Informe
     //  Cómo se cuenta la nota
     // =====================================================================
 
+    /**
+     * La nota que manda en cada modo.
+     *
+     * En el análisis completo, la global. Pero si alguien pidió un análisis de
+     * SEO, el número que quiere ver es el de SEO: decirle "tu sitio saca 66"
+     * cuando ese 66 incluye la velocidad y el botón de WhatsApp no responde a
+     * lo que preguntó. En los modos a fondo manda el área, y la global queda
+     * de acompañamiento.
+     */
+    public static function notaDeModo(string $modo, int $global, array $areas): int
+    {
+        return match ($modo) {
+            'seo'     => (int) ($areas['seo'] ?? $global),
+            'malware' => (int) ($areas['malware'] ?? $global),
+            default   => $global,
+        };
+    }
+
+    /** Cómo se llama la nota que se está enseñando. */
+    public static function nombreNota(string $modo): string
+    {
+        return match ($modo) {
+            'seo'     => 'Nota de SEO',
+            'malware' => 'Seguridad del sitio',
+            default   => 'Nota global',
+        };
+    }
+
+    /**
+     * Las áreas que entran en el plan de mejora de cada modo.
+     *
+     * Tiene que ser EXACTAMENTE el área de la nota que se está enseñando: si
+     * el plan abarcara más áreas que la nota, la cuenta dejaría de cuadrar y
+     * la suma de los arreglos no daría cien.
+     */
+    public static function areasDeModo(string $modo): array
+    {
+        return match ($modo) {
+            'seo'     => ['seo'],
+            'malware' => ['malware'],
+            default   => [],
+        };
+    }
+
     /** Color del semáforo: verde, ambar o rojo. */
     public static function color(int $nota): string
     {

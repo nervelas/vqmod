@@ -117,6 +117,7 @@ CREATE TABLE IF NOT EXISTS `cr_auditorias` (
   `usuario_id`  INT UNSIGNED NULL,
   `lote`        VARCHAR(40) NOT NULL DEFAULT '',
   `papel`       VARCHAR(12) NOT NULL DEFAULT 'principal',
+  `modo`        VARCHAR(12) NOT NULL DEFAULT 'completo',
   `url`         VARCHAR(500) NOT NULL,
   `host`        VARCHAR(190) NOT NULL DEFAULT '',
   `titulo`      VARCHAR(255) NULL,

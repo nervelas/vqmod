@@ -20,7 +20,7 @@ const CAMPOS_TEXTO = [
     'hero_titulo', 'hero_subtitulo', 'hero_placeholder', 'hero_boton', 'hero_etiqueta', 'aviso_legal',
     'user_agent', 'headless_binario', 'dominios_excluidos', 'prefijo_pais',
     'remitente_postal', 'cron_clave',
-    'psi_clave', 'informe_lema', 'informe_contacto', 'informe_cta',
+    'psi_clave', 'vt_clave', 'informe_lema', 'informe_contacto', 'informe_cta',
 ];
 /** Interruptores (se guardan como 1 o 0). */
 const CAMPOS_BOOL = [
@@ -48,6 +48,7 @@ const CAMPOS_NUM = [
     'max_sitios_lote'   => [1, 2000],
     'paginas_por_sitio' => [1, 50],
     'auditor_timeout'   => [5, 90],
+    'seo_max_paginas'   => [3, 120],
     'auditor_max_lote'  => [1, 300],
 ];
 /** Colores en formato #RRGGBB. */
@@ -628,6 +629,13 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
     fila('Clave de Google (PageSpeed y listas de seguridad)',
         'Gratuita y muy recomendable. Se saca en <b>console.cloud.google.com</b> &rarr; crear proyecto &rarr; Credenciales &rarr; Crear clave de API. Con la MISMA clave, activa los dos servicios: <b>PageSpeed Insights API</b> (nota de velocidad) y <b>Safe Browsing API</b> (saber si Google tiene el sitio marcado como peligroso). Sin clave, ni lo uno ni lo otro.',
         '<input type="text" name="psi_clave" class="campo" maxlength="120" autocomplete="off" spellcheck="false" value="' . e($a['psi_clave'] ?? '') . '" placeholder="AIza...">');
+
+    fila('Clave de VirusTotal <span class="suave pequeno">(opcional)</span>',
+        'Suma la opinión de unos setenta motores antivirus a la vez, que es mucho más que una sola. Gratuita en <b>virustotal.com</b>: registrarse y copiar la clave del perfil. El plan gratis da 500 consultas al día. Sin clave, el resto de la búsqueda de virus funciona igual.',
+        '<input type="text" name="vt_clave" class="campo" maxlength="120" autocomplete="off" spellcheck="false" value="' . e($a['vt_clave'] ?? '') . '">');
+
+    fila('Páginas que recorre el análisis SEO', 'Cuántas páginas del sitio se abren para comparar títulos, contenido y enlaces. Más páginas, análisis más fiel y más lento.',
+        '<input type="number" name="seo_max_paginas" class="campo" min="3" max="120" value="' . e((string) Ajustes::entero('seo_max_paginas', 25, 3, 120)) . '">');
 
     fila('Tiempo de espera por página', 'Segundos que se le dan a cada sitio antes de darlo por caído.',
         '<input type="number" name="auditor_timeout" class="campo" min="5" max="90" value="' . e((string) Ajustes::entero('auditor_timeout', 25, 5, 90)) . '">');

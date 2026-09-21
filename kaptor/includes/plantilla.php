@@ -16,6 +16,43 @@ function cr_logo_url(): string
 }
 
 /**
+ * Pinta un grupo del menú con sus entradas dentro.
+ *
+ * Es un <details> y no un menú de JavaScript a propósito: así se abre y se
+ * cierra sin una línea de código, funciona con el teclado de fábrica, y si el
+ * JavaScript falla o tarda, el menú sigue sirviendo. El comportamiento de
+ * escritorio (abrir al pasar el ratón, cerrar al salir) lo añade el CSS y un
+ * puñado de líneas en app.js; si no llegan, no se pierde nada.
+ *
+ * @param array<int,array{0:string,1:string,2:string,3:string}> $entradas
+ *        [clave activa, archivo, título, descripción]
+ */
+function cr_menu_grupo(string $titulo, string $activo, array $entradas): void
+{
+    $claves = array_column($entradas, 0);
+    $aqui   = in_array($activo, $claves, true);
+    ?>
+    <details class="menu-grupo<?= $aqui ? ' activo' : '' ?>">
+      <summary>
+        <span><?= e($titulo) ?></span>
+        <svg class="menu-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m6 9 6 6 6-6"/>
+        </svg>
+      </summary>
+      <div class="menu-desplegable">
+        <?php foreach ($entradas as [$clave, $archivo, $nombre, $pista]): ?>
+          <a href="<?= e(cr_url($archivo)) ?>" class="<?= $activo === $clave ? 'activo' : '' ?>">
+            <span class="menu-nombre"><?= e($nombre) ?></span>
+            <span class="menu-pista"><?= e($pista) ?></span>
+          </a>
+        <?php endforeach; ?>
+      </div>
+    </details>
+    <?php
+}
+
+/**
  * Imprime la cabecera completa de una página pública.
  *
  * @param array{título?:string,descripción?:string,activo?:string,clase?:string,css?:string[]} $opciones
@@ -107,11 +144,24 @@ foreach ((array) ($opciones['css'] ?? []) as $hoja): ?>
     <nav id="menu-principal" aria-label="Navegación principal">
       <?php if (Auth::autenticado()): ?>
         <!-- Kaptor es privado: sin sesión no se enseñan destinos que solo
-             llevarían de vuelta al acceso. -->
-        <a href="<?= e(cr_url('index.php')) ?>" class="enlace-extraer <?= $activo === 'inicio' ? 'activo' : '' ?>">Extraer</a>
-        <a href="<?= e(cr_url('depurar.php')) ?>" class="<?= $activo === 'depurar' ? 'activo' : '' ?>">Extraer correos</a>
-        <a href="<?= e(cr_url('dominios.php')) ?>" class="<?= $activo === 'dominios' ? 'activo' : '' ?>">Extraer dominios</a>
-        <a href="<?= e(cr_url('auditor.php')) ?>" class="<?= $activo === 'auditor' ? 'activo' : '' ?>">Auditar web</a>
+             llevarían de vuelta al acceso.
+
+             Las herramientas van agrupadas en dos desplegables. Sueltas eran
+             siete enlaces y no cabían; agrupadas son tres, y además dicen de
+             un vistazo que Kaptor hace dos cosas: sacar datos y analizarlos. -->
+        <?php
+        cr_menu_grupo('Extraer', $activo, [
+            ['inicio',   'index.php',    'De una web',        'Correos y WhatsApp de una web o de una lista'],
+            ['depurar',  'depurar.php',  'Correos de un texto', 'Pega un texto y saca los correos'],
+            ['whatsapp', 'whatsapp.php', 'WhatsApp de un texto', 'Pega un texto y saca los números'],
+            ['dominios', 'dominios.php', 'Dominios de un texto', 'Pega un listado y saca las webs'],
+        ]);
+        cr_menu_grupo('Analizar', $activo, [
+            ['auditor', 'auditor.php',       'Auditoría completa', 'Las siete áreas de un sitio, con informe'],
+            ['seo',     'seo.php',           'Análisis SEO',       'Nota real y qué cambiar para llegar al 100 %'],
+            ['malware', 'malware.php',       'Buscar virus',       'Código malicioso, listas negras y spam oculto'],
+        ]);
+        ?>
         <a href="<?= e(cr_url('mis-extracciones.php')) ?>" class="<?= $activo === 'mias' ? 'activo' : '' ?>">Mis extracciones</a>
         <?php if (Auth::esAdmin()): ?>
           <a href="<?= e(cr_url('admin/index.php')) ?>">Panel</a>

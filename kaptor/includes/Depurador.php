@@ -331,6 +331,140 @@ final class Depurador
     // ---------------------------------------------------------------- dominios
 
     /**
+     * Saca los números de teléfono y de WhatsApp de un texto pegado.
+     *
+     * Hace con los números lo mismo que procesar() hace con los correos:
+     * encuentra, valida, quita repetidos y filtra. La validación es la del
+     * extractor —la misma que descarta fechas, NIT, precios y números de
+     * factura, que es lo que ensucia cualquier listado—, así que lo que sale
+     * son teléfonos de verdad y no ristras de dígitos.
+     *
+     * @param array{paises?:string|array,solo_whatsapp?:bool,limite?:int,internacional?:bool} $op
+     * @return array{telefonos:array,resumen:array,paises:array,descartados:array}
+     */
+    public static function telefonos(string $texto, array $op = []): array
+    {
+        $paises       = self::listaPaises($op['paises'] ?? []);
+        $soloWhatsapp = !empty($op['solo_whatsapp']);
+        $internacional = !empty($op['internacional']);
+        $limite       = max(0, (int) ($op['limite'] ?? 0));
+
+        if (strlen($texto) > self::MAX_ENTRADA) {
+            $texto = substr($texto, 0, self::MAX_ENTRADA);
+        }
+
+        $stats = [
+            'encontrados' => 0, 'repetidos' => 0, 'invalidos' => 0,
+            'pais' => 0, 'whatsapp' => 0, 'final' => 0,
+        ];
+
+        $vistos = [];
+        $lista  = [];
+        $porPais = [];
+        $descartados = [];
+
+        // 1) Los enlaces de WhatsApp son la fuente más fiable que hay: el
+        //    número viene ya en formato internacional y sin adornos.
+        // Un enlace wa.me SÍ dice que ese número tiene WhatsApp. Un tel:, no:
+        // es un teléfono y nada más. Mezclarlos marcaba como de WhatsApp
+        // números que igual son de una centralita fija.
+        $deWhatsapp = [];
+        if (preg_match_all('~(?:wa\.me/|api\.whatsapp\.com/send\?phone=|web\.whatsapp\.com/send\?phone=)\+?(\d{7,15})~i', $texto, $m)) {
+            foreach ($m[1] as $n) { $deWhatsapp[$n] = true; }
+        }
+        $deTelefono = [];
+        if (preg_match_all('~tel:\+?([\d\s().-]{7,25})~i', $texto, $m2)) {
+            foreach ($m2[1] as $n) {
+                $d = preg_replace('~\D~', '', $n) ?? '';
+                if ($d !== '' && !isset($deWhatsapp[$d])) { $deTelefono[$d] = true; }
+            }
+        }
+
+        // 2) Y luego los sueltos dentro del texto.
+        $crudos = [];
+        foreach (array_keys($deWhatsapp) as $n) {
+            if ($n !== '') { $crudos[] = ['bruto' => '+' . $n, 'fiable' => true, 'wa' => true]; }
+        }
+        foreach (array_keys($deTelefono) as $n) {
+            if ($n !== '') { $crudos[] = ['bruto' => '+' . $n, 'fiable' => true, 'wa' => false]; }
+        }
+        if (preg_match_all('~\+?\d[\d\s().\-]{6,22}\d~', $texto, $m3, PREG_OFFSET_CAPTURE)) {
+            foreach ($m3[0] as [$bruto, $pos]) {
+                // El contexto alrededor deja descartar fechas, NIT y precios.
+                $ctx = substr($texto, max(0, $pos - 40), strlen($bruto) + 80);
+                $crudos[] = ['bruto' => $bruto, 'fiable' => false, 'wa' => false, 'ctx' => $ctx];
+            }
+        }
+        unset($m, $m2, $m3, $texto, $deWhatsapp, $deTelefono);
+
+        $stats['encontrados'] = count($crudos);
+
+        foreach ($crudos as $indice => $c) {
+            unset($crudos[$indice]);
+
+            $v = Telefono::validar(
+                $c['bruto'],
+                $internacional || $c['fiable'],
+                (string) ($c['ctx'] ?? ''),
+                !$c['fiable']
+            );
+            if (empty($v['ok'])) {
+                $stats['invalidos']++;
+                if (count($descartados) < 25) {
+                    $descartados[] = ['numero' => trim($c['bruto']), 'motivo' => (string) ($v['motivo'] ?? 'no válido')];
+                }
+                continue;
+            }
+
+            $clave = $v['e164'];
+            if (isset($vistos[$clave])) {
+                $vistos[$clave]['veces']++;
+                // Si cualquiera de las apariciones venía de un enlace de
+                // WhatsApp, el número cuenta como de WhatsApp.
+                if ($c['wa']) { $vistos[$clave]['whatsapp'] = true; }
+                $stats['repetidos']++;
+                continue;
+            }
+
+            $vistos[$clave] = [
+                'numero'   => $v['e164'],
+                'formato'  => $v['formato'],
+                'pais'     => $v['pais'],
+                'iso'      => $v['iso'],
+                'whatsapp' => $c['wa'],
+                'veces'    => 1,
+            ];
+        }
+
+        foreach ($vistos as $t) {
+            if ($paises && !self::esDePais($t, $paises)) { $stats['pais']++; continue; }
+            if ($soloWhatsapp && !$t['whatsapp']) { $stats['whatsapp']++; continue; }
+
+            $etiqueta = $t['pais'] !== '' ? $t['pais'] : 'Sin identificar';
+            $porPais[$etiqueta] = ($porPais[$etiqueta] ?? 0) + 1;
+            $lista[] = $t;
+        }
+
+        // Primero los de WhatsApp, y dentro de cada grupo por número.
+        usort($lista, static function ($a, $b) {
+            if ($a['whatsapp'] !== $b['whatsapp']) { return $a['whatsapp'] ? -1 : 1; }
+            return strcmp($a['numero'], $b['numero']);
+        });
+        if ($limite > 0 && count($lista) > $limite) { $lista = array_slice($lista, 0, $limite); }
+
+        $stats['final']  = count($lista);
+        $stats['unicos'] = count($vistos);
+        arsort($porPais);
+
+        return [
+            'telefonos'   => $lista,
+            'resumen'     => $stats,
+            'paises'      => $porPais,
+            'descartados' => $descartados,
+        ];
+    }
+
+    /**
      * Saca las páginas web que haya dentro de un texto cualquiera.
      *
      * Está pensada para lo que de verdad se pega: el JSON de crt.sh (los
@@ -522,6 +656,56 @@ final class Depurador
      * @param mixed $valor
      * @return string[]
      */
+    /**
+     * ¿Este número es de alguno de los países pedidos?
+     *
+     * Vale tanto el código ISO del país como su prefijo telefónico, porque
+     * cada quien escribe lo que tiene a mano: unos ponen "gt" y otros "502".
+     *
+     * @param string[] $paises
+     */
+    private static function esDePais(array $telefono, array $paises): bool
+    {
+        $iso = strtolower((string) ($telefono['iso'] ?? ''));
+        $num = ltrim((string) ($telefono['numero'] ?? ''), '+');
+
+        foreach ($paises as $pais) {
+            $pais = (string) $pais;
+            if ($pais !== '' && $pais === $iso) { return true; }
+            if ($pais !== '' && ctype_digit($pais) && str_starts_with($num, $pais)) { return true; }
+        }
+        return false;
+    }
+
+    /**
+     * Lee el filtro por país: admite el código ISO ("gt", "mx") y el prefijo
+     * telefónico ("502", "+52").
+     *
+     * No sirve el lector de extensiones de dominio, que es lo que se usaba:
+     * ese descarta todo lo que no parezca un TLD, y "502" no lo parece, así
+     * que filtrar por prefijo devolvía siempre una lista vacía.
+     *
+     * @return string[] en minúsculas y sin el "+"
+     */
+    private static function listaPaises($valor): array
+    {
+        if (is_array($valor)) { $valor = implode(',', $valor); }
+        $partes = preg_split('~[\s,;|]+~', (string) $valor) ?: [];
+
+        $salida = [];
+        foreach ($partes as $parte) {
+            $parte = strtolower(trim($parte, " \t\n\r\0\x0B+.\"'"));
+            if ($parte === '' || $parte === 'todos' || $parte === 'todas') { continue; }
+            // O letras (el código ISO del país) o dígitos (el prefijo).
+            if (preg_match('~^[a-z]{2}$~', $parte) || preg_match('~^[0-9]{1,4}$~', $parte)) {
+                // Como valor y no como clave: PHP convierte las claves que
+                // parecen números en enteros, y "502" dejaba de ser texto.
+                $salida[] = $parte;
+            }
+        }
+        return array_values(array_unique($salida));
+    }
+
     private static function normalizarLista($valor): array
     {
         if (is_array($valor)) { $valor = implode(',', $valor); }

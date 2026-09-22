@@ -25,8 +25,8 @@ final class Ajustes
         return [
             // --- Identidad -------------------------------------------------
             'sitio_nombre'        => 'Kaptor',
-            'sitio_lema'          => 'Capta correos y WhatsApp de cualquier web',
-            'sitio_descripcion'   => 'Extrae todos los correos y números de WhatsApp de cualquier página web en un solo clic, y envía campañas desde tu propio dominio.',
+            'sitio_lema'          => 'Extractor Web Inteligente',
+            'sitio_descripcion'   => 'Extractor web inteligente: correos, WhatsApp, auditoría, SEO y búsqueda de virus, en un solo lugar.',
             'logo'                => '',
             'favicon'             => '',
             'pie_texto'           => '© Kaptor. Uso responsable: extrae solo datos públicos y respeta la legislación de protección de datos.',
@@ -50,9 +50,11 @@ final class Ajustes
             'color_fondo_claro'   => '#FFFFFF',
             'color_fondo2_claro'  => '#F7F8FA',
             'color_texto_claro'   => '#0E1116',
-            'color_oro_claro'     => '#1B3FA8',   // azul de marca
-            'color_oro2_claro'    => '#2B52C4',
+            'color_oro_claro'     => '#133E92',   // azul de marca
+            'color_oro2_claro'    => '#072B72',
             'color_neon_claro'    => '#0F7B43',   // verde de estado
+            'color_acento_claro'  => '#FF4800',   // naranja de marca
+            'color_acento'        => '#FF6A33',   // el mismo, subido para el oscuro
             'color_texto'         => '#F2F4F7',
             'tema_por_defecto'    => 'claro',
 

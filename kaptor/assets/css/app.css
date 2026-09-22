@@ -27,11 +27,17 @@
 */
 :root{
   /* --- Acento de marca ------------------------------------------------- */
-  --oro:var(--cr-oro-claro, #1B3FA8);        /* el "oro" de antes es hoy el azul de marca */
-  --oro-2:var(--cr-oro2-claro, #2B52C4);
-  --oro-claro:var(--cr-oro-claro, #1B3FA8);
+  --oro:var(--cr-oro-claro, #133E92);        /* el "oro" de antes es hoy el azul de marca */
+  --oro-2:var(--cr-oro2-claro, #072B72);
+  --oro-claro:var(--cr-oro-claro, #133E92);
   --neon:var(--cr-neon-claro, #0F7B43);
   --btn-texto:#FFFFFF;
+  /* El naranja de marca. Es el golpe de color: numeros, subrayados, la
+     palabra en cursiva de los titulares. Sobre blanco no llega al contraste
+     que pide un texto pequeno, asi que para leer se usa --acento-texto. */
+  --acento:var(--cr-acento-claro, #FF4800);
+  --acento-texto:#C33200;
+  --acento-fondo:#FFF0E9;
 
   /* --- Papel y tinta ---------------------------------------------------- */
   --fondo:var(--cr-fondo-claro, #FFFFFF);
@@ -53,7 +59,7 @@
   --wa:#0E7C4A;
 
   /* --- Un color por herramienta ---------------------------------------- */
-  --hc-correo:#3A46C8;   --hb-correo:#EEF0FC;
+  --hc-correo:#133E92;   --hb-correo:#EAEFFA;
   --hc-wa:#0E7C4A;       --hb-wa:#E9F6EF;
   --hc-auditor:#B3730C;  --hb-auditor:#FCF3E6;
   --hc-seo:#0E6E86;      --hb-seo:#E8F4F7;
@@ -61,8 +67,8 @@
   --hc-campana:#7A3FBF;  --hb-campana:#F4EEFC;
 
   /* --- Halos derivados: acompañan a la paleta elegida en el panel ------- */
-  --oro-sombra:color-mix(in srgb, var(--cr-oro-claro, #1B3FA8) 9%, transparent);
-  --neon-sombra:color-mix(in srgb, var(--cr-neon-claro, #0F7B43) 7%, transparent);
+  --oro-sombra:color-mix(in srgb, var(--cr-oro-claro, #133E92) 9%, transparent);
+  --neon-sombra:color-mix(in srgb, var(--cr-acento-claro, #FF4800) 7%, transparent);
 
   /* --- Sombras. Dos capas: uno de contacto y otro de elevacion. -------- */
   --sombra-suave:0 1px 2px rgba(14,17,22,.05);
@@ -88,6 +94,9 @@
   --oro-2:var(--cr-oro2, #A8C0FF);
   --oro-claro:var(--cr-oro, #7DA2FF);
   --neon:var(--cr-neon, #43D98B);
+  --acento:var(--cr-acento, #FF6A33);
+  --acento-texto:#FF8A5C;
+  --acento-fondo:rgba(255,106,51,.14);
   --btn-texto:#0B0D11;
 
   --fondo:var(--cr-fondo, #0B0D11);
@@ -984,7 +993,7 @@ table.tabla.tabla-compacta tbody tr:hover{background:color-mix(in srgb,var(--oro
 
 /* -------------------------------------------------- Depurar lista de correos */
 .seccion-depurar{padding-top:44px;padding-bottom:72px}
-.depurar-cab{max-width:760px;margin-bottom:26px}
+.depurar-cab{margin-bottom:26px}
 .depurar-cab h1{font-size:clamp(1.9rem,4.4vw,2.6rem);margin:14px 0 10px}
 .caja-depurar{padding:24px}
 .area-lista{

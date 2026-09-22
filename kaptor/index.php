@@ -97,7 +97,7 @@ cr_cabecera([
             </label>
           </div>
           <input type="text" id="objetivo" name="objetivo" class="campo" autocomplete="off" spellcheck="false"
-                 placeholder="Ej.: .edu.gt   ·   vacío = todos los dominios" <?= $puedeExtraer ? '' : 'disabled' ?>>
+                 placeholder="" <?= $puedeExtraer ? '' : 'disabled' ?>>
           <div class="chips-ext" id="chips-objetivo">
             <button type="button" class="chip-ext chip-todos" data-ext="">Todos</button>
             <button type="button" class="chip-ext" data-ext="edu.gt">.edu.gt</button>
@@ -148,42 +148,50 @@ cr_cabecera([
       </p>
     </div>
 
-    <!-- ----------------------------- COLUMNA DE LECTURA ----------------------------- -->
-    <!-- Lo que un instrumento enseña cuando está en reposo: de qué es capaz y
-         qué se ha hecho con él. En pantallas estrechas pasa debajo. -->
-    <aside class="consola-lectura" aria-label="Estado del instrumento">
-      <?php $resumen = cr_resumen_usuario(); ?>
 
-      <div class="lectura-cifras">
-        <div class="lectura-dato">
-          <span class="lectura-n"><?= number_format((float) $resumen['escaneos'], 0, ',', '.') ?></span>
-          <span class="lectura-txt">extracciones</span>
-        </div>
-        <div class="lectura-dato">
-          <span class="lectura-n"><?= number_format((float) $resumen['correos'], 0, ',', '.') ?></span>
-          <span class="lectura-txt">correos captados</span>
-        </div>
-        <div class="lectura-dato">
-          <span class="lectura-n"><?= number_format((float) $resumen['whatsapps'], 0, ',', '.') ?></span>
-          <span class="lectura-txt">WhatsApp</span>
-        </div>
+  </div>
+</section>
+
+<!-- ----------------------------- CARRUSEL ----------------------------- -->
+<!-- No son fotos de banco de imagenes: son capturas de Kaptor trabajando.
+     Se arrastra con el dedo, se mueve solo y se para en cuanto alguien lo
+     toca o pasa el raton por encima. -->
+<section class="carrusel" aria-label="Kaptor por dentro">
+  <div class="contenedor">
+    <div class="carrusel-cab">
+      <div>
+        <h2>Kaptor por dentro</h2>
+        <p>Capturas reales de la herramienta trabajando, no dibujos.</p>
       </div>
+      <div class="carrusel-mandos">
+        <button type="button" id="carr-izq" aria-label="Ver la anterior">
+          <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/></svg>
+        </button>
+        <button type="button" id="carr-der" aria-label="Ver la siguiente">
+          <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></svg>
+        </button>
+      </div>
+    </div>
 
-      <ol class="lectura-lista">
-        <li><b>20 técnicas</b> para los correos y 8 para los números: mailto, widgets, JSON-LD, texto y ofuscaciones.</li>
-        <li><b>Rastreo profundo</b> por contacto, nosotros y equipo, con el sitemap incluido.</li>
-        <li><b>Nivel educativo</b> de cada centro, leído en su propia web.</li>
-        <li><b>TXT, CSV y Excel</b>, filtrados por la terminación que elijas.</li>
-        <li><b>Auditor web</b>: revisa cualquier sitio y saca un informe con tu marca, listo para enviar.</li>
-      </ol>
-
-      <?php if ($resumen['ultimo'] !== ''): ?>
-        <p class="lectura-pie">
-          Última extracción · <span class="mono"><?= e($resumen['ultimo']) ?></span>
-        </p>
-      <?php endif; ?>
-    </aside>
-
+    <div class="carrusel-pista" id="carrusel-pista" tabindex="0" role="group" aria-label="Capturas de Kaptor">
+      <?php
+      $diapos = [
+          ['1-correos',  'Correos y su origen',  'cada correo con su dominio, su tipo y la página exacta de donde salió.'],
+          ['2-informe',  'El informe del cliente', 'nota sobre 100, las siete áreas y lo primero que hay que arreglar.'],
+          ['3-whatsapp', 'WhatsApp de un texto',  'números en formato internacional, sin facturas ni NIT colados.'],
+          ['4-listas',   'Listas limpias',        'pega lo que sea y sale sin repetidos, filtrado por la terminación que pidas.'],
+      ];
+      foreach ($diapos as $i => [$archivo, $titulo, $pie]): ?>
+        <figure class="diapo">
+          <div class="diapo-img">
+            <img src="<?= e(cr_url('assets/img/carrusel/' . $archivo . '.jpg')) ?>"
+                 alt="<?= e($titulo) ?>" width="1280" height="760"
+                 loading="<?= $i === 0 ? 'eager' : 'lazy' ?>" decoding="async">
+          </div>
+          <figcaption><b><?= e($titulo) ?></b> <span><?= e($pie) ?></span></figcaption>
+        </figure>
+      <?php endforeach; ?>
+    </div>
   </div>
 </section>
 
@@ -279,7 +287,7 @@ cr_cabecera([
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
           <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
         </svg>
-        <input type="search" id="buscar" class="campo" placeholder="Buscar correo, dominio o método…" aria-label="Buscar en los correos">
+        <input type="search" id="buscar" class="campo" placeholder="" aria-label="Buscar en los correos">
       </div>
       <select id="filtro-tipo" class="campo" aria-label="Filtrar por tipo de correo">
         <option value="">Todos los tipos</option>
@@ -315,7 +323,7 @@ cr_cabecera([
       </div>
 
       <input type="text" id="filtro-ext" class="campo campo-ext" autocomplete="off" spellcheck="false"
-             placeholder="Escríbelo o púlsalo abajo: .edu.gt, .com.gt, .com…   ·   vacío = todos"
+             placeholder=""
              aria-label="Filtrar por terminación del dominio">
 
       <!-- Terminaciones encontradas, con cuántos correos y cuántos dominios
@@ -370,7 +378,7 @@ cr_cabecera([
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
           <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
         </svg>
-        <input type="search" id="buscar-tel" class="campo" placeholder="Buscar número, país o método…" aria-label="Buscar en los teléfonos">
+        <input type="search" id="buscar-tel" class="campo" placeholder="" aria-label="Buscar en los teléfonos">
       </div>
       <select id="filtro-pais" class="campo" aria-label="Filtrar por país">
         <option value="">Todos los países</option>

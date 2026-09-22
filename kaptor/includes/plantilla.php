@@ -73,6 +73,20 @@ function cr_cabecera(array $opciones = []): void
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<?php /* El tema se decide AQUI, antes de pintar nada, y en TODAS las paginas
+         (tambien en las que no cargan app.js). Si no, al pasar de una pagina
+         con JS a otra sin el, la pantalla cambiaba de oscuro a claro sola. */ ?>
+<script>
+(function(){
+  try{
+    var g=null;
+    try{ g=localStorage.getItem('kaptor-tema'); }catch(e){}
+    if(g!=='claro'&&g!=='oscuro'){ g=<?= ejs($tema) ?>; }
+    document.documentElement.setAttribute('data-tema',g);
+  }catch(e){}
+})();
+</script>
 <title><?= e($titulo) ?></title>
 <meta name="description" content="<?= e($descripcion) ?>">
 <meta name="theme-color" content="<?= e(Ajustes::obtener('color_fondo', '#07080A')) ?>">
@@ -116,7 +130,9 @@ foreach ((array) ($opciones['css'] ?? []) as $hoja): ?>
     --cr-texto-claro:<?= e(Ajustes::obtener('color_texto_claro', '#171512')) ?>;
     --cr-oro-claro:<?= e(Ajustes::obtener('color_oro_claro', '#7E682F')) ?>;
     --cr-oro2-claro:<?= e(Ajustes::obtener('color_oro2_claro', '#8D7A40')) ?>;
-    --cr-neon-claro:<?= e(Ajustes::obtener('color_neon_claro', '#3B7F55')) ?>;
+    --cr-neon-claro:<?= e(Ajustes::obtener('color_neon_claro', '#0F7B43')) ?>;
+    --cr-acento-claro:<?= e(Ajustes::obtener('color_acento_claro', '#FF4800')) ?>;
+    --cr-acento:<?= e(Ajustes::obtener('color_acento', '#FF6A33')) ?>;
     --cr-texto:<?= e(Ajustes::obtener('color_texto', '#EDEAE3')) ?>;
   }
 </style>

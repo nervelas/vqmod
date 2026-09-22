@@ -38,9 +38,11 @@ return [
         'fondo_claro'   => '#FFFFFF',
         'fondo2_claro'  => '#F7F8FA',
         'texto_claro'   => '#0E1116',
-        'oro_claro'     => '#1B3FA8',
-        'oro2_claro'    => '#2B52C4',
+        'oro_claro'     => '#133E92',
+        'oro2_claro'    => '#072B72',
         'neon_claro'    => '#0F7B43',
+        'acento_claro'  => '#FF4800',
+        'acento'        => '#FF6A33',
     ],
     'azul' => [
         'nombre'        => 'Azul eléctrico',

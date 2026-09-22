@@ -54,55 +54,10 @@
 .tema:active{transform:scale(.96)}
 
 /* --------------------------------------------------------- 3. Portada */
-/* Dos columnas: el mando a la izquierda y, en paralelo, un panel compacto
-   con lo que el instrumento ya ha hecho. Antes ese panel caia debajo y se
-   quedaba suelto en medio de la nada; asi el ancho se llena con algo util
-   en vez de con aire. Por debajo de 1100 px se apilan. */
-.consola-int{
-  display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,380px);
-  gap:clamp(20px,2.4vw,40px);align-items:start;text-align:left;
-}
+/* Una sola columna a todo lo ancho: el mando manda y no hay nada al lado
+   que le robe sitio ni deje aire muerto a la derecha. */
+.consola-int{display:block;text-align:left}
 .consola-mando{min-width:0}
-@media (max-width:1100px){ .consola-int{grid-template-columns:1fr} }
-
-/* El panel de lectura: numeros arriba, lo que sabe hacer debajo. */
-.consola-lectura{
-  background:var(--panel);border:1px solid var(--borde);border-radius:var(--r-md);
-  box-shadow:var(--sombra-suave);padding:clamp(18px,1.6vw,24px);
-  font-family:'Manrope',system-ui,sans-serif;color:var(--suave);
-  display:flex;flex-direction:column;gap:16px;
-}
-.lectura-cifras{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
-  padding-bottom:16px;border-bottom:1px solid var(--borde);
-}
-.lectura-dato{display:flex;flex-direction:column;gap:2px;min-width:0}
-.lectura-n{
-  font-family:'Cormorant Garamond',Georgia,serif;font-weight:400;
-  font-size:clamp(1.5rem,2vw,1.9rem);line-height:1;letter-spacing:-.02em;color:var(--texto);
-}
-.lectura-txt{
-  /* .75rem son 12 px: el suelo de lectura del sitio. */
-  font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;
-  color:var(--tenue);font-weight:700;
-}
-.lectura-lista{
-  list-style:none;counter-reset:l;margin:0;padding:0;
-  display:flex;flex-direction:column;gap:10px;
-}
-.lectura-lista li{
-  counter-increment:l;position:relative;padding-left:26px;
-  font-size:.85rem;line-height:1.5;
-}
-.lectura-lista li::before{
-  content:counter(l,decimal-leading-zero);position:absolute;left:0;top:1px;
-  font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:500;color:var(--oro);
-}
-.lectura-lista b{color:var(--texto);font-weight:700}
-.lectura-pie{
-  margin:0;padding-top:14px;border-top:1px solid var(--borde);
-  font-size:.75rem;color:var(--tenue);
-}
 
 /* El atajo, al pie del mando: una linea discreta, no un parrafo centrado. */
 .atajo-texto{
@@ -114,10 +69,10 @@
   font-weight:300;letter-spacing:-.025em;line-height:.94;
 }
 .portada h1 .brillo,.titular .brillo,.depurar-cab h1 .brillo{
-  font-style:italic;color:var(--oro);
+  font-style:italic;color:var(--acento-texto);
   -webkit-text-fill-color:currentColor;background:none;
 }
-.portada-sub{color:var(--suave);max-width:62ch;margin-inline:auto}
+.portada-sub{color:var(--suave);max-width:none;margin-inline:0}
 
 .insignia{
   display:inline-flex;align-items:center;gap:9px;
@@ -126,8 +81,8 @@
   font-size:.72rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--suave);
 }
 .insignia .punto{
-  width:7px;height:7px;border-radius:50%;background:var(--exito);flex:none;
-  box-shadow:0 0 0 3px color-mix(in srgb, var(--exito) 18%, transparent);
+  width:7px;height:7px;border-radius:50%;background:var(--acento);flex:none;
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--acento) 20%, transparent);
 }
 
 /* ------------------------------------------- 4. La caja de busqueda */
@@ -263,8 +218,8 @@
 /* --------------------------------------------------- 8. Pasos y rotulos */
 .paso-n{
   font-family:'IBM Plex Mono',monospace;font-weight:500;
-  color:var(--oro);background:color-mix(in srgb, var(--oro) 9%, transparent);
-  border:1px solid color-mix(in srgb, var(--oro) 22%, transparent);
+  color:var(--acento-texto);background:var(--acento-fondo);
+  border:1px solid color-mix(in srgb, var(--acento) 30%, transparent);
   border-radius:var(--r-xs);
 }
 .paso .caja-etiqueta,.filtro-ext-cab label{
@@ -284,8 +239,8 @@
 }
 .rotulo-linea{display:none}          /* dentro de una pastilla no pinta nada */
 .rotulo-punto{
-  width:7px;height:7px;border-radius:50%;background:var(--exito);flex:none;
-  box-shadow:0 0 0 3px color-mix(in srgb, var(--exito) 18%, transparent);
+  width:7px;height:7px;border-radius:50%;background:var(--acento);flex:none;
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--acento) 20%, transparent);
 }
 .rotulo-usuario{
   color:var(--tenue);font-family:'IBM Plex Mono',monospace;
@@ -384,7 +339,6 @@ table.tabla thead th{
 .caja-modos .modo:hover{border-color:var(--oro);color:var(--oro)}
 .depurar-cab{text-align:center}
 .depurar-cab > *{margin-inline:auto}
-.lectura-pie .mono{font-size:.75rem}
 
 /* ==========================================================================
    25. Los grupos del menú
@@ -586,4 +540,121 @@ body.menu-abierto{overflow:hidden}
 
 @media (max-width:900px) and (prefers-reduced-motion: reduce){
   .barra .barra-int > nav{transition:none}
+}
+
+
+/* ------------------------------------- 14. Cabeceras a todo lo ancho */
+/* El titulo y su descripcion se reparten el ancho completo de la pagina:
+   el titulo a la izquierda, el texto a la derecha, alineados por abajo.
+   Asi no queda medio folio en blanco a la derecha del titular. */
+.aud-intro,.depurar-cab{
+  max-width:none;width:100%;
+  display:grid;
+  grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);
+  grid-template-areas:"rotulo rotulo" "titulo texto";
+  column-gap:clamp(24px,3.5vw,64px);row-gap:12px;
+  align-items:end;
+  padding-bottom:clamp(18px,1.8vw,26px);
+  margin-bottom:clamp(22px,2.4vw,34px);
+  border-bottom:1px solid var(--borde);
+}
+.aud-intro > .etiqueta-seccion,
+.depurar-cab > .insignia{grid-area:rotulo;justify-self:start;margin:0}
+.aud-intro > h1,.depurar-cab > h1{grid-area:titulo;margin:0;text-wrap:balance}
+.aud-intro > .sub,.depurar-cab > .portada-sub{
+  grid-area:texto;max-width:none;margin:0 0 .3rem;
+  color:var(--suave);line-height:1.6;
+}
+@media (max-width:900px){
+  .aud-intro,.depurar-cab{
+    grid-template-columns:1fr;
+    grid-template-areas:"rotulo" "titulo" "texto";
+    align-items:start;
+  }
+  .aud-intro > .sub,.depurar-cab > .portada-sub{margin-bottom:0}
+}
+
+/* ------------------------------------- 15. Boton de borrar y su fila */
+.cab-acciones{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.form-vaciar{margin:0}
+.btn-peligro{
+  background:var(--error-fondo);color:var(--error);
+  border:1px solid color-mix(in srgb,var(--error) 38%,transparent);
+  box-shadow:none;
+}
+.btn-peligro:hover{
+  background:var(--error);color:#FFFFFF;
+  border-color:var(--error);
+  box-shadow:0 8px 20px -12px color-mix(in srgb,var(--error) 70%,transparent);
+}
+.btn-peligro svg{flex:none}
+
+/* --------------------------------------------- 16. Carrusel de la portada */
+/* Capturas de verdad de Kaptor trabajando: se ve lo que hace antes de
+   pedirle nada a nadie. Va a ancho completo, se arrastra con el dedo y
+   avanza solo hasta que alguien lo toca. */
+.carrusel{
+  position:relative;
+  padding:clamp(34px,4vw,60px) 0 clamp(30px,3.4vw,52px);
+  border-top:1px solid var(--borde);
+  background:linear-gradient(180deg,var(--fondo-2) 0%,var(--fondo) 100%);
+}
+.carrusel-cab{
+  display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;
+  gap:16px;margin-bottom:clamp(16px,1.8vw,24px);
+}
+.carrusel-cab h2{
+  margin:0;font-size:clamp(1.5rem,3.2vw,2.3rem);line-height:1;
+}
+.carrusel-cab p{margin:0;color:var(--suave);font-size:.9rem;max-width:56ch}
+.carrusel-mandos{display:flex;gap:8px}
+.carrusel-mandos button{
+  width:44px;height:44px;border-radius:var(--r-full);flex:none;
+  display:grid;place-items:center;cursor:pointer;
+  border:1px solid var(--borde-fuerte);background:var(--panel);color:var(--texto);
+  transition:background var(--transicion),color var(--transicion),border-color var(--transicion);
+}
+.carrusel-mandos button:hover{background:var(--oro);border-color:var(--oro);color:#FFFFFF}
+.carrusel-mandos svg{width:19px;height:19px}
+
+.carrusel-pista{
+  display:flex;gap:clamp(14px,1.6vw,24px);
+  overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  padding-bottom:4px;
+}
+.carrusel-pista::-webkit-scrollbar{display:none}
+
+.diapo{
+  flex:0 0 clamp(280px,64vw,860px);scroll-snap-align:center;margin:0;
+  display:flex;flex-direction:column;min-width:0;
+}
+.diapo-img{
+  margin:0;border-radius:var(--r-lg);overflow:hidden;
+  border:1px solid var(--borde);background:var(--panel);
+  box-shadow:var(--sombra-alta);
+  transition:transform var(--transicion);
+}
+.diapo:hover .diapo-img{transform:translateY(-4px)}
+.diapo img{width:100%;height:auto;display:block;aspect-ratio:1280/760;object-fit:cover;object-position:top center}
+.diapo figcaption{
+  display:flex;align-items:baseline;gap:10px;
+  padding:14px 2px 0;font-size:.88rem;color:var(--suave);line-height:1.45;
+}
+.diapo figcaption b{
+  color:var(--texto);font-weight:700;font-size:.95rem;white-space:nowrap;
+}
+.diapo figcaption b::before{
+  content:"";display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:var(--acento);margin-right:9px;vertical-align:middle;
+}
+@media (max-width:700px){
+  .diapo{flex:0 0 86vw}
+  .diapo figcaption{flex-direction:column;gap:3px}
+  .diapo figcaption b{white-space:normal}
+  .carrusel-mandos{display:none}
+}
+@media (prefers-reduced-motion: reduce){
+  .carrusel-pista{scroll-behavior:auto}
+  .diapo:hover .diapo-img{transform:none}
 }

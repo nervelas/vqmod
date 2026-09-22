@@ -46,6 +46,16 @@ function admin_cabecera(array $opciones = []): void
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+(function(){
+  try{
+    var g=null;
+    try{ g=localStorage.getItem('kaptor-tema'); }catch(e){}
+    if(g!=='claro'&&g!=='oscuro'){ g=<?= ejs($tema) ?>; }
+    document.documentElement.setAttribute('data-tema',g);
+  }catch(e){}
+})();
+</script>
 <title><?= e($titulo) ?> · <?= e($nombre) ?></title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="<?= e(cr_url('assets/img/favicon.svg')) ?>" type="image/svg+xml">
@@ -162,9 +172,6 @@ function admin_pie(array $scripts = []): void
     document.documentElement.setAttribute('data-tema', t);
     try { localStorage.setItem(CLAVE, t); } catch (e) {}
   }
-  var guardado = null;
-  try { guardado = localStorage.getItem(CLAVE); } catch (e) {}
-  if (guardado) { aplicar(guardado); }
   var bt = document.querySelector('.tema');
   if (bt) {
     bt.addEventListener('click', function () {

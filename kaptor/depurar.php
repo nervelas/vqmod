@@ -187,10 +187,10 @@ cr_cabecera([
     <label class="caja-etiqueta" for="lista">Pega aquí tu texto o tu lista</label>
     <?php if ($modo === 'webs'): ?>
       <textarea name="lista" id="lista" class="campo area-lista" rows="9" spellcheck="false" <?= $puedeUsar ? "" : "disabled" ?>
-        placeholder="Pega el listado entero. Da igual cómo vengan las webs:&#10;&#10;{&quot;name_value&quot;:&quot;colegioamericano.com.gt\nwww.colegioamericano.com.gt&quot;}&#10;*.liceoguatemala.com.gt&#10;https://www.institutomoderno.com.gt/contacto&#10;escuelabilingue.org.gt&#10;&#10;…el JSON de crt.sh, resultados de búsqueda o un directorio copiado."><?= e($texto) ?></textarea>
+        placeholder=""><?= e($texto) ?></textarea>
     <?php else: ?>
       <textarea name="lista" id="lista" class="campo area-lista" rows="9" spellcheck="false" <?= $puedeUsar ? "" : "disabled" ?>
-        placeholder="Pega aquí el texto entero. Da igual cómo vengan los correos:&#10;&#10;«Escríbenos a info@colegio.edu.gt o a direccion (at) liceo (dot) edu (dot) gt»&#10;juan.perez@empresa.com.gt&#10;&quot;Ventas&quot;;&quot;ventas@tienda.com&quot;;&quot;5022200&quot;&#10;&#10;…un artículo, un PDF copiado, un correo reenviado, un CSV o una columna de Excel."><?= e($texto) ?></textarea>
+        placeholder=""><?= e($texto) ?></textarea>
     <?php endif; ?>
 
     <div class="depurar-filtros">
@@ -199,7 +199,7 @@ cr_cabecera([
         <label for="extensiones">Extensiones que quiero <span class="suave pequeno">(vacío = todas)</span></label>
         <input type="text" name="extensiones" id="extensiones" class="campo"
                value="<?= e((string) $op['extensiones']) ?>"
-               placeholder="Ej.: .com, .com.gt, .edu.gt   ·   escribe TODOS para no filtrar"
+               placeholder=""
                autocomplete="off" spellcheck="false">
         <div class="chips-ext" id="chips-ext">
           <button type="button" class="chip-ext chip-todos" data-ext="">Todas</button>
@@ -213,7 +213,7 @@ cr_cabecera([
         <label for="excluir">Extensiones que NO quiero <span class="suave pequeno">(opcional)</span></label>
         <input type="text" name="excluir" id="excluir" class="campo"
                value="<?= e((string) $op['excluir']) ?>"
-               placeholder="Ej.: .ru, .cn, .xyz" autocomplete="off" spellcheck="false">
+               placeholder="" autocomplete="off" spellcheck="false">
       </div>
 
       <?php if ($modo === 'webs'): ?>
@@ -221,7 +221,7 @@ cr_cabecera([
           <label for="contiene">Solo las webs que digan <span class="suave pequeno">(vacío = todas)</span></label>
           <input type="text" name="contiene" id="contiene" class="campo"
                  value="<?= e((string) $op['contiene']) ?>"
-                 placeholder="Ej.: colegio, liceo, instituto, escuela, educativo"
+                 placeholder=""
                  autocomplete="off" spellcheck="false">
           <div class="chips-ext" id="chips-palabras">
             <button type="button" class="chip-ext" data-palabras="colegio, liceo, instituto, escuela, educativo, cole">Colegios</button>
@@ -235,7 +235,7 @@ cr_cabecera([
           <label for="sin_palabra">Fuera las que digan <span class="suave pequeno">(opcional)</span></label>
           <input type="text" name="sin_palabra" id="sin_palabra" class="campo"
                  value="<?= e((string) $op['sin_palabra']) ?>"
-                 placeholder="Ej.: tienda, banco, hotel" autocomplete="off" spellcheck="false">
+                 placeholder="" autocomplete="off" spellcheck="false">
         </div>
       <?php else: ?>
         <div class="campo-grupo">

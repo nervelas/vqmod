@@ -125,7 +125,7 @@ cr_cabecera([
     <div class="campo-grupo">
       <label for="texto">Pega aquí el texto</label>
       <textarea id="texto" name="texto" rows="11" spellcheck="false" class="campo area-lista"
-        placeholder="Pega el texto entero. Da igual cómo vengan los números:&#10;&#10;Colegio San José — WhatsApp: https://wa.me/50255551234&#10;Tel. 2222-3333 · Cel. +502 4444 5555&#10;&quot;Ventas&quot;;&quot;ventas@tienda.com&quot;;&quot;5022 2200&quot;&#10;&#10;…un directorio, un grupo exportado o una columna de Excel."><?= e($texto) ?></textarea>
+        placeholder=""><?= e($texto) ?></textarea>
     </div>
 
     <div class="depurar-filtros">
@@ -133,7 +133,7 @@ cr_cabecera([
         <label for="paises">Solo de estos países <span class="suave pequeno">(vacío = todos)</span></label>
         <input type="text" name="paises" id="paises" class="campo"
                value="<?= e((string) $op['paises']) ?>"
-               placeholder="Ej.: 502, mx, us   ·   por prefijo o por código de país"
+               placeholder=""
                autocomplete="off" spellcheck="false">
         <p class="pequeno suave">
           Vale el prefijo (<b>502</b>) o el código del país (<b>gt</b>). Varios, separados por comas.

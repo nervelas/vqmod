@@ -14,7 +14,7 @@ declare(strict_types=1);
 final class Esquema
 {
     /** Se sube de uno en uno cada vez que cambia la estructura. */
-    public const VERSION = 9;
+    public const VERSION = 11;
 
     /** Aplica los cambios pendientes. Se llama desde bootstrap.php. */
     public static function actualizar(): void
@@ -79,6 +79,14 @@ final class Esquema
             //    del usuario, pero el fondo blanco es el diseno. Su color de
             //    acento se respeta; cada paleta trae su version clara.
             if ($actual < 9) { Ajustes::guardar('tema_por_defecto', 'claro'); }
+
+            // 10: el lema del sitio se quedo sin cambiar en la 6.0. Es el
+            //     texto que sale en la pestana del navegador, en el pie y en
+            //     la app instalable, asi que seguia diciendo lo de antes por
+            //     todo el sitio. Se vuelve a pasar la misma rutina, que solo
+            //     toca lo que nadie escribio a mano.
+            if ($actual < 10) { self::textosRediseno(); }
+            if ($actual < 11) { self::coloresMarca(); }
 
             Ajustes::guardar('esquema', (string) self::VERSION);
         } catch (Throwable $e) {
@@ -212,6 +220,16 @@ final class Esquema
     private static function textosRediseno(): void
     {
         $anteriores = [
+            // El lema sale en la pestana del navegador, en el pie y en la app
+            // instalable. Se quedo sin cambiar en la 6.0 y seguia diciendo lo
+            // de antes por todo el sitio.
+            'sitio_lema' => [
+                'Capta correos y WhatsApp de cualquier web',
+                'Encuentra cada correo de cualquier web',
+                'Extrae correos de cualquier web',
+                'Capta correos de cualquier web',
+                'Correos y WhatsApp de cualquier web',
+            ],
             'hero_titulo' => [
                 'Capta cada correo y WhatsApp de cualquier web',
                 'Capta cada correo de cualquier web',
@@ -227,6 +245,7 @@ final class Esquema
             ],
         ];
         $nuevos = [
+            'sitio_lema'       => 'Extractor Web Inteligente',
             'hero_titulo'      => 'Extracción web inteligente',
             'hero_subtitulo'   => 'Una web, una lista completa, una búsqueda o una página de Facebook.',
             'hero_placeholder' => '',
@@ -248,6 +267,39 @@ final class Esquema
      * el usuario escogio "Azul electrico" o se pinto los suyos a mano, esto
      * no le toca nada. Solo se mueve al que nunca entro a Apariencia.
      */
+    /**
+     * Los colores de la marca: azul #133E92, azul profundo #072B72 y el
+     * naranja de realce #FF4800. Se ponen si y solo si el usuario seguia
+     * con los que traia Kaptor de fabrica; si los habia cambiado a mano,
+     * no se le tocan.
+     */
+    private static function coloresMarca(): void
+    {
+        $anteriores = [
+            'color_oro_claro'  => ['#1B3FA8', '#7E682F', '#D8B36A', '#8D7A40'],
+            'color_oro2_claro' => ['#2B52C4', '#8D7A40', '#F3D89A', '#7E682F'],
+        ];
+        $nuevos = [
+            'color_oro_claro'  => '#133E92',
+            'color_oro2_claro' => '#072B72',
+        ];
+
+        foreach ($anteriores as $clave => $viejos) {
+            $actual = strtoupper(trim((string) Ajustes::obtener($clave, '')));
+            if ($actual === '' || in_array($actual, array_map('strtoupper', $viejos), true)) {
+                Ajustes::guardar($clave, $nuevos[$clave]);
+            }
+        }
+
+        // El realce no existia antes de esta version: se crea siempre.
+        if (trim((string) Ajustes::obtener('color_acento_claro', '')) === '') {
+            Ajustes::guardar('color_acento_claro', '#FF4800');
+        }
+        if (trim((string) Ajustes::obtener('color_acento', '')) === '') {
+            Ajustes::guardar('color_acento', '#FF6A33');
+        }
+    }
+
     private static function paletaNueva(): void
     {
         $temas = Ajustes::temas();

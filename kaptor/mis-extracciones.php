@@ -14,6 +14,38 @@ if (!Auth::autenticado()) {
 }
 
 $usuarioId = Auth::id();
+
+// --- Borrar todo el historial -------------------------------------------
+// Solo lo suyo, nunca lo de otro usuario, y solo por POST con el token de
+// la sesion: asi un enlace de fuera no puede vaciarle el historial a nadie.
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && (string) cr_post('accion', '') === 'vaciar') {
+    Seguridad::exigirCsrf();
+
+    $ids = array_map(
+        static fn(array $f): int => (int) $f['id'],
+        BD::todos('SELECT `id` FROM `cr_escaneos` WHERE `usuario_id` = ?', [$usuarioId])
+    );
+
+    if ($ids === []) {
+        cr_flash('info', 'No había nada que borrar.');
+    } else {
+        // De mil en mil, que un historial largo no reviente la consulta.
+        foreach (array_chunk($ids, 1000) as $tanda) {
+            $marcas = implode(',', array_fill(0, count($tanda), '?'));
+            foreach (['cr_correos', 'cr_telefonos', 'cr_cola', 'cr_sitios'] as $tabla) {
+                BD::ejecutar("DELETE FROM `{$tabla}` WHERE `escaneo_id` IN ({$marcas})", $tanda);
+            }
+            BD::ejecutar("DELETE FROM `cr_escaneos` WHERE `id` IN ({$marcas}) AND `usuario_id` = ?",
+                         array_merge($tanda, [$usuarioId]));
+        }
+        cr_flash('exito', count($ids) === 1
+            ? 'Se borró la extracción y todo lo que tenía dentro.'
+            : 'Se borraron ' . cr_numero(count($ids)) . ' extracciones y todo lo que tenían dentro.');
+    }
+
+    cr_redirigir('mis-extracciones.php');
+}
+
 $pagina    = max(1, (int) cr_get('p', 1));
 $porPagina = 20;
 $desplaz   = ($pagina - 1) * $porPagina;
@@ -34,7 +66,19 @@ cr_cabecera(['titulo' => 'Mis extracciones', 'activo' => 'mias']);
         <h1 style="font-size:clamp(1.6rem,4vw,2.2rem)">Mis extracciones</h1>
         <p class="sub"><?= cr_numero($total) ?> extracción<?= $total === 1 ? '' : 'es' ?> guardada<?= $total === 1 ? '' : 's' ?></p>
       </div>
-      <a class="btn btn-peq" href="<?= e(cr_url('index.php')) ?>">Nueva extracción</a>
+      <div class="cab-acciones">
+        <a class="btn btn-peq" href="<?= e(cr_url('index.php')) ?>">Nueva extracción</a>
+        <?php if ($lista): ?>
+          <form method="post" id="form-vaciar" class="form-vaciar">
+            <?= Seguridad::campoCsrf() ?>
+            <input type="hidden" name="accion" value="vaciar">
+            <button type="submit" class="btn btn-peligro btn-peq" id="btn-vaciar">
+              <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" width="16" height="16"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"/></svg>
+              Borrar todo el historial
+            </button>
+          </form>
+        <?php endif; ?>
+      </div>
     </div>
 
     <?php if (!$lista): ?>
@@ -113,4 +157,15 @@ cr_cabecera(['titulo' => 'Mis extracciones', 'activo' => 'mias']);
     <?php endif; ?>
   </div>
 </section>
+<script>
+  (function () {
+    var f = document.getElementById('form-vaciar');
+    if (!f) { return; }
+    f.addEventListener('submit', function (e) {
+      if (!window.confirm('Se borrará TODO tu historial de extracciones, con sus correos y teléfonos.\n\nEsto no se puede deshacer. \u00bfSeguro?')) {
+        e.preventDefault();
+      }
+    });
+  })();
+</script>
 <?php cr_pie(false); ?>

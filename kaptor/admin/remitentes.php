@@ -157,7 +157,7 @@ admin_cabecera(['titulo' => 'Buzones de salida', 'activo' => 'remitentes.php']);
       <div class="campo-grupo">
         <label class="etiqueta" for="de_nombre">Nombre que verá el destinatario</label>
         <input type="text" id="de_nombre" name="de_nombre" class="campo"
-               placeholder="Servicom · Plataforma educativa" value="<?= e((string) ($editar['de_nombre'] ?? '')) ?>">
+               placeholder="Tu empresa · lo que haces" value="<?= e((string) ($editar['de_nombre'] ?? '')) ?>">
       </div>
       <div class="campo-grupo">
         <label class="etiqueta" for="responder_a">Responder a (opcional)</label>

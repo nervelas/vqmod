@@ -28,7 +28,7 @@ $copia = [
         'activo'  => 'auditor',
         'titulo'  => 'Auditor web',
         'etiqueta' => 'Diagnóstico técnico',
-        'h1'      => 'Audita cualquier web y entrega el informe',
+        'h1'      => 'Audita un sitio y entrega el informe',
         'sub'     => 'Pega una dirección y Kaptor revisa velocidad, celular, Google, seguridad, '
                    . 'contacto, código malicioso y visibilidad en las inteligencias artificiales. '
                    . 'Sale un informe con tu marca, listo para enviar.',
@@ -99,7 +99,7 @@ cr_cabecera([
           <div class="paso-cuerpo">
             <label for="sitios" class="paso-titulo"><?= e($copia['paso1']) ?></label>
             <textarea id="sitios" name="sitios" rows="4" spellcheck="false"
-                      placeholder="colegio.edu.gt&#10;otraempresa.com&#10;&#10;Una por línea. Puedes pegar la lista completa que sacaste con el extractor."><?= e($precargado) ?></textarea>
+                      placeholder=""><?= e($precargado) ?></textarea>
             <p class="paso-nota">Hasta <?= e((string) Ajustes::entero('auditor_max_lote', 50, 1, 300)) ?> sitios por tanda. No hace falta escribir «https://».</p>
           </div>
         </div>
@@ -113,7 +113,7 @@ cr_cabecera([
               <span class="opcional">opcional</span>
             </label>
             <textarea id="rivales" name="rivales" rows="2" spellcheck="false"
-                      placeholder="competidor1.com&#10;competidor2.com"></textarea>
+                      placeholder=""></textarea>
             <p class="paso-nota">
               Hasta tres. El informe enseñará lado a lado quién va ganando en cada área:
               es lo que cierra la venta. Solo funciona cuando auditas <strong>un</strong> sitio.

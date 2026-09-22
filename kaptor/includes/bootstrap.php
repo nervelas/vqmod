@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 if (defined('CR_ARRANCADO')) { return; }
 define('CR_ARRANCADO', true);
-define('CR_VERSION', '6.0.1');
+define('CR_VERSION', '6.1.0');
 define('CR_PHP_MINIMO', '8.0.0');
 
 // --- Rutas base --------------------------------------------------------------

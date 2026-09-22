@@ -56,6 +56,7 @@ const CAMPOS_COLOR = [
     'color_fondo', 'color_fondo2', 'color_oro', 'color_oro2', 'color_neon', 'color_texto',
     'color_fondo_claro', 'color_fondo2_claro', 'color_texto_claro',
     'color_oro_claro', 'color_oro2_claro', 'color_neon_claro',
+    'color_acento_claro', 'color_acento',
 ];
 
 $mensaje = '';
@@ -138,6 +139,8 @@ function colores_de_paleta(string $clave, array $tema): array
         'color_oro_claro'     => strtoupper((string) ($tema['oro_claro']    ?? $tema['oro'])),
         'color_oro2_claro'    => strtoupper((string) ($tema['oro2_claro']   ?? $tema['oro'])),
         'color_neon_claro'    => strtoupper((string) ($tema['neon_claro']   ?? $tema['neon'])),
+        'color_acento_claro'  => strtoupper((string) ($tema['acento_claro'] ?? '#FF4800')),
+        'color_acento'        => strtoupper((string) ($tema['acento']       ?? '#FF6A33')),
         'tema_por_defecto'    => ($tema['modo'] ?? 'oscuro') === 'claro' ? 'claro' : 'oscuro',
     ];
 }
@@ -215,6 +218,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $nuevos['color_oro_claro']   = strtoupper($temas[$elegido]['oro_claro']   ?? '#7E682F');
             $nuevos['color_oro2_claro']  = strtoupper($temas[$elegido]['oro2_claro']  ?? '#8D7A40');
             $nuevos['color_neon_claro']  = strtoupper($temas[$elegido]['neon_claro']  ?? '#3B7F55');
+            $nuevos['color_acento_claro'] = strtoupper($temas[$elegido]['acento_claro'] ?? '#FF4800');
+            $nuevos['color_acento']       = strtoupper($temas[$elegido]['acento']       ?? '#FF6A33');
             // Al cambiar de paleta se deja puesto el modo propio del tema
             // (claro u oscuro). Si la paleta no cambia, manda el selector.
             if ($elegido !== (string) Ajustes::obtener('tema_color', 'obsidiana')) {
@@ -420,6 +425,8 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
         'color_oro_claro'   => ['Acento en modo claro', 'Debe ser oscuro para leerse sobre el fondo claro.'],
         'color_oro2_claro'  => ['Segundo color del degradado (claro)', 'El otro extremo del degradado en modo claro.'],
         'color_neon_claro'  => ['Acento secundario en modo claro', 'Aciertos y confirmaciones cuando se ve en claro.'],
+        'color_acento_claro' => ['Color de realce (claro)', 'El golpe de color: números, cursivas de los títulos y detalles.'],
+        'color_acento'      => ['Color de realce (oscuro)', 'El mismo realce, subido de tono para que se vea en el fondo oscuro.'],
     ];
     foreach ($colores as $clave => [$titulo, $pista]) {
         fila($titulo, $pista,
@@ -591,7 +598,7 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
     fila('Dirección postal del remitente',
         'Se añade al pie de cada mensaje. En varios países es obligatoria en el correo comercial y, '
         . 'además, mejora bastante la entrega porque es una señal de remitente legítimo.',
-        '<textarea name="remitente_postal" class="campo" rows="2" maxlength="300" placeholder="Servicom, 5a Avenida 1-23, Zona 10, Ciudad de Guatemala">'
+        '<textarea name="remitente_postal" class="campo" rows="2" maxlength="300" placeholder="Tu empresa, tu direccion, tu ciudad">'
         . e($a['remitente_postal'] ?? '') . '</textarea>');
 
     fila('Seguimiento de aperturas', 'Añade un píxel invisible para saber quién abrió el mensaje.',
@@ -666,7 +673,7 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
         '<textarea name="informe_cta" class="campo" rows="2" maxlength="400">' . e($a['informe_cta'] ?? '') . '</textarea>');
 
     fila('Tus datos de contacto', 'Aparecen al pie del informe. Teléfono, WhatsApp, correo, lo que quieras.',
-        '<textarea name="informe_contacto" class="campo" rows="3" maxlength="400" placeholder="Servicom&#10;WhatsApp: +502 0000 0000&#10;correo@dominio.com">' . e($a['informe_contacto'] ?? '') . '</textarea>');
+        '<textarea name="informe_contacto" class="campo" rows="3" maxlength="400" placeholder="Tu empresa&#10;WhatsApp: +502 0000 0000&#10;correo@dominio.com">' . e($a['informe_contacto'] ?? '') . '</textarea>');
     ?>
 
     <div class="aviso aviso-info" style="margin-top:18px">

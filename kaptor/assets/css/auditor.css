@@ -29,9 +29,9 @@
 .seccion-auditor,
 .seccion-informe{padding-top:40px;padding-bottom:80px}
 
-.aud-intro{max-width:720px;margin-bottom:30px}
+.aud-intro{margin-bottom:30px}
 .aud-intro h1{margin:10px 0 12px}
-.aud-intro .sub{color:var(--suave);font-size:1.02rem;line-height:1.6;max-width:62ch}
+.aud-intro .sub{color:var(--suave);font-size:1.02rem;line-height:1.6}
 
 /* ------------------------------------------------- 2. El formulario ---- */
 .aud-cuadro{

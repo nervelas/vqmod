@@ -1291,7 +1291,8 @@
   // Cada campo con su versión corta. Si el campo no está en la página, se
   // salta sin más: esta lista vale para la portada y para el depurador.
   var campos = [
-    { id: 'url',         corto: 'Pega una web, una lista o unas palabras' },
+    // El campo principal va vacio a proposito, tambien en el telefono.
+    { id: 'url',         corto: '' },
     { id: 'objetivo',    corto: 'Ej.: .edu.gt  ·  vacío = todos' },
     { id: 'extensiones', corto: 'Ej.: .com, .edu.gt  ·  vacío = todas' },
     { id: 'excluir',     corto: 'Ej.: .ru, .cn' },

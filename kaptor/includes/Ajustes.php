@@ -32,29 +32,29 @@ final class Ajustes
             'pie_texto'           => '© Kaptor. Uso responsable: extrae solo datos públicos y respeta la legislación de protección de datos.',
 
             // --- Textos de la portada --------------------------------------
-            'hero_titulo'         => 'Capta cada correo y WhatsApp de cualquier web',
-            'hero_subtitulo'      => 'Pega un enlace y Kaptor barre el código, los enlaces mailto, las ofuscaciones y hasta los correos protegidos por Cloudflare.',
-            'hero_placeholder'    => 'https://ejemplo.com  ·  varias webs, una por línea  ·  o unas palabras para buscar',
+            'hero_titulo'         => 'Extracción web inteligente',
+            'hero_subtitulo'      => 'Una web, una lista completa, una búsqueda o una página de Facebook.',
+            'hero_placeholder'    => '',   // vacío a propósito: el campo se ve más limpio
             'hero_boton'          => 'Capturar contactos',
             'hero_etiqueta'       => 'Pega una web, una lista o una búsqueda',
             'aviso_legal'         => 'Usa Kaptor solo sobre sitios propios o con autorización. No envíes correo no solicitado.',
 
             // --- Paleta "Radar de lujo" ------------------------------------
-            'tema_color'          => 'oro',   // paleta elegida en el panel
-            'color_fondo'         => '#06070A',
-            'color_fondo2'        => '#0D0F14',   // segundo tono del degradado del fondo
-            'color_oro'           => '#D8B36A',
-            'color_oro2'          => '#B8873A',   // segundo color del degradado
-            'color_neon'          => '#F0C674',
+            'tema_color'          => 'tinta',  // paleta elegida en el panel
+            'color_fondo'         => '#0B0D11',
+            'color_fondo2'        => '#11141A',   // segundo tono del fondo oscuro
+            'color_oro'           => '#7DA2FF',   // azul de marca en oscuro
+            'color_oro2'          => '#A8C0FF',
+            'color_neon'          => '#43D98B',   // verde de estado en oscuro
             // Colores del modo claro (los define también la paleta elegida)
             'color_fondo_claro'   => '#FFFFFF',
-            'color_fondo2_claro'  => '#F4F6FA',
-            'color_texto_claro'   => '#111418',
-            'color_oro_claro'     => '#816D46',
-            'color_oro2_claro'    => '#8D6931',
-            'color_neon_claro'    => '#816D46',
+            'color_fondo2_claro'  => '#F7F8FA',
+            'color_texto_claro'   => '#0E1116',
+            'color_oro_claro'     => '#1B3FA8',   // azul de marca
+            'color_oro2_claro'    => '#2B52C4',
+            'color_neon_claro'    => '#0F7B43',   // verde de estado
             'color_texto'         => '#F2F4F7',
-            'tema_por_defecto'    => 'oscuro',
+            'tema_por_defecto'    => 'claro',
 
             // --- Motor de extracción ---------------------------------------
             'timeout'             => '20',    // segundos por página

@@ -11,7 +11,7 @@
      esos datos deben ser siempre los de verdad.
    =========================================================================== */
 
-const VERSION = 'kaptor-v18';
+const VERSION = 'kaptor-v19';
 const CACHE_ESTATICA = VERSION + '-estatica';
 const CACHE_PAGINAS  = VERSION + '-paginas';
 

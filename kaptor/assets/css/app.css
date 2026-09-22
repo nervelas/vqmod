@@ -1,141 +1,169 @@
 /* ==========================================================================
    Kaptor · Hoja de estilo principal
-   Direccion de arte: "Radar de lujo"
-     · Fondo obsidiana, detalles en oro champan y verde fosforo.
-     · Fraunces para titulos, Inter para textos, JetBrains Mono para correos.
-     · Movil primero, modo claro y oscuro, animaciones suaves.
-   Los colores base se pueden cambiar desde el panel de administracion:
-   se inyectan como variables CSS en la propia pagina.
+   Direccion de arte: "Instrumento editorial"
+     · Papel blanco, tinta profunda, un azul de marca y nada mas.
+     · Cormorant Garamond para titulos, Manrope para la interfaz,
+       IBM Plex Mono para correos, dominios y numeros.
+     · Cada herramienta con SU color: es lo que hace que de seis fichas
+       iguales se distinga una de un vistazo.
+     · El color de estado (verde / ambar / rojo) NO se usa de adorno en
+       ningun sitio. Si algo esta en rojo, es que algo va mal.
+     · Movil primero, ancho completo, animaciones sobrias.
+   Los colores base se cambian desde el panel: se inyectan como variables
+   CSS en la propia pagina.
    ========================================================================== */
 
 @import url('../fonts/fonts.css');
 
 /* --------------------------------------------------------------- 1. Tokens */
 /*
-   El panel de administración inyecta la paleta como --cr-oro, --cr-neon,
-   --cr-fondo y --cr-texto. Aquí se traducen a los tokens que usa todo el
-   sitio, de modo que el modo claro puede reinterpretarlos sin que el color
-   configurado para el modo oscuro deje el texto ilegible.
+   El panel inyecta la paleta como --cr-oro, --cr-neon, --cr-fondo y
+   --cr-texto (los nombres vienen de la version anterior y se mantienen para
+   no romper los ajustes ya guardados de nadie). Aqui se traducen a los
+   tokens que usa todo el sitio.
+
+   El tema por defecto es el CLARO. El oscuro sigue existiendo y esta
+   redisenado con el mismo criterio, no es el de antes con otro fondo.
 */
 :root{
-  --obsidiana:var(--cr-fondo, #07080A);
-  --oro:var(--cr-oro, #D8B36A);
-  --fondo-2b:var(--cr-fondo2, #161008);
-  --oro-2:var(--cr-oro2, #F3D89A);
-  --btn-texto:#14100A;
-  --neon:var(--cr-neon, #6EF3A5);
-  --texto:var(--cr-texto, #EDEAE3);
+  /* --- Acento de marca ------------------------------------------------- */
+  --oro:var(--cr-oro-claro, #1B3FA8);        /* el "oro" de antes es hoy el azul de marca */
+  --oro-2:var(--cr-oro2-claro, #2B52C4);
+  --oro-claro:var(--cr-oro-claro, #1B3FA8);
+  --neon:var(--cr-neon-claro, #0F7B43);
+  --btn-texto:#FFFFFF;
 
-  /* Derivados del tema oscuro */
-  --fondo:var(--obsidiana);
-  --fondo-2:#0C0E12;
-  --panel:rgba(20,23,29,.82);
-  --panel-solido:#14171D;
-  --borde:rgba(255,255,255,.09);
-  --borde-fuerte:rgba(216,179,106,.32);
-  --suave:#98A0AE;
-  --tenue:#8C95A4;
-  /* Derivados del acento: se recalculan solos con la paleta elegida en el
-     panel, de modo que enlaces, halos y sombras acompañan al tema. */
-  --oro-claro:color-mix(in srgb, var(--cr-oro, #D8B36A) 60%, #FFFFFF);
-  --oro-sombra:color-mix(in srgb, var(--cr-oro, #D8B36A) 24%, transparent);
-  --neon-sombra:color-mix(in srgb, var(--cr-neon, #6EF3A5) 22%, transparent);
-  --error:#FF7A7A;
-  --error-fondo:rgba(255,122,122,.10);
-  --wa:#4ADE80;                     /* verde de WhatsApp adaptado a la paleta */
-  --exito:var(--neon);
-  --sombra-suave:0 2px 10px rgba(0,0,0,.30);
-  --sombra:0 18px 50px rgba(0,0,0,.50);
-  --sombra-alta:0 34px 90px rgba(0,0,0,.62);
+  /* --- Papel y tinta ---------------------------------------------------- */
+  --fondo:var(--cr-fondo-claro, #FFFFFF);
+  --fondo-2:var(--cr-fondo2-claro, #F7F8FA);
+  --fondo-2b:var(--cr-fondo2-claro, #F7F8FA);
+  --panel:#FFFFFF;
+  --panel-solido:#FFFFFF;
+  --texto:var(--cr-texto-claro, #0E1116);
+  --suave:#5A6473;
+  --tenue:#8B94A3;
+  --borde:#E3E6EB;
+  --borde-fuerte:#CBD1DA;
 
-  /* Formas y ritmo */
-  --r-xs:8px; --r-sm:11px; --r-md:16px; --r-lg:22px; --r-xl:30px; --r-full:999px;
-  --esp:clamp(16px,4vw,28px);
-  --ancho:1480px;
-  --transicion:.24s cubic-bezier(.22,.61,.36,1);
+  /* --- Estados. Solo para decir bien / regular / mal. ------------------- */
+  --exito:#0F7B43;
+  --aviso:#B3730C;
+  --error:#C0362A;
+  --error-fondo:#FCEEEC;
+  --wa:#0E7C4A;
+
+  /* --- Un color por herramienta ---------------------------------------- */
+  --hc-correo:#3A46C8;   --hb-correo:#EEF0FC;
+  --hc-wa:#0E7C4A;       --hb-wa:#E9F6EF;
+  --hc-auditor:#B3730C;  --hb-auditor:#FCF3E6;
+  --hc-seo:#0E6E86;      --hb-seo:#E8F4F7;
+  --hc-virus:#C0362A;    --hb-virus:#FCEEEC;
+  --hc-campana:#7A3FBF;  --hb-campana:#F4EEFC;
+
+  /* --- Halos derivados: acompañan a la paleta elegida en el panel ------- */
+  --oro-sombra:color-mix(in srgb, var(--cr-oro-claro, #1B3FA8) 9%, transparent);
+  --neon-sombra:color-mix(in srgb, var(--cr-neon-claro, #0F7B43) 7%, transparent);
+
+  /* --- Sombras. Dos capas: uno de contacto y otro de elevacion. -------- */
+  --sombra-suave:0 1px 2px rgba(14,17,22,.05);
+  --sombra:0 1px 2px rgba(14,17,22,.05), 0 12px 28px -18px rgba(14,17,22,.22);
+  --sombra-alta:0 2px 4px rgba(14,17,22,.06), 0 24px 48px -24px rgba(14,17,22,.3);
+
+  /* --- Formas y ritmo --------------------------------------------------- */
+  --r-xs:8px; --r-sm:10px; --r-md:14px; --r-lg:20px; --r-xl:26px; --r-full:999px;
+  /* El aire lateral crece con la pantalla: 20 px en el movil, 100 en grande.
+     Es lo que hace que la pagina sea de ANCHO COMPLETO sin quedar pegada
+     a los bordes. */
+  --esp:clamp(20px, 5vw, 100px);
+  --ancho:100%;
+  --transicion:.24s cubic-bezier(.16,1,.3,1);
+  --t:cubic-bezier(.16,1,.3,1);
+
+  color-scheme:light;
+}
+
+/* Tema oscuro: mismo criterio, tinta invertida. No es el dorado de antes. */
+[data-tema="oscuro"]{
+  --oro:var(--cr-oro, #7DA2FF);
+  --oro-2:var(--cr-oro2, #A8C0FF);
+  --oro-claro:var(--cr-oro, #7DA2FF);
+  --neon:var(--cr-neon, #43D98B);
+  --btn-texto:#0B0D11;
+
+  --fondo:var(--cr-fondo, #0B0D11);
+  --fondo-2:var(--cr-fondo2, #11141A);
+  --fondo-2b:var(--cr-fondo2, #11141A);
+  --panel:#11141A;
+  --panel-solido:#151922;
+  --texto:var(--cr-texto, #EDEFF3);
+  --suave:#9BA3B0;
+  --tenue:#79818E;
+  --borde:rgba(255,255,255,.10);
+  --borde-fuerte:rgba(255,255,255,.20);
+
+  --exito:#43D98B;
+  --aviso:#F2B63C;
+  --error:#FF7A6A;
+  --error-fondo:rgba(255,122,106,.11);
+  --wa:#43D98B;
+
+  --hc-correo:#8C97FF;   --hb-correo:rgba(140,151,255,.14);
+  --hc-wa:#43D98B;       --hb-wa:rgba(67,217,139,.14);
+  --hc-auditor:#F2B63C;  --hb-auditor:rgba(242,182,60,.14);
+  --hc-seo:#4FC3D9;      --hb-seo:rgba(79,195,217,.14);
+  --hc-virus:#FF7A6A;    --hb-virus:rgba(255,122,106,.14);
+  --hc-campana:#C59BFF;  --hb-campana:rgba(197,155,255,.14);
+
+  --oro-sombra:color-mix(in srgb, var(--cr-oro, #7DA2FF) 14%, transparent);
+  --neon-sombra:color-mix(in srgb, var(--cr-neon, #43D98B) 10%, transparent);
+
+  --sombra-suave:0 2px 8px rgba(0,0,0,.4);
+  --sombra:0 18px 44px -22px rgba(0,0,0,.8);
+  --sombra-alta:0 34px 80px -34px rgba(0,0,0,.9);
 
   color-scheme:dark;
 }
 
-/* Modo claro: marfil calido, tinta profunda, oro mas saturado */
-[data-tema="claro"]{
-  /* El fondo y el texto del modo claro también salen de la paleta elegida
-     en el panel, por eso hay temas claros y no solo oscuros. */
-  --fondo:var(--cr-fondo-claro, #F6F3EB);
-  --fondo-2:color-mix(in srgb, var(--cr-fondo-claro, #F6F3EB) 45%, #FFFFFF);
-  --panel:color-mix(in srgb, var(--cr-fondo-claro, #F6F3EB) 18%, rgba(255,255,255,.90));
-  --panel-solido:color-mix(in srgb, var(--cr-fondo-claro, #F6F3EB) 28%, #FFFFFF);
-  --borde:color-mix(in srgb, var(--cr-texto-claro, #16181C) 11%, transparent);
-  --borde-fuerte:color-mix(in srgb, var(--cr-oro-claro, #7E682F) 46%, transparent);
-  --texto:var(--cr-texto-claro, #16181C);
-  --suave:color-mix(in srgb, var(--cr-texto-claro, #16181C) 66%, #FFFFFF);
-  --tenue:color-mix(in srgb, var(--cr-texto-claro, #16181C) 68%, #FFFFFF);
-  /* Cada paleta trae ya sus acentos para el modo claro, comprobados uno a
-     uno por encima del contraste AA sobre su propio fondo. */
-  --fondo-2b:var(--cr-fondo2-claro, #F3EAD8);
-  --oro:var(--cr-oro-claro, #7E682F);
-  --oro-2:var(--cr-oro2-claro, #8D7A40);
-  --oro-claro:var(--cr-oro-claro, #7E682F);
-  --neon:var(--cr-neon-claro, #3B7F55);
-  --oro-sombra:color-mix(in srgb, var(--cr-oro-claro, #7E682F) 20%, transparent);
-  --neon-sombra:color-mix(in srgb, var(--cr-neon-claro, #3B7F55) 18%, transparent);
-  /* Sobre acentos oscuros el texto del botón va en blanco. */
-  --btn-texto:#FFFFFF;
-  --error:#C0392B;
-  --error-fondo:rgba(192,57,43,.08);
-  --wa:#0F8A46;
-  --sombra-suave:0 2px 10px rgba(30,25,15,.07);
-  --sombra:0 16px 44px rgba(40,33,18,.13);
-  --sombra-alta:0 30px 80px rgba(40,33,18,.16);
-  color-scheme:light;
-}
+/* El interruptor del panel sigue mandando "claro": es el tema por defecto,
+   asi que aqui no hace falta redefinir nada. Se deja el selector para que
+   una pagina guardada con el tema antiguo no se quede sin estilo. */
+[data-tema="claro"]{color-scheme:light}
 
 /* ------------------------------------------------------- 2. Reset y base */
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
 body{
   margin:0;
-  min-height:100vh;
+  min-height:100dvh;                 /* dvh y no vh: en el movil vh miente */
   background:var(--fondo);
   color:var(--texto);
-  font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  font-family:'Manrope',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   font-size:16px;
-  line-height:1.65;
-  font-feature-settings:'cv11','ss01';
+  line-height:1.62;
   -webkit-font-smoothing:antialiased;
   text-rendering:optimizeLegibility;
   overflow-x:hidden;
+  touch-action:manipulation;         /* quita el retardo de 300 ms al tocar */
 }
 
-/* Telon de fondo: textura + halos + grano fotografico */
+/* Telon de fondo: dos halos muy tenues y nada mas. Ni texturas, ni grano,
+   ni auroras. En una herramienta de trabajo el fondo no compite. */
 body::before{
-  content:'';position:fixed;inset:0;z-index:-2;pointer-events:none;
+  content:'';position:fixed;inset:0 0 auto;height:620px;z-index:-2;pointer-events:none;
+  /* Los dos halos van del color de marca. Con uno verde, sobre papel
+     blanco el fondo se ve sucio en vez de luminoso. */
   background:
-    radial-gradient(1100px 620px at 50% -8%, var(--oro-sombra), transparent 62%),
-    radial-gradient(820px 520px at 92% 104%, var(--neon-sombra), transparent 60%),
-    url('../img/textura-obsidiana.jpg') center/cover no-repeat,
-    /* Degradado propio de cada paleta: el fondo deja de ser un color plano. */
-    linear-gradient(155deg, var(--fondo) 0%, var(--fondo-2b) 52%, var(--fondo) 100%);
+    radial-gradient(52% 44% at 18% 0%, var(--oro-sombra), transparent 70%),
+    radial-gradient(48% 40% at 84% 4%, var(--oro-sombra), transparent 70%);
 }
-html[data-tema="claro"] body::before{
-  background:
-    radial-gradient(1100px 620px at 50% -8%, var(--oro-sombra), transparent 62%),
-    radial-gradient(820px 520px at 92% 104%, var(--neon-sombra), transparent 62%),
-    linear-gradient(155deg, var(--fondo) 0%, var(--fondo-2b) 52%, var(--fondo) 100%);
-}
-body::after{
-  content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
-  background:url('../img/grano.png') repeat;
-  opacity:.30;mix-blend-mode:overlay;
-}
-html[data-tema="claro"] body::after{opacity:.16}
+body::after{content:none}
 
 img,svg{max-width:100%;height:auto;display:block}
-a{color:var(--oro-claro);text-decoration:none;transition:color var(--transicion)}
-a:hover{color:var(--oro)}
+a{color:var(--oro);text-decoration:none;transition:color var(--transicion)}
+a:hover{color:var(--oro-2)}
 hr{border:0;border-top:1px solid var(--borde);margin:26px 0}
 
-::selection{background:var(--oro);color:#1A1206}
+::selection{background:var(--oro);color:#FFFFFF}
 
 /* Foco visible y accesible en todo el sitio */
 :focus-visible{
@@ -145,19 +173,27 @@ hr{border:0;border-top:1px solid var(--borde);margin:26px 0}
 }
 
 /* ------------------------------------------------------- 3. Tipografia */
+/* Los titulos van en Cormorant: de ahi sale la elegancia. Peso ligero y
+   tamaño grande, que es como este garamond se ve bien; apretado y en
+   negrita se convierte en otra cosa. */
 h1,h2,h3,h4{
-  font-family:'Fraunces','Georgia',serif;
-  font-weight:600;
-  line-height:1.14;
-  letter-spacing:-.018em;
-  margin:0 0 .5em;
-  font-variation-settings:'SOFT' 0,'WONK' 1,'opsz' 60;
+  font-family:'Cormorant Garamond',Georgia,serif;
+  font-weight:400;
+  line-height:1.04;
+  letter-spacing:-.02em;
+  margin:0 0 .46em;
 }
-h1{font-size:clamp(2rem,5.6vw,3.6rem);font-weight:700}
-h2{font-size:clamp(1.45rem,3.2vw,2.1rem)}
-h3{font-size:clamp(1.12rem,2.2vw,1.35rem)}
+h1{font-size:clamp(2.6rem,6.4vw,5.2rem);font-weight:300;line-height:.96}
+h2{font-size:clamp(1.9rem,3.8vw,3rem);font-weight:300}
+h3{font-size:clamp(1.25rem,2vw,1.6rem);font-weight:500;letter-spacing:-.012em}
+h4{font-size:1.15rem;font-weight:500}
+/* A partir de aqui manda Manrope: los titulillos de tabla y de ficha son
+   interfaz, no editorial, y en serif se leen peor. */
+h5,h6,.titulillo,legend,th{font-family:'Manrope',system-ui,sans-serif}
 p{margin:0 0 1em}
-.mono,code,kbd{font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;font-size:.92em}
+.mono,code,kbd{font-family:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
+  /* max() pone un suelo: en em, al anidarse, esto bajaba de 11 px. */
+  font-size:max(.9em, 12px)}
 .oro{color:var(--oro)}
 .neon{color:var(--neon)}
 .suave{color:var(--suave)}
@@ -196,7 +232,7 @@ p{margin:0 0 1em}
 }
 .recordar:hover span{color:var(--texto)}
 
-.marca-txt{font-family:'Fraunces',serif;font-size:1.18rem;font-weight:700;white-space:nowrap;text-transform:uppercase;letter-spacing:.09em}
+.marca-txt{font-family:'Cormorant Garamond',serif;font-size:1.18rem;font-weight:700;white-space:nowrap;text-transform:uppercase;letter-spacing:.09em}
 /* La inicial del logotipo lleva el degradado del tema. Si el navegador no
    admite recortar el fondo al texto, se queda el acento sólido. */
 .marca-txt span{color:var(--oro)}
@@ -220,7 +256,7 @@ p{margin:0 0 1em}
 
 /* Boton de tema claro/oscuro */
 .tema{
-  width:40px;height:40px;flex:none;display:grid;place-items:center;cursor:pointer;
+  width:44px;height:44px;flex:none;display:grid;place-items:center;cursor:pointer;
   border:1px solid var(--borde);border-radius:var(--r-full);
   background:color-mix(in srgb,var(--panel-solido) 60%,transparent);color:var(--oro);
   transition:transform var(--transicion),border-color var(--transicion),background var(--transicion);
@@ -416,18 +452,18 @@ html[data-tema="claro"] .radar{opacity:.5}
 }
 .caja-radar:focus-within{border-color:var(--oro);box-shadow:var(--sombra-alta),0 0 0 4px var(--oro-sombra)}
 .caja-etiqueta{
-  display:block;font-family:'Fraunces',serif;font-size:1.06rem;font-weight:600;
+  display:block;font-family:'Cormorant Garamond',serif;font-size:1.06rem;font-weight:600;
   color:var(--texto);margin-bottom:12px;letter-spacing:-.01em;
 }
 .caja-fila{display:flex;flex-direction:column;gap:12px}
 .caja-url{
   width:100%;padding:17px 19px;font-size:1.04rem;
-  font-family:'JetBrains Mono',monospace;letter-spacing:-.01em;
+  font-family:'IBM Plex Mono',monospace;letter-spacing:-.01em;
   background:color-mix(in srgb,var(--fondo) 72%,transparent);
   border:1px solid var(--borde);border-radius:var(--r-md);color:var(--texto);
   transition:border-color var(--transicion),box-shadow var(--transicion);
 }
-.caja-url::placeholder{color:var(--tenue);font-family:'Inter',sans-serif}
+.caja-url::placeholder{color:var(--tenue);font-family:'Manrope',sans-serif}
 .caja-url:focus{outline:none;border-color:var(--oro);box-shadow:0 0 0 3px var(--oro-sombra)}
 .caja-boton{padding:17px 30px;font-size:1.04rem;border-radius:var(--r-md)}
 .caja-pie{
@@ -457,7 +493,7 @@ html[data-tema="claro"] .radar{opacity:.5}
 /* ------------------------------------------------------- 7. Progreso */
 .progreso{margin-top:30px}
 .progreso-cab{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px}
-.progreso-titulo{display:flex;align-items:center;gap:13px;font-family:'Fraunces',serif;font-size:1.08rem;font-weight:600}
+.progreso-titulo{display:flex;align-items:center;gap:13px;font-family:'Cormorant Garamond',serif;font-size:1.08rem;font-weight:600}
 .mini-radar{width:34px;height:34px;flex:none;position:relative}
 .mini-radar::before{
   content:'';position:absolute;inset:0;border-radius:50%;
@@ -485,12 +521,12 @@ html[data-tema="claro"] .radar{opacity:.5}
 }
 .barra-progreso i{
   display:block;height:100%;width:3%;border-radius:var(--r-full);
-  background:linear-gradient(90deg,var(--oro),var(--neon));
+  background:var(--oro);
   transition:width .45s cubic-bezier(.22,.61,.36,1);
   box-shadow:0 0 14px var(--neon-sombra);
 }
 .progreso-url{
-  margin-top:11px;font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--tenue);
+  margin-top:11px;font-family:'IBM Plex Mono',monospace;font-size:.76rem;color:var(--tenue);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .contadores{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:18px}
@@ -499,7 +535,7 @@ html[data-tema="claro"] .radar{opacity:.5}
   padding:13px;border-radius:var(--r-sm);text-align:center;
   border:1px solid var(--borde);background:color-mix(in srgb,var(--panel-solido) 45%,transparent);
 }
-.contador b{display:block;font-family:'Fraunces',serif;font-size:1.6rem;line-height:1.1;color:var(--oro)}
+.contador b{display:block;font-family:'Cormorant Garamond',serif;font-size:1.6rem;line-height:1.1;color:var(--oro)}
 .contador span{font-size:.72rem;color:var(--suave);letter-spacing:.05em;text-transform:uppercase}
 .contador.destacado b{color:var(--neon)}
 .contador.wa b{color:var(--wa)}
@@ -576,14 +612,14 @@ table.tabla tbody tr.marcada{background:color-mix(in srgb,var(--neon) 8%,transpa
 .col-check{width:44px;text-align:center}
 .col-check input{width:17px;height:17px;accent-color:var(--oro);cursor:pointer}
 .celda-correo{
-  font-family:'JetBrains Mono',monospace;font-size:.86rem;font-weight:500;
+  font-family:'IBM Plex Mono',monospace;font-size:.86rem;font-weight:500;
   color:var(--texto);word-break:break-all;
 }
 .celda-url{max-width:260px;font-size:.78rem;color:var(--suave);word-break:break-all}
 .celda-metodos{display:flex;flex-wrap:wrap;gap:4px;max-width:260px}
 .confianza{display:flex;align-items:center;gap:8px;min-width:88px}
 .confianza .pista{flex:1;height:5px;border-radius:var(--r-full);background:color-mix(in srgb,var(--texto) 11%,transparent);overflow:hidden}
-.confianza .pista i{display:block;height:100%;border-radius:var(--r-full);background:linear-gradient(90deg,var(--oro),var(--neon))}
+.confianza .pista i{display:block;height:100%;border-radius:var(--r-full);background:var(--oro)}
 .confianza b{font-size:.76rem;color:var(--suave);font-variant-numeric:tabular-nums;min-width:26px;text-align:right}
 
 /* Efecto "ping" al aparecer cada correo nuevo */
@@ -608,7 +644,7 @@ tr.ping{animation:ping 1.25s cubic-bezier(.22,.61,.36,1) both}
 .lista-extras li a,.lista-extras li span{
   display:inline-block;padding:6px 12px;border-radius:var(--r-full);
   border:1px solid var(--borde);font-size:.82rem;color:var(--suave);
-  font-family:'JetBrains Mono',monospace;
+  font-family:'IBM Plex Mono',monospace;
 }
 
 /* Aviso flotante (copiado al portapapeles, etc.) */
@@ -884,7 +920,16 @@ textarea.caja-url::placeholder{white-space:pre-wrap}
 .aviso-busqueda[hidden]{display:none}
 
 @media (max-width:560px){
-  .caja-modos .modo{flex:1;min-width:0;text-align:center;min-height:40px}
+  /* Repartirlas a partes iguales las dejaba tan estrechas que "Buscar en
+     Facebook" se partia en tres renglones y se salia de la pastilla. Ahora
+     cada una ocupa lo que mide su texto, en una sola linea, y bajan de fila
+     cuando no caben. */
+  .caja-modos{gap:8px}
+  .caja-modos .modo{
+    flex:0 1 auto;min-width:0;text-align:center;
+    min-height:44px;display:inline-flex;align-items:center;justify-content:center;
+    white-space:nowrap;padding:7px 14px;
+  }
   textarea.caja-url{font-size:16px}   /* evita el zoom automático de iOS */
 }
 
@@ -899,12 +944,12 @@ textarea.caja-url::placeholder{white-space:pre-wrap}
    las columnas largas para quien las necesite.
    ========================================================================== */
 table.tabla.tabla-compacta{font-size:.84rem;min-width:0}
-table.tabla.tabla-compacta thead th{padding:9px 12px;font-size:.68rem;letter-spacing:.07em}
+table.tabla.tabla-compacta thead th{padding:9px 12px;font-size:.75rem;letter-spacing:.07em}
 table.tabla.tabla-compacta tbody td{padding:7px 12px;line-height:1.35}
 table.tabla.tabla-compacta .col-dominio,
 table.tabla.tabla-compacta .col-conf{display:none}
 table.tabla.tabla-compacta .celda-url{max-width:210px;font-size:.74rem}
-table.tabla.tabla-compacta .chip{padding:2px 8px;font-size:.68rem}
+table.tabla.tabla-compacta .chip{padding:2px 8px;font-size:.75rem}
 table.tabla.tabla-compacta .celda-correo{font-size:.88rem}
 table.tabla.tabla-compacta tbody tr:nth-child(even){background:color-mix(in srgb,var(--texto) 3%,transparent)}
 table.tabla.tabla-compacta tbody tr:hover{background:color-mix(in srgb,var(--oro) 9%,transparent)}
@@ -923,7 +968,7 @@ table.tabla.tabla-compacta tbody tr:hover{background:color-mix(in srgb,var(--oro
   cursor:pointer;display:inline-flex;align-items:center;gap:6px;
   transition:border-color var(--transicion),color var(--transicion),background var(--transicion);
 }
-.chip-ext i{font-style:normal;font-size:.68rem;opacity:.7;font-variant-numeric:tabular-nums}
+.chip-ext i{font-style:normal;font-size:.75rem;opacity:.75;font-variant-numeric:tabular-nums}
 .chip-ext:hover{border-color:var(--oro);color:var(--texto)}
 .chip-ext:focus-visible{outline:2px solid var(--oro);outline-offset:2px}
 .chip-ext.activo{
@@ -999,7 +1044,7 @@ table.tabla.tabla-compacta tbody tr:hover{background:color-mix(in srgb,var(--oro
 .caja-objetivo .campo{width:100%}
 .caja-objetivo .chips-ext{margin:10px 0 0}
 @media (max-width:560px){
-  .caja-objetivo .chip-ext{flex:1 1 auto;justify-content:center;min-height:36px}
+  .caja-objetivo .chip-ext{flex:1 1 auto;justify-content:center;min-height:44px}
   .caja-objetivo .campo{font-size:16px}   /* evita el zoom de iOS */
 }
 

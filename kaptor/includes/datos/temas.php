@@ -23,6 +23,25 @@
 declare(strict_types=1);
 
 return [
+    /* La paleta de la casa: papel blanco, tinta profunda, azul de marca.
+       Va la primera porque es la que se lleva puesta de serie. */
+    'tinta' => [
+        'nombre'        => 'Tinta',
+        'pista'         => 'Página blanca, tinta profunda y azul de marca. La de la casa.',
+        'modo'          => 'claro',
+        'fondo'         => '#0B0D11',
+        'fondo2'        => '#11141A',
+        'texto'         => '#EDEFF3',
+        'oro'           => '#7DA2FF',
+        'oro2'          => '#A8C0FF',
+        'neon'          => '#43D98B',
+        'fondo_claro'   => '#FFFFFF',
+        'fondo2_claro'  => '#F7F8FA',
+        'texto_claro'   => '#0E1116',
+        'oro_claro'     => '#1B3FA8',
+        'oro2_claro'    => '#2B52C4',
+        'neon_claro'    => '#0F7B43',
+    ],
     'azul' => [
         'nombre'        => 'Azul eléctrico',
         'pista'         => 'Negro puro con azul intenso y turquesa.',

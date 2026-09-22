@@ -167,7 +167,7 @@
 
     ctx.fillStyle = color('--texto', '#EDEAE3');
     ctx.textAlign = 'center';
-    ctx.font = '700 26px Fraunces, Georgia, serif';
+    ctx.font = '700 26px Cormorant Garamond, Georgia, serif';
     ctx.fillText(String(total), cx, cy + 4);
     ctx.font = '11px Inter, sans-serif';
     ctx.fillStyle = color('--suave', '#98A0AE');

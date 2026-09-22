@@ -14,7 +14,7 @@ declare(strict_types=1);
 final class Esquema
 {
     /** Se sube de uno en uno cada vez que cambia la estructura. */
-    public const VERSION = 7;
+    public const VERSION = 8;
 
     /** Aplica los cambios pendientes. Se llama desde bootstrap.php. */
     public static function actualizar(): void
@@ -56,6 +56,18 @@ final class Esquema
             if ($actual < 7) {
                 self::tablaAuditorias();   // por si se instaló justo en la 6
                 self::columna('cr_auditorias', 'modo', "VARCHAR(12) NOT NULL DEFAULT 'completo' AFTER `papel`");
+            }
+
+            // 8: el rediseno. La pagina pasa de negra y dorada a blanca con
+            //    tinta y azul de marca. Los colores viven en la base, asi que
+            //    sin esto una instalacion antigua subiria los archivos nuevos
+            //    y seguiria viendose igual de oscura.
+            //
+            //    Solo se cambia a quien nunca toco los colores: si alguien
+            //    eligio su propia paleta, se le respeta.
+            if ($actual < 8) {
+                self::paletaNueva();
+                self::textosRediseno();
             }
 
             Ajustes::guardar('esquema', (string) self::VERSION);
@@ -179,6 +191,78 @@ final class Esquema
               KEY `idx_host` (`host`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
         );
+    }
+
+    /**
+     * Textos de portada del rediseno.
+     *
+     * Mismo criterio que la paleta: solo se cambia el texto que sigue siendo
+     * el de fabrica. Si el usuario escribio el suyo, no se toca.
+     */
+    private static function textosRediseno(): void
+    {
+        $anteriores = [
+            'hero_titulo' => [
+                'Capta cada correo y WhatsApp de cualquier web',
+                'Capta cada correo de cualquier web',
+                'Extrae cada correo de cualquier web',
+            ],
+            'hero_subtitulo' => [
+                'Pega un enlace y Kaptor barre el codigo, los enlaces mailto, las ofuscaciones y hasta los correos protegidos por Cloudflare.',
+                'Pega un enlace y Kaptor barre el código, los enlaces mailto, las ofuscaciones y hasta los correos protegidos por Cloudflare.',
+            ],
+            'hero_placeholder' => [
+                'https://ejemplo.com  ·  varias webs, una por línea  ·  o unas palabras para buscar',
+                'https://ejemplo.com/contacto',
+            ],
+        ];
+        $nuevos = [
+            'hero_titulo'      => 'Extracción web inteligente',
+            'hero_subtitulo'   => 'Una web, una lista completa, una búsqueda o una página de Facebook.',
+            'hero_placeholder' => '',
+        ];
+
+        $cambios = [];
+        foreach ($anteriores as $clave => $valores) {
+            if (in_array(trim(Ajustes::obtener($clave, '')), $valores, true)) {
+                $cambios[$clave] = $nuevos[$clave];
+            }
+        }
+        if ($cambios) { Ajustes::guardarVarios($cambios); }
+    }
+
+    /**
+     * Pone la paleta de la casa a quien seguia con la de fabrica antigua.
+     *
+     * La comprobacion es por el nombre de la paleta, no por cada color: si
+     * el usuario escogio "Azul electrico" o se pinto los suyos a mano, esto
+     * no le toca nada. Solo se mueve al que nunca entro a Apariencia.
+     */
+    private static function paletaNueva(): void
+    {
+        $temas = Ajustes::temas();
+        if (!isset($temas['tinta'])) { return; }
+
+        // 'oro' era la paleta de fabrica del diseno anterior.
+        if (Ajustes::obtener('tema_color', 'oro') !== 'oro') { return; }
+
+        $t = $temas['tinta'];
+        Ajustes::guardarVarios([
+            'tema_color'         => 'tinta',
+            'tema_por_defecto'   => 'claro',
+            'color_fondo'        => $t['fondo'],
+            'color_fondo2'       => $t['fondo2'],
+            'color_texto'        => $t['texto'],
+            'color_oro'          => $t['oro'],
+            'color_oro2'         => $t['oro2'],
+            'color_neon'         => $t['neon'],
+            'color_fondo_claro'  => $t['fondo_claro'],
+            'color_fondo2_claro' => $t['fondo2_claro'],
+            'color_texto_claro'  => $t['texto_claro'],
+            'color_oro_claro'    => $t['oro_claro'],
+            'color_oro2_claro'   => $t['oro2_claro'],
+            'color_neon_claro'   => $t['neon_claro'],
+        ]);
     }
 
     /**

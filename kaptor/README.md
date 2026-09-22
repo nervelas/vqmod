@@ -1,4 +1,4 @@
-# Kaptor 5.3
+# Kaptor 6.0
 
 Caja de herramientas para vender servicios web. Dos mitades:
 
@@ -27,45 +27,27 @@ el **pixel** y el **registro de clics**, y el **instalador**.
 
 ## El diseño
 
-Dirección de arte: **instrumento de precisión**. Kaptor no es un folleto, es un
-aparato de medición, y desde que se entra lo primero que se ve es el panel de
-mando. Modo claro de verdad (no un oscuro aclarado) y diez paletas que se
-cambian de un clic desde el panel.
+Dirección de arte: **instrumento editorial**. Papel blanco, tinta profunda y
+un solo azul de marca. Nada de fondos oscuros, dorados ni degradados: es una
+herramienta de trabajo, y el fondo no compite con los datos.
 
-- **Composición asimétrica**: el mando a la izquierda, la lectura del
-  instrumento a la derecha y el radar saliéndose del encuadre.
-- **Tres pasos numerados** —de dónde, qué quiero, hasta dónde— en lugar de un
-  formulario corrido.
-- **Retícula técnica** de fondo y esquinas marcadas en los paneles, como el
-  visor de un aparato.
-- **Tipografía con carácter**: Fraunces con el eje óptico al máximo para los
-  titulares, que a tamaño grande da unos remates dramáticos; JetBrains Mono
-  —la misma letra con la que se leen los correos— para los rótulos, en
-  versalitas y numerados.
-
-- **Luz ambiental** que respira detrás del contenido, grano finísimo y viñeta:
-  es lo que le quita a un fondo oscuro el aspecto de plástico.
-- **Superficies de cristal** con filo de luz en el borde de arriba, el detalle
-  que separa una interfaz cara de una barata.
-- **Movimiento con intención**, de 160 a 320 ms y curva Expo: el radar late
-  mientras rastrea, las filas nuevas entran en lugar de aparecer de golpe, los
-  botones tienen un destello que los cruza y se hunden 2,5 % al pulsarlos.
-- **Iconos** dentro de un disco de cristal con anillo de oro y halo propio.
-- **Tipografía** Fraunces para los títulos, Inter para el texto y JetBrains
-  Mono para los correos, servidas desde el propio servidor: sin llamadas a
-  Google Fonts ni dependencias externas.
-
-Todo vive en dos hojas aparte —`assets/css/lujo.css` y
-`admin/assets/lujo-admin.css`— que se cargan después de las de siempre. No
-añaden ni quitan un solo selector de los que usa el JavaScript, así que el
-diseño se puede revisar, ajustar o quitar sin tocar el funcionamiento.
-
-**Comprobado**: las diez paletas por encima del mínimo AA (la peor, 5,5:1), las
-catorce páginas sin desbordes a 390, 768 y 1440 px, todo lo pulsable de 44 px o
-más en el teléfono, anillo de foco en el recorrido completo con teclado, y
-`prefers-reduced-motion` detiene hasta la luz de fondo.
-
----
+- **Tipografías.** Cormorant Garamond en los títulos —de ahí sale la
+  elegancia—, Manrope en la interfaz y IBM Plex Mono en correos, dominios y
+  números. Las tres se sirven desde tu propio dominio: ni una petición a
+  Google, que es más rápido y no filtra a tus visitantes.
+- **Iconos de Phosphor**, no dibujos a mano: todos con el mismo trazo.
+- **Ancho completo.** Las secciones van de borde a borde y el aire lateral
+  crece con la pantalla, de 20 px en el teléfono a 100 en una grande.
+- **Un color por herramienta**: correos azul, WhatsApp verde, auditor ámbar,
+  SEO turquesa, virus rojo, campañas violeta. No es decoración; es lo que hace
+  que de seis fichas iguales se distinga una de un vistazo.
+- **El verde, el ámbar y el rojo son de ESTADO**, nunca de adorno. Si algo se
+  ve en rojo, es que algo va mal.
+- **Movil primero**: nada que se pulse baja de 44 px, ningún texto baja de
+  12 px, y no hay desbordes a 390, 768, 1440 ni 1920.
+- **Tema oscuro** incluido, rediseñado con el mismo criterio, y **once
+  paletas** en *Ajustes → Apariencia*. Si ya elegíste la tuya, la
+  actualización no te la toca.
 
 ## Cómo saber qué versión está instalada
 

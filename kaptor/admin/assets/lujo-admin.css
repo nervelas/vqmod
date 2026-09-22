@@ -19,7 +19,7 @@ body::before{
   content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:
     radial-gradient(40vw 40vw at 6% 0%,   color-mix(in srgb, var(--oro) 20%, transparent), transparent 62%),
-    radial-gradient(34vw 34vw at 98% 12%, color-mix(in srgb, var(--neon) 13%, transparent), transparent 64%);
+    radial-gradient(34vw 34vw at 98% 12%, color-mix(in srgb, var(--oro) 7%, transparent), transparent 64%);
   animation:respirarPanel 30s cubic-bezier(.4,0,.2,1) infinite alternate;
 }
 @keyframes respirarPanel{
@@ -42,7 +42,7 @@ body::before{
 }
 .lateral a::before{
   content:"";position:absolute;left:0;top:18%;bottom:18%;width:2px;border-radius:2px;
-  background:linear-gradient(180deg, var(--oro), var(--neon));
+  background:var(--oro);
   transform:scaleY(0);transform-origin:center;transition:transform var(--t-media);
 }
 .lateral a:hover::before,.lateral a.activo::before{transform:scaleY(1)}
@@ -66,7 +66,7 @@ body::before{
   background:linear-gradient(90deg, transparent, color-mix(in srgb, var(--oro) 40%, transparent), transparent);
 }
 .panel-barra h1{
-  font-family:'Fraunces',Georgia,serif;font-weight:600;letter-spacing:-.01em;font-size:1.3rem;
+  font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;letter-spacing:-.01em;font-size:1.3rem;
 }
 
 /* ----------------------------------------------------------- Superficies */
@@ -103,7 +103,7 @@ body::before{
 }
 .pestanas button::after{
   content:"";position:absolute;left:50%;right:50%;bottom:-13px;height:2px;border-radius:2px;
-  background:linear-gradient(90deg, var(--oro), var(--neon));
+  background:var(--oro);
   transition:left var(--t-media), right var(--t-media);
 }
 .pestanas button.activa::after{left:0;right:0}

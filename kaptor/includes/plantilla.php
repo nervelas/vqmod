@@ -65,7 +65,9 @@ function cr_cabecera(array $opciones = []): void
     $descripcion = $opciones['descripcion'] ?? Ajustes::obtener('sitio_descripcion');
     $activo = $opciones['activo'] ?? '';
     $logo   = cr_logo_url();
-    $tema   = Ajustes::obtener('tema_por_defecto', 'oscuro') === 'claro' ? 'claro' : 'oscuro';
+    // El tema de la casa es el claro: papel blanco. El oscuro sigue ahi
+    // para quien lo prefiera, redisenado con el mismo criterio.
+    $tema   = Ajustes::obtener('tema_por_defecto', 'claro') === 'oscuro' ? 'oscuro' : 'claro';
     ?><!DOCTYPE html>
 <html lang="es" data-tema="<?= e($tema) ?>">
 <head>
@@ -92,7 +94,8 @@ function cr_cabecera(array $opciones = []): void
 <meta property="og:image" content="<?= e(cr_url('assets/img/og.jpg')) ?>">
 <meta property="og:locale" content="es_ES">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="preload" href="<?= e(cr_url('assets/fonts/inter-var-latin.woff2')) ?>" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="<?= e(cr_url('assets/fonts/manrope-400-latin.woff2')) ?>" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="<?= e(cr_url('assets/fonts/cormorant-garamond-300-latin.woff2')) ?>" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="<?= e(cr_url('assets/css/app.css')) ?>?v=<?= e(CR_VERSION) ?>">
 <link rel="stylesheet" href="<?= e(cr_url('assets/css/lujo.css')) ?>?v=<?= e(CR_VERSION) ?>">
 <?php // Hojas propias de una página, si la página las pide. Van al final para
@@ -254,7 +257,7 @@ function cr_pie(bool $conJs = true): void
     apiEscaneo: <?= ejs(cr_url('api/escaneo.php')) ?>,
     apiExportar: <?= ejs(cr_url('api/exportar.php')) ?>,
     urlLogin: <?= ejs(cr_url('login.php')) ?>,
-    temaPorDefecto: <?= ejs(Ajustes::obtener('tema_por_defecto', 'oscuro')) ?>,
+    temaPorDefecto: <?= ejs(Ajustes::obtener('tema_por_defecto', 'claro')) ?>,
     sw: <?= ejs(cr_url('sw.js')) ?>,
     base: <?= ejs(rtrim(cr_url_base(), '/') . '/') ?>
   };

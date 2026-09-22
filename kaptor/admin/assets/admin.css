@@ -27,7 +27,7 @@
 
 .lateral .marca{padding:6px 10px 18px;border-bottom:1px solid var(--borde);margin-bottom:12px}
 .lateral .marca-txt{
-  font-family:'Fraunces',Georgia,serif;font-size:1.12rem;font-weight:700;
+  font-family:'Cormorant Garamond',Georgia,serif;font-size:1.12rem;font-weight:700;
   text-transform:uppercase;letter-spacing:.09em;white-space:nowrap;color:var(--texto);
 }
 .lateral .marca-txt span{color:var(--oro)}
@@ -104,7 +104,7 @@
 .metrica .icono{width:36px;height:36px;border-radius:var(--r-sm);display:grid;place-items:center;
   background:color-mix(in srgb,var(--oro) 14%,transparent);color:var(--oro);margin-bottom:12px}
 .metrica .icono svg{width:19px;height:19px}
-.metrica b{display:block;font-family:'Fraunces',serif;font-size:2rem;line-height:1.05;color:var(--texto)}
+.metrica b{display:block;font-family:'Cormorant Garamond',serif;font-size:2rem;line-height:1.05;color:var(--texto)}
 .metrica span{font-size:.8rem;color:var(--suave);letter-spacing:.03em}
 .metrica .delta{font-size:.76rem;color:var(--neon);margin-top:6px;display:block}
 
@@ -144,7 +144,7 @@
   width:48px;height:40px;padding:0;border:1px solid var(--borde);border-radius:var(--r-sm);
   background:transparent;cursor:pointer;
 }
-.color-fila .campo{max-width:140px;font-family:'JetBrains Mono',monospace;font-size:.86rem}
+.color-fila .campo{max-width:140px;font-family:'IBM Plex Mono',monospace;font-size:.86rem}
 
 /* Barra de guardado fija */
 .guardar-barra{
@@ -188,7 +188,7 @@
   font-size:.82rem;font-weight:700;color:var(--oro);
 }
 .paletas-titulo{
-  font-family:'Fraunces',Georgia,serif;font-size:1rem;font-weight:600;
+  font-family:'Cormorant Garamond',Georgia,serif;font-size:1rem;font-weight:600;
   margin:22px 0 10px;color:var(--texto);
 }
 .paletas-titulo:first-of-type{margin-top:6px}

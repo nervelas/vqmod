@@ -14,7 +14,7 @@ ini_set('display_errors', '1');
 @set_time_limit(180);
 
 define('CR_RAIZ', __DIR__);
-define('CR_VERSION', '5.3.0');
+define('CR_VERSION', '6.0.0');
 const PHP_MINIMO = '8.0.0';
 
 $rutaConfig = CR_RAIZ . '/config/config.php';
@@ -252,20 +252,20 @@ function h(?string $t): string { return htmlspecialchars((string) $t, ENT_QUOTES
   --error:#FF6B6B;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--obsidiana);color:var(--texto);font-family:'Inter',system-ui,-apple-system,sans-serif;
+body{margin:0;background:var(--obsidiana);color:var(--texto);font-family:'Manrope',system-ui,-apple-system,sans-serif;
      font-size:15px;line-height:1.6;
      background-image:radial-gradient(900px 500px at 50% -10%, rgba(216,179,106,.10), transparent 60%),
                       radial-gradient(700px 400px at 90% 100%, rgba(110,243,165,.06), transparent 60%);}
 .caja{max-width:820px;margin:0 auto;padding:40px 20px 80px}
 .marca{display:flex;align-items:center;gap:14px;margin-bottom:8px}
 .marca svg{width:46px;height:46px;flex:none}
-h1{font-family:'Fraunces',Georgia,serif;font-size:clamp(28px,5vw,40px);margin:0;font-weight:700;letter-spacing:-.02em}
+h1{font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(28px,5vw,40px);margin:0;font-weight:700;letter-spacing:-.02em}
 h1 span{color:var(--oro)}
 .lema{color:var(--suave);margin:0 0 28px}
 .panel{background:linear-gradient(180deg,var(--panel),var(--carbon));border:1px solid var(--borde);
        border-radius:18px;padding:26px;margin-bottom:22px;box-shadow:0 22px 60px rgba(0,0,0,.45)}
-h2{font-family:'Fraunces',Georgia,serif;font-size:20px;margin:0 0 4px;font-weight:600}
-h2 small{display:block;font-family:'Inter',sans-serif;font-size:13px;color:var(--suave);font-weight:400;margin-top:4px}
+h2{font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;margin:0 0 4px;font-weight:600}
+h2 small{display:block;font-family:'Manrope',sans-serif;font-size:13px;color:var(--suave);font-weight:400;margin-top:4px}
 .req{display:flex;justify-content:space-between;gap:14px;padding:10px 0;border-bottom:1px dashed var(--borde);font-size:14px}
 .req:last-child{border-bottom:0}
 .req b{font-weight:500}
@@ -291,7 +291,7 @@ button:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(216,179,106,
 .aviso.bien{background:rgba(110,243,165,.08);border:1px solid rgba(110,243,165,.32);color:var(--neon)}
 .aviso ul{margin:8px 0 0 18px;padding:0}
 code{background:#0B0D11;border:1px solid var(--borde);padding:2px 7px;border-radius:6px;
-     font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--oro-claro)}
+     font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--oro-claro)}
 .pasos{counter-reset:p;list-style:none;padding:0;margin:18px 0 0}
 .pasos li{counter-increment:p;position:relative;padding:10px 0 10px 40px;font-size:14.5px}
 .pasos li::before{content:counter(p);position:absolute;left:0;top:9px;width:26px;height:26px;border-radius:50%;

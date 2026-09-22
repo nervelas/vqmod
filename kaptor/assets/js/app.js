@@ -1274,11 +1274,13 @@
 })();
 
 /* ==========================================================================
-   18. Textos cortos en pantallas pequeñas
-   El marcador de posición del campo principal está escrito para un monitor:
-   en un teléfono ocupaba tres renglones y empujaba el botón fuera de la
-   vista. Aquí se cambia por su versión corta, y se devuelve el largo si la
-   pantalla crece (girar el teléfono, abrir en una tableta).
+   18. Marcadores de posición
+   Los campos van VACIOS, tambien en el telefono: dentro de un campo no se
+   escriben ejemplos. Lo que hay que explicar se explica en la etiqueta de
+   arriba o en la nota de abajo, que es donde se lee sin borrarlo.
+   Este bloque se queda porque devuelve al campo lo que traiga escrito el
+   servidor cuando la pantalla crece, y porque el panel deja poner un texto
+   en el campo principal si alguien lo quiere.
    ========================================================================== */
 (function () {
   'use strict';
@@ -1286,17 +1288,14 @@
   var consulta = window.matchMedia ? window.matchMedia('(max-width: 620px)') : null;
   if (!consulta) { return; }
 
-  // Cada campo con su versión corta. Si el campo no está en la página, se
-  // salta sin más: esta lista vale para la portada y para el depurador.
   var campos = [
-    // El campo principal va vacio a proposito, tambien en el telefono.
     { id: 'url',         corto: '' },
-    { id: 'objetivo',    corto: 'Ej.: .edu.gt  ·  vacío = todos' },
-    { id: 'extensiones', corto: 'Ej.: .com, .edu.gt  ·  vacío = todas' },
-    { id: 'excluir',     corto: 'Ej.: .ru, .cn' },
-    { id: 'contiene',    corto: 'Ej.: colegio, liceo, instituto' },
-    { id: 'sin_palabra', corto: 'Ej.: tienda, banco' },
-    { id: 'filtro-ext',  corto: 'Extensiones: .edu.gt, .com…' }
+    { id: 'objetivo',    corto: '' },
+    { id: 'extensiones', corto: '' },
+    { id: 'excluir',     corto: '' },
+    { id: 'contiene',    corto: '' },
+    { id: 'sin_palabra', corto: '' },
+    { id: 'filtro-ext',  corto: '' }
   ].map(function (c) {
     var el = document.getElementById(c.id);
     return el ? { el: el, corto: c.corto, largo: el.getAttribute('placeholder') || '' } : null;

@@ -148,12 +148,13 @@ cr_cabecera([
       </p>
     </div>
 
-
   </div>
 </section>
 
-    <!-- Ventajas -->
-    <div class="ventajas">
+<!-- Lo que hace, en tres lineas. Dentro del contenedor, como todo lo demas:
+     antes colgaba fuera y se salia por los dos lados de la pagina. -->
+<section class="contenedor seccion-corta">
+  <div class="ventajas">
       <div class="ventaja">
         <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224,48H32a8,8,0,0,0-8,8V192a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A8,8,0,0,0,224,48Zm-96,85.15L52.57,64H203.43ZM98.71,128,40,181.81V74.19Zm11.84,10.85L128,154.81l17.45-16L206.73,192H49.27ZM157.29,128,216,74.19V181.81Z"/></svg>
         <b>Correos y WhatsApp a la vez</b>
@@ -169,7 +170,6 @@ cr_cabecera([
         <b>TXT, CSV y Excel</b>
         <span>Descarga la lista y a trabajar.</span>
       </div>
-    </div>
   </div>
 </section>
 

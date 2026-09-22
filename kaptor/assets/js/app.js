@@ -44,62 +44,6 @@
   }
 
 
-  /* ------------------------------------------------------- 1b. Carrusel */
-  /* Avanza solo, pero en cuanto alguien lo toca, pasa el raton por encima o
-     lo enfoca con el teclado, se calla y no vuelve a moverse: no hay nada
-     mas molesto que una pagina que se mueve mientras se lee. */
-  function iniciarCarrusel() {
-    var pista = $('#carrusel-pista');
-    if (!pista) { return; }
-
-    var diapos = $$('.diapo', pista);
-    if (diapos.length < 2) { return; }
-
-    var quieto = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var reloj  = null;
-
-    function irA(i) {
-      var n = diapos.length;
-      var destino = diapos[((i % n) + n) % n];
-      pista.scrollTo({ left: destino.offsetLeft - (pista.clientWidth - destino.clientWidth) / 2,
-                       behavior: quieto ? 'auto' : 'smooth' });
-    }
-
-    function actual() {
-      var centro = pista.scrollLeft + pista.clientWidth / 2;
-      var mejor = 0, dist = Infinity;
-      diapos.forEach(function (d, i) {
-        var dd = Math.abs((d.offsetLeft + d.clientWidth / 2) - centro);
-        if (dd < dist) { dist = dd; mejor = i; }
-      });
-      return mejor;
-    }
-
-    function parar() {
-      if (reloj) { clearInterval(reloj); reloj = null; }
-    }
-
-    var izq = $('#carr-izq'), der = $('#carr-der');
-    if (izq) { izq.addEventListener('click', function () { parar(); irA(actual() - 1); }); }
-    if (der) { der.addEventListener('click', function () { parar(); irA(actual() + 1); }); }
-
-    pista.addEventListener('keydown', function (e) {
-      if (e.key === 'ArrowRight') { parar(); irA(actual() + 1); e.preventDefault(); }
-      if (e.key === 'ArrowLeft')  { parar(); irA(actual() - 1); e.preventDefault(); }
-    });
-
-    ['pointerdown', 'wheel', 'touchstart', 'focusin', 'mouseenter'].forEach(function (ev) {
-      pista.addEventListener(ev, parar, { passive: true });
-    });
-
-    if (!quieto) {
-      reloj = setInterval(function () {
-        if (document.hidden) { return; }
-        irA(actual() + 1);
-      }, 5200);
-    }
-  }
-
   /* ------------------------------------------------------------- 2. Utilidades */
   function esc(t) {
     return String(t == null ? '' : t)
@@ -995,7 +939,6 @@
 
   /* ------------------------------------------------------------- 10. Arranque */
   iniciarTema();
-  iniciarCarrusel();
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', conectar);
   } else {

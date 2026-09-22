@@ -152,65 +152,22 @@ cr_cabecera([
   </div>
 </section>
 
-<!-- ----------------------------- CARRUSEL ----------------------------- -->
-<!-- No son fotos de banco de imagenes: son capturas de Kaptor trabajando.
-     Se arrastra con el dedo, se mueve solo y se para en cuanto alguien lo
-     toca o pasa el raton por encima. -->
-<section class="carrusel" aria-label="Kaptor por dentro">
-  <div class="contenedor">
-    <div class="carrusel-cab">
-      <div>
-        <h2>Kaptor por dentro</h2>
-        <p>Capturas reales de la herramienta trabajando, no dibujos.</p>
-      </div>
-      <div class="carrusel-mandos">
-        <button type="button" id="carr-izq" aria-label="Ver la anterior">
-          <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/></svg>
-        </button>
-        <button type="button" id="carr-der" aria-label="Ver la siguiente">
-          <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></svg>
-        </button>
-      </div>
-    </div>
-
-    <div class="carrusel-pista" id="carrusel-pista" tabindex="0" role="group" aria-label="Capturas de Kaptor">
-      <?php
-      $diapos = [
-          ['1-correos',  'Correos y su origen',  'cada correo con su dominio, su tipo y la página exacta de donde salió.'],
-          ['2-informe',  'El informe del cliente', 'nota sobre 100, las siete áreas y lo primero que hay que arreglar.'],
-          ['3-whatsapp', 'WhatsApp de un texto',  'números en formato internacional, sin facturas ni NIT colados.'],
-          ['4-listas',   'Listas limpias',        'pega lo que sea y sale sin repetidos, filtrado por la terminación que pidas.'],
-      ];
-      foreach ($diapos as $i => [$archivo, $titulo, $pie]): ?>
-        <figure class="diapo">
-          <div class="diapo-img">
-            <img src="<?= e(cr_url('assets/img/carrusel/' . $archivo . '.jpg')) ?>"
-                 alt="<?= e($titulo) ?>" width="1280" height="760"
-                 loading="<?= $i === 0 ? 'eager' : 'lazy' ?>" decoding="async">
-          </div>
-          <figcaption><b><?= e($titulo) ?></b> <span><?= e($pie) ?></span></figcaption>
-        </figure>
-      <?php endforeach; ?>
-    </div>
-  </div>
-</section>
-
     <!-- Ventajas -->
     <div class="ventajas">
       <div class="ventaja">
         <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224,48H32a8,8,0,0,0-8,8V192a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A8,8,0,0,0,224,48Zm-96,85.15L52.57,64H203.43ZM98.71,128,40,181.81V74.19Zm11.84,10.85L128,154.81l17.45-16L206.73,192H49.27ZM157.29,128,216,74.19V181.81Z"/></svg>
         <b>Correos y WhatsApp a la vez</b>
-        <span>20 técnicas para los correos y 8 para los números: wa.me, api.whatsapp, widgets, tel:, JSON-LD y texto.</span>
+        <span>Los dos en la misma pasada.</span>
       </div>
       <div class="ventaja">
         <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg>
         <b>Rastreo profundo</b>
-        <span>Recorre contacto, nosotros, equipo y el resto de páginas internas, con sitemap incluido.</span>
+        <span>Entra en las páginas internas del sitio.</span>
       </div>
       <div class="ventaja">
         <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224,144v64a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V144a8,8,0,0,1,16,0v64H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg>
         <b>TXT, CSV y Excel</b>
-        <span>Descarga los resultados con el nombre del dominio y la fecha, listos para tu CRM.</span>
+        <span>Descarga la lista y a trabajar.</span>
       </div>
     </div>
   </div>
@@ -365,7 +322,7 @@ cr_cabecera([
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3M8 11h6"/>
         </svg>
         <p><b>No se encontró ningún correo.</b></p>
-        <p class="pequeno">Prueba a activar el <b>rastreo profundo</b> o apunta directamente a la página de contacto.</p>
+        <p class="pequeno">Prueba con el rastreo profundo.</p>
       </div>
       <div class="vacio oculto" id="sin-coincidencias"><p>Ningún correo coincide con el filtro.</p></div>
     </div>
@@ -423,7 +380,7 @@ cr_cabecera([
           <path d="M20.5 11.6A8.4 8.4 0 0 1 7.8 19l-4.3 1.2 1.2-4.2A8.4 8.4 0 1 1 20.5 11.6Z"/>
         </svg>
         <p><b>No se encontró ningún número.</b></p>
-        <p class="pequeno">Muchos sitios solo publican el WhatsApp en la página de contacto: prueba con el rastreo profundo.</p>
+        <p class="pequeno">Prueba con el rastreo profundo.</p>
       </div>
       <div class="vacio oculto" id="sin-coincidencias-tel"><p>Ningún número coincide con el filtro.</p></div>
     </div>

@@ -22,7 +22,7 @@ header('Cache-Control: public, max-age=3600');
 
 echo json_encode([
     'id'                => $base,
-    'name'              => $nombre . ' · ' . Ajustes::obtener('sitio_lema', 'Extractor Web Inteligente'),
+    'name'              => $nombre . ' · ' . Ajustes::obtener('sitio_lema', 'Extracción web inteligente'),
     'short_name'        => mb_substr($nombre, 0, 12),
     'description'       => Ajustes::obtener('sitio_descripcion', 'Extrae correos y números de WhatsApp de cualquier página web.'),
     'lang'              => 'es',

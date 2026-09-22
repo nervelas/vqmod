@@ -120,22 +120,11 @@ cr_cabecera([
   <header class="depurar-cab">
     <span class="insignia"><span class="punto"></span> Sin salir a internet</span>
     <?php if ($modo === 'webs'): ?>
-      <h1>Extraer páginas web de un texto</h1>
-      <p class="portada-sub">
-        Pega el listado que sea —el JSON de <b>crt.sh</b>, unos resultados de búsqueda, un
-        directorio copiado— y Kaptor saca las <b>páginas web</b> que lleve dentro: sin repetidos,
-        sin <code>www.</code> ni subdominios, y solo las que digan lo que tú pidas
-        (<i>colegio</i>, <i>liceo</i>, <i>instituto</i>…). La lista sale lista para pegarla en la
-        caja de extracción.
-      </p>
+      <h1>Extraer webs</h1>
+      <p class="portada-sub">Pega cualquier listado y salen las páginas web que lleve dentro, sin repetidos.</p>
     <?php else: ?>
-      <h1>Extraer correos de un texto</h1>
-      <p class="portada-sub">
-        Pega <b>cualquier cosa</b> y Kaptor saca los correos que lleve dentro: un texto largo, un
-        artículo, un PDF copiado, un correo reenviado con cien firmas, una columna de Excel, un CSV
-        entero o una lista suelta. Los pone en minúsculas, <b>quita los repetidos</b> y te deja solo
-        los que terminen como tú digas.
-      </p>
+      <h1>Extraer correos</h1>
+      <p class="portada-sub">Pega cualquier texto y salen los correos que lleve dentro, sin repetidos.</p>
     <?php endif; ?>
   </header>
 

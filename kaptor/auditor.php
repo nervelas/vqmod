@@ -28,10 +28,8 @@ $copia = [
         'activo'  => 'auditor',
         'titulo'  => 'Auditor web',
         'etiqueta' => 'Diagnóstico técnico',
-        'h1'      => 'Audita un sitio y entrega el informe',
-        'sub'     => 'Pega una dirección y Kaptor revisa velocidad, celular, Google, seguridad, '
-                   . 'contacto, código malicioso y visibilidad en las inteligencias artificiales. '
-                   . 'Sale un informe con tu marca, listo para enviar.',
+        'h1'      => 'Auditoría web',
+        'sub'     => 'Pega una dirección y sale un informe con tu marca, listo para enviar.',
         'boton'   => 'Auditar',
         'paso1'   => '¿Qué sitios quieres revisar?',
     ],
@@ -39,10 +37,8 @@ $copia = [
         'activo'  => 'seo',
         'titulo'  => 'Análisis SEO',
         'etiqueta' => 'Posicionamiento en Google',
-        'h1'      => 'Cuánto SEO tiene y qué falta para el 100 %',
-        'sub'     => 'Kaptor recorre las páginas del sitio, comprueba TODOS sus enlaces uno a uno '
-                   . 'y compara las páginas entre sí. Al final da la nota real y la lista exacta '
-                   . 'de qué cambiar, con los puntos que devuelve cada arreglo.',
+        'h1'      => 'Análisis SEO',
+        'sub'     => 'La nota real del sitio y la lista exacta de qué cambiar.',
         'boton'   => 'Analizar el SEO',
         'paso1'   => '¿Qué sitio quieres analizar?',
     ],
@@ -50,10 +46,8 @@ $copia = [
         'activo'  => 'malware',
         'titulo'  => 'Buscar virus',
         'etiqueta' => 'Seguridad del sitio',
-        'h1'      => 'Busca virus y código malicioso',
-        'sub'     => 'Kaptor recorre el sitio, abre sus archivos de código uno a uno y pide la '
-                   . 'página haciéndose pasar por Google y por un celular, que es donde se esconde '
-                   . 'lo que un vistazo normal no ve. Y pregunta a los motores antivirus.',
+        'h1'      => 'Buscar virus',
+        'sub'     => 'Revisa el código del sitio y lo consulta con los motores antivirus.',
         'boton'   => 'Buscar virus',
         'paso1'   => '¿Qué sitios quieres revisar?',
     ],
@@ -100,7 +94,7 @@ cr_cabecera([
             <label for="sitios" class="paso-titulo"><?= e($copia['paso1']) ?></label>
             <textarea id="sitios" name="sitios" rows="4" spellcheck="false"
                       placeholder=""><?= e($precargado) ?></textarea>
-            <p class="paso-nota">Hasta <?= e((string) Ajustes::entero('auditor_max_lote', 50, 1, 300)) ?> sitios por tanda. No hace falta escribir «https://».</p>
+            <p class="paso-nota">Uno por línea. Hasta <?= e((string) Ajustes::entero('auditor_max_lote', 50, 1, 300)) ?>.</p>
           </div>
         </div>
 

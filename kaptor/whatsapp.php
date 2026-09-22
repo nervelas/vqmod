@@ -82,14 +82,8 @@ cr_cabecera([
 
   <header class="depurar-cab">
     <span class="insignia"><span class="punto"></span> Sin salir a internet</span>
-    <h1>Extraer WhatsApp de un texto</h1>
-    <p class="portada-sub">
-      Pega <b>cualquier cosa</b> y Kaptor saca los números que lleve dentro: una
-      lista de contactos, un directorio copiado, un grupo de WhatsApp exportado,
-      una columna de Excel. Salen sin repetidos, en formato internacional y con
-      el <b>enlace de chat ya montado</b>. Las fechas, los NIT, los precios y los
-      números de factura se quedan fuera, que es lo que siempre ensucia estas listas.
-    </p>
+    <h1>Extraer WhatsApp</h1>
+    <p class="portada-sub">Pega cualquier texto y salen los números con el enlace de chat ya montado.</p>
   </header>
 
   <?php if ($error !== ''): ?>

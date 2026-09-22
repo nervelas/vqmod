@@ -14,7 +14,7 @@ ini_set('display_errors', '1');
 @set_time_limit(180);
 
 define('CR_RAIZ', __DIR__);
-define('CR_VERSION', '6.1.0');
+define('CR_VERSION', '6.1.1');
 const PHP_MINIMO = '8.0.0';
 
 $rutaConfig = CR_RAIZ . '/config/config.php';
@@ -175,7 +175,7 @@ if (!$yaInstalado && !$faltaAlgo && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST
             $defectos['sitio_nombre'] = trim($datos['sitio_nombre']) !== '' ? trim($datos['sitio_nombre']) : 'Kaptor';
             $defectos['cron_clave']   = bin2hex(random_bytes(16));   // para automatizar el envío
             $defectos['pie_texto']    = '© ' . date('Y') . ' ' . $defectos['sitio_nombre']
-                . '. Uso responsable: extrae solo datos públicos y respeta la legislación de protección de datos.';
+                . '. Extrae solo datos públicos.';
             $ins = $pdo->prepare('INSERT INTO `cr_ajustes` (`clave`,`valor`,`actualizado`) VALUES (?,?,NOW())
                                   ON DUPLICATE KEY UPDATE `valor` = VALUES(`valor`)');
             foreach ($defectos as $clave => $valor) { $ins->execute([$clave, (string) $valor]); }

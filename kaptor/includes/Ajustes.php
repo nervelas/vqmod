@@ -25,19 +25,19 @@ final class Ajustes
         return [
             // --- Identidad -------------------------------------------------
             'sitio_nombre'        => 'Kaptor',
-            'sitio_lema'          => 'Extractor Web Inteligente',
-            'sitio_descripcion'   => 'Extractor web inteligente: correos, WhatsApp, auditoría, SEO y búsqueda de virus, en un solo lugar.',
+            'sitio_lema'          => 'Extracción web inteligente',
+            'sitio_descripcion'   => 'Correos, WhatsApp, auditoría, SEO y virus en un solo lugar.',
             'logo'                => '',
             'favicon'             => '',
-            'pie_texto'           => '© Kaptor. Uso responsable: extrae solo datos públicos y respeta la legislación de protección de datos.',
+            'pie_texto'           => '© Kaptor. Extrae solo datos públicos.',
 
             // --- Textos de la portada --------------------------------------
             'hero_titulo'         => 'Extracción web inteligente',
-            'hero_subtitulo'      => 'Una web, una lista completa, una búsqueda o una página de Facebook.',
+            'hero_subtitulo'      => 'Una web, una lista o una búsqueda.',
             'hero_placeholder'    => '',   // vacío a propósito: el campo se ve más limpio
             'hero_boton'          => 'Capturar contactos',
             'hero_etiqueta'       => 'Pega una web, una lista o una búsqueda',
-            'aviso_legal'         => 'Usa Kaptor solo sobre sitios propios o con autorización. No envíes correo no solicitado.',
+            'aviso_legal'         => 'Úsalo solo sobre sitios propios o con autorización.',
 
             // --- Paleta "Radar de lujo" ------------------------------------
             'tema_color'          => 'tinta',  // paleta elegida en el panel

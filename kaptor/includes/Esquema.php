@@ -14,7 +14,7 @@ declare(strict_types=1);
 final class Esquema
 {
     /** Se sube de uno en uno cada vez que cambia la estructura. */
-    public const VERSION = 11;
+    public const VERSION = 12;
 
     /** Aplica los cambios pendientes. Se llama desde bootstrap.php. */
     public static function actualizar(): void
@@ -87,6 +87,7 @@ final class Esquema
             //     toca lo que nadie escribio a mano.
             if ($actual < 10) { self::textosRediseno(); }
             if ($actual < 11) { self::coloresMarca(); }
+            if ($actual < 12) { self::textosCortos(); }
 
             Ajustes::guardar('esquema', (string) self::VERSION);
         } catch (Throwable $e) {
@@ -273,6 +274,70 @@ final class Esquema
      * con los que traia Kaptor de fabrica; si los habia cambiado a mano,
      * no se le tocan.
      */
+    /**
+     * Textos mas cortos. La pagina estaba cargada de parrafos que nadie lee;
+     * se cambian por una linea. Igual que arriba: solo se toca lo que el
+     * usuario no haya reescrito por su cuenta.
+     */
+    private static function textosCortos(): void
+    {
+        $anteriores = [
+            'hero_subtitulo' => [
+                'Una web, una lista completa, una búsqueda o una página de Facebook.',
+            ],
+            // El pie se trata aparte, mas abajo: el instalador le mete delante
+            // el año y el nombre del sitio, asi que comparar la frase entera
+            // no vale.
+            'aviso_legal' => [
+                'Usa Kaptor solo sobre sitios propios o con autorización. No envíes correo no solicitado.',
+                'Usa Kaptor solo sobre sitios propios o con autorizacion. No envies correo no solicitado.',
+            ],
+            'sitio_descripcion' => [
+                'Extractor web inteligente: correos, WhatsApp, auditoría, SEO y búsqueda de virus, en un solo lugar.',
+            ],
+        ];
+        $nuevos = [
+            'hero_subtitulo'    => 'Una web, una lista o una búsqueda.',
+            'pie_texto'         => '© Kaptor. Extrae solo datos públicos.',
+            'aviso_legal'       => 'Úsalo solo sobre sitios propios o con autorización.',
+            'sitio_descripcion' => 'Correos, WhatsApp, auditoría, SEO y virus en un solo lugar.',
+        ];
+
+        $cambios = [];
+        foreach ($anteriores as $clave => $valores) {
+            if (in_array(trim((string) Ajustes::obtener($clave, '')), $valores, true)) {
+                $cambios[$clave] = $nuevos[$clave];
+            }
+        }
+
+        // El pie se compara por el final: el instalador le pone delante el año
+        // y el nombre del sitio, asi que la frase entera nunca coincide.
+        $pie = trim((string) Ajustes::obtener('pie_texto', ''));
+        foreach (['respeta la legislación de protección de datos.',
+                  'respeta la legislacion de proteccion de datos.'] as $cola) {
+            if (str_ends_with($pie, $cola)) {
+                $nombre = trim((string) Ajustes::obtener('sitio_nombre', 'Kaptor'));
+                $cambios['pie_texto'] = '© ' . date('Y') . ' ' . $nombre . '. Extrae solo datos públicos.';
+                break;
+            }
+        }
+
+        // El lema, igual. Las versiones viejas dejaron por ahi media docena de
+        // variantes ("Encuentra cada correo de cualquier web", "Capta correos
+        // y WhatsApp de cualquier web"...) y compararlas una a una se queda
+        // corto siempre. Cualquiera que hable de "cualquier web" o de "cada
+        // correo" es de fabrica; un lema escrito por el usuario no dice eso.
+        $lema = trim((string) Ajustes::obtener('sitio_lema', ''));
+        $viejo = mb_strtolower($lema, 'UTF-8');
+        $delaCasa = $lema === ''
+            || str_contains($viejo, 'cualquier web')
+            || str_contains($viejo, 'cada correo')
+            || str_contains($viejo, 'extractor web inteligente');
+        if ($delaCasa) { $cambios['sitio_lema'] = 'Extracción web inteligente'; }
+
+        if ($cambios) { Ajustes::guardarVarios($cambios); }
+    }
+
     private static function coloresMarca(): void
     {
         $anteriores = [

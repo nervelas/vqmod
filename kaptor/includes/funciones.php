@@ -225,6 +225,72 @@ function cr_flash_pendientes(): array
     return is_array($lista) ? $lista : [];
 }
 
+/**
+ * Textos de marca que NO pueden depender de la base de datos.
+ *
+ * El lema y los demas textos de fabrica viven en cr_ajustes, y una
+ * migracion puede no llegar a correr: basta que el hosting no de permiso
+ * de ALTER para que se quede a medias. Paso de verdad, y el sitio siguio
+ * ensenando el lema viejo entrega tras entrega.
+ *
+ * Asi que aqui se corrige al PINTAR, no al migrar. Si lo guardado es uno
+ * de los textos de fabrica antiguos, se devuelve el nuevo y punto: no hace
+ * falta tocar la base, ni permisos, ni que nada corra antes. Un texto que
+ * haya escrito el usuario se devuelve tal cual, sin tocarlo.
+ */
+function cr_texto_marca(string $clave, string $valor): string
+{
+    $v = trim($valor);
+    if ($v === '') { return $v; }
+    $b = mb_strtolower($v, 'UTF-8');
+
+    switch ($clave) {
+        case 'sitio_lema':
+        case 'hero_titulo':
+            // Cualquier lema de fabrica hablaba de "cualquier web" o de
+            // "cada correo". Uno escrito por el usuario no dice eso.
+            if (str_contains($b, 'cualquier web')
+             || str_contains($b, 'cada correo')
+             || str_contains($b, 'extractor web inteligente')) {
+                return 'Extracción web inteligente';
+            }
+            return $v;
+
+        case 'hero_subtitulo':
+            if (str_contains($b, 'cloudflare') || str_contains($b, 'página de facebook')
+             || str_contains($b, 'pagina de facebook')) {
+                return 'Una web, una lista o una búsqueda.';
+            }
+            return $v;
+
+        case 'pie_texto':
+            if (str_contains($b, 'protección de datos') || str_contains($b, 'proteccion de datos')) {
+                return '© ' . date('Y') . ' ' . Ajustes::obtener('sitio_nombre', 'Kaptor')
+                     . '. Extrae solo datos públicos.';
+            }
+            return $v;
+
+        case 'aviso_legal':
+            if (str_contains($b, 'no solicitado')) {
+                return 'Úsalo solo sobre sitios propios o con autorización.';
+            }
+            return $v;
+
+        case 'sitio_descripcion':
+            if (str_contains($b, 'en un solo lugar') && mb_strlen($v, 'UTF-8') > 80) {
+                return 'Correos, WhatsApp, auditoría, SEO y virus en un solo lugar.';
+            }
+            return $v;
+    }
+    return $v;
+}
+
+/** El ajuste, ya corregido si era uno de los textos de fabrica viejos. */
+function cr_ajuste_texto(string $clave, string $defecto = ''): string
+{
+    return cr_texto_marca($clave, (string) Ajustes::obtener($clave, $defecto));
+}
+
 /** Número formateado a la española (1.234). */
 function cr_numero($n): string
 {

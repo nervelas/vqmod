@@ -62,7 +62,7 @@ function cr_cabecera(array $opciones = []): void
     $nombre = Ajustes::obtener('sitio_nombre', 'Kaptor');
     $titulo = $opciones['titulo'] ?? $nombre;
     if ($titulo !== $nombre) { $titulo .= ' · ' . $nombre; }
-    $descripcion = $opciones['descripcion'] ?? Ajustes::obtener('sitio_descripcion');
+    $descripcion = $opciones['descripcion'] ?? cr_ajuste_texto('sitio_descripcion');
     $activo = $opciones['activo'] ?? '';
     $logo   = cr_logo_url();
     // El tema de la casa es el claro: papel blanco. El oscuro sigue ahi
@@ -254,7 +254,7 @@ function cr_pie(bool $conJs = true): void
 
 <footer class="pie">
   <div class="contenedor pie-int">
-    <span><?= e(Ajustes::obtener('pie_texto')) ?>
+    <span><?= e(cr_ajuste_texto('pie_texto')) ?>
       <span class="pie-version" title="Versión instalada de Kaptor">v<?= e(CR_VERSION) ?></span>
     </span>
     <span>

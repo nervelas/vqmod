@@ -432,3 +432,78 @@ table.tabla.tabla-compacta tbody tr:hover{background:color-mix(in srgb,var(--oro
      con .14em se partian en dos renglones. */
   .caja-etiqueta,.etiqueta-seccion{letter-spacing:.09em}
 }
+
+/* --- Campos de una sola linea -------------------------------------------
+   Los campos donde se escriben sitios son de UNA LINEA. Aunque se peguen
+   cincuenta, el texto sigue entero dentro y el campo se desplaza: no crece
+   ni empuja el boton fuera de la pantalla. */
+.campo-linea{
+  height:48px;min-height:48px;max-height:48px;
+  overflow-y:auto;resize:none;line-height:1.35;
+}
+
+/* ------------------------------------------- Slider de la portada -------
+   Capturas reales de Kaptor trabajando. Va a ancho completo, se arrastra
+   con el dedo y se para en cada imagen (scroll-snap). */
+.carrusel{
+  padding:clamp(30px,3.6vw,54px) 0 clamp(28px,3vw,46px);
+  border-top:1px solid var(--borde);
+  background:var(--fondo-2);
+}
+.carrusel-cab{
+  display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;
+  gap:16px;margin-bottom:clamp(16px,1.8vw,24px);
+}
+.carrusel-cab h2{margin:0;font-size:clamp(1.5rem,3vw,2.2rem);line-height:1}
+.carrusel-cab p{margin:4px 0 0;color:var(--suave);font-size:.9rem}
+.carrusel-mandos{display:flex;gap:8px}
+.carrusel-mandos button{
+  width:44px;height:44px;border-radius:var(--r-full);flex:none;
+  display:grid;place-items:center;cursor:pointer;
+  border:1px solid var(--borde-fuerte);background:var(--panel);color:var(--texto);
+  transition:background var(--transicion),color var(--transicion),
+             border-color var(--transicion),transform var(--transicion);
+}
+.carrusel-mandos button:hover{background:var(--oro);border-color:var(--oro);color:#FFFFFF}
+.carrusel-mandos button:active{transform:scale(.94)}
+.carrusel-mandos svg{width:19px;height:19px}
+
+.carrusel-pista{
+  display:flex;gap:clamp(14px,1.6vw,24px);
+  overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:4px;
+}
+.carrusel-pista::-webkit-scrollbar{display:none}
+
+.diapo{
+  flex:0 0 clamp(280px,62vw,840px);scroll-snap-align:center;margin:0;
+  display:flex;flex-direction:column;min-width:0;
+}
+.diapo-img{
+  border-radius:var(--r-lg);overflow:hidden;
+  border:1px solid var(--borde);background:var(--panel);
+  box-shadow:var(--sombra-alta);
+  transition:transform var(--transicion);
+}
+.diapo:hover .diapo-img{transform:translateY(-4px)}
+.diapo img{width:100%;height:auto;display:block;aspect-ratio:1280/760;
+           object-fit:cover;object-position:top center}
+.diapo figcaption{
+  display:flex;align-items:baseline;gap:10px;
+  padding:14px 2px 0;font-size:.88rem;color:var(--suave);line-height:1.45;
+}
+.diapo figcaption b{color:var(--texto);font-weight:700;font-size:.95rem;white-space:nowrap}
+.diapo figcaption b::before{
+  content:"";display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:var(--acento);margin-right:9px;vertical-align:middle;
+}
+@media (max-width:700px){
+  .diapo{flex:0 0 86vw}
+  .diapo figcaption{flex-direction:column;gap:3px}
+  .diapo figcaption b{white-space:normal}
+  .carrusel-mandos{display:none}
+}
+@media (prefers-reduced-motion: reduce){
+  .carrusel-pista{scroll-behavior:auto}
+  .diapo:hover .diapo-img{transform:none}
+}

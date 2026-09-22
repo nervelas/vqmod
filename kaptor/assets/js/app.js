@@ -19,6 +19,51 @@
      porque cinco paginas no lo cargan y ahi el boton quedaba muerto. Si lo
      conectaran los dos, cada clic cambiaria el tema dos veces. */
 
+
+  /* --------------------------------------------------- 1b. Slider */
+  /* Avanza solo, pero en cuanto alguien lo toca, pasa el raton por encima o
+     lo enfoca con el teclado se calla y no vuelve a moverse: no hay nada
+     mas molesto que una pagina que se mueve mientras se lee. */
+  function iniciarCarrusel() {
+    var pista = $('#carrusel-pista');
+    if (!pista) { return; }
+    var diapos = $$('.diapo', pista);
+    if (diapos.length < 2) { return; }
+
+    var quieto = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var reloj = null;
+
+    function irA(i) {
+      var n = diapos.length;
+      var d = diapos[((i % n) + n) % n];
+      pista.scrollTo({ left: d.offsetLeft - (pista.clientWidth - d.clientWidth) / 2,
+                       behavior: quieto ? 'auto' : 'smooth' });
+    }
+    function actual() {
+      var centro = pista.scrollLeft + pista.clientWidth / 2, mejor = 0, dist = Infinity;
+      diapos.forEach(function (d, i) {
+        var dd = Math.abs((d.offsetLeft + d.clientWidth / 2) - centro);
+        if (dd < dist) { dist = dd; mejor = i; }
+      });
+      return mejor;
+    }
+    function parar() { if (reloj) { clearInterval(reloj); reloj = null; } }
+
+    var izq = $('#carr-izq'), der = $('#carr-der');
+    if (izq) { izq.addEventListener('click', function () { parar(); irA(actual() - 1); }); }
+    if (der) { der.addEventListener('click', function () { parar(); irA(actual() + 1); }); }
+    pista.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight') { parar(); irA(actual() + 1); e.preventDefault(); }
+      if (e.key === 'ArrowLeft')  { parar(); irA(actual() - 1); e.preventDefault(); }
+    });
+    ['pointerdown', 'wheel', 'touchstart', 'focusin', 'mouseenter'].forEach(function (ev) {
+      pista.addEventListener(ev, parar, { passive: true });
+    });
+    if (!quieto) {
+      reloj = setInterval(function () { if (!document.hidden) { irA(actual() + 1); } }, 5200);
+    }
+  }
+
   /* ------------------------------------------------------------- 2. Utilidades */
   function esc(t) {
     return String(t == null ? '' : t)
@@ -758,6 +803,8 @@
 
   /* ------------------------------------------------------------ 9. Conexiones */
   function conectar() {
+    iniciarCarrusel();
+
     var form = $('#form-radar');
     if (form) { form.addEventListener('submit', iniciarEscaneo); }
 
@@ -1081,11 +1128,16 @@
     pintarObj();
   }
 
-  /* Los tres botones de ejemplo rellenan el campo para enseñar cómo se usa. */
+  /* Las pastillas de modo NO escriben nada dentro del campo: solo llevan
+     el cursor a el. Meter un ejemplo dentro obliga a borrarlo antes de
+     escribir, y encima dejaba ahi unas webs inventadas que no son de
+     nadie. Si se pulsa una, el campo queda limpio y listo. */
   Array.prototype.forEach.call(document.querySelectorAll('.caja-modos .modo'), function (b) {
     b.addEventListener('click', function () {
-      campo.value = b.dataset.ejemplo || '';
-      ajustarAlto();
+      Array.prototype.forEach.call(document.querySelectorAll('.caja-modos .modo'), function (o) {
+        o.classList.remove('activo');
+      });
+      b.classList.add('activo');
       campo.focus();
       campo.setSelectionRange(campo.value.length, campo.value.length);
     });

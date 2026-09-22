@@ -17,7 +17,7 @@ $puedeExtraer  = Auth::puedeExtraer();
 $rastreoActivo = Ajustes::activo('rastreo_profundo', true);
 
 cr_cabecera([
-    'titulo' => Ajustes::obtener('sitio_lema'),
+    'titulo' => cr_ajuste_texto('sitio_lema'),
     'activo' => 'inicio',
 ]);
 ?>
@@ -49,8 +49,8 @@ cr_cabecera([
         <span class="rotulo-usuario"><?= e(Auth::usuario()['usuario'] ?? '') ?></span>
       </p>
 
-      <h1 class="titular"><?= cr_titulo_brillo(Ajustes::obtener('hero_titulo')) ?></h1>
-      <p class="portada-sub"><?= e(Ajustes::obtener('hero_subtitulo')) ?></p>
+      <h1 class="titular"><?= cr_titulo_brillo(cr_ajuste_texto('hero_titulo')) ?></h1>
+      <p class="portada-sub"><?= e(cr_ajuste_texto('hero_subtitulo')) ?></p>
 
       <p class="aviso-busqueda" id="aviso-busqueda" hidden></p>
 
@@ -78,11 +78,11 @@ cr_cabecera([
 
         <?php if (Ajustes::activo('buscar_activo', true)): ?>
         <div class="caja-modos">
-          <button type="button" class="modo" data-ejemplo="https://www.colegio.edu.gt">Una web</button>
-          <button type="button" class="modo" data-ejemplo="colegio1.edu.gt&#10;colegio2.edu.gt&#10;colegio3.edu.gt">Lista de webs</button>
-          <button type="button" class="modo" data-ejemplo="colegios privados Guatemala correo">Buscar en Google</button>
-          <button type="button" class="modo" data-ejemplo="site:facebook.com colegios Guatemala">Buscar en Facebook</button>
-          <button type="button" class="modo" data-ejemplo="https://www.facebook.com/nombredelapagina">Una página de Facebook</button>
+          <button type="button" class="modo">Una web</button>
+          <button type="button" class="modo">Lista de webs</button>
+          <button type="button" class="modo">Buscar en Google</button>
+          <button type="button" class="modo">Buscar en Facebook</button>
+          <button type="button" class="modo">Una página de Facebook</button>
         </div>
         <?php endif; ?>
 
@@ -102,17 +102,6 @@ cr_cabecera([
           </div>
           <input type="text" id="objetivo" name="objetivo" class="campo" autocomplete="off" spellcheck="false"
                  placeholder="" <?= $puedeExtraer ? '' : 'disabled' ?>>
-          <div class="chips-ext" id="chips-objetivo">
-            <button type="button" class="chip-ext chip-todos" data-ext="">Todos</button>
-            <button type="button" class="chip-ext" data-ext="edu.gt">.edu.gt</button>
-            <button type="button" class="chip-ext" data-ext="com.gt">.com.gt</button>
-            <button type="button" class="chip-ext" data-ext="gob.gt">.gob.gt</button>
-            <button type="button" class="chip-ext" data-ext="org.gt">.org.gt</button>
-            <button type="button" class="chip-ext" data-ext="gt">.gt</button>
-            <button type="button" class="chip-ext" data-ext="com">.com</button>
-            <button type="button" class="chip-ext" data-ext="org">.org</button>
-            <button type="button" class="chip-ext" data-ext="edu">.edu</button>
-          </div>
         </div>
 
         <!-- ····· 03 · hasta dónde ····· -->
@@ -140,7 +129,7 @@ cr_cabecera([
           <?= e(Ajustes::obtener('hero_boton')) ?>
         </button>
 
-        <p class="caja-nota caja-nota-legal"><?= e(Ajustes::obtener('aviso_legal')) ?></p>
+        <p class="caja-nota caja-nota-legal"><?= e(cr_ajuste_texto('aviso_legal')) ?></p>
       </form>
 
       <!-- El otro camino: no hay web que rastrear, ya se tiene el texto. -->
@@ -152,6 +141,49 @@ cr_cabecera([
       </p>
     </div>
 
+  </div>
+</section>
+
+<!-- ----------------------------- SLIDER ----------------------------- -->
+<!-- Capturas reales de Kaptor trabajando, no dibujos ni fotos de banco.
+     Se arrastra con el dedo, avanza solo y se para en cuanto alguien lo
+     toca, pasa el raton por encima o lo enfoca con el teclado. -->
+<section class="carrusel" aria-label="Kaptor por dentro">
+  <div class="contenedor">
+    <div class="carrusel-cab">
+      <div>
+        <h2>Kaptor por dentro</h2>
+        <p>Capturas reales de la herramienta trabajando.</p>
+      </div>
+      <div class="carrusel-mandos">
+        <button type="button" id="carr-izq" aria-label="Ver la anterior">
+          <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/></svg>
+        </button>
+        <button type="button" id="carr-der" aria-label="Ver la siguiente">
+          <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="carrusel-pista" id="carrusel-pista" tabindex="0" role="group" aria-label="Capturas de Kaptor">
+      <?php
+      $diapos = [
+          ['1-correos',  'Correos y su origen',   'cada correo con su dominio, su tipo y la página de donde salió.'],
+          ['2-informe',  'El informe del cliente', 'nota sobre 100, las siete áreas y lo primero que arreglar.'],
+          ['3-whatsapp', 'WhatsApp de un texto',   'números en formato internacional, sin facturas ni NIT colados.'],
+          ['4-listas',   'Listas limpias',         'pega lo que sea y sale sin repetidos, filtrado como pidas.'],
+      ];
+      foreach ($diapos as $i => [$archivo, $titulo, $pie]): ?>
+        <figure class="diapo">
+          <div class="diapo-img">
+            <img src="<?= e(cr_url('assets/img/carrusel/' . $archivo . '.jpg')) ?>"
+                 alt="<?= e($titulo) ?>" width="1280" height="760"
+                 loading="<?= $i === 0 ? 'eager' : 'lazy' ?>" decoding="async">
+          </div>
+          <figcaption><b><?= e($titulo) ?></b> <span><?= e($pie) ?></span></figcaption>
+        </figure>
+      <?php endforeach; ?>
+    </div>
   </div>
 </section>
 

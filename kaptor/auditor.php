@@ -92,7 +92,7 @@ cr_cabecera([
           <span class="paso-n">01</span>
           <div class="paso-cuerpo">
             <label for="sitios" class="paso-titulo"><?= e($copia['paso1']) ?></label>
-            <textarea id="sitios" name="sitios" rows="4" spellcheck="false"
+            <textarea id="sitios" name="sitios" rows="1" spellcheck="false" class="campo-linea"
                       placeholder=""><?= e($precargado) ?></textarea>
             <p class="paso-nota">Uno por línea. Hasta <?= e((string) Ajustes::entero('auditor_max_lote', 50, 1, 300)) ?>.</p>
           </div>
@@ -106,7 +106,7 @@ cr_cabecera([
               Compáralo con su competencia
               <span class="opcional">opcional</span>
             </label>
-            <textarea id="rivales" name="rivales" rows="2" spellcheck="false"
+            <textarea id="rivales" name="rivales" rows="1" spellcheck="false" class="campo-linea"
                       placeholder=""></textarea>
             <p class="paso-nota">
               Hasta tres. El informe enseñará lado a lado quién va ganando en cada área:

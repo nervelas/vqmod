@@ -52,9 +52,14 @@
   color:var(--suave);border:1px solid var(--borde);border-radius:999px;padding:2px 9px;
 }
 .paso-nota{color:var(--suave);font-size:.86rem;margin-top:8px;line-height:1.5}
+/* Los campos donde se escriben sitios son de UNA SOLA LINEA. Aunque se
+   peguen cincuenta, el texto sigue entero dentro: el campo se desplaza,
+   no crece. Esta hoja se carga la ultima, asi que la altura se fija aqui
+   o no hay manera de ganarle. */
 .seccion-auditor textarea{
-  width:100%;resize:vertical;min-height:84px;
-  font-family:var(--mono,ui-monospace,monospace);font-size:.92rem;line-height:1.55;
+  width:100%;resize:none;
+  height:48px;min-height:48px;max-height:48px;overflow-y:auto;
+  font-family:var(--mono,ui-monospace,monospace);font-size:.92rem;line-height:1.35;
 }
 .aud-acciones{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:22px}
 .aud-consejo{

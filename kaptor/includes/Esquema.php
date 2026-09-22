@@ -14,7 +14,7 @@ declare(strict_types=1);
 final class Esquema
 {
     /** Se sube de uno en uno cada vez que cambia la estructura. */
-    public const VERSION = 8;
+    public const VERSION = 9;
 
     /** Aplica los cambios pendientes. Se llama desde bootstrap.php. */
     public static function actualizar(): void
@@ -69,6 +69,16 @@ final class Esquema
                 self::paletaNueva();
                 self::textosRediseno();
             }
+
+            // 9: arregla el 8. Alli el tema claro se ponia DENTRO de
+            //    paletaNueva(), que se salta a quien ya habia elegido paleta.
+            //    Resultado: esa gente subia el rediseno y seguia viendo la
+            //    pagina en negro.
+            //
+            //    Son dos decisiones distintas y van separadas: la paleta es
+            //    del usuario, pero el fondo blanco es el diseno. Su color de
+            //    acento se respeta; cada paleta trae su version clara.
+            if ($actual < 9) { Ajustes::guardar('tema_por_defecto', 'claro'); }
 
             Ajustes::guardar('esquema', (string) self::VERSION);
         } catch (Throwable $e) {
@@ -249,7 +259,6 @@ final class Esquema
         $t = $temas['tinta'];
         Ajustes::guardarVarios([
             'tema_color'         => 'tinta',
-            'tema_por_defecto'   => 'claro',
             'color_fondo'        => $t['fondo'],
             'color_fondo2'       => $t['fondo2'],
             'color_texto'        => $t['texto'],

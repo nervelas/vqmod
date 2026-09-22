@@ -54,9 +54,61 @@
 .tema:active{transform:scale(.96)}
 
 /* --------------------------------------------------------- 3. Portada */
-/* Todo centrado: un hueco a un lado se ve peor que un bloque estrecho. */
-.portada-int{text-align:center;display:flex;flex-direction:column;align-items:center}
-.portada-int > *{width:100%}
+/* Dos columnas: el mando a la izquierda y, en paralelo, un panel compacto
+   con lo que el instrumento ya ha hecho. Antes ese panel caia debajo y se
+   quedaba suelto en medio de la nada; asi el ancho se llena con algo util
+   en vez de con aire. Por debajo de 1100 px se apilan. */
+.consola-int{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,380px);
+  gap:clamp(20px,2.4vw,40px);align-items:start;text-align:left;
+}
+.consola-mando{min-width:0}
+@media (max-width:1100px){ .consola-int{grid-template-columns:1fr} }
+
+/* El panel de lectura: numeros arriba, lo que sabe hacer debajo. */
+.consola-lectura{
+  background:var(--panel);border:1px solid var(--borde);border-radius:var(--r-md);
+  box-shadow:var(--sombra-suave);padding:clamp(18px,1.6vw,24px);
+  font-family:'Manrope',system-ui,sans-serif;color:var(--suave);
+  display:flex;flex-direction:column;gap:16px;
+}
+.lectura-cifras{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+  padding-bottom:16px;border-bottom:1px solid var(--borde);
+}
+.lectura-dato{display:flex;flex-direction:column;gap:2px;min-width:0}
+.lectura-n{
+  font-family:'Cormorant Garamond',Georgia,serif;font-weight:400;
+  font-size:clamp(1.5rem,2vw,1.9rem);line-height:1;letter-spacing:-.02em;color:var(--texto);
+}
+.lectura-txt{
+  /* .75rem son 12 px: el suelo de lectura del sitio. */
+  font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--tenue);font-weight:700;
+}
+.lectura-lista{
+  list-style:none;counter-reset:l;margin:0;padding:0;
+  display:flex;flex-direction:column;gap:10px;
+}
+.lectura-lista li{
+  counter-increment:l;position:relative;padding-left:26px;
+  font-size:.85rem;line-height:1.5;
+}
+.lectura-lista li::before{
+  content:counter(l,decimal-leading-zero);position:absolute;left:0;top:1px;
+  font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:500;color:var(--oro);
+}
+.lectura-lista b{color:var(--texto);font-weight:700}
+.lectura-pie{
+  margin:0;padding-top:14px;border-top:1px solid var(--borde);
+  font-size:.75rem;color:var(--tenue);
+}
+
+/* El atajo, al pie del mando: una linea discreta, no un parrafo centrado. */
+.atajo-texto{
+  margin:14px 0 0;font-size:.85rem;color:var(--tenue);
+  display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+}
 .portada h1,.titular,.depurar-cab h1,.form-caja h1{
   font-family:'Cormorant Garamond',Georgia,serif;
   font-weight:300;letter-spacing:-.025em;line-height:.94;
@@ -197,6 +249,9 @@
   color:var(--hc-correo);background:var(--hb-correo);
   border-radius:var(--r-sm);padding:9px;width:42px;height:42px;flex:none;
   transition:transform .28s var(--t);
+  /* Phosphor dibuja con relleno. Sin esto la hoja base les mete un trazo
+     encima y salen con doble contorno. */
+  fill:currentColor;stroke:none;
 }
 .ventaja:hover > svg{transform:scale(1.06) rotate(-4deg)}
 .ventajas .ventaja:nth-child(2) > svg{color:var(--hc-wa);background:var(--hb-wa)}
@@ -252,7 +307,6 @@
 .radar,.consola .radar{display:none}
 .consola-int{align-items:flex-start}
 .consola-mando .portada-sub{margin:0}
-.consola-lectura{font-family:'IBM Plex Mono',monospace;color:var(--suave)}
 .radar-barrido{display:none}
 .radar img{filter:none}
 body.escaneando .radar::after{content:none}

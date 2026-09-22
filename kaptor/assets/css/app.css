@@ -323,16 +323,16 @@ html[data-tema="claro"] .tema .icono-luna{display:block}
 
 /* Campos */
 .campo{
-  width:100%;padding:14px 16px;
+  width:100%;padding:12px 14px;
   background:color-mix(in srgb,var(--fondo-2) 88%,transparent);
   border:1px solid var(--borde);border-radius:var(--r-sm);
-  color:var(--texto);font-family:inherit;font-size:1rem;
+  color:var(--texto);font-family:inherit;font-size:.95rem;min-height:44px;
   transition:border-color var(--transicion),box-shadow var(--transicion),background var(--transicion);
 }
 .campo::placeholder{color:var(--tenue)}
 .campo:focus{outline:none;border-color:var(--oro);box-shadow:0 0 0 3px var(--oro-sombra)}
 .campo:disabled{opacity:.6}
-textarea.campo{min-height:110px;resize:vertical;line-height:1.6}
+textarea.campo{min-height:84px;resize:vertical;line-height:1.55}
 select.campo{cursor:pointer}
 .etiqueta{display:block;font-size:.82rem;font-weight:500;color:var(--suave);margin-bottom:7px;letter-spacing:.02em}
 
@@ -423,7 +423,10 @@ html[data-tema="claro"] .radar{opacity:.5}
 .escaneando .radar{opacity:.92}
 @keyframes girar{to{transform:rotate(360deg)}}
 
-.portada-int{position:relative;z-index:1;text-align:center;max-width:1000px;margin:0 auto}
+/* Sin tope de ancho: la portada es de ancho completo y el aire lateral
+   ya lo pone .contenedor. Los 1.000 px de antes dejaban franjas vacias
+   a los lados en cuanto la pantalla pasaba de ahi. */
+.portada-int{position:relative;z-index:1;margin:0 auto}
 .insignia{
   display:inline-flex;align-items:center;gap:9px;margin-bottom:20px;
   padding:7px 16px;border-radius:var(--r-full);
@@ -439,7 +442,9 @@ html[data-tema="claro"] .radar{opacity:.5}
 
 /* LA CAJA: una sola, grande, todo en un clic */
 .caja-radar{
-  position:relative;z-index:2;max-width:980px;margin:0 auto;
+  /* Sin tope: la caja ocupa su columna entera. Con 980 px fijos, en una
+     pantalla ancha quedaba un hueco a su derecha. */
+  position:relative;z-index:2;margin:0;
   background:linear-gradient(165deg,
     color-mix(in srgb,var(--panel-solido) 92%,transparent),
     color-mix(in srgb,var(--fondo-2) 88%,transparent));
@@ -457,7 +462,7 @@ html[data-tema="claro"] .radar{opacity:.5}
 }
 .caja-fila{display:flex;flex-direction:column;gap:12px}
 .caja-url{
-  width:100%;padding:17px 19px;font-size:1.04rem;
+  width:100%;padding:14px 17px;font-size:1rem;min-height:52px;
   font-family:'IBM Plex Mono',monospace;letter-spacing:-.01em;
   background:color-mix(in srgb,var(--fondo) 72%,transparent);
   border:1px solid var(--borde);border-radius:var(--r-md);color:var(--texto);
@@ -465,7 +470,7 @@ html[data-tema="claro"] .radar{opacity:.5}
 }
 .caja-url::placeholder{color:var(--tenue);font-family:'Manrope',sans-serif}
 .caja-url:focus{outline:none;border-color:var(--oro);box-shadow:0 0 0 3px var(--oro-sombra)}
-.caja-boton{padding:17px 30px;font-size:1.04rem;border-radius:var(--r-md)}
+.caja-boton{padding:14px 28px;font-size:1rem;border-radius:var(--r-full);min-height:52px}
 .caja-pie{
   display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;justify-content:space-between;
   margin-top:16px;padding-top:15px;border-top:1px solid var(--borde);

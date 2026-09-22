@@ -177,6 +177,12 @@ body::before{
 body::after{content:none}
 
 img,svg,video{max-width:100%;height:auto;display:block}
+
+/* El atributo hidden tiene que ganar SIEMPRE. Cualquier regla de display
+   que ponga una clase lo pisa sin querer, y entonces el JavaScript oculta
+   el elemento pero en pantalla sigue ahi: el aviso de instalar la app se
+   quedaba clavado y sus dos botones parecian muertos. */
+[hidden]{display:none !important}
 a{color:inherit;text-decoration:none}
 button,input,select,textarea{font:inherit;color:inherit}
 button{background:none;border:0;padding:0;cursor:pointer}
@@ -557,7 +563,12 @@ textarea.campo{min-height:84px;resize:vertical;line-height:1.55}
 }
 .caja-fila{display:flex;flex-direction:column;gap:11px}
 .caja-url{
-  width:100%;padding:15px 18px;min-height:54px;
+  /* Una sola linea, siempre. Aunque se pegue una lista de cien webs: el
+     texto sigue ahi entero, el campo se desplaza y el boton no se va de
+     la pantalla. */
+  width:100%;padding:15px 18px;
+  height:54px;min-height:54px;max-height:54px;
+  overflow-y:auto;
   background:var(--panel);
   border:1px solid var(--borde-fuerte);
   border-radius:var(--r-md);

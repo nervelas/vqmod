@@ -20,79 +20,86 @@ final class Esquema
     public static function actualizar(): void
     {
         $actual = (int) Ajustes::obtener('esquema', '0');
-        if ($actual >= self::VERSION) { return; }
 
-        try {
-            // 2: filtro de extensiones del escaneo (búsqueda inteligente).
-            if ($actual < 2) {
+        // Pasos que fallaron en un arranque anterior. Todos los de aqui son
+        // idempotentes (comprueban antes de tocar nada), asi que reintentarlos
+        // no cuesta nada y no rompe nada.
+        $pendientes = array_filter(array_map(
+            'intval',
+            explode(',', (string) Ajustes::obtener('esquema_pendiente', ''))
+        ));
+
+        if ($actual >= self::VERSION && !$pendientes) { return; }
+
+        // Cada paso por separado. ANTES iban los doce dentro de un solo
+        // try/catch: si un ALTER TABLE fallaba (hosting compartido donde el
+        // usuario de la base no tiene ese permiso), se saltaba todo lo que
+        // venia detras Y no se guardaba la version. En el siguiente arranque
+        // volvia a fallar en el mismo sitio, asi que los cambios de texto y
+        // de color no llegaban NUNCA, por muchas veces que se subiera el ZIP.
+        //
+        // Ahora un paso que falla solo se afecta a si mismo: los demas corren
+        // igual, la version se guarda, y el que fallo queda apuntado para
+        // reintentarlo en el siguiente arranque.
+        $pasos = [
+            // Filtro de extensiones del escaneo (busqueda inteligente).
+            2 => static function (): void {
                 self::columna('cr_escaneos', 'filtro_ext', "VARCHAR(190) NULL DEFAULT NULL AFTER `host`");
-            }
-
-            // 3: los textos guardados que todavía llevaban el nombre anterior.
-            //    Solo se tocan si nadie los cambió: si el usuario escribió los
-            //    suyos, se respetan tal cual.
-            if ($actual < 3) {
+            },
+            // Los textos que todavia llevaban el nombre anterior. Solo se
+            // tocan si nadie los cambio.
+            3 => static function (): void {
                 self::renombrarTextos();
-
-                // El tope por lote de fábrica era 100 y dejaba fuera media
-                // lista sin decirlo. Si nadie lo cambió, se sube a 300.
+                // El tope por lote de fabrica era 100 y dejaba fuera media
+                // lista sin decirlo. Si nadie lo cambio, se sube a 300.
                 if (Ajustes::obtener('max_sitios_lote') === '100') {
                     Ajustes::guardar('max_sitios_lote', '300');
                 }
-            }
-
-            // 4: niveles educativos detectados en cada sitio del escaneo.
-            if ($actual < 4) { self::tablaSitios(); }
-
-            // 5: Kaptor pasa a ser privado. Si alguien tenía el acceso libre
-            //    encendido, se apaga: ahora hace falta sesión siempre.
-            if ($actual < 5) { Ajustes::guardar('acceso_publico', '0'); }
-
-            // 6: auditor web.
-            if ($actual < 6) { self::tablaAuditorias(); }
-
-            // 7: el auditor gana modos (completo, SEO, malware) y guarda el
-            //    rastreo de páginas que necesitan los dos análisis a fondo.
-            if ($actual < 7) {
-                self::tablaAuditorias();   // por si se instaló justo en la 6
+            },
+            // Niveles educativos detectados en cada sitio del escaneo.
+            4 => static function (): void { self::tablaSitios(); },
+            // Kaptor pasa a ser privado: hace falta sesion siempre.
+            5 => static function (): void { Ajustes::guardar('acceso_publico', '0'); },
+            // Auditor web.
+            6 => static function (): void { self::tablaAuditorias(); },
+            // El auditor gana modos y guarda el rastreo de paginas.
+            7 => static function (): void {
+                self::tablaAuditorias();   // por si se instalo justo en la 6
                 self::columna('cr_auditorias', 'modo', "VARCHAR(12) NOT NULL DEFAULT 'completo' AFTER `papel`");
-            }
-
-            // 8: el rediseno. La pagina pasa de negra y dorada a blanca con
-            //    tinta y azul de marca. Los colores viven en la base, asi que
-            //    sin esto una instalacion antigua subiria los archivos nuevos
-            //    y seguiria viendose igual de oscura.
-            //
-            //    Solo se cambia a quien nunca toco los colores: si alguien
-            //    eligio su propia paleta, se le respeta.
-            if ($actual < 8) {
+            },
+            // El rediseno: de negra y dorada a blanca con tinta y azul.
+            8 => static function (): void {
                 self::paletaNueva();
                 self::textosRediseno();
+            },
+            // Arregla el 8: alli el tema claro se ponia dentro de paletaNueva(),
+            // que se salta a quien ya habia elegido paleta.
+            9 => static function (): void { Ajustes::guardar('tema_por_defecto', 'claro'); },
+            // El lema se quedo sin cambiar en la 6.0.
+            10 => static function (): void { self::textosRediseno(); },
+            // Los colores de marca.
+            11 => static function (): void { self::coloresMarca(); },
+            // Textos cortos y el lema, ahora por contenido y no frase a frase.
+            12 => static function (): void { self::textosCortos(); },
+        ];
+
+        $fallaron = [];
+        foreach ($pasos as $version => $paso) {
+            if ($actual >= $version && !in_array($version, $pendientes, true)) { continue; }
+            try {
+                $paso();
+            } catch (Throwable $e) {
+                $fallaron[] = $version;
+                error_log('Kaptor / esquema paso ' . $version . ': ' . $e->getMessage());
             }
+        }
 
-            // 9: arregla el 8. Alli el tema claro se ponia DENTRO de
-            //    paletaNueva(), que se salta a quien ya habia elegido paleta.
-            //    Resultado: esa gente subia el rediseno y seguia viendo la
-            //    pagina en negro.
-            //
-            //    Son dos decisiones distintas y van separadas: la paleta es
-            //    del usuario, pero el fondo blanco es el diseno. Su color de
-            //    acento se respeta; cada paleta trae su version clara.
-            if ($actual < 9) { Ajustes::guardar('tema_por_defecto', 'claro'); }
-
-            // 10: el lema del sitio se quedo sin cambiar en la 6.0. Es el
-            //     texto que sale en la pestana del navegador, en el pie y en
-            //     la app instalable, asi que seguia diciendo lo de antes por
-            //     todo el sitio. Se vuelve a pasar la misma rutina, que solo
-            //     toca lo que nadie escribio a mano.
-            if ($actual < 10) { self::textosRediseno(); }
-            if ($actual < 11) { self::coloresMarca(); }
-            if ($actual < 12) { self::textosCortos(); }
-
+        // La version se guarda pase lo que pase. Lo que no se pudo hacer queda
+        // anotado aparte para volver a intentarlo, en vez de atascar al resto.
+        try {
             Ajustes::guardar('esquema', (string) self::VERSION);
+            Ajustes::guardar('esquema_pendiente', implode(',', $fallaron));
         } catch (Throwable $e) {
-            // Si el usuario de la base de datos no tiene permiso de ALTER, la
-            // aplicación sigue funcionando; solo se pierde la función nueva.
             error_log('Kaptor / esquema: ' . $e->getMessage());
         }
     }

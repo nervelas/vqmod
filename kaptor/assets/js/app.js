@@ -14,35 +14,10 @@
   var $$ = function (sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); };
 
   /* ------------------------------------------------------ 1. Tema claro/oscuro */
-  var TEMA_CLAVE = 'kaptor-tema';
-
-  function aplicarTema(tema) {
-    document.documentElement.setAttribute('data-tema', tema);
-    try { localStorage.setItem(TEMA_CLAVE, tema); } catch (e) { /* modo privado */ }
-    var btn = $('.tema');
-    if (btn) {
-      btn.setAttribute('aria-label', tema === 'oscuro' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro');
-    }
-  }
-
-  function iniciarTema() {
-    /* El tema ya lo dejo puesto el guion que va en la cabecera, antes de
-       pintar. Aqui solo se lee lo que hay: asi la pagina no parpadea ni
-       cambia de color al volver de una pagina que no carga este archivo. */
-    var actual = document.documentElement.getAttribute('data-tema');
-    if (actual !== 'claro' && actual !== 'oscuro') {
-      actual = (CR.temaPorDefecto === 'claro') ? 'claro' : 'oscuro';
-    }
-    aplicarTema(actual);
-
-    var btn = $('.tema');
-    if (btn) {
-      btn.addEventListener('click', function () {
-        aplicarTema(document.documentElement.getAttribute('data-tema') === 'oscuro' ? 'claro' : 'oscuro');
-      });
-    }
-  }
-
+  /* Ya no vive aqui. El tema se decide y el boton se conecta en el guion
+     corto de la cabecera, que va en TODAS las paginas: app.js no lo hace,
+     porque cinco paginas no lo cargan y ahi el boton quedaba muerto. Si lo
+     conectaran los dos, cada clic cambiaria el tema dos veces. */
 
   /* ------------------------------------------------------------- 2. Utilidades */
   function esc(t) {
@@ -938,7 +913,6 @@
   }
 
   /* ------------------------------------------------------------- 10. Arranque */
-  iniciarTema();
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', conectar);
   } else {
@@ -986,6 +960,7 @@
   }
 
   function ocultar(dias) {
+    caja.classList.remove('visible');
     caja.hidden = true;
     if (dias) {
       try { localStorage.setItem(CLAVE, String(Date.now() + dias * 86400000)); } catch (e) {}
@@ -1008,15 +983,34 @@
 
   if (boton) {
     boton.addEventListener('click', function () {
-      if (!evento) { return; }
+      // Sin evento el navegador no sabe instalar nada. Antes el boton se
+      // quedaba muerto y no pasaba NADA al pulsarlo; ahora se cambia por
+      // las instrucciones a mano, que es lo unico que se puede hacer.
+      if (!evento) {
+        boton.hidden = true;
+        if (pista) {
+          pista.textContent = 'Abre el menu del navegador y elige '
+                            + '«Instalar aplicacion» o «Anadir a la pantalla de inicio».';
+        }
+        return;
+      }
       evento.prompt();
       evento.userChoice.then(function (r) {
         ocultar(r && r.outcome === 'accepted' ? 365 : 7);
         evento = null;
+      }).catch(function () {
+        // Si el navegador rechaza la peticion, el aviso no se queda clavado.
+        ocultar(7);
+        evento = null;
       });
     });
   }
-  if (luego) { luego.addEventListener('click', function () { ocultar(7); }); }
+  if (luego) {
+    luego.addEventListener('click', function (e) {
+      e.preventDefault();
+      ocultar(7);
+    });
+  }
 
   window.addEventListener('appinstalled', function () { ocultar(365); });
 
@@ -1037,21 +1031,13 @@
 /* ===========================================================================
    15. Campo de entrada múltiple
    El mismo campo admite una web, una lista de webs (una por línea) o unas
-   palabras para buscar. Crece solo según lo que se escriba.
+   palabras para buscar. Se ve SIEMPRE de UNA SOLA LÍNEA: si se pega una
+   lista, sigue entera dentro del campo y este se desplaza, pero no crece
+   ni empuja el botón fuera de la pantalla.
    =========================================================================== */
 (function () {
   var campo = document.getElementById('url');
   if (!campo || campo.tagName !== 'TEXTAREA') { return; }
-
-  function ajustarAlto() {
-    campo.style.height = 'auto';
-    var alto = Math.min(campo.scrollHeight, 260);
-    campo.style.height = Math.max(54, alto) + 'px';
-  }
-
-  campo.addEventListener('input', ajustarAlto);
-  campo.addEventListener('paste', function () { setTimeout(ajustarAlto, 0); });
-  ajustarAlto();
 
   /* Enter envía; Mayúsculas+Enter añade otra línea para seguir la lista. */
   campo.addEventListener('keydown', function (e) {

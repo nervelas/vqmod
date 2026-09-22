@@ -17,7 +17,7 @@ Auth::exigirAdmin();
 const CAMPOS_TEXTO = [
     'buscador_motor', 'buscador_pais', 'buscador_idioma',
     'sitio_nombre', 'sitio_lema', 'sitio_descripcion', 'pie_texto',
-    'hero_titulo', 'hero_subtitulo', 'hero_placeholder', 'hero_boton', 'hero_etiqueta', 'aviso_legal',
+    'hero_titulo', 'hero_subtitulo', 'hero_boton', 'hero_etiqueta', 'aviso_legal',
     'user_agent', 'headless_binario', 'dominios_excluidos', 'prefijo_pais',
     'remitente_postal', 'cron_clave',
     'psi_clave', 'vt_clave', 'informe_lema', 'informe_contacto', 'informe_cta',
@@ -321,8 +321,6 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
     fila('Etiqueta de la caja', 'Texto que acompaña al campo de la dirección web.',
         '<input type="text" name="hero_etiqueta" class="campo" maxlength="80" value="' . e($a['hero_etiqueta']) . '">');
 
-    fila('Texto de ejemplo del campo', 'El texto gris que se ve dentro del campo vacío.',
-        '<input type="text" name="hero_placeholder" class="campo" maxlength="120" value="' . e($a['hero_placeholder']) . '">');
 
     fila('Texto del botón', 'Llamada a la acción principal.',
         '<input type="text" name="hero_boton" class="campo" maxlength="60" value="' . e($a['hero_boton']) . '">');

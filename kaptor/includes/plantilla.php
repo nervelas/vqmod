@@ -79,12 +79,37 @@ function cr_cabecera(array $opciones = []): void
          con JS a otra sin el, la pantalla cambiaba de oscuro a claro sola. */ ?>
 <script>
 (function(){
-  try{
-    var g=null;
-    try{ g=localStorage.getItem('kaptor-tema'); }catch(e){}
-    if(g!=='claro'&&g!=='oscuro'){ g=<?= ejs($tema) ?>; }
-    document.documentElement.setAttribute('data-tema',g);
-  }catch(e){}
+  var CLAVE='kaptor-tema', raiz=document.documentElement;
+
+  function poner(t){
+    raiz.setAttribute('data-tema',t);
+    try{ localStorage.setItem(CLAVE,t); }catch(e){}
+    var b=document.querySelector('.tema');
+    if(b){ b.setAttribute('aria-label', t==='oscuro'?'Cambiar a modo claro':'Cambiar a modo oscuro'); }
+  }
+
+  // El tema se decide AQUI, antes de pintar, para que la pagina no
+  // parpadee de oscuro a claro al entrar.
+  var g=null;
+  try{ g=localStorage.getItem(CLAVE); }catch(e){}
+  if(g!=='claro'&&g!=='oscuro'){ g=<?= ejs($tema) ?>; }
+  raiz.setAttribute('data-tema',g);
+
+  // Y el boton se conecta AQUI TAMBIEN, no en app.js: hay cinco paginas
+  // (auditor, SEO, virus, mis extracciones y correcciones) que no cargan
+  // app.js, y en ellas el boton de la luna no hacia absolutamente nada.
+  function conectar(){
+    var b=document.querySelector('.tema');
+    if(!b || b.dataset.listo) { return; }
+    b.dataset.listo='1';
+    poner(raiz.getAttribute('data-tema')==='oscuro'?'oscuro':'claro');
+    b.addEventListener('click', function(){
+      poner(raiz.getAttribute('data-tema')==='oscuro'?'claro':'oscuro');
+    });
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', conectar);
+  } else { conectar(); }
 })();
 </script>
 <title><?= e($titulo) ?></title>
@@ -261,7 +286,7 @@ function cr_pie(bool $conJs = true): void
     <span id="instalar-pista">Añádelo a tu pantalla de inicio y ábrelo como una aplicación.</span>
   </div>
   <div class="instalar-botones">
-    <button type="button" class="btn btn-peq" id="instalar-si">Instalar</button>
+    <button type="button" class="btn btn-peq" id="instalar-si" hidden>Instalar</button>
     <button type="button" class="btn btn-fantasma btn-peq" id="instalar-no" aria-label="Ahora no">Ahora no</button>
   </div>
 </div>

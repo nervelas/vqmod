@@ -68,7 +68,11 @@ cr_cabecera([
                que en el móvil la dirección se parta en lugar de salirse. -->
           <textarea id="url" name="url" class="caja-url" rows="1" spellcheck="false"
                  inputmode="url" enterkeyhint="go"
-                 placeholder="<?= e(Ajustes::obtener('hero_placeholder')) ?>"
+                 placeholder=""<?php /* VACIO SIEMPRE. Dentro de un campo no se
+                     escriben ejemplos: lo que hay que explicar va en la
+                     etiqueta de arriba. Ni siquiera se lee de los ajustes,
+                     para que un valor viejo guardado en la base no pueda
+                     volver a meter texto aqui. */ ?>
                  <?= $puedeExtraer ? '' : 'disabled' ?> required></textarea>
         </div>
 

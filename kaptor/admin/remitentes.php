@@ -230,7 +230,7 @@ admin_cabecera(['titulo' => 'Buzones de salida', 'activo' => 'remitentes.php']);
     <h3>Antes de tu primera campaña</h3>
     <div class="estado-linea">
       <span><b>1. Configura SPF, DKIM y DMARC</b>
-        <em>En cPanel → Autenticación de correo. Sin esto, la mitad de tus correos van a spam.</em></span>
+        <em>En cPanel → Correo electrónico → Autenticación de correo electrónico. Sin esto, la mitad de tus correos van a spam.</em></span>
     </div>
     <div class="estado-linea">
       <span><b>2. Envía una prueba</b>

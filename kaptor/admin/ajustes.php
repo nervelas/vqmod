@@ -611,7 +611,7 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
     $clave = $a['cron_clave'] ?? '';
     $urlCron = cr_url('cron.php?clave=' . $clave);
     fila('Clave del cron',
-        'Protege la dirección que avanza las campañas automáticamente. Programa esta línea en cPanel &rarr; Tareas Cron, cada 5 minutos:'
+        'Protege la dirección que avanza las campañas automáticamente. Programa esta línea en cPanel &rarr; Avanzado &rarr; Trabajos de cron, cada 5 minutos (*/5 * * * *):'
         . ($clave !== '' ? '<br><code class="mono" style="display:block;margin-top:8px;word-break:break-all">curl -s "' . e($urlCron) . '"</code>' : ''),
         '<input type="text" name="cron_clave" class="campo mono" value="' . e($clave) . '" placeholder="pulsa Generar">'
         . '<button type="button" class="btn btn-fantasma btn-peq" style="margin-top:8px" onclick="'
@@ -622,7 +622,7 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
 
     <div class="aviso aviso-info" style="margin-top:18px">
       <span>
-        <b>Antes de tu primera campaña:</b> configura SPF, DKIM y DMARC en tu dominio (cPanel &rarr; Autenticación de correo),
+        <b>Antes de tu primera campaña:</b> configura SPF, DKIM y DMARC en tu dominio (cPanel &rarr; Correo electrónico &rarr; Autenticación de correo electrónico),
         envía una prueba a tu propio correo y empieza con 20–30 mensajes al día por buzón durante la primera semana.
       </span>
     </div>

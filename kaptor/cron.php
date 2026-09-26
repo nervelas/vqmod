@@ -6,7 +6,7 @@
  * Es la forma recomendada de enviar: el ritmo lo marcan los límites por hora,
  * así que la campaña avanza sola durante días si hace falta.
  *
- * Configúralo en cPanel → Tareas Cron, cada 5 minutos:
+ * Configúralo en cPanel → Avanzado → Trabajos de cron, cada 5 minutos:
  *
  *   /usr/bin/php /home/USUARIO/public_html/cron.php CLAVE
  *

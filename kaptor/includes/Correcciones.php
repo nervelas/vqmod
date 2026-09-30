@@ -418,6 +418,12 @@ TXT;
                               . '300 palabras útiles: qué se ofrece, para quién, dónde y por qué tú. '
                               . 'Sin esto, lo demás de la lista rinde la mitad.'];
         }
+        if (isset($malos['claves_titulo'])) {
+            $m[] = ['titulo' => 'Poner el tema del sitio en el título de la portada',
+                    'pasos'  => (string) ($malos['claves_titulo']['arreglo'] ?? '')
+                              . ' El título es el renglón azul sobre el que la gente hace clic en Google: '
+                              . 'si no dice a qué te dedicas, compite por una búsqueda que nadie escribe.'];
+        }
         if (isset($malos['enlaces_rotos']) || isset($malos['rotos_internos'])) {
             $m[] = ['titulo' => 'Arreglar los enlaces rotos',
                     'pasos'  => 'Corrige o quita los enlaces que llevan a páginas que ya no existen. '

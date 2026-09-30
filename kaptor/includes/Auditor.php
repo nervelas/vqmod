@@ -331,6 +331,14 @@ final class Auditor
         $p = new Pagina($r['cuerpo'], $r['url_final']);
         $datos['titulo'] = $p->titulo();
 
+        // Las palabras clave de la portada se guardan aquí y no solo en el
+        // rastreo: en modo rápido no hay rastreo, y la portada es justamente
+        // la página cuyo tema le importa a todo el mundo.
+        $datos['claves_portada'] = [
+            'claves'      => Claves::delTexto($p),
+            'claves_meta' => Claves::declaradas($p),
+        ];
+
         // Lo que hace falta en fases posteriores se apunta ya, para no volver
         // a analizar el HTML en cada paso.
         $datos['_imagenes'] = array_slice(array_values(array_filter(
@@ -631,6 +639,8 @@ final class Auditor
             'ms'          => $ms,
             'og'          => $p->meta('og:title') !== '',
             'schema'      => count($p->tiposSchema()),
+            'claves'      => Claves::delTexto($p),
+            'claves_meta' => Claves::declaradas($p),
         ];
     }
 
@@ -948,6 +958,18 @@ final class Auditor
         unset($guardar['html'], $guardar['html_google']);
         foreach (array_keys($guardar) as $k) {
             if ($k !== '' && $k[0] === '_') { unset($guardar[$k]); }
+        }
+
+        // Las palabras clave se resumen a una sola lista del sitio y se borran
+        // de cada página: en un sitio de doscientas páginas, guardarlas una a
+        // una era la mitad de la fila y no se mira nunca así.
+        $resumenClaves = Seo::clavesDe($datos);
+        if ($resumenClaves !== null) { $guardar['claves'] = $resumenClaves; }
+        unset($guardar['claves_portada']);
+        if (isset($guardar['paginas']) && is_array($guardar['paginas'])) {
+            foreach ($guardar['paginas'] as $i => $_) {
+                unset($guardar['paginas'][$i]['claves'], $guardar['paginas'][$i]['claves_meta']);
+            }
         }
 
         BD::actualizar('cr_auditorias', [

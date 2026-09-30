@@ -38,7 +38,7 @@ $copia = [
         'titulo'  => 'Análisis SEO',
         'etiqueta' => 'Posicionamiento en Google',
         'h1'      => 'Análisis SEO',
-        'sub'     => 'La nota real del sitio y la lista exacta de qué cambiar.',
+        'sub'     => 'La nota real del sitio, sus palabras clave y la lista exacta de qué cambiar.',
         'boton'   => 'Analizar el SEO',
         'paso1'   => '¿Qué sitio quieres analizar?',
     ],

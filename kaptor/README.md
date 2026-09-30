@@ -1,4 +1,4 @@
-# Kaptor 6.0
+# Kaptor 6.3
 
 Caja de herramientas para vender servicios web. Dos mitades:
 
@@ -7,8 +7,9 @@ pegado o de una lista, más un módulo de campañas para escribirles desde tu
 propio dominio.
 
 **Analizar sitios** — auditoría completa en siete áreas, análisis de SEO con
-rastreo del sitio entero, y búsqueda de virus y código malicioso. De cada una
-sale un informe con tu marca y un archivo de correcciones listo para pegar.
+rastreo del sitio entero y palabras clave, y búsqueda de virus y código
+malicioso. De cada una sale un informe con tu marca y un archivo de
+correcciones listo para pegar.
 PHP 8.0+ · MySQL/MariaDB · sin Composer · listo para subir a `public_html`.
 
 ## De uso privado
@@ -417,6 +418,29 @@ Eso saca a la luz lo que mirando una sola página no se ve:
 - **Cobertura**: cuántas de las páginas que el sitio declara se llegaron a
   analizar. Va el primero del informe, para que el resto se lea sabiendo sobre
   cuánto sitio se está hablando.
+
+### Palabras clave
+
+El informe trae una tarjeta con dos listas, y lo que vende es la diferencia
+entre ellas:
+
+- **Configuradas en el código.** Las que el dueño escribió a mano: la etiqueta
+  `keywords`, las `article:tag` de Open Graph y el campo `keywords` de los datos
+  estructurados. Google no las usa desde hace años, así que no penalizan; sirven
+  para saber sobre qué quiso posicionarse el sitio. Las que el texto no respalda
+  salen marcadas.
+- **Para las que habla de verdad.** Esta no la declara nadie: sale de contar
+  cada término y cada frase de dos y tres palabras del sitio entero, dando más
+  peso a lo que está en el `<title>`, en el H1 y en los encabezados que a lo que
+  está en un párrafo —que es como lo lee un buscador—. Las frases que se solapan
+  se agrupan («colegio», «bilingüe» y «colegio bilingüe» son un tema, no tres) y
+  el menú y el pie se descartan.
+
+De ahí sale un chequeo con nota: **si el título de la portada no menciona el
+tema principal del sitio**, la página está compitiendo por una búsqueda que
+nadie escribe. Ese arreglo entra en el archivo de correcciones.
+
+Todo se calcula con el HTML que ya se descargó: ninguna API, ningún coste.
 
 ### El porcentaje real, y el camino al 100 %
 

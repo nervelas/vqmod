@@ -62,6 +62,7 @@ $urgentes  = Informe::problemas($hallazgos, 3);
 $criticos  = Informe::criticos($hallazgos);
 $problemas = Informe::problemas($hallazgos);
 $porArea   = Informe::porArea($hallazgos);
+$claves    = is_array($datos['claves'] ?? null) ? $datos['claves'] : null;
 
 // Competencia, si la hubo.
 $lote     = (string) $fila['lote'];
@@ -267,6 +268,69 @@ cr_cabecera([
               <?php endforeach; ?>
             </tbody>
           </table>
+        </div>
+      </section>
+    <?php endif; ?>
+
+    <!-- Palabras clave --------------------------------------------------------- -->
+    <?php if ($claves && ($claves['reales'] || $claves['declaradas'])):
+      $tope   = $claves['reales'] ? max(1, (int) $claves['reales'][0]['p']) : 1;
+      // Por debajo del 10 % ya no es un tema del sitio, es una palabra que
+      // aparece. La lista corta se lee; la larga no la mira nadie.
+      $reales = array_slice(array_filter(
+          $claves['reales'],
+          static fn($r) => (int) $r['p'] * 100 >= $tope * 10
+      ), 0, 15); ?>
+      <section class="inf-claves">
+        <h2>Palabras clave</h2>
+        <p class="inf-sub">Lo que el sitio dice que quiere posicionar, y aquello de lo que habla de verdad.</p>
+
+        <div class="claves-par">
+          <div class="claves-col">
+            <h3>Configuradas en el código</h3>
+            <?php if ($claves['declaradas']): ?>
+              <p class="pequeno suave">
+                <?= e((string) count($claves['declaradas'])) ?> declaradas
+                <?php if ($claves['origen']): ?>· <?= e(implode(', ', $claves['origen'])) ?><?php endif; ?>
+              </p>
+              <ul class="claves-nube">
+                <?php foreach (array_slice($claves['declaradas'], 0, 30) as $d): ?>
+                  <li<?= in_array($d['t'], $claves['sin_usar'], true) ? ' class="sin-uso" title="Declarada pero el texto apenas la menciona"' : '' ?>>
+                    <?= e($d['t']) ?>
+                  </li>
+                <?php endforeach; ?>
+              </ul>
+              <?php if ($claves['sin_usar']): ?>
+                <p class="claves-nota">Las marcadas están declaradas pero el contenido no las respalda.</p>
+              <?php endif; ?>
+            <?php else: ?>
+              <p class="claves-vacio">El sitio no declara ninguna palabra clave.</p>
+              <p class="claves-nota">No es un fallo en sí: Google no usa la etiqueta <span class="mono">keywords</span> desde hace años. El tema lo deciden el título, el H1 y el texto.</p>
+            <?php endif; ?>
+          </div>
+
+          <div class="claves-col">
+            <h3>Para las que habla de verdad</h3>
+            <p class="pequeno suave">Contando cada término con el peso que le da un buscador: título, H1, encabezados y texto.</p>
+            <?php if ($reales): ?>
+              <ol class="claves-barras">
+                <?php foreach ($reales as $r): $ancho = max(6, (int) round($r['p'] * 100 / $tope)); ?>
+                  <li>
+                    <span class="cb-texto"><?= e($r['t']) ?></span>
+                    <span class="cb-barra"><i style="width:<?= e((string) $ancho) ?>%"></i></span>
+                    <span class="cb-dato"><?= e((string) $ancho) ?>&nbsp;%<?php
+                      if ((int) $r['paginas'] > 1): ?> · <?= e((string) $r['paginas']) ?> pág.<?php endif; ?></span>
+                  </li>
+                <?php endforeach; ?>
+              </ol>
+            <?php else: ?>
+              <p class="claves-vacio">No hay texto suficiente para deducir el tema.</p>
+            <?php endif; ?>
+            <?php if ($claves['sin_declarar']): ?>
+              <p class="claves-nota">Mandan en el texto y no están declaradas:
+                <b><?= e(implode(', ', $claves['sin_declarar'])) ?></b>.</p>
+            <?php endif; ?>
+          </div>
         </div>
       </section>
     <?php endif; ?>

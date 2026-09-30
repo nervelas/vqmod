@@ -43,12 +43,13 @@ final class Seo
             static fn($p) => empty($p['error'])
         ));
 
-        // Sin rastreo no hay análisis de sitio: se devuelve vacío y la nota se
-        // calcula solo con lo de la portada, que sigue valiendo.
-        if (count($paginas) < 2) { return []; }
+        // Sin rastreo no hay análisis de sitio, pero las palabras clave sí se
+        // pueden dar: salen de la portada, que siempre se descarga.
+        if (count($paginas) < 2) { return self::palabrasClave($d, $paginas); }
 
         return array_merge(
             self::cobertura($d, $paginas),
+            self::palabrasClave($d, $paginas),
             self::duplicados($paginas),
             self::contenido($paginas),
             self::estructura($paginas),
@@ -123,6 +124,129 @@ final class Seo
             'Sin mapa del sitio, el análisis solo llega a lo que está enlazado. '
             . 'Crear un sitemap.xml haría que se cubriera entero, y de paso que Google lo encuentre todo.',
             'sin mapa del sitio')];
+    }
+
+    // =====================================================================
+    //  Palabras clave
+    // =====================================================================
+
+    /**
+     * Palabras clave del sitio, juntando todas las páginas analizadas.
+     *
+     * Se usa el rastreo si lo hubo y, si no, la portada sola. Devuelve lo
+     * mismo que Claves::delSitio(), o null cuando no hay nada que mirar.
+     */
+    public static function clavesDe(array $d): ?array
+    {
+        $paginas = array_values(array_filter(
+            $d['paginas'] ?? [],
+            static fn($p) => empty($p['error']) && !empty($p['claves'])
+        ));
+
+        if (!$paginas && !empty($d['claves_portada']['claves'])) {
+            $paginas = [$d['claves_portada'] + ['error' => false]];
+        }
+        if (!$paginas) { return null; }
+
+        $r = Claves::delSitio($paginas);
+        return $r['reales'] || $r['declaradas'] ? $r : null;
+    }
+
+    /**
+     * Qué palabras clave tiene puestas el sitio y para cuáles habla de verdad.
+     *
+     * Las dos listas son informativas: la <meta keywords> lleva años sin
+     * contar para Google, así que penalizar por no tenerla sería mentir. Lo
+     * que sí se puntúa es el desajuste: que el tema principal del sitio no
+     * esté en el título de la portada es un fallo real y caro.
+     */
+    private static function palabrasClave(array $d, array $paginas): array
+    {
+        $c = self::clavesDe($d);
+        if ($c === null) { return []; }
+
+        $r = [];
+
+        // --- Lo que el sitio declara ----------------------------------------
+        $declaradas = $c['declaradas'];
+        if ($declaradas) {
+            $muestra = array_slice(array_column($declaradas, 't'), 0, 12);
+            $r[] = self::h('claves_declaradas', Chequeos::NA, 0,
+                'El sitio declara ' . count($declaradas) . ' '
+                . (count($declaradas) === 1 ? 'palabra clave' : 'palabras clave'),
+                '',
+                $c['sin_usar']
+                    ? 'Estas están declaradas pero el texto del sitio apenas las menciona, '
+                      . 'así que no van a posicionar por sí solas: '
+                      . implode(', ', array_slice($c['sin_usar'], 0, 6)) . '. '
+                      . 'Declararlas no basta; hay que escribir sobre ellas.'
+                    : 'Google dejó de usar la etiqueta keywords hace años, así que estas '
+                      . 'no dan posiciones por sí mismas. Valen para saber sobre qué quiso '
+                      . 'posicionarse el sitio y comprobar si el texto lo respalda.',
+                implode(' · ', $muestra)
+                . ($c['origen'] ? ' — origen: ' . implode(', ', $c['origen']) : ''));
+        } else {
+            $r[] = self::h('claves_declaradas', Chequeos::NA, 0,
+                'El sitio no tiene palabras clave configuradas',
+                '',
+                'No es un fallo: Google no lee la etiqueta keywords desde hace años y '
+                . 'la mayoría de sitios serios ya no la ponen. El tema de cada página '
+                . 'se decide con el título, el H1 y el texto, que es lo que sí se mide aquí.',
+                'sin etiqueta keywords');
+        }
+
+        // --- Para lo que habla de verdad ------------------------------------
+        $reales = $c['reales'];
+        if (!$reales) { return $r; }
+
+        $top = array_slice(array_column($reales, 't'), 0, 10);
+        $r[] = self::h('claves_reales', Chequeos::NA, 0,
+            'Por su contenido, el sitio habla sobre todo de: ' . $top[0],
+            '',
+            $c['sin_declarar']
+                ? 'Estos temas mandan en el texto y no están entre las palabras clave '
+                  . 'declaradas: ' . implode(', ', $c['sin_declarar']) . '. '
+                  . 'Si son los que interesan, deben estar en los títulos; si no lo son, '
+                  . 'el sitio está hablando de lo que no toca.'
+                : 'Sale de contar cada término del sitio dando más peso al título, al H1 '
+                  . 'y a los encabezados que al texto corrido, que es como lo lee un buscador. '
+                  . 'Son las búsquedas por las que el sitio puede aspirar a salir hoy.',
+            implode(' · ', $top));
+
+        // --- ¿Está el tema en el título? -------------------------------------
+        $titulo = self::normaliza((string) ($d['titulo'] ?? ''));
+        $primera = $reales[0]['t'];
+        if ($titulo !== '') {
+            $enTitulo = null;
+            foreach (array_slice($reales, 0, 5) as $i => $rc) {
+                if (str_contains(' ' . $titulo . ' ', ' ' . self::normaliza($rc['t']) . ' ')) {
+                    $enTitulo = $rc['t'];
+                    break;
+                }
+            }
+            if ($enTitulo !== null) {
+                $r[] = self::h('claves_titulo', Chequeos::BIEN, 8,
+                    'El título de la portada usa el tema principal del sitio',
+                    '', '', '«' . $enTitulo . '» está en el título');
+            } else {
+                $r[] = self::h('claves_titulo', Chequeos::AVISO, 8,
+                    'El título de la portada no menciona el tema principal del sitio',
+                    'El título es lo primero que lee Google y lo único que ve quien busca. '
+                    . 'Si el sitio entero habla de «' . $primera . '» y el título no lo dice, '
+                    . 'la página compite por una búsqueda que nadie hace.',
+                    'Reescribe el título de la portada empezando por «' . $primera . '», '
+                    . 'seguido del nombre y la ciudad. De 30 a 60 caracteres.',
+                    'título actual: ' . mb_substr((string) ($d['titulo'] ?? ''), 0, 70));
+            }
+        }
+
+        return $r;
+    }
+
+    /** Igual que Claves::normalizar, con nombre corto para usarlo aquí. */
+    private static function normaliza(string $t): string
+    {
+        return Claves::normalizar($t);
     }
 
     // =====================================================================

@@ -205,6 +205,7 @@ foreach ((array) ($opciones['css'] ?? []) as $hoja): ?>
         cr_menu_grupo('Analizar', $activo, [
             ['auditor', 'auditor.php', 'Auditor de sitios web', 'Las siete áreas del sitio, con informe de marca'],
             ['seo',     'seo.php',     'Análisis SEO',          'Recorre el sitio entero y dice qué falta para el 100 %'],
+            ['posiciones', 'posiciones.php', 'Análisis de palabras clave', 'En qué puesto exacto sale una web, con la prueba'],
             ['malware', 'malware.php', 'Análisis de virus',     'Código malicioso, listas negras y spam escondido'],
         ]);
         if (Auth::esAdmin()) {

@@ -14,7 +14,7 @@ declare(strict_types=1);
 final class Esquema
 {
     /** Se sube de uno en uno cada vez que cambia la estructura. */
-    public const VERSION = 12;
+    public const VERSION = 13;
 
     /** Aplica los cambios pendientes. Se llama desde bootstrap.php. */
     public static function actualizar(): void
@@ -81,6 +81,8 @@ final class Esquema
             11 => static function (): void { self::coloresMarca(); },
             // Textos cortos y el lema, ahora por contenido y no frase a frase.
             12 => static function (): void { self::textosCortos(); },
+            // Analisis de palabras clave: en que puesto sale una web.
+            13 => static function (): void { self::tablaPosiciones(); },
         ];
 
         $fallaron = [];
@@ -174,6 +176,49 @@ final class Esquema
               PRIMARY KEY (`id`),
               UNIQUE KEY `uq_sitio` (`escaneo_id`, `host`),
               KEY `idx_escaneo` (`escaneo_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+        );
+    }
+
+    /**
+     * Tabla del análisis de palabras clave: una fila por medición.
+     *
+     * Se guarda la medición entera, no solo el número: la lista de resultados
+     * tal como la devolvió el buscador y las direcciones que se pidieron. Sin
+     * eso, un puesto es la palabra de una máquina contra la de otra; con eso,
+     * cualquiera lo comprueba. El HTML original no cabe aquí —medio mega por
+     * página— y vive en storage/serp.
+     *
+     * No lleva clave ajena a una tabla de palabras seguidas: cada medición se
+     * sostiene sola, y el historial se arma agrupando por consulta + dominio +
+     * motor, que es como la gente las compara.
+     */
+    private static function tablaPosiciones(): void
+    {
+        BD::ejecutar(
+            'CREATE TABLE IF NOT EXISTS `cr_posiciones` (
+              `id`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+              `clave_id`    INT UNSIGNED NULL,
+              `usuario_id`  INT UNSIGNED NULL,
+              `consulta`    VARCHAR(190) NOT NULL,
+              `dominio`     VARCHAR(190) NOT NULL,
+              `motor`       VARCHAR(20) NOT NULL DEFAULT \'google\',
+              `pais`        CHAR(2) NOT NULL DEFAULT \'gt\',
+              `idioma`      CHAR(2) NOT NULL DEFAULT \'es\',
+              `dispositivo` VARCHAR(12) NOT NULL DEFAULT \'escritorio\',
+              `posicion`    SMALLINT UNSIGNED NULL,
+              `pagina`      TINYINT UNSIGNED NULL,
+              `en_pagina`   TINYINT UNSIGNED NULL,
+              `url_hallada` VARCHAR(500) NOT NULL DEFAULT \'\',
+              `revisados`   SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+              `resultados`  LONGTEXT NULL,
+              `peticiones`  TEXT NULL,
+              `agente`      VARCHAR(255) NOT NULL DEFAULT \'\',
+              `error`       VARCHAR(255) NOT NULL DEFAULT \'\',
+              `creado`      DATETIME NOT NULL,
+              PRIMARY KEY (`id`),
+              KEY `idx_usuario` (`usuario_id`, `id`),
+              KEY `idx_clave` (`consulta`, `dominio`, `motor`, `id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
         );
     }

@@ -1,4 +1,4 @@
-# Kaptor 6.3
+# Kaptor 6.4
 
 Caja de herramientas para vender servicios web. Dos mitades:
 
@@ -7,9 +7,9 @@ pegado o de una lista, más un módulo de campañas para escribirles desde tu
 propio dominio.
 
 **Analizar sitios** — auditoría completa en siete áreas, análisis de SEO con
-rastreo del sitio entero y palabras clave, y búsqueda de virus y código
-malicioso. De cada una sale un informe con tu marca y un archivo de
-correcciones listo para pegar.
+rastreo del sitio entero, análisis de palabras clave con la posición exacta en
+el buscador, y búsqueda de virus y código malicioso. De cada una sale un
+informe con tu marca y un archivo de correcciones listo para pegar.
 PHP 8.0+ · MySQL/MariaDB · sin Composer · listo para subir a `public_html`.
 
 ## De uso privado
@@ -203,7 +203,7 @@ grupos que se despliegan y tres entradas sueltas:
 | Grupo | Qué hay dentro |
 |---|---|
 | **Extraer** | Extractor de una web · Extractor de correos · Extractor de WhatsApp · Extractor de dominios |
-| **Analizar** | Auditor de sitios web · Análisis SEO · Análisis de virus |
+| **Analizar** | Auditor de sitios web · Análisis SEO · Análisis de palabras clave · Análisis de virus |
 | **Campañas** (solo administrador) | Campañas de correo · Listas de contactos · Plantillas · Remitentes · Bajas y supresión |
 | | Mis extracciones · Panel · Salir |
 
@@ -393,6 +393,53 @@ Desde el informe hay dos botones:
 Lo que aparece en la cabecera y en el cierre del documento (tu logotipo, tu
 lema, tus datos de contacto y el párrafo de cierre) se configura en
 *Ajustes → Auditor*.
+
+## Análisis de palabras clave
+
+Entra por **Analizar → Análisis de palabras clave**. Se escribe la palabra o la
+frase, se escribe el dominio, y Kaptor contesta con el puesto exacto:
+
+> **15.º** — puesto **5** de la **página 2**.
+
+### Por qué se puede comprobar
+
+Un número suelto no vale nada: habría que creérselo. Por eso de cada medición
+queda la prueba entera, y son tres cosas distintas:
+
+1. **La dirección exacta que se pidió**, enlazada. Se abre en cualquier
+   navegador y se cuentan los resultados a mano.
+2. **La lista completa en su orden**, del puesto 1 al último que se revisó, con
+   el título y el enlace de cada resultado y el tuyo marcado. El número no hay
+   que creérselo: se cuenta.
+3. **La página original del buscador**, guardada comprimida tal como llegó, con
+   su fecha y su código HTTP. Es la prueba de verdad, y se puede descargar.
+
+Y se dice lo que se midió, porque sin eso un puesto no significa nada:
+buscador, país, idioma, si se buscó desde un ordenador o desde un teléfono, y
+el momento exacto. Repitiendo esos mismos parámetros sale el mismo resultado.
+
+### Qué cuenta como puesto
+
+Solo los resultados **orgánicos**. Los anuncios no ocupan puesto —no es un
+sitio al que se pueda llegar escribiendo mejor— y los bloques de mapas, vídeos
+o «la gente también pregunta» tampoco. Es como lo cuenta cualquier herramienta
+seria del mercado.
+
+### Buscadores
+
+Google, Bing (en HTML y en RSS), DuckDuckGo y Mojeek. **Google bloquea con
+frecuencia las consultas que salen de un servidor** y pide verificación: cuando
+pasa, Kaptor lo dice en claro en vez de inventarse un número. Bing y Mojeek
+casi nunca bloquean y dan el puesto igual, así que son la opción fiable desde
+un hosting compartido.
+
+### El historial
+
+Midiendo la misma palabra cada cierto tiempo sale una barra por medición, con
+su fecha. Es lo que se le enseña al cliente para cobrar el mes siguiente.
+
+Las pruebas viven en `storage/serp/`, fuera del alcance de la web, y se borran
+con la medición.
 
 ## Análisis SEO
 

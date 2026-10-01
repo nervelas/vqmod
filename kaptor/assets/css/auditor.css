@@ -575,3 +575,102 @@
   a{text-decoration:none;color:inherit}
   .tabla-envoltorio{overflow:visible !important}
 }
+
+/* ===========================================================================
+   ANÁLISIS DE PALABRAS CLAVE
+   =========================================================================== */
+.seccion-posiciones{padding:34px 0 70px}
+.pos-cab{max-width:none;margin:0 0 26px}
+.pos-cab h1{margin:12px 0 10px;line-height:1.08}
+.pos-sub{color:var(--suave);font-size:1rem;line-height:1.6;margin:0;max-width:66ch}
+
+/* --- Formulario ----------------------------------------------------------- */
+.pos-form{margin-bottom:28px}
+.pos-par{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.pos-avanzado{margin:14px 0 4px;border-top:1px solid var(--borde);padding-top:12px}
+.pos-avanzado summary{
+  cursor:pointer;font-size:.88rem;color:var(--suave);
+  padding:6px 0;min-height:32px;list-style:none;
+}
+.pos-avanzado summary::-webkit-details-marker{display:none}
+.pos-avanzado summary::before{content:'▸ ';color:var(--oro)}
+.pos-avanzado[open] summary::before{content:'▾ '}
+.pos-opciones{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:14px;margin-top:10px;
+}
+.pos-casilla{
+  grid-column:1/-1;display:flex;align-items:center;gap:9px;
+  font-size:.88rem;color:var(--texto);min-height:40px;
+}
+.pos-nota{margin:10px 0 0;font-size:.82rem;color:var(--suave);text-align:center}
+
+/* --- El veredicto --------------------------------------------------------- */
+.pos-veredicto{text-align:center;margin-bottom:34px;padding:26px 22px}
+.pos-eti{margin:0 0 10px;font-size:.88rem;color:var(--suave);overflow-wrap:anywhere}
+.pos-numero{
+  margin:0;font-size:clamp(3.2rem,12vw,4.6rem);line-height:1;font-weight:700;
+  letter-spacing:-.03em;color:var(--oro);
+}
+.pos-numero small{font-size:.32em;vertical-align:super;margin-left:2px}
+.pos-veredicto.top    .pos-numero{color:var(--verde,#22A06B)}
+.pos-veredicto.media  .pos-numero{color:var(--ambar,#C98A1A)}
+.pos-veredicto.sin    .pos-numero{color:var(--tenue)}
+.pos-nada{letter-spacing:0}
+.pos-frase{margin:12px 0 0;font-size:1rem;line-height:1.55;color:var(--texto)}
+.pos-aviso{color:var(--ambar,#C98A1A);font-size:.9rem}
+.pos-url{margin:10px 0 0;font-size:.86rem;overflow-wrap:anywhere}
+.pos-dl{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));
+  gap:12px;margin:22px 0 0;padding-top:18px;border-top:1px solid var(--borde);text-align:left;
+}
+.pos-dl dt{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--suave);margin:0 0 3px}
+.pos-dl dd{margin:0;font-size:.9rem}
+
+/* --- La comprobación ------------------------------------------------------ */
+.pos-prueba{margin-bottom:40px}
+.pos-prueba h2{font-size:1.32rem;margin:0 0 6px}
+.pos-prueba h3{margin:0 0 6px;font-size:1rem}
+.pos-peticiones,.pos-tabla-caja,.pos-historial{margin-bottom:18px}
+.pos-lista-peticiones{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:12px}
+.pos-lista-peticiones li{
+  border-top:1px solid color-mix(in srgb,var(--texto) 8%,transparent);padding-top:12px;
+}
+.pos-lista-peticiones li:first-child{border-top:0;padding-top:0}
+.pp-pagina{display:block;font-size:.76rem;text-transform:uppercase;letter-spacing:.06em;color:var(--suave)}
+.pp-url{display:block;margin:3px 0;font-size:.8rem;overflow-wrap:anywhere;line-height:1.45}
+.pp-datos{display:block;font-size:.78rem;color:var(--suave)}
+.pp-datos a{color:var(--oro);text-decoration:underline;text-underline-offset:2px}
+
+.pos-tabla td{vertical-align:top}
+.pos-td-num{font-weight:700;width:3.4rem;white-space:nowrap}
+.pos-td-pag{width:3.4rem;white-space:nowrap;color:var(--suave);font-size:.82rem}
+.pos-titulo{display:block;font-size:.9rem;line-height:1.38}
+.pos-enlace{display:block;font-size:.78rem;color:var(--suave);overflow-wrap:anywhere;line-height:1.4}
+.pos-marca{
+  display:inline-block;margin-top:5px;padding:2px 9px;border-radius:999px;
+  font-size:.72rem;font-weight:700;background:var(--oro);color:var(--btn-texto);
+}
+.pos-tabla tr.pos-nuestro{background:color-mix(in srgb,var(--oro) 12%,transparent)}
+.pos-tabla tr.pos-nuestro .pos-td-num{color:var(--oro)}
+
+/* --- Historial del puesto -------------------------------------------------- */
+.pos-barras{list-style:none;margin:16px 0 0;padding:0;display:flex;align-items:flex-end;gap:10px;overflow-x:auto}
+.pos-barras li{flex:0 0 auto;width:52px;text-align:center}
+.ph-barra{
+  display:block;height:92px;border-radius:7px;overflow:hidden;
+  background:color-mix(in srgb,var(--texto) 8%,transparent);
+  display:flex;align-items:flex-end;
+}
+.ph-barra i{display:block;width:100%;background:var(--oro);border-radius:7px}
+.ph-num{display:block;margin-top:6px;font-size:.84rem;font-weight:700}
+.ph-fecha{display:block;font-size:.68rem;color:var(--suave);line-height:1.3}
+
+.pos-recientes h2{font-size:1.15rem;margin:0 0 14px}
+.pos-recientes form{margin:0}
+
+@media (max-width:720px){
+  .pos-par{grid-template-columns:1fr}
+  .pos-veredicto{padding:22px 16px}
+  .pos-dl{grid-template-columns:repeat(2,1fr)}
+}

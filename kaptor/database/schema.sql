@@ -327,3 +327,35 @@ CREATE TABLE IF NOT EXISTS `cr_envios` (
   KEY `idx_pendientes` (`campana_id`,`estado`,`id`),
   KEY `idx_enviados` (`remitente_id`,`enviado_en`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
+--  ANÁLISIS DE PALABRAS CLAVE
+-- ============================================================================
+
+-- Una fila por medición: en qué puesto salía una web para una palabra clave,
+-- con la lista de resultados y las direcciones que se pidieron, para que
+-- cualquiera pueda comprobarlo. El HTML original vive en storage/serp.
+CREATE TABLE IF NOT EXISTS `cr_posiciones` (
+  `id`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `clave_id`    INT UNSIGNED NULL,
+  `usuario_id`  INT UNSIGNED NULL,
+  `consulta`    VARCHAR(190) NOT NULL,
+  `dominio`     VARCHAR(190) NOT NULL,
+  `motor`       VARCHAR(20) NOT NULL DEFAULT 'google',
+  `pais`        CHAR(2) NOT NULL DEFAULT 'gt',
+  `idioma`      CHAR(2) NOT NULL DEFAULT 'es',
+  `dispositivo` VARCHAR(12) NOT NULL DEFAULT 'escritorio',
+  `posicion`    SMALLINT UNSIGNED NULL,
+  `pagina`      TINYINT UNSIGNED NULL,
+  `en_pagina`   TINYINT UNSIGNED NULL,
+  `url_hallada` VARCHAR(500) NOT NULL DEFAULT '',
+  `revisados`   SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  `resultados`  LONGTEXT NULL,
+  `peticiones`  TEXT NULL,
+  `agente`      VARCHAR(255) NOT NULL DEFAULT '',
+  `error`       VARCHAR(255) NOT NULL DEFAULT '',
+  `creado`      DATETIME NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_usuario` (`usuario_id`,`id`),
+  KEY `idx_clave` (`consulta`,`dominio`,`motor`,`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

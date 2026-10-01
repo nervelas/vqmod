@@ -17,3 +17,12 @@
 /kaptor/storage/sessions/*
 !/kaptor/storage/*/index.html
 /kaptor/assets/subidas/logo-*
+/kaptor/storage/serp/*
+!/kaptor/storage/serp/index.html
+
+# Capturas que dejan las pruebas de Playwright al correr.
+/slider.png
+/kaptor/slider.png
+/kaptor/menu-abierto.png
+/kaptor/niveles.png
+/kaptor/filtro-ext.png

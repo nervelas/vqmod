@@ -24,7 +24,17 @@ final class Buscador
     private static array $extensiones = [];
 
     /** Resultados que pide cada página a los buscadores. */
-    private const POR_PAGINA = 10;
+    public const POR_PAGINA = 10;
+
+    /**
+     * País e idioma forzados para esta petición, por encima de los ajustes.
+     *
+     * Lo usa el análisis de posiciones: una medición tiene que poder decir
+     * «esto es lo que se ve buscando desde Guatemala en español», y repetirse
+     * mañana con los mismos parámetros aunque el ajuste general haya cambiado.
+     */
+    private static ?string $paisForzado = null;
+    private static ?string $idiomaForzado = null;
 
     /** Dominios que nunca interesan como resultado. */
     private const DESCARTAR = [
@@ -323,15 +333,88 @@ final class Buscador
     /** País desde el que se busca, en ISO de dos letras y en minúsculas. */
     private static function pais(): string
     {
-        $p = strtolower(trim((string) Ajustes::obtener('buscador_pais', 'gt')));
+        $p = self::$paisForzado ?? strtolower(trim((string) Ajustes::obtener('buscador_pais', 'gt')));
         return preg_match('~^[a-z]{2}$~', $p) ? $p : 'gt';
     }
 
     /** Idioma de los resultados. */
     private static function idioma(): string
     {
-        $i = strtolower(trim((string) Ajustes::obtener('buscador_idioma', 'es')));
+        $i = self::$idiomaForzado ?? strtolower(trim((string) Ajustes::obtener('buscador_idioma', 'es')));
         return preg_match('~^[a-z]{2}$~', $i) ? $i : 'es';
+    }
+
+    // =====================================================================
+    //  Una sola página de resultados, tal cual la devuelve el buscador
+    // =====================================================================
+
+    /**
+     * Pide UNA página de resultados y la devuelve sin interpretar.
+     *
+     * Es lo que necesita el análisis de posiciones: ahí no vale la lista
+     * limpia que arma buscar() —que junta motores, quita redes sociales y
+     * descarta repetidos—, porque cada una de esas cosas corre los puestos.
+     * Para decir «estás en el quinto de la segunda página» hace falta la
+     * página entera, en su orden, con lo que el buscador puso y nada más.
+     *
+     * Devuelve también la dirección exacta que se pidió, para que cualquiera
+     * pueda abrirla en su navegador y contar los resultados a mano.
+     *
+     * @param array{pais?:string,idioma?:string,agente?:string,timeout?:int} $opciones
+     * @return array{ok:bool,url:string,codigo:int,html:string,bytes:int,ms:int,bloqueo:bool,error:string,pais:string,idioma:string}
+     */
+    public static function serp(string $motor, string $consulta, int $pagina, array $opciones = []): array
+    {
+        $antesPais   = self::$paisForzado;
+        $antesIdioma = self::$idiomaForzado;
+        self::$paisForzado   = isset($opciones['pais'])   ? strtolower(trim((string) $opciones['pais']))   : null;
+        self::$idiomaForzado = isset($opciones['idioma']) ? strtolower(trim((string) $opciones['idioma'])) : null;
+
+        try {
+            if (!isset(self::MOTORES[$motor])) { $motor = 'google'; }
+            $peticion = self::peticion($motor, $consulta, max(0, $pagina));
+
+            $envio = [
+                'timeout'   => (int) ($opciones['timeout'] ?? Ajustes::entero('timeout', 20, 3, 180)),
+                'cabeceras' => self::cabeceras(),
+                'datos'     => $peticion['datos'] ?? null,
+                'referer'   => $peticion['referer'] ?? '',
+            ];
+            if (!empty($opciones['agente'])) { $envio['agente'] = (string) $opciones['agente']; }
+
+            $r = Http::obtener($peticion['url'], $envio);
+            $html = (string) ($r['cuerpo'] ?? '');
+
+            // La dirección que se enseña como prueba tiene que ser la que
+            // cualquiera pueda abrir. DuckDuckGo se pide por POST, así que se
+            // reconstruye su equivalente por GET.
+            $urlPrueba = $peticion['url'];
+            if (!empty($peticion['datos']) && is_array($peticion['datos'])) {
+                $urlPrueba .= (str_contains($urlPrueba, '?') ? '&' : '?') . http_build_query($peticion['datos']);
+            }
+
+            return [
+                'ok'      => !empty($r['ok']) && $html !== '',
+                'url'     => $urlPrueba,
+                'codigo'  => (int) ($r['codigo'] ?? 0),
+                'html'    => $html,
+                'bytes'   => (int) ($r['bytes'] ?? strlen($html)),
+                'ms'      => (int) ($r['ms'] ?? 0),
+                'bloqueo' => $html !== '' && self::pareceBloqueo($html),
+                'error'   => (string) ($r['error'] ?? ''),
+                'pais'    => self::pais(),
+                'idioma'  => self::idioma(),
+            ];
+        } finally {
+            self::$paisForzado   = $antesPais;
+            self::$idiomaForzado = $antesIdioma;
+        }
+    }
+
+    /** Los buscadores que se pueden usar: clave => nombre. */
+    public static function motores(): array
+    {
+        return self::MOTORES;
     }
 
     /** Cabeceras de navegador: sin ellas los buscadores responden con un muro. */

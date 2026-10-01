@@ -342,6 +342,7 @@ CREATE TABLE IF NOT EXISTS `cr_posiciones` (
   `consulta`    VARCHAR(190) NOT NULL,
   `dominio`     VARCHAR(190) NOT NULL,
   `motor`       VARCHAR(20) NOT NULL DEFAULT 'google',
+  `proveedor`   VARCHAR(20) NOT NULL DEFAULT 'directo',
   `pais`        CHAR(2) NOT NULL DEFAULT 'gt',
   `idioma`      CHAR(2) NOT NULL DEFAULT 'es',
   `dispositivo` VARCHAR(12) NOT NULL DEFAULT 'escritorio',

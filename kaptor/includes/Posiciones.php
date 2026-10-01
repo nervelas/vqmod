@@ -29,6 +29,29 @@ declare(strict_types=1);
 
 final class Posiciones
 {
+    /**
+     * De dónde salen los resultados.
+     *
+     * Hay dos caminos y conviene no confundirlos:
+     *
+     *   · «directo» pide la página al buscador como lo haría un navegador. Es
+     *     gratis y no hay que registrarse en nada, pero Google lleva años
+     *     cerrándoselo a los servidores: contesta con una página de consentimiento,
+     *     con un captcha o con un armazón vacío que necesita JavaScript. Cuando
+     *     eso pasa no se puede medir, y Kaptor lo dice en vez de callárselo.
+     *
+     *   · los demás son servicios que hacen la búsqueda por ti y devuelven los
+     *     resultados ya ordenados, con su puesto. Cuestan dinero (poco) y hay que
+     *     pegar una clave, pero funcionan siempre y dan el google.com de verdad.
+     *     Es lo que usan por dentro todas las herramientas de pago del mercado.
+     */
+    public const PROVEEDORES = [
+        'directo' => 'Preguntar al buscador directamente (gratis)',
+        'serper'  => 'Serper.dev (Google real · 2.500 búsquedas gratis)',
+        'serpapi' => 'SerpApi (Google real · 100 al mes gratis)',
+        'cse'     => 'Google Custom Search (oficial · 100 al día gratis)',
+    ];
+
     /** Resultados por página, que es como cuenta la gente. */
     public const POR_PAGINA = 10;
 
@@ -78,6 +101,13 @@ final class Posiciones
         $motor  = (string) ($p['motor'] ?? 'google');
         if (!isset(Buscador::motores()[$motor])) { $motor = 'google'; }
 
+        $proveedor = (string) ($p['proveedor'] ?? Ajustes::obtener('pos_proveedor', 'directo'));
+        if (!isset(self::PROVEEDORES[$proveedor])) { $proveedor = 'directo'; }
+        // Los servicios con clave hablan siempre con Google: el motor que se
+        // eligiera para raspar deja de pintar nada, y decir otra cosa en el
+        // informe sería mentir sobre lo que se midió.
+        if ($proveedor !== 'directo') { $motor = 'google'; }
+
         $pais   = self::codigo((string) ($p['pais'] ?? ''), 'gt');
         $idioma = self::codigo((string) ($p['idioma'] ?? ''), 'es');
         $aparato = ($p['dispositivo'] ?? 'escritorio') === 'movil' ? 'movil' : 'escritorio';
@@ -93,9 +123,12 @@ final class Posiciones
         $encontrado = null;
         $error      = '';
 
+        $leido = false;   // ¿se llegó a leer ALGUNA lista de resultados?
+
         for ($i = 0; $i < $paginas; $i++) {
-            $r = Buscador::serp($motor, $consulta, $i, [
-                'pais' => $pais, 'idioma' => $idioma, 'agente' => $agente,
+            $r = self::pagina($proveedor, $motor, $consulta, $i, [
+                'pais' => $pais, 'idioma' => $idioma,
+                'agente' => $agente, 'dispositivo' => $aparato,
             ]);
 
             $peticiones[] = [
@@ -109,26 +142,38 @@ final class Posiciones
                 'ms'      => $r['ms'],
                 'bloqueo' => $r['bloqueo'],
                 'error'   => $r['error'],
+                'diagnostico' => $r['diagnostico'],
             ];
 
+            // Lo que llegó se guarda SIEMPRE, también cuando no sirvió: si
+            // Google contestó con un captcha, esa es justamente la prueba de
+            // por qué no se pudo medir.
+            if ($r['crudo'] !== '') { $snapshots[$i + 1] = $r['crudo']; }
+
             if ($r['bloqueo']) {
-                $error = 'El buscador pidió verificación («no soy un robot») en la página '
-                       . ($i + 1) . '. La medición queda incompleta.';
+                $error = 'No se pudo medir: el buscador pidió verificación («no soy un robot») '
+                       . 'en la consulta ' . ($i + 1) . '.';
                 break;
             }
             if (!$r['ok']) {
-                $error = $r['error'] !== ''
-                    ? 'El buscador no respondió en la página ' . ($i + 1) . ': ' . $r['error']
-                    : 'El buscador devolvió una página vacía en la ' . ($i + 1) . '.';
+                $error = 'No se pudo medir: ' . $r['diagnostico'] . ' (consulta ' . ($i + 1) . ').';
                 break;
             }
 
-            $snapshots[$i + 1] = $r['html'];
-            $pagina = self::resultados($motor, $r['html']);
+            $pagina = $r['resultados'];
 
-            // Sin resultados en una página no hay más páginas que mirar: el
-            // buscador ya se quedó sin nada que ofrecer para esa consulta.
-            if (!$pagina) { break; }
+            // Esta es la diferencia que lo cambia todo. Si el buscador contesta
+            // pero no se le puede leer ni un resultado, lo honrado es decir que
+            // NO SE PUDO MIRAR. Decir «no apareces» con cero resultados en la
+            // mano es exactamente la clase de mentira por la que una
+            // herramienta de estas no vale nada.
+            if (!$pagina) {
+                if (!$leido) {
+                    $error = 'No se pudo medir: ' . $r['diagnostico'] . '.';
+                }
+                break;
+            }
+            $leido = true;
 
             foreach ($pagina as $res) {
                 // La página y el puesto dentro de ella NO son los de la
@@ -160,6 +205,9 @@ final class Posiciones
 
         return [
             'ok'          => $encontrado !== null || ($error === '' && $resultados !== []),
+            'medible'     => $leido,          // ¿se llegó a leer la lista?
+            'proveedor'   => $proveedor,
+            'proveedor_nombre' => self::PROVEEDORES[$proveedor],
             'encontrado'  => $encontrado !== null,
             'posicion'    => $encontrado['puesto']    ?? null,
             'pagina'      => $encontrado['pagina']    ?? null,
@@ -187,8 +235,217 @@ final class Posiciones
 
     private static function fallo(string $mensaje): array
     {
-        return ['ok' => false, 'encontrado' => false, 'error' => $mensaje,
+        return ['ok' => false, 'medible' => false, 'encontrado' => false, 'error' => $mensaje,
                 'resultados' => [], 'peticiones' => [], 'snapshots' => []];
+    }
+
+    // =====================================================================
+    //  Una página de resultados, venga de donde venga
+    // =====================================================================
+
+    /**
+     * Pide una página de resultados al proveedor que toque.
+     *
+     * Devuelve siempre la misma forma, de modo que a medir() le da igual si
+     * los resultados vinieron de raspar Google o de un servicio de pago: lo
+     * que cambia es la fiabilidad, no el formato.
+     *
+     * @return array{ok:bool,url:string,codigo:int,crudo:string,bytes:int,ms:int,
+     *               bloqueo:bool,error:string,resultados:array,diagnostico:string}
+     */
+    public static function pagina(string $proveedor, string $motor, string $consulta,
+                                  int $pagina, array $op): array
+    {
+        if ($proveedor !== 'directo') {
+            return self::porApi($proveedor, $consulta, $pagina, $op);
+        }
+
+        $r = Buscador::serp($motor, $consulta, $pagina, $op);
+        $res = $r['ok'] && !$r['bloqueo'] ? self::resultados($motor, $r['html']) : [];
+
+        return [
+            'ok'          => $r['ok'],
+            'url'         => $r['url'],
+            'codigo'      => $r['codigo'],
+            'crudo'       => $r['html'],
+            'bytes'       => $r['bytes'],
+            'ms'          => $r['ms'],
+            'bloqueo'     => $r['bloqueo'],
+            'error'       => $r['error'],
+            'resultados'  => $res,
+            'diagnostico' => self::diagnostico($r, $res),
+        ];
+    }
+
+    /**
+     * Qué pasó exactamente, en una línea que se pueda enseñar.
+     *
+     * Cuando un buscador contesta 200 y aun así no hay resultados que leer,
+     * decir «no apareces» sería mentir: lo que ha pasado es que no se pudo
+     * mirar. Esta frase es la diferencia entre las dos cosas.
+     */
+    private static function diagnostico(array $r, array $res): string
+    {
+        if (!$r['ok']) {
+            return $r['error'] !== '' ? 'no se pudo conectar: ' . $r['error'] : 'respuesta vacía';
+        }
+        if ($r['bloqueo']) {
+            return 'el buscador pidió verificación (captcha o aviso de cookies)';
+        }
+        if (!$res) {
+            $muestra = mb_strtolower(mb_substr(strip_tags($r['html']), 0, 600));
+            if (str_contains($muestra, 'javascript')) {
+                return 'el buscador devolvió una página que necesita JavaScript, sin resultados dentro';
+            }
+            if ($r['bytes'] < 20000) {
+                return 'el buscador contestó con una página demasiado corta para traer resultados ('
+                     . number_format($r['bytes'] / 1024, 1, ',', '.') . ' KB)';
+            }
+            return 'el buscador contestó, pero su página no trae resultados que se puedan leer';
+        }
+        return count($res) . ' resultados leídos';
+    }
+
+    /**
+     * Resultados a través de un servicio de búsqueda con clave.
+     *
+     * Los tres hablan JSON y todos dan la lista ya en orden, que es justo lo
+     * que hace falta. La respuesta entera se guarda igual que se guarda el
+     * HTML cuando se raspa: también es prueba.
+     */
+    private static function porApi(string $proveedor, string $consulta, int $pagina, array $op): array
+    {
+        $clave = trim((string) Ajustes::obtener('pos_api_clave', ''));
+        $pais   = (string) ($op['pais'] ?? 'gt');
+        $idioma = (string) ($op['idioma'] ?? 'es');
+        $desde  = $pagina * self::POR_PAGINA;
+
+        $base = [
+            'ok' => false, 'url' => '', 'codigo' => 0, 'crudo' => '', 'bytes' => 0,
+            'ms' => 0, 'bloqueo' => false, 'error' => '', 'resultados' => [], 'diagnostico' => '',
+        ];
+
+        if ($clave === '') {
+            $base['error'] = 'Falta la clave del servicio de búsqueda. Se pone en '
+                           . 'Panel → Ajustes → Auditor → Palabras clave.';
+            $base['diagnostico'] = $base['error'];
+            return $base;
+        }
+
+        // Http::obtener hace POST en cuanto se le da un cuerpo, así que no
+        // hace falta decirle el método: con 'datos' va POST y sin él, GET.
+        $cabeceras = ['Accept: application/json'];
+        $datos = null;
+
+        switch ($proveedor) {
+            case 'serper':
+                $url = 'https://google.serper.dev/search';
+                $cabeceras[] = 'X-API-KEY: ' . $clave;
+                $cabeceras[] = 'Content-Type: application/json';
+                $datos = json_encode([
+                    'q' => $consulta, 'gl' => $pais, 'hl' => $idioma,
+                    'num' => self::POR_PAGINA, 'page' => $pagina + 1,
+                ]);
+                break;
+
+            case 'serpapi':
+                $url = 'https://serpapi.com/search.json?' . http_build_query([
+                    'engine' => 'google', 'q' => $consulta, 'gl' => $pais, 'hl' => $idioma,
+                    'num' => self::POR_PAGINA, 'start' => $desde, 'api_key' => $clave,
+                    'device' => ($op['dispositivo'] ?? '') === 'movil' ? 'mobile' : 'desktop',
+                ]);
+                break;
+
+            case 'cse':
+            default:
+                $cx = trim((string) Ajustes::obtener('pos_cse_cx', ''));
+                if ($cx === '') {
+                    $base['error'] = 'Falta el identificador del buscador (cx) de Google Custom Search.';
+                    $base['diagnostico'] = $base['error'];
+                    return $base;
+                }
+                $url = 'https://www.googleapis.com/customsearch/v1?' . http_build_query([
+                    'key' => $clave, 'cx' => $cx, 'q' => $consulta,
+                    'gl' => $pais, 'hl' => $idioma, 'num' => self::POR_PAGINA,
+                    'start' => $desde + 1,
+                ]);
+                break;
+        }
+
+        $resp = Http::obtener($url, [
+            'timeout'   => (int) ($op['timeout'] ?? 30),
+            'cabeceras' => $cabeceras,
+            'datos'     => $datos,
+        ]);
+
+        $cuerpo = (string) ($resp['cuerpo'] ?? '');
+        $json   = json_decode($cuerpo, true);
+
+        $base['url']    = self::sinClave($url, $clave);
+        $base['codigo'] = (int) ($resp['codigo'] ?? 0);
+        $base['crudo']  = self::sinClave($cuerpo, $clave);
+        $base['bytes']  = strlen($cuerpo);
+        $base['ms']     = (int) ($resp['ms'] ?? 0);
+        $base['ok']     = !empty($resp['ok']) && is_array($json);
+
+        if (!$base['ok']) {
+            $base['error'] = (string) ($resp['error'] ?? '');
+            if ($base['error'] === '' && is_array($json)) {
+                $base['error'] = (string) ($json['error']['message'] ?? $json['error'] ?? '');
+            }
+            if ($base['error'] === '') { $base['error'] = 'el servicio contestó algo que no es JSON'; }
+            $base['diagnostico'] = 'HTTP ' . $base['codigo'] . ' · ' . $base['error'];
+            return $base;
+        }
+
+        // Un error del servicio llega con HTTP 200 más de lo que debería.
+        $mensaje = (string) ($json['error']['message'] ?? $json['message'] ?? $json['error'] ?? '');
+        if ($mensaje !== '') {
+            $base['ok'] = false;
+            $base['error'] = $mensaje;
+            $base['diagnostico'] = 'el servicio devolvió un error: ' . $mensaje;
+            return $base;
+        }
+
+        $base['resultados'] = self::deJson($proveedor, $json);
+        $base['diagnostico'] = $base['resultados']
+            ? count($base['resultados']) . ' resultados leídos'
+            : 'el servicio no devolvió resultados para esta búsqueda';
+        return $base;
+    }
+
+    /**
+     * La lista ordenada que devuelve cada servicio.
+     *
+     * @return array<int,array{url:string,titulo:string}>
+     */
+    private static function deJson(string $proveedor, array $json): array
+    {
+        $crudos = match ($proveedor) {
+            'serper'  => $json['organic'] ?? [],
+            'serpapi' => $json['organic_results'] ?? [],
+            default   => $json['items'] ?? [],
+        };
+        if (!is_array($crudos)) { return []; }
+
+        $salida = [];
+        foreach ($crudos as $r) {
+            if (!is_array($r)) { continue; }
+            $url = (string) ($r['link'] ?? $r['url'] ?? '');
+            if (!preg_match('~^https?://~i', $url)) { continue; }
+            $salida[] = [
+                'url'    => $url,
+                'titulo' => mb_substr(trim((string) ($r['title'] ?? '')), 0, 300),
+            ];
+        }
+        return $salida;
+    }
+
+    /** Nunca se guarda ni se enseña una clave de API. */
+    private static function sinClave(string $texto, string $clave): string
+    {
+        if ($clave === '') { return $texto; }
+        return str_replace([$clave, rawurlencode($clave)], '«tu clave»', $texto);
     }
 
     // =====================================================================
@@ -224,9 +481,13 @@ final class Posiciones
                 '//ul[contains(@class,"results")]//li//h2/a[@href]',
                 '//li//h2/a[@href]',
             ],
-            default => [   // Google
+            default => [   // Google, que cambia de maquetado cada temporada
                 '//div[@id="search"]//a[@href][.//h3]',
+                '//div[@id="rso"]//a[@href][.//h3]',
+                '//div[contains(@class,"MjjYud")]//a[@href][.//h3]',
+                '//div[contains(concat(" ",normalize-space(@class)," ")," g ")]//a[@href][.//h3]',
                 '//a[@href][.//h3]',
+                '//a[@href][.//*[@role="heading"]]',
             ],
         };
         // Último recurso, común a todos.
@@ -440,6 +701,7 @@ final class Posiciones
                 'consulta'    => mb_substr((string) $m['consulta'], 0, 190),
                 'dominio'     => mb_substr((string) $m['dominio'], 0, 190),
                 'motor'       => mb_substr((string) $m['motor'], 0, 20),
+                'proveedor'   => mb_substr((string) ($m['proveedor'] ?? 'directo'), 0, 20),
                 'pais'        => (string) $m['pais'],
                 'idioma'      => (string) $m['idioma'],
                 'dispositivo' => (string) $m['dispositivo'],
@@ -538,7 +800,7 @@ final class Posiciones
         $args  = $usuarioId !== null ? [$usuarioId] : [];
 
         return BD::todos(
-            'SELECT `id`, `consulta`, `dominio`, `motor`, `pais`, `idioma`, `dispositivo`,
+            'SELECT `id`, `consulta`, `dominio`, `motor`, `proveedor`, `pais`, `idioma`, `dispositivo`,
                     `posicion`, `pagina`, `en_pagina`, `revisados`, `error`, `creado`
                FROM `cr_posiciones` ' . $donde . '
               ORDER BY `id` DESC LIMIT ' . max(1, min($limite, 200)),

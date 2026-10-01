@@ -627,6 +627,14 @@
 .pos-dl dt{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--suave);margin:0 0 3px}
 .pos-dl dd{margin:0;font-size:.9rem}
 
+/* --- Cuando no se pudo medir ----------------------------------------------- */
+.pos-fallo{
+  margin-bottom:30px;
+  border-color:color-mix(in srgb,var(--ambar,#C98A1A) 38%,var(--borde));
+}
+.pos-fallo h2{font-size:1.15rem;margin:0 0 6px}
+.pos-fallo .pp-datos b{color:var(--ambar,#C98A1A)}
+
 /* --- La comprobación ------------------------------------------------------ */
 .pos-prueba{margin-bottom:40px}
 .pos-prueba h2{font-size:1.32rem;margin:0 0 6px}

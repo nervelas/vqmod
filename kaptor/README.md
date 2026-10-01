@@ -1,4 +1,4 @@
-# Kaptor 6.4
+# Kaptor 6.5
 
 Caja de herramientas para vender servicios web. Dos mitades:
 
@@ -425,13 +425,39 @@ sitio al que se pueda llegar escribiendo mejor— y los bloques de mapas, vídeo
 o «la gente también pregunta» tampoco. Es como lo cuenta cualquier herramienta
 seria del mercado.
 
-### Buscadores
+### De dónde salen los resultados
 
-Google, Bing (en HTML y en RSS), DuckDuckGo y Mojeek. **Google bloquea con
-frecuencia las consultas que salen de un servidor** y pide verificación: cuando
-pasa, Kaptor lo dice en claro en vez de inventarse un número. Bing y Mojeek
-casi nunca bloquean y dan el puesto igual, así que son la opción fiable desde
-un hosting compartido.
+Hay dos caminos, y la diferencia entre ellos es si la herramienta funciona
+siempre o solo a veces:
+
+**Preguntar directamente** (gratis, sin registro). Kaptor pide la página de
+resultados como lo haría un navegador. Funciona con Bing, DuckDuckGo y Mojeek.
+Con **Google falla a menudo**: lleva años cerrándoles el paso a las búsquedas
+que salen de un servidor, y contesta con un aviso de cookies, un captcha o un
+armazón vacío que necesita JavaScript.
+
+**Un servicio de búsqueda con clave** (unos céntimos, y hay plan gratis).
+Hacen la búsqueda por ti y devuelven el google.com de verdad, ya ordenado. Es
+lo que usan por dentro todas las herramientas de pago del mercado. Se elige en
+*Ajustes → Auditor → Análisis de palabras clave* y se pega la clave una vez:
+
+| Servicio | Gratis | Dónde se saca |
+|---|---|---|
+| **Serper.dev** | 2.500 búsquedas | serper.dev |
+| **SerpApi** | 100 al mes | serpapi.com |
+| **Google Custom Search** | 100 al día | programmablesearchengine.google.com (hace falta también el `cx`) |
+
+La clave se guarda en tu base de datos y **nunca** sale en los informes ni en
+las pruebas guardadas: se sustituye por «tu clave» antes de escribir nada.
+
+### Lo que no hace: mentir
+
+Si el buscador no deja leer sus resultados, **Kaptor no dice «no apareces»**.
+Dice *no se pudo medir* y enseña por qué, consulta por consulta: el código
+HTTP, el tamaño de la respuesta y el motivo en una línea («pidió verificación»,
+«devolvió una página que necesita JavaScript», «el servicio contestó un error»).
+Esa tentativa fallida **no se guarda** como medición, porque un cero que no se
+pudo comprobar no es un dato: es un error disfrazado de dato.
 
 ### El historial
 

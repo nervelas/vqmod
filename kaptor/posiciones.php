@@ -64,6 +64,7 @@ $form = [
     'consulta'    => trim((string) cr_post('consulta', (string) cr_get('consulta', ''))),
     'dominio'     => trim((string) cr_post('dominio',  (string) cr_get('dominio', ''))),
     'motor'       => (string) cr_post('motor', 'google'),
+    'proveedor'   => (string) cr_post('proveedor', Ajustes::obtener('pos_proveedor', 'directo')),
     'pais'        => (string) cr_post('pais',   Ajustes::obtener('buscador_pais', 'gt')),
     'idioma'      => (string) cr_post('idioma', Ajustes::obtener('buscador_idioma', 'es')),
     'dispositivo' => (string) cr_post('dispositivo', 'escritorio'),
@@ -72,6 +73,7 @@ $form = [
 ];
 
 $medicion = null;
+$fallo    = null;   // el intento que no se pudo completar, con su diagnóstico
 $error    = '';
 $verId    = (int) cr_get('ver', 0);
 
@@ -89,9 +91,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && cr_post('accion', '') === '
     } else {
         Seguridad::registrarPeticion('posicion');
         $medicion = Posiciones::medir($form);
-        if (!$medicion['ok'] && !$medicion['encontrado'] && ($medicion['error'] ?? '') !== ''
-            && ($medicion['resultados'] ?? []) === []) {
-            $error = (string) $medicion['error'];
+
+        // Si no se pudo leer ni una lista de resultados, esto NO es una
+        // medición: es un intento fallido. Se dice lo que pasó y no se guarda
+        // un «no aparece» que sería falso.
+        if (empty($medicion['medible'])) {
+            $error = (string) ($medicion['error'] ?: 'No se pudo leer ningún resultado del buscador.');
+            $fallo = $medicion;
             $medicion = null;
         } else {
             $id = Posiciones::guardar($medicion, null, Auth::id());
@@ -142,6 +148,33 @@ cr_cabecera([
     <div class="aviso aviso-mal"><span><?= e($error) ?></span></div>
   <?php endif; ?>
 
+  <?php if ($fallo && !empty($fallo['peticiones'])): ?>
+    <section class="tarjeta pos-fallo">
+      <h2>Qué contestó el buscador</h2>
+      <p class="pequeno suave">Esto no es «no apareces»: es que no se pudo mirar. Aquí está lo que
+        pasó en cada intento, para que se vea el motivo y no haya que adivinarlo.</p>
+      <ol class="pos-lista-peticiones">
+        <?php foreach ($fallo['peticiones'] as $pf): ?>
+          <li>
+            <span class="pp-pagina">Consulta <?= e((string) ($pf['consulta'] ?? '?')) ?></span>
+            <span class="pp-url mono"><?= e((string) ($pf['url'] ?? '')) ?></span>
+            <span class="pp-datos">
+              HTTP <?= e((string) ($pf['codigo'] ?? 0)) ?> ·
+              <?= e(number_format(((int) ($pf['bytes'] ?? 0)) / 1024, 1, ',', '.')) ?> KB —
+              <b><?= e((string) ($pf['diagnostico'] ?? '')) ?></b>
+            </span>
+          </li>
+        <?php endforeach; ?>
+      </ol>
+      <div class="aviso aviso-info" style="margin-top:16px">
+        <span><b>Cómo se arregla:</b> elige arriba <b>Serper.dev</b> (2.500 búsquedas gratis),
+          <b>SerpApi</b> o <b>Google Custom Search</b>, saca la clave en su web y pégala en
+          <a href="<?= e(cr_url('admin/ajustes.php#h-auditor')) ?>">Ajustes → Auditor</a>.
+          Esos servicios devuelven el Google de verdad y no los bloquea nadie.</span>
+      </div>
+    </section>
+  <?php endif; ?>
+
   <!-- ===================== Formulario ===================== -->
   <form method="post" class="tarjeta pos-form" id="pos-form">
     <?= Seguridad::campoCsrf() ?>
@@ -161,11 +194,28 @@ cr_cabecera([
       </div>
     </div>
 
-    <details class="pos-avanzado"<?= $fila ? '' : '' ?>>
+    <div class="campo-grupo">
+      <label class="etiqueta" for="proveedor">De dónde se sacan los resultados</label>
+      <select id="proveedor" name="proveedor" class="campo">
+        <?php foreach (Posiciones::PROVEEDORES as $clave => $nombre): ?>
+          <option value="<?= e($clave) ?>" <?= $form['proveedor'] === $clave ? 'selected' : '' ?>>
+            <?= e($nombre) ?>
+          </option>
+        <?php endforeach; ?>
+      </select>
+      <p class="pequeno suave" style="margin:8px 0 0">
+        <b>Preguntar directamente</b> es gratis, pero Google cierra el paso a las búsquedas que
+        salen de un servidor: cuando lo hace, Kaptor lo dice y no mide. Los otros tres son
+        servicios que devuelven el Google de verdad y <b>funcionan siempre</b>; la clave se pega
+        una vez en <a href="<?= e(cr_url('admin/ajustes.php#h-auditor')) ?>">Ajustes → Auditor</a>.
+      </p>
+    </div>
+
+    <details class="pos-avanzado">
       <summary>Dónde y cómo se busca</summary>
       <div class="pos-opciones">
         <div class="campo-grupo">
-          <label class="etiqueta" for="motor">Buscador</label>
+          <label class="etiqueta" for="motor">Buscador <span class="suave pequeno">(solo si preguntas directamente)</span></label>
           <select id="motor" name="motor" class="campo">
             <?php foreach ($motores as $clave => $nombre): ?>
               <option value="<?= e($clave) ?>" <?= ($fila['motor'] ?? $form['motor']) === $clave ? 'selected' : '' ?>>
@@ -250,6 +300,7 @@ cr_cabecera([
 
     <dl class="pos-dl">
       <div><dt>Buscador</dt><dd><?= e($motores[$fila['motor']] ?? $fila['motor']) ?></dd></div>
+      <div><dt>Fuente</dt><dd><?= e(Posiciones::PROVEEDORES[$fila['proveedor'] ?? 'directo'] ?? 'Directo') ?></dd></div>
       <div><dt>País</dt><dd><?= e(strtoupper((string) $fila['pais'])) ?></dd></div>
       <div><dt>Idioma</dt><dd><?= e($fila['idioma']) ?></dd></div>
       <div><dt>Desde</dt><dd><?= $fila['dispositivo'] === 'movil' ? 'Un teléfono' : 'Un ordenador' ?></dd></div>
@@ -281,8 +332,11 @@ cr_cabecera([
             <a class="pp-url mono" href="<?= e((string) ($p['url'] ?? '')) ?>" target="_blank" rel="noopener nofollow"><?= e((string) ($p['url'] ?? '')) ?></a>
             <span class="pp-datos">
               HTTP <?= e((string) ($p['codigo'] ?? 0)) ?> ·
-              <?= e(cr_numero((int) (($p['bytes'] ?? 0) / 1024))) ?> KB ·
+              <?= e(number_format(((int) ($p['bytes'] ?? 0)) / 1024, 1, ',', '.')) ?> KB ·
               <?= e(cr_numero((int) ($p['ms'] ?? 0))) ?> ms
+              <?php if (!empty($p['diagnostico'])): ?>
+                · <?= e((string) $p['diagnostico']) ?>
+              <?php endif; ?>
               <?php $nPag = (int) ($p['consulta'] ?? $p['pagina'] ?? 0);
                     if ($nPag > 0 && Posiciones::prueba((int) $fila['id'], $nPag) !== ''): ?>
                 · <a href="<?= e(cr_url('posiciones.php?prueba=' . (int) $fila['id'] . '&p=' . $nPag)) ?>" target="_blank" rel="noopener">ver la página guardada</a>

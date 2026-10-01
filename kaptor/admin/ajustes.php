@@ -21,6 +21,7 @@ const CAMPOS_TEXTO = [
     'user_agent', 'headless_binario', 'dominios_excluidos', 'prefijo_pais',
     'remitente_postal', 'cron_clave',
     'psi_clave', 'vt_clave', 'informe_lema', 'informe_contacto', 'informe_cta',
+    'pos_proveedor', 'pos_api_clave', 'pos_cse_cx',
 ];
 /** Interruptores (se guardan como 1 o 0). */
 const CAMPOS_BOOL = [
@@ -651,6 +652,40 @@ admin_cabecera(['titulo' => 'Ajustes', 'activo' => 'ajustes.php']);
     fila('Páginas que recorre el análisis del sitio',
         'Se usa en el análisis SEO y en el de virus. Kaptor busca el mapa del sitio (siguiendo los índices y los .xml.gz) y recorre desde ahí, así que cubre también las páginas a las que no llega ningún enlace. Con <b>100</b> se cubre entero el sitio de casi cualquier negocio. Se puede subir hasta <b>' . Auditor::TOPE_PAGINAS . '</b> para tiendas y periódicos, a costa del tiempo: cada página es una descarga, así que mil páginas son del orden de diez minutos con la pestaña abierta. El análisis se reanuda solo entre llamadas y no se corta, pero si cierras la pestaña se queda a medias.',
         '<input type="number" name="seo_max_paginas" class="campo" min="' . Auditor::MIN_PAGINAS . '" max="' . Auditor::TOPE_PAGINAS . '" value="' . e((string) Auditor::topePaginas()) . '">');
+
+    ?>
+
+    <h3 style="margin:26px 0 4px">Análisis de palabras clave</h3>
+    <p class="pequeno suave" style="margin-bottom:16px">
+      Decide de dónde salen los resultados cuando se mide en qué puesto está una web.
+    </p>
+    <?php
+    $prov = (string) ($a['pos_proveedor'] ?? 'directo');
+    $opciones = '';
+    foreach (Posiciones::PROVEEDORES as $k => $n) {
+        $opciones .= '<option value="' . e($k) . '"' . ($prov === $k ? ' selected' : '') . '>' . e($n) . '</option>';
+    }
+    fila('De dónde salen los resultados',
+        'Preguntar directamente es gratis y no pide registro, pero <b>Google rechaza las búsquedas '
+        . 'que salen de un servidor</b>: contesta con un aviso de cookies, un captcha o una página '
+        . 'vacía que necesita JavaScript. Cuando eso pasa no se puede medir, y Kaptor lo dice en '
+        . 'vez de inventarse un «no aparece». Los otros tres son servicios que hacen la búsqueda '
+        . 'por ti y devuelven el Google real ya ordenado: es lo que usan por dentro todas las '
+        . 'herramientas de pago. <b>Serper.dev</b> regala 2.500 búsquedas y después cuesta unos '
+        . 'céntimos cada mil; <b>SerpApi</b> da 100 al mes; <b>Google Custom Search</b> es la API '
+        . 'oficial, 100 al día gratis, pero busca sobre un índice propio y puede no coincidir al '
+        . 'dedillo con google.com.',
+        '<select name="pos_proveedor" class="campo">' . $opciones . '</select>');
+
+    fila('Clave del servicio de búsqueda',
+        'La de Serper.dev, SerpApi o Google, según cuál hayas elegido arriba. Se guarda en tu base '
+        . 'de datos y nunca sale en los informes ni en las pruebas que se guardan.',
+        '<input type="text" name="pos_api_clave" class="campo" maxlength="190" autocomplete="off" spellcheck="false" value="' . e($a['pos_api_clave'] ?? '') . '">');
+
+    fila('Identificador del buscador (cx) <span class="suave pequeno">solo para Google Custom Search</span>',
+        'Se saca en <b>programmablesearchengine.google.com</b>: crea un buscador, márcalo para que '
+        . 'busque en toda la web y copia su ID.',
+        '<input type="text" name="pos_cse_cx" class="campo" maxlength="120" autocomplete="off" spellcheck="false" value="' . e($a['pos_cse_cx'] ?? '') . '" placeholder="a1b2c3d4e5f6g7h8i">');
 
     fila('Tiempo de espera por página', 'Segundos que se le dan a cada sitio antes de darlo por caído.',
         '<input type="number" name="auditor_timeout" class="campo" min="5" max="90" value="' . e((string) Ajustes::entero('auditor_timeout', 25, 5, 90)) . '">');

@@ -14,7 +14,7 @@ declare(strict_types=1);
 final class Esquema
 {
     /** Se sube de uno en uno cada vez que cambia la estructura. */
-    public const VERSION = 13;
+    public const VERSION = 14;
 
     /** Aplica los cambios pendientes. Se llama desde bootstrap.php. */
     public static function actualizar(): void
@@ -83,6 +83,10 @@ final class Esquema
             12 => static function (): void { self::textosCortos(); },
             // Analisis de palabras clave: en que puesto sale una web.
             13 => static function (): void { self::tablaPosiciones(); },
+            // De donde salieron los resultados de cada medicion.
+            14 => static function (): void {
+                self::columna('cr_posiciones', 'proveedor', "VARCHAR(20) NOT NULL DEFAULT 'directo' AFTER `motor`");
+            },
         ];
 
         $fallaron = [];
@@ -203,6 +207,7 @@ final class Esquema
               `consulta`    VARCHAR(190) NOT NULL,
               `dominio`     VARCHAR(190) NOT NULL,
               `motor`       VARCHAR(20) NOT NULL DEFAULT \'google\',
+              `proveedor`   VARCHAR(20) NOT NULL DEFAULT \'directo\',
               `pais`        CHAR(2) NOT NULL DEFAULT \'gt\',
               `idioma`      CHAR(2) NOT NULL DEFAULT \'es\',
               `dispositivo` VARCHAR(12) NOT NULL DEFAULT \'escritorio\',

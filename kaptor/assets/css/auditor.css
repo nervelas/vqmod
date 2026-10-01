@@ -682,3 +682,50 @@
   .pos-veredicto{padding:22px 16px}
   .pos-dl{grid-template-columns:repeat(2,1fr)}
 }
+
+/* --- Seguimiento de palabras clave ------------------------------------------ */
+.seg-resumen{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));
+  gap:12px;margin-bottom:22px;
+}
+.seg-dato{
+  border:1px solid var(--borde);border-radius:14px;background:var(--panel);
+  padding:14px 15px;min-width:0;
+}
+.seg-dato b{display:block;font-size:1.5rem;line-height:1.1;letter-spacing:-.02em}
+.seg-dato span{display:block;margin-top:4px;font-size:.76rem;color:var(--suave);line-height:1.3}
+.seg-dato.verde b{color:var(--verde,#22A06B)}
+
+.seg-barra{
+  display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;
+  margin-bottom:16px;
+}
+.seg-filtros,.seg-acciones{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.seg-filtros .activo{border-color:var(--oro);color:var(--oro);font-weight:700}
+.seg-acciones form{margin:0}
+.seg-cola{font-size:.8rem;color:var(--suave)}
+
+.seg-caja{padding:0;overflow:hidden}
+.seg-tabla td{vertical-align:middle}
+.seg-consulta{display:block;font-size:.92rem;line-height:1.35;overflow-wrap:anywhere}
+.seg-donde{display:block;font-size:.72rem;color:var(--suave);margin-top:2px}
+.seg-dominio{font-size:.82rem;overflow-wrap:anywhere}
+.seg-tabla a.pastilla{text-decoration:none}
+.seg-cambio{white-space:nowrap;font-size:.86rem;font-weight:700}
+.seg-cambio .sube{color:var(--verde,#22A06B)}
+.seg-cambio .baja{color:var(--rojo,#D64545)}
+.seg-error{
+  display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;
+  font-size:.7rem;background:color-mix(in srgb,var(--ambar,#C98A1A) 20%,transparent);
+  color:var(--ambar,#C98A1A);
+}
+.seg-tabla form{margin:0}
+.seg-vacio{text-align:center;padding:30px 20px;color:var(--suave)}
+.seg-vacio p{margin:0}
+.seg-alta{margin-top:26px}
+.seg-alta h2{font-size:1.15rem;margin:0 0 6px}
+
+@media (max-width:720px){
+  .seg-resumen{grid-template-columns:repeat(2,1fr)}
+  .seg-barra{flex-direction:column;align-items:stretch}
+}

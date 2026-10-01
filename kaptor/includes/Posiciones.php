@@ -61,6 +61,18 @@ final class Posiciones
     /** Tope duro: más allá del puesto 100 nadie recibe visitas. */
     public const MAX_PAGINAS = 10;
 
+    /**
+     * Resultados que se piden de una vez a los servicios con clave.
+     *
+     * Aquí está el ahorro grande. Raspando hay que pedir las páginas de diez
+     * en diez, como un navegador, así que mirar treinta puestos son tres
+     * peticiones. Serper y SerpApi, en cambio, devuelven hasta cien de un
+     * tirón, y cobran por CONSULTA, no por resultado: pedir cien cuesta lo
+     * mismo que pedir diez. Así, una palabra clave se mide con un solo
+     * crédito y además se ve mucho más hondo.
+     */
+    public const DE_UNA_VEZ = 100;
+
     /** Agentes de usuario, para poder medir también lo que se ve en el móvil. */
     private const AGENTES = [
         'escritorio' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
@@ -86,19 +98,64 @@ final class Posiciones
      *
      * @param array{
      *   consulta:string, dominio:string, motor?:string, pais?:string,
-     *   idioma?:string, dispositivo?:string, paginas?:int, exacta?:bool
+     *   idioma?:string, dispositivo?:string, paginas?:int, exacta?:bool,
+     *   proveedor?:string
      * } $p
      * @return array Medición lista para guardar y para enseñar.
      */
     public static function medir(array $p): array
     {
+        $dominio = self::normalizarDominio((string) ($p['dominio'] ?? ''), !empty($p['exacta']));
+        if ($dominio === '') {
+            return self::fallo('Escribe el dominio de la web, por ejemplo midominio.com.');
+        }
+
+        $r = self::medirVarios(['dominios' => [$dominio]] + $p);
+        $m = $r['medidas'][$dominio] ?? ['encontrado' => false];
+        unset($r['medidas'], $r['dominios']);
+
+        return array_merge($r, [
+            'dominio'     => $dominio,
+            'encontrado'  => !empty($m['encontrado']),
+            'posicion'    => $m['puesto']    ?? null,
+            'pagina'      => $m['pagina']    ?? null,
+            'en_pagina'   => $m['en_pagina'] ?? null,
+            'url_hallada' => $m['url']       ?? '',
+            'titulo'      => $m['titulo']    ?? '',
+            'ok'          => !empty($m['encontrado']) || ($r['resultados'] ?? []) !== [],
+        ]);
+    }
+
+    /**
+     * La misma búsqueda, pero midiendo VARIOS dominios a la vez.
+     *
+     * Aquí está el segundo ahorro, y es el que de verdad cambia las cuentas de
+     * quien lleva el SEO de varias empresas: una página de resultados trae a
+     * todo el mundo. Si tres clientes pelean por «colegio bilingüe guatemala»,
+     * eso es UNA búsqueda —un crédito— de la que salen las tres posiciones, no
+     * tres búsquedas. Y de paso quedan medidos los competidores.
+     *
+     * @param array{
+     *   consulta:string, dominios:string[], motor?:string, pais?:string,
+     *   idioma?:string, dispositivo?:string, paginas?:int, profundidad?:int,
+     *   exacta?:bool, proveedor?:string
+     * } $p
+     */
+    public static function medirVarios(array $p): array
+    {
         $consulta = trim((string) ($p['consulta'] ?? ''));
-        $dominio  = self::normalizarDominio((string) ($p['dominio'] ?? ''));
-
         if ($consulta === '') { return self::fallo('Escribe la palabra o frase que quieres medir.'); }
-        if ($dominio === '')  { return self::fallo('Escribe el dominio de la web, por ejemplo midominio.com.'); }
 
-        $motor  = (string) ($p['motor'] ?? 'google');
+        $exacta = !empty($p['exacta']);
+        $dominios = [];
+        foreach ((array) ($p['dominios'] ?? []) as $d) {
+            $n = self::normalizarDominio((string) $d, $exacta);
+            if ($n !== '') { $dominios[$n] = true; }
+        }
+        $dominios = array_keys($dominios);
+        if (!$dominios) { return self::fallo('No hay ningún dominio que medir.'); }
+
+        $motor = (string) ($p['motor'] ?? 'google');
         if (!isset(Buscador::motores()[$motor])) { $motor = 'google'; }
 
         $proveedor = (string) ($p['proveedor'] ?? Ajustes::obtener('pos_proveedor', 'directo'));
@@ -108,40 +165,54 @@ final class Posiciones
         // informe sería mentir sobre lo que se midió.
         if ($proveedor !== 'directo') { $motor = 'google'; }
 
-        $pais   = self::codigo((string) ($p['pais'] ?? ''), 'gt');
-        $idioma = self::codigo((string) ($p['idioma'] ?? ''), 'es');
+        $pais    = self::codigo((string) ($p['pais'] ?? ''), 'gt');
+        $idioma  = self::codigo((string) ($p['idioma'] ?? ''), 'es');
         $aparato = ($p['dispositivo'] ?? 'escritorio') === 'movil' ? 'movil' : 'escritorio';
         $agente  = self::AGENTES[$aparato];
 
-        $paginas = (int) ($p['paginas'] ?? self::PAGINAS);
-        $paginas = max(1, min($paginas, self::MAX_PAGINAS));
-        $exacta  = !empty($p['exacta']);   // la URL completa, no el dominio
+        // Hasta qué puesto se quiere mirar. Se acepta en páginas (como lo dice
+        // la gente) o en puestos sueltos.
+        $hondo = isset($p['profundidad'])
+            ? (int) $p['profundidad']
+            : ((int) ($p['paginas'] ?? self::PAGINAS)) * self::POR_PAGINA;
+        $hondo = max(self::POR_PAGINA, min($hondo, self::MAX_PAGINAS * self::POR_PAGINA));
 
-        $resultados = [];   // puesto global => ['url','titulo','pagina','en_pagina']
-        $peticiones = [];   // una por página pedida: la prueba de qué se pidió
-        $snapshots  = [];   // el HTML de cada página, para guardarlo aparte
-        $encontrado = null;
+        // Cuántos resultados caben en cada consulta. Raspando, diez, que es lo
+        // que da una página. Con un servicio de pago, hasta cien de un tirón,
+        // y como cobran por consulta eso divide el gasto por diez.
+        $porConsulta = $proveedor === 'directo' || $proveedor === 'cse'
+            ? self::POR_PAGINA
+            : self::DE_UNA_VEZ;
+        $consultas = (int) ceil($hondo / $porConsulta);
+
+        $resultados = [];
+        $peticiones = [];
+        $snapshots  = [];
         $error      = '';
+        $leido      = false;
 
-        $leido = false;   // ¿se llegó a leer ALGUNA lista de resultados?
+        /** @var array<string,array> dominio => lo que se encontró de él */
+        $medidas = [];
+        foreach ($dominios as $d) { $medidas[$d] = ['encontrado' => false]; }
+        $faltan = count($dominios);
 
-        for ($i = 0; $i < $paginas; $i++) {
+        for ($i = 0; $i < $consultas; $i++) {
             $r = self::pagina($proveedor, $motor, $consulta, $i, [
-                'pais' => $pais, 'idioma' => $idioma,
-                'agente' => $agente, 'dispositivo' => $aparato,
+                'pais' => $pais, 'idioma' => $idioma, 'agente' => $agente,
+                'dispositivo' => $aparato, 'por_consulta' => $porConsulta,
             ]);
 
             $peticiones[] = [
                 'consulta' => $i + 1,
-                'pagina'  => $i + 1,
-                'desde'   => count($resultados) + 1,
-                'hasta'   => count($resultados),
-                'url'     => $r['url'],
-                'codigo'  => $r['codigo'],
-                'bytes'   => $r['bytes'],
-                'ms'      => $r['ms'],
-                'bloqueo' => $r['bloqueo'],
-                'error'   => $r['error'],
+                'pagina'   => $i + 1,
+                'desde'    => count($resultados) + 1,
+                'hasta'    => count($resultados),
+                'url'      => $r['url'],
+                'codigo'   => $r['codigo'],
+                'bytes'    => $r['bytes'],
+                'ms'       => $r['ms'],
+                'bloqueo'  => $r['bloqueo'],
+                'error'    => $r['error'],
                 'diagnostico' => $r['diagnostico'],
             ];
 
@@ -160,26 +231,24 @@ final class Posiciones
                 break;
             }
 
-            $pagina = $r['resultados'];
-
             // Esta es la diferencia que lo cambia todo. Si el buscador contesta
             // pero no se le puede leer ni un resultado, lo honrado es decir que
             // NO SE PUDO MIRAR. Decir «no apareces» con cero resultados en la
             // mano es exactamente la clase de mentira por la que una
             // herramienta de estas no vale nada.
-            if (!$pagina) {
-                if (!$leido) {
-                    $error = 'No se pudo medir: ' . $r['diagnostico'] . '.';
-                }
+            if (!$r['resultados']) {
+                if (!$leido) { $error = 'No se pudo medir: ' . $r['diagnostico'] . '.'; }
                 break;
             }
             $leido = true;
 
-            foreach ($pagina as $res) {
+            foreach ($r['resultados'] as $res) {
+                if (count($resultados) >= $hondo) { break; }
+
                 // La página y el puesto dentro de ella NO son los de la
-                // petición: hay buscadores que entregan treinta resultados de
-                // una vez. La gente cuenta de diez en diez —«la segunda página
-                // de Google»— y es así como hay que decirlo, salga como salga.
+                // petición: hay buscadores que entregan treinta o cien
+                // resultados de una vez. La gente cuenta de diez en diez —«la
+                // segunda página de Google»— y es así como hay que decirlo.
                 $puesto = count($resultados) + 1;
                 $enPag  = (int) ceil($puesto / self::POR_PAGINA);
                 $fila = [
@@ -190,32 +259,34 @@ final class Posiciones
                     'titulo'    => $res['titulo'],
                     'nuestro'   => false,
                 ];
-                if ($encontrado === null && self::coincide($res['url'], $dominio, $exacta)) {
+
+                foreach ($dominios as $d) {
+                    if ($medidas[$d]['encontrado']) { continue; }
+                    if (!self::coincide($res['url'], $d, $exacta)) { continue; }
+                    $medidas[$d] = $fila + ['encontrado' => true];
                     $fila['nuestro'] = true;
-                    $encontrado = $fila;
+                    $faltan--;
                 }
+
                 $resultados[] = $fila;
             }
 
             $peticiones[count($peticiones) - 1]['hasta'] = count($resultados);
 
-            if ($encontrado !== null) { break; }
-            usleep(500000);   // un respiro entre páginas, para no parecer un robot
+            // Se para en cuanto están todos localizados: cada consulta de más
+            // es un crédito tirado.
+            if ($faltan === 0 || count($resultados) >= $hondo) { break; }
+            if ($proveedor === 'directo') { usleep(500000); }   // para no parecer un robot
         }
 
         return [
-            'ok'          => $encontrado !== null || ($error === '' && $resultados !== []),
-            'medible'     => $leido,          // ¿se llegó a leer la lista?
+            'ok'          => $leido,
+            'medible'     => $leido,
             'proveedor'   => $proveedor,
             'proveedor_nombre' => self::PROVEEDORES[$proveedor],
-            'encontrado'  => $encontrado !== null,
-            'posicion'    => $encontrado['puesto']    ?? null,
-            'pagina'      => $encontrado['pagina']    ?? null,
-            'en_pagina'   => $encontrado['en_pagina'] ?? null,
-            'url_hallada' => $encontrado['url']       ?? '',
-            'titulo'      => $encontrado['titulo']    ?? '',
             'consulta'    => $consulta,
-            'dominio'     => $dominio,
+            'dominios'    => $dominios,
+            'medidas'     => $medidas,
             'motor'       => $motor,
             'motor_nombre' => Buscador::motores()[$motor],
             'pais'        => $pais,
@@ -223,6 +294,7 @@ final class Posiciones
             'dispositivo' => $aparato,
             'agente'      => $agente,
             'exacta'      => $exacta,
+            'profundidad' => $hondo,
             'revisados'   => count($resultados),
             'paginas_vistas' => count($peticiones),
             'resultados'  => $resultados,
@@ -235,8 +307,16 @@ final class Posiciones
 
     private static function fallo(string $mensaje): array
     {
-        return ['ok' => false, 'medible' => false, 'encontrado' => false, 'error' => $mensaje,
-                'resultados' => [], 'peticiones' => [], 'snapshots' => []];
+        return [
+            'ok' => false, 'medible' => false, 'encontrado' => false, 'error' => $mensaje,
+            'resultados' => [], 'peticiones' => [], 'snapshots' => [], 'medidas' => [],
+            'dominios' => [], 'revisados' => 0, 'paginas_vistas' => 0,
+            'consulta' => '', 'dominio' => '', 'motor' => 'google', 'motor_nombre' => 'Google',
+            'proveedor' => 'directo', 'proveedor_nombre' => self::PROVEEDORES['directo'],
+            'pais' => 'gt', 'idioma' => 'es', 'dispositivo' => 'escritorio', 'agente' => '',
+            'exacta' => false, 'profundidad' => 0, 'posicion' => null, 'pagina' => null,
+            'en_pagina' => null, 'url_hallada' => '', 'titulo' => '', 'fecha' => date('Y-m-d H:i:s'),
+        ];
     }
 
     // =====================================================================
@@ -318,7 +398,14 @@ final class Posiciones
         $clave = trim((string) Ajustes::obtener('pos_api_clave', ''));
         $pais   = (string) ($op['pais'] ?? 'gt');
         $idioma = (string) ($op['idioma'] ?? 'es');
-        $desde  = $pagina * self::POR_PAGINA;
+
+        // Cuántos resultados caben en una consulta de este servicio. Google
+        // Custom Search no pasa de diez por mucho que se le pida, así que con
+        // él sigue habiendo que paginar.
+        $porConsulta = (int) ($op['por_consulta'] ?? self::POR_PAGINA);
+        if ($proveedor === 'cse') { $porConsulta = self::POR_PAGINA; }
+        $porConsulta = max(self::POR_PAGINA, min($porConsulta, self::DE_UNA_VEZ));
+        $desde  = $pagina * $porConsulta;
 
         $base = [
             'ok' => false, 'url' => '', 'codigo' => 0, 'crudo' => '', 'bytes' => 0,
@@ -344,14 +431,14 @@ final class Posiciones
                 $cabeceras[] = 'Content-Type: application/json';
                 $datos = json_encode([
                     'q' => $consulta, 'gl' => $pais, 'hl' => $idioma,
-                    'num' => self::POR_PAGINA, 'page' => $pagina + 1,
+                    'num' => $porConsulta, 'page' => $pagina + 1,
                 ]);
                 break;
 
             case 'serpapi':
                 $url = 'https://serpapi.com/search.json?' . http_build_query([
                     'engine' => 'google', 'q' => $consulta, 'gl' => $pais, 'hl' => $idioma,
-                    'num' => self::POR_PAGINA, 'start' => $desde, 'api_key' => $clave,
+                    'num' => $porConsulta, 'start' => $desde, 'api_key' => $clave,
                     'device' => ($op['dispositivo'] ?? '') === 'movil' ? 'mobile' : 'desktop',
                 ]);
                 break;
@@ -366,7 +453,7 @@ final class Posiciones
                 }
                 $url = 'https://www.googleapis.com/customsearch/v1?' . http_build_query([
                     'key' => $clave, 'cx' => $cx, 'q' => $consulta,
-                    'gl' => $pais, 'hl' => $idioma, 'num' => self::POR_PAGINA,
+                    'gl' => $pais, 'hl' => $idioma, 'num' => $porConsulta,
                     'start' => $desde + 1,
                 ]);
                 break;
@@ -658,10 +745,17 @@ final class Posiciones
      *
      * En modo exacto se conserva la ruta, porque ahí se mide una página.
      */
-    public static function normalizarDominio(string $entrada): string
+    public static function normalizarDominio(string $entrada, bool $exacta = false): string
     {
         $t = trim($entrada);
         if ($t === '') { return ''; }
+
+        // En modo exacto se mide UNA página, así que la ruta no se toca.
+        if ($exacta) {
+            return preg_match('~^https?://~i', $t) || str_contains($t, '/') || str_contains($t, '.')
+                ? rtrim($t, " \t\n\r")
+                : '';
+        }
 
         if (str_contains($t, '/') || str_contains($t, '://')) {
             $conProto = preg_match('~^https?://~i', $t) ? $t : 'https://' . $t;

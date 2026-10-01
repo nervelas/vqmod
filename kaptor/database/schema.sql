@@ -360,3 +360,38 @@ CREATE TABLE IF NOT EXISTS `cr_posiciones` (
   KEY `idx_usuario` (`usuario_id`,`id`),
   KEY `idx_clave` (`consulta`,`dominio`,`motor`,`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Palabras clave que se vigilan. Una fila por BUSQUEDA (consulta + pais +
+-- idioma + aparato): es lo que cuesta una consulta al buscador.
+CREATE TABLE IF NOT EXISTS `cr_claves` (
+  `id`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `usuario_id`  INT UNSIGNED NULL,
+  `consulta`    VARCHAR(190) NOT NULL,
+  `pais`        CHAR(2) NOT NULL DEFAULT 'gt',
+  `idioma`      CHAR(2) NOT NULL DEFAULT 'es',
+  `dispositivo` VARCHAR(12) NOT NULL DEFAULT 'escritorio',
+  `motor`       VARCHAR(20) NOT NULL DEFAULT 'google',
+  `profundidad` SMALLINT UNSIGNED NOT NULL DEFAULT 100,
+  `cada_dias`   SMALLINT UNSIGNED NOT NULL DEFAULT 7,
+  `activa`      TINYINT(1) NOT NULL DEFAULT 1,
+  `creditos`    INT UNSIGNED NOT NULL DEFAULT 0,
+  `ultimo_error` VARCHAR(255) NOT NULL DEFAULT '',
+  `medida_en`   DATETIME NULL,
+  `creado`      DATETIME NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_busqueda` (`consulta`,`pais`,`idioma`,`dispositivo`,`motor`),
+  KEY `idx_cola` (`activa`,`medida_en`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- A quien se le mira el puesto en cada busqueda. Varios dominios por busqueda
+-- salen de una sola consulta: la pagina de resultados los trae a todos.
+CREATE TABLE IF NOT EXISTS `cr_claves_dominios` (
+  `id`       INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `clave_id` INT UNSIGNED NOT NULL,
+  `dominio`  VARCHAR(190) NOT NULL,
+  `cliente`  VARCHAR(120) NOT NULL DEFAULT '',
+  `creado`   DATETIME NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_clave_dominio` (`clave_id`,`dominio`),
+  KEY `idx_cliente` (`cliente`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -53,6 +53,23 @@ BD::ejecutar(
      WHERE `estado` = \'ejecutando\' AND `inicio` < (NOW() - INTERVAL 30 MINUTE)'
 );
 
+// --- Seguimiento de palabras clave -----------------------------------------
+//
+// Va antes que las campañas y gasta poco: unas pocas búsquedas por pasada. Así
+// cien palabras se miden solas a lo largo del día sin que nadie tenga la
+// pestaña abierta, que es la única forma de llevar el SEO de varias empresas.
+try {
+    $r = Seguimiento::pasada();
+    if ($r['medidas'] > 0) {
+        printf("Palabras clave: %d búsquedas medidas · %d dominios · %d consultas gastadas\n",
+            $r['medidas'], $r['dominios'], $r['creditos']);
+        foreach ($r['lineas'] as $linea) { echo $linea, "\n"; }
+    }
+} catch (Throwable $e) {
+    error_log('Kaptor / cron palabras clave: ' . $e->getMessage());
+    echo 'Palabras clave: error ', $e->getMessage(), "\n";
+}
+
 // --- Campañas en marcha ----------------------------------------------------
 if (!Ajustes::activo('campanas_activas', true)) {
     exit("El módulo de campañas está desactivado.\n");

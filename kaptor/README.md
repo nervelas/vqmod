@@ -1,4 +1,4 @@
-# Kaptor 6.5
+# Kaptor 6.6
 
 Caja de herramientas para vender servicios web. Dos mitades:
 
@@ -203,7 +203,7 @@ grupos que se despliegan y tres entradas sueltas:
 | Grupo | Qué hay dentro |
 |---|---|
 | **Extraer** | Extractor de una web · Extractor de correos · Extractor de WhatsApp · Extractor de dominios |
-| **Analizar** | Auditor de sitios web · Análisis SEO · Análisis de palabras clave · Análisis de virus |
+| **Analizar** | Auditor de sitios web · Análisis SEO · Análisis de palabras clave · Seguimiento de posiciones · Análisis de virus |
 | **Campañas** (solo administrador) | Campañas de correo · Listas de contactos · Plantillas · Remitentes · Bajas y supresión |
 | | Mis extracciones · Panel · Salir |
 
@@ -466,6 +466,40 @@ su fecha. Es lo que se le enseña al cliente para cobrar el mes siguiente.
 
 Las pruebas viven en `storage/serp/`, fuera del alcance de la web, y se borran
 con la medición.
+
+## Seguimiento de posiciones
+
+El análisis de una palabra suelta sirve para una reunión. Esto es para llevar
+el SEO de varias empresas: **Analizar → Seguimiento de posiciones**. Se pegan
+las palabras —una por línea—, los dominios a vigilar y el nombre del cliente, y
+Kaptor las mide solo cada semana. El cron las va empujando, así que no hay que
+dejar ninguna pestaña abierta.
+
+El cuadro enseña, por cada palabra y cada dominio: el puesto de hoy, **si subió
+o bajó** desde la medición anterior y cuándo se midió. El puesto es un enlace a
+su prueba, con la lista entera y la página original del buscador.
+
+### Por qué llevar cien palabras no cuesta cien veces más
+
+Las tres decisiones que abaratan esto están en el diseño, no en la letra pequeña:
+
+1. **Lo que se guarda es LA BÚSQUEDA, no «la palabra de un cliente».** Una fila
+   por consulta + país + idioma + aparato. Si tres clientes pelean por «colegio
+   bilingüe guatemala», es **una** búsqueda, no tres.
+2. **Una página de resultados trae a todo el mundo.** De esa única consulta
+   salen las posiciones de todos los dominios que vigiles con ella. Añadir a la
+   competencia de tu cliente **no cuesta ni una consulta más** — y es el dato
+   que mejor se vende.
+3. **Se piden cien resultados de una vez.** Serper y SerpApi cobran por
+   consulta, no por resultado: pedir cien cuesta lo mismo que pedir diez, y se
+   ve diez veces más hondo. Una palabra = **una** consulta, no tres.
+
+Resultado: **cien palabras medidas una vez por semana son unas cuatrocientas
+consultas al mes.** Con las 2.500 gratis de Serper eso son más de seis meses;
+después, alrededor de medio dólar al mes. Y con «Preguntar directamente»
+(Bing, DuckDuckGo o Mojeek) no cuesta nada, solo va más despacio.
+
+El cuadro lleva la cuenta de las consultas gastadas, para que no haya sorpresas.
 
 ## Análisis SEO
 

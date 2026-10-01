@@ -14,7 +14,7 @@ declare(strict_types=1);
 final class Esquema
 {
     /** Se sube de uno en uno cada vez que cambia la estructura. */
-    public const VERSION = 14;
+    public const VERSION = 15;
 
     /** Aplica los cambios pendientes. Se llama desde bootstrap.php. */
     public static function actualizar(): void
@@ -87,6 +87,8 @@ final class Esquema
             14 => static function (): void {
                 self::columna('cr_posiciones', 'proveedor', "VARCHAR(20) NOT NULL DEFAULT 'directo' AFTER `motor`");
             },
+            // Seguimiento: palabras vigiladas y los dominios de cada una.
+            15 => static function (): void { self::tablasSeguimiento(); },
         ];
 
         $fallaron = [];
@@ -224,6 +226,53 @@ final class Esquema
               PRIMARY KEY (`id`),
               KEY `idx_usuario` (`usuario_id`, `id`),
               KEY `idx_clave` (`consulta`, `dominio`, `motor`, `id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+        );
+    }
+
+    /**
+     * Tablas del seguimiento de palabras clave.
+     *
+     * Son dos a propósito, y la separación es lo que abarata todo. `cr_claves`
+     * guarda LA BÚSQUEDA —consulta, país, idioma, aparato—, que es lo que
+     * cuesta dinero; `cr_claves_dominios` guarda a quién se le mira el puesto
+     * en esa búsqueda. Así, tres clientes que compiten por la misma palabra
+     * son tres filas en la segunda tabla y UNA sola consulta al buscador.
+     */
+    private static function tablasSeguimiento(): void
+    {
+        BD::ejecutar(
+            'CREATE TABLE IF NOT EXISTS `cr_claves` (
+              `id`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+              `usuario_id`  INT UNSIGNED NULL,
+              `consulta`    VARCHAR(190) NOT NULL,
+              `pais`        CHAR(2) NOT NULL DEFAULT \'gt\',
+              `idioma`      CHAR(2) NOT NULL DEFAULT \'es\',
+              `dispositivo` VARCHAR(12) NOT NULL DEFAULT \'escritorio\',
+              `motor`       VARCHAR(20) NOT NULL DEFAULT \'google\',
+              `profundidad` SMALLINT UNSIGNED NOT NULL DEFAULT 100,
+              `cada_dias`   SMALLINT UNSIGNED NOT NULL DEFAULT 7,
+              `activa`      TINYINT(1) NOT NULL DEFAULT 1,
+              `creditos`    INT UNSIGNED NOT NULL DEFAULT 0,
+              `ultimo_error` VARCHAR(255) NOT NULL DEFAULT \'\',
+              `medida_en`   DATETIME NULL,
+              `creado`      DATETIME NOT NULL,
+              PRIMARY KEY (`id`),
+              UNIQUE KEY `uq_busqueda` (`consulta`, `pais`, `idioma`, `dispositivo`, `motor`),
+              KEY `idx_cola` (`activa`, `medida_en`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+        );
+
+        BD::ejecutar(
+            'CREATE TABLE IF NOT EXISTS `cr_claves_dominios` (
+              `id`       INT UNSIGNED NOT NULL AUTO_INCREMENT,
+              `clave_id` INT UNSIGNED NOT NULL,
+              `dominio`  VARCHAR(190) NOT NULL,
+              `cliente`  VARCHAR(120) NOT NULL DEFAULT \'\',
+              `creado`   DATETIME NOT NULL,
+              PRIMARY KEY (`id`),
+              UNIQUE KEY `uq_clave_dominio` (`clave_id`, `dominio`),
+              KEY `idx_cliente` (`cliente`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
         );
     }

@@ -729,3 +729,22 @@
   .seg-resumen{grid-template-columns:repeat(2,1fr)}
   .seg-barra{flex-direction:column;align-items:stretch}
 }
+
+/* --- Palabras clave del sitio ------------------------------------------------ */
+.cl-acciones{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 24px}
+.cl-caja{margin-bottom:24px}
+.cl-caja h2{font-size:1.2rem;margin:0 0 6px}
+.cl-tabla td,.cl-paginas td{vertical-align:top}
+.cl-si{color:var(--verde,#22A06B);font-weight:700;font-size:.84rem}
+.cl-medio{color:var(--ambar,#C98A1A);font-weight:700;font-size:.84rem}
+.cl-no{color:var(--rojo,#D64545);font-weight:700;font-size:.84rem}
+
+.cl-pagina{max-width:34ch}
+.cl-url{display:block;font-size:.78rem;overflow-wrap:anywhere;line-height:1.4}
+.cl-titulo{display:block;margin-top:3px;font-size:.88rem;line-height:1.35}
+.cl-h1{display:block;margin-top:2px;font-size:.74rem;color:var(--suave);line-height:1.35}
+.cl-origen{display:block;margin-top:6px;font-size:.72rem;color:var(--suave)}
+.cl-temas{font-size:.82rem;line-height:1.45;overflow-wrap:anywhere}
+.cl-paginas .claves-nube{gap:5px}
+.cl-paginas .claves-nube li{font-size:.78rem;padding:3px 9px}
+.cl-limite{margin-bottom:24px}

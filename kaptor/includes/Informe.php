@@ -190,7 +190,7 @@ final class Informe
     public static function notaDeModo(string $modo, int $global, array $areas): int
     {
         return match ($modo) {
-            'seo'     => (int) ($areas['seo'] ?? $global),
+            'seo', 'claves' => (int) ($areas['seo'] ?? $global),
             'malware' => (int) ($areas['malware'] ?? $global),
             default   => $global,
         };
@@ -201,6 +201,7 @@ final class Informe
     {
         return match ($modo) {
             'seo'     => 'Nota de SEO',
+            'claves'  => 'Nota de SEO',
             'malware' => 'Seguridad del sitio',
             default   => 'Nota global',
         };
@@ -216,7 +217,7 @@ final class Informe
     public static function areasDeModo(string $modo): array
     {
         return match ($modo) {
-            'seo'     => ['seo'],
+            'seo', 'claves' => ['seo'],
             'malware' => ['malware'],
             default   => [],
         };

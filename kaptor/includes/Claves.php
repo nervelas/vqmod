@@ -106,19 +106,20 @@ final class Claves
      */
     public static function declaradas(Pagina $p): array
     {
-        $lista  = [];
-        $origen = [];
+        // Cada palabra se anota CON la etiqueta de la que salió. Decir solo
+        // «este sitio declara estas palabras» no basta: para poder enseñarlo
+        // sin que nadie tenga que fiarse, hay que poder señalar la etiqueta
+        // exacta de donde se leyó cada una.
+        $crudas = [];   // [texto, origen]
 
         $meta = $p->meta('keywords');
         if (trim($meta) !== '') {
-            $n = self::trocear($meta);
-            if ($n) { $lista = array_merge($lista, $n); $origen[] = 'meta keywords'; }
+            foreach (self::trocear($meta) as $k) { $crudas[] = [$k, 'meta keywords']; }
         }
 
         $noticias = $p->meta('news_keywords');
         if (trim($noticias) !== '') {
-            $n = self::trocear($noticias);
-            if ($n) { $lista = array_merge($lista, $n); $origen[] = 'news_keywords'; }
+            foreach (self::trocear($noticias) as $k) { $crudas[] = [$k, 'news_keywords']; }
         }
 
         // Open Graph de artículo: cada etiqueta va en su propia <meta>, así que
@@ -127,29 +128,49 @@ final class Claves
             '~<meta[^>]+property\s*=\s*["\']article:tag["\'][^>]*content\s*=\s*["\']([^"\']+)~i',
             $p->html(), $m
         )) {
-            $n = self::trocear(implode(',', $m[1]));
-            if ($n) { $lista = array_merge($lista, $n); $origen[] = 'article:tag'; }
+            foreach (self::trocear(implode(',', $m[1])) as $k) { $crudas[] = [$k, 'article:tag']; }
         }
 
-        foreach ($p->jsonLd() as $bloque) {
-            $n = self::clavesDeJson($bloque);
-            if ($n) {
-                $lista = array_merge($lista, $n);
-                if (!in_array('datos estructurados', $origen, true)) {
-                    $origen[] = 'datos estructurados';
+        // Las etiquetas de WordPress, que es donde el 90 % de los sitios de
+        // verdad tienen puestas sus palabras clave. Salen como enlaces con
+        // rel="tag", y son tan «configuradas» como la etiqueta keywords: las
+        // escribió una persona a mano.
+        if (preg_match_all(
+            '~<a[^>]+rel\s*=\s*["\'][^"\']*\btag\b[^"\']*["\'][^>]*>(.*?)</a>~is',
+            $p->html(), $mt
+        )) {
+            foreach ($mt[1] as $txt) {
+                $txt = trim(html_entity_decode(strip_tags($txt), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                if ($txt !== '' && mb_strlen($txt, 'UTF-8') <= 60) {
+                    $crudas[] = [$txt, 'etiquetas del gestor'];
                 }
             }
         }
 
+        foreach ($p->jsonLd() as $bloque) {
+            foreach (self::clavesDeJson($bloque) as $k) { $crudas[] = [$k, 'datos estructurados']; }
+        }
+
         // Sin repetir, respetando cómo las escribió el dueño la primera vez.
-        $vistas = [];
-        $limpia = [];
-        foreach ($lista as $k) {
-            $clave = self::normalizar($k);
-            if ($clave === '' || isset($vistas[$clave])) { continue; }
-            $vistas[$clave] = true;
-            $limpia[] = $k;
-            if (count($limpia) >= 40) { break; }
+        // Una misma palabra puede venir de dos sitios: se guardan los dos.
+        $limpia  = [];
+        $fuentes = [];
+        $origen  = [];
+        $indice  = [];
+
+        foreach ($crudas as [$texto, $de]) {
+            $clave = self::normalizar($texto);
+            if ($clave === '') { continue; }
+
+            if (!isset($indice[$clave])) {
+                if (count($limpia) >= 40) { continue; }
+                $indice[$clave] = $texto;
+                $limpia[] = $texto;
+                $fuentes[$texto] = [];
+            }
+            $cual = $indice[$clave];
+            if (!in_array($de, $fuentes[$cual], true)) { $fuentes[$cual][] = $de; }
+            if (!in_array($de, $origen, true)) { $origen[] = $de; }
         }
 
         // ¿Cuáles de esas palabras aparecen en la página? Se mira sobre el
@@ -166,7 +187,7 @@ final class Claves
             if ($n !== '' && str_contains($cuerpo, ' ' . $n . ' ')) { $usadas[] = $k; }
         }
 
-        return ['lista' => $limpia, 'origen' => $origen, 'usadas' => $usadas];
+        return ['lista' => $limpia, 'origen' => $origen, 'usadas' => $usadas, 'fuentes' => $fuentes];
     }
 
     /** Separa "uno, dos | tres" en sus términos. */

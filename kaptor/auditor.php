@@ -42,6 +42,15 @@ $copia = [
         'boton'   => 'Analizar el SEO',
         'paso1'   => '¿Qué sitio quieres analizar?',
     ],
+    'claves' => [
+        'activo'  => 'palabras',
+        'titulo'  => 'Palabras clave del sitio',
+        'etiqueta' => 'Lo que el sitio tiene puesto',
+        'h1'      => 'Palabras clave del sitio',
+        'sub'     => 'Escribe el dominio y Kaptor lee, página por página, las palabras clave que tiene configuradas.',
+        'boton'   => 'Leer las palabras clave',
+        'paso1'   => '¿De qué sitio quieres leer las palabras clave?',
+    ],
     'malware' => [
         'activo'  => 'malware',
         'titulo'  => 'Buscar virus',
@@ -167,7 +176,7 @@ cr_cabecera([
               </div>
               <div class="aud-botones">
                 <?php if ($a['estado'] === 'listo'): ?>
-                  <a class="btn btn-fino" href="<?= e(cr_url('informe.php?id=' . (int) $a['id'])) ?>">Ver informe</a>
+                  <a class="btn btn-fino" href="<?= e(cr_url(($modo === 'claves' ? 'claves.php?id=' : 'informe.php?id=') . (int) $a['id'])) ?>"><?= $modo === 'claves' ? 'Ver las palabras' : 'Ver informe' ?></a>
                 <?php else: ?>
                   <span class="aud-estado"><?= e($a['estado'] === 'error' ? 'No se pudo' : 'Sin terminar') ?></span>
                 <?php endif; ?>

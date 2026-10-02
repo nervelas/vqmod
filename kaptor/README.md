@@ -1,4 +1,4 @@
-# Kaptor 6.6
+# Kaptor 6.7
 
 Caja de herramientas para vender servicios web. Dos mitades:
 
@@ -203,7 +203,7 @@ grupos que se despliegan y tres entradas sueltas:
 | Grupo | Qué hay dentro |
 |---|---|
 | **Extraer** | Extractor de una web · Extractor de correos · Extractor de WhatsApp · Extractor de dominios |
-| **Analizar** | Auditor de sitios web · Análisis SEO · Análisis de palabras clave · Seguimiento de posiciones · Análisis de virus |
+| **Analizar** | Auditor de sitios web · Análisis SEO · Palabras clave del sitio · Análisis de palabras clave · Seguimiento de posiciones · Análisis de virus |
 | **Campañas** (solo administrador) | Campañas de correo · Listas de contactos · Plantillas · Remitentes · Bajas y supresión |
 | | Mis extracciones · Panel · Salir |
 
@@ -466,6 +466,44 @@ su fecha. Es lo que se le enseña al cliente para cobrar el mes siguiente.
 
 Las pruebas viven en `storage/serp/`, fuera del alcance de la web, y se borran
 con la medición.
+
+## Palabras clave del sitio
+
+**Analizar → Palabras clave del sitio.** Se escribe el dominio y Kaptor recorre
+el sitio entero leyendo, página por página, las palabras clave que tiene
+configuradas. Es el modo más corto del motor: no mide velocidad, no comprueba
+enlaces y no llama a Google, así que un sitio de cien páginas se lee en un
+minuto.
+
+### Qué se lee, y de dónde exactamente
+
+De cada palabra se dice **la etiqueta de la que salió**, no «el sitio declara
+esto»:
+
+| Fuente | Qué es |
+|---|---|
+| `<meta name="keywords">` | La de toda la vida |
+| `news_keywords` | La variante de los medios |
+| `article:tag` (Open Graph) | Las etiquetas del artículo |
+| **Etiquetas del gestor** (`rel="tag"`) | Las de WordPress, que es donde la mayoría de sitios las tienen de verdad |
+| Datos estructurados | El campo `keywords` del JSON-LD |
+
+Si una palabra está en dos sitios, salen los dos. Y se dice si **el texto de
+esa página la menciona** o no: declarar «cerrajería» y no nombrarla nunca no
+posiciona nada, y ese desajuste es lo que se le enseña al cliente.
+
+Debajo va la tabla **página por página** —dirección, título, H1, lo que declara
+y de qué habla su texto— y todo se descarga en CSV, una fila por palabra y
+página, lista para ordenar en una hoja de cálculo.
+
+### Lo que no se puede leer, y se dice
+
+La «palabra clave objetivo» que se escribe en **Yoast o Rank Math se guarda en
+la base de datos de ese WordPress y no sale en el código de la página**. Nadie
+que mire el sitio desde fuera puede leerla —ni Kaptor ni ninguna otra
+herramienta—, así que aquí no se inventa: se dice en el informe. Lo que sí
+está escrito en el código es todo lo de arriba; y lo que de verdad decide el
+posicionamiento (título, H1 y texto) sale en la misma pantalla.
 
 ## Seguimiento de posiciones
 

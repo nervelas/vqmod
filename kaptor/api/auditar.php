@@ -163,7 +163,10 @@ switch ($accion) {
                 'error'    => (string) $e['error'],
                 'papel'    => (string) $e['papel'],
                 'lote'     => (string) $e['lote'],
-                'informe'  => cr_url('informe.php?id=' . (int) $e['id']),
+                // El modo «claves» tiene su propio informe: lo que interesa ahí
+                // es la tabla página a página, no la nota ni el plan.
+                'informe'  => cr_url((($e['modo'] ?? '') === 'claves' ? 'claves.php?id=' : 'informe.php?id=') . (int) $e['id']),
+                'informe_texto' => ($e['modo'] ?? '') === 'claves' ? 'Ver las palabras' : 'Ver informe',
             ];
         }
 

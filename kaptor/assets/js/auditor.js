@@ -129,7 +129,7 @@
       var ver = document.createElement('a');
       ver.className = 'btn btn-fino';
       ver.href = a.informe;
-      ver.textContent = 'Ver informe';
+      ver.textContent = a.informe_texto || 'Ver informe';
       botones.appendChild(ver);
     }
 

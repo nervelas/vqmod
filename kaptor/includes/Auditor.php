@@ -24,13 +24,22 @@ final class Auditor
      * profundidades, en vez de tres programas distintos, es lo que mantiene
      * esto manejable.
      */
-    public const MODOS = ['completo', 'seo', 'malware'];
+    public const MODOS = ['completo', 'seo', 'malware', 'claves'];
 
-    /** Orden de las fases de cada modo. La última calcula la nota y cierra. */
+    /**
+     * Orden de las fases de cada modo. La última calcula la nota y cierra.
+     *
+     * «claves» es el más corto a propósito: abre la portada, busca el mapa del
+     * sitio y recorre las páginas. Nada más. No mide velocidad, no comprueba
+     * enlaces y no llama a Google, porque para leer las palabras clave que un
+     * sitio tiene puestas no hace falta nada de eso, y así un sitio de cien
+     * páginas se lee en un minuto en vez de en diez.
+     */
     public const FASES_POR_MODO = [
         'completo' => ['portada', 'archivos', 'recursos', 'enlaces', 'malware', 'psi', 'cerrar'],
         'seo'      => ['portada', 'archivos', 'rastreo', 'vinculos', 'recursos', 'psi', 'cerrar'],
         'malware'  => ['portada', 'archivos', 'rastreo', 'codigo', 'malware', 'cerrar'],
+        'claves'   => ['portada', 'archivos', 'rastreo', 'cerrar'],
     ];
 
     /** Fases del modo completo, que es el de siempre. */
@@ -963,12 +972,18 @@ final class Auditor
         // Las palabras clave se resumen a una sola lista del sitio y se borran
         // de cada página: en un sitio de doscientas páginas, guardarlas una a
         // una era la mitad de la fila y no se mira nunca así.
+        //
+        // Salvo en el modo «claves», claro: ahí el detalle página a página ES
+        // el informe, y tirarlo sería tirar justo lo que se pidió.
         $resumenClaves = Seo::clavesDe($datos);
         if ($resumenClaves !== null) { $guardar['claves'] = $resumenClaves; }
-        unset($guardar['claves_portada']);
-        if (isset($guardar['paginas']) && is_array($guardar['paginas'])) {
-            foreach ($guardar['paginas'] as $i => $_) {
-                unset($guardar['paginas'][$i]['claves'], $guardar['paginas'][$i]['claves_meta']);
+
+        if ($modo !== 'claves') {
+            unset($guardar['claves_portada']);
+            if (isset($guardar['paginas']) && is_array($guardar['paginas'])) {
+                foreach ($guardar['paginas'] as $i => $_) {
+                    unset($guardar['paginas'][$i]['claves'], $guardar['paginas'][$i]['claves_meta']);
+                }
             }
         }
 

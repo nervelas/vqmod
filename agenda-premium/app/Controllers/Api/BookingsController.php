@@ -8,6 +8,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Tz;
 use App\Services\BookingService;
+use App\Services\EventRepository;
 
 /** GET /api/v1/bookings, /bookings/{id}; POST /bookings y /bookings/{id}/cancel. */
 final class BookingsController extends ApiController
@@ -74,6 +75,9 @@ final class BookingsController extends ApiController
         $eventId = $this->bodyInt($body, 'event_id');
         if ($eventId === null || $eventId < 1) {
             throw new ApiError('Indica el «event_id» del evento que quieres reservar.', 'validation', 422);
+        }
+        if (EventRepository::find($eventId) === null) {
+            throw new ApiError('No encontramos ese evento.', 'not_found', 404);
         }
         $start = $this->bodyStr($body, 'start', 40);
         if (!preg_match('/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2})?(\.\d{1,6})?(Z|[+-]\d{2}:?\d{2})$/', $start)) {

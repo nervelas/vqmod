@@ -164,7 +164,8 @@
     overlay.hidden = true;
     d.body.classList.remove('cmdk-open');
     if (ctrl) { ctrl.abort(); }
-    if (lastFocus && lastFocus.focus) { try { lastFocus.focus(); } catch (e) { /* nada */ } }
+    input.blur();
+    if (lastFocus && lastFocus !== d.body && lastFocus.focus) { try { lastFocus.focus(); } catch (e) { /* nada */ } }
   }
 
   function local(q) {

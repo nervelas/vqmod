@@ -4,6 +4,7 @@ declare(strict_types=1);
 require __DIR__ . '/../lib/T.php';
 T::boot('sb2_prof');
 
+use App\Core\Clock;
 use App\Core\Db;
 use App\Core\Settings;
 use App\Services\ProfessionPresets;
@@ -101,6 +102,45 @@ Db::exec("UPDATE workflows SET template = 'Texto editado por el negocio' WHERE t
 ProfessionService::apply('veterinario', false);
 T::eq('Texto editado por el negocio', Db::val("SELECT template FROM workflows WHERE trigger_key = 'booking.no_show'"), 'un flujo editado no se pisa');
 T::eq(9, (int) Db::val('SELECT COUNT(*) FROM workflows'), 'sigue habiendo 9 flujos');
+
+T::section('Los flujos funcionan con el motor real (WorkflowService)');
+foreach (['workflow_runs', 'payments', 'bookings', 'custom_fields', 'workflows', 'event_hosts', 'event_resources', 'event_types'] as $tbl) {
+    Db::pdo()->exec("DELETE FROM `$tbl`");
+}
+ProfessionService::apply('medico', false);
+$event = \App\Services\EventRepository::findBySlug('control-seguimiento-medico');
+$slot = \App\Services\AvailabilityService::next($event, (int) $event['default_duration']);
+T::ok($slot !== null, 'el evento del preset tiene horarios libres');
+$ans = [];
+foreach ($event['fields'] as $f) {
+    if ((int) $f['required'] === 1) {
+        $ans[(int) $f['id']] = $f['options'] ? preg_split('/\R/', (string) $f['options'])[0] : 'Respuesta de prueba';
+    }
+}
+$res = \App\Services\BookingService::create(['answers' => $ans, 'event_id' => (int) $event['id'], 'start' => $slot['start'], 'name' => 'Rosa Méndez', 'email' => 'rosa@example.test', 'phone' => '55557777', 'created_via' => 'admin']);
+$bid = (int) $res['booking']['id'];
+$runs = Db::all('SELECT w.trigger_key, w.offset_minutes, w.action, w.recipient, r.scheduled_at, r.status FROM workflow_runs r JOIN workflows w ON w.id = r.workflow_id WHERE r.booking_id = ?', [$bid]);
+$by = static fn (string $trig, int $off = 0) => array_values(array_filter($runs, static fn ($r) => $r['trigger_key'] === $trig && (int) $r['offset_minutes'] === $off));
+T::eq(2, count($by('booking.created')), 'al crear: confirmación al invitado y aviso al anfitrión');
+T::eq(1, count($by('booking.before_start', 1440)), 'recordatorio de 24 h programado');
+T::eq(1, count($by('booking.before_start', 120)), 'recordatorio de 2 h programado');
+T::eq(1, count($by('booking.after_end', 120)), 'solicitud de reseña programada');
+T::eq(gmdate('Y-m-d H:i:s', strtotime($slot['start'] . ' UTC') - 1440 * 60), $by('booking.before_start', 1440)[0]['scheduled_at'], 'el recordatorio de 24 h cae exactamente 24 h antes');
+Db::pdo()->exec('DELETE FROM email_queue');
+\App\Services\WorkflowService::runDue(50);
+$mails = Db::all('SELECT to_email, subject, body_text FROM email_queue ORDER BY id');
+T::ok(count($mails) >= 1 && str_contains($mails[0]['subject'], 'control y seguimiento') === false && str_contains((string) $mails[0]['body_text'], 'Rosa Méndez'), 'la confirmación sale con el nombre de la persona');
+T::ok(!str_contains(implode(' ', array_column($mails, 'body_text')), '{'), 'sin variables sin resolver en los correos');
+Clock::set(strtotime($slot['start'] . ' UTC') - 1440 * 60 + 60);
+\App\Services\WorkflowService::runDue(50);
+$wa = Db::one("SELECT phone, body FROM message_queue WHERE booking_id = ? ORDER BY id DESC LIMIT 1", [$bid]);
+T::ok($wa !== null && $wa['phone'] === '50255557777' && str_contains($wa['body'], 'mañana') && str_contains($wa['body'], 'Rosa Méndez') && !str_contains($wa['body'], '{'), 'recordatorio de WhatsApp de un toque en la cola, con datos reales');
+Clock::set(strtotime($slot['start'] . ' UTC') - 100 * 60);
+\App\Services\WorkflowService::runDue(50);
+T::ok(str_contains((string) Db::val('SELECT body FROM message_queue WHERE booking_id = ? ORDER BY id DESC LIMIT 1', [$bid]), 'es hoy'), 'recordatorio de 2 h en la cola');
+\App\Services\BookingService::cancel($bid, 'Prueba', ['type' => 'user', 'label' => 'Prueba']);
+T::eq(0, (int) Db::val("SELECT COUNT(*) FROM workflow_runs WHERE booking_id = ? AND status = 'pending' AND scheduled_at > ?", [$bid, Clock::utc()]), 'al cancelar se anulan los recordatorios pendientes');
+Clock::set(null);
 
 T::section('Profesión desconocida');
 $r = ProfessionService::apply('astronauta', false);

@@ -44,9 +44,10 @@ if (preg_match('#^/rec/(\w+)$#', $path, $m)) {
 if (preg_match('#^/wa/(\d+)/messages$#', $path, $m)) {
     $n = sa_count($dir, 'wa');
     sa_log($dir, 'wa', ['n' => $n, 'headers' => $headers, 'body' => $body, 'path' => $path]);
-    $fail = (int) ($q['fail'] ?? 0);
+    // Comportamiento configurable desde la prueba con los archivos wa_fail (n.º de fallos iniciales) y wa_mode
+    $fail = (int) @file_get_contents($dir . '/wa_fail');
     header('Content-Type: application/json');
-    if (($q['mode'] ?? '') === 'badtoken') {
+    if (trim((string) @file_get_contents($dir . '/wa_mode')) === 'badtoken') {
         http_response_code(401);
         echo json_encode(['error' => ['message' => 'Invalid OAuth access token', 'code' => 190]]);
     } elseif ($n <= $fail) {

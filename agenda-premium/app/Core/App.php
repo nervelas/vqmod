@@ -66,7 +66,7 @@ final class App
         if ($isApi) {
             $auth = ApiAuth::authenticate($req, (string) $opts['api']);
             if (!$auth['ok']) {
-                return Response::json(['error' => $auth['error']], (int) $auth['status']);
+                return Response::json(['error' => $auth['error'], 'code' => [401 => 'unauthorized', 403 => 'forbidden', 429 => 'rate_limited'][(int) $auth['status']] ?? 'error'], (int) $auth['status']);
             }
             $req->server['__api_key'] = $auth['key'];
         }

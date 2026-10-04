@@ -153,7 +153,7 @@ body.cmdk-open { overflow: hidden; }
 .cal-actions .btn { width: 100%; justify-content: center; }
 .cal-scroll { overflow: auto; max-height: calc(100vh - 17rem); min-height: 24rem; position: relative; }
 .cal-grid { min-width: 100%; }
-.cal-grid.cal-cols-7 { min-width: 52rem; }
+.cal-grid.cal-cols-7 { min-width: 42rem; }
 .cal-head { position: sticky; top: 0; z-index: 6; display: grid; grid-template-columns: 4.6rem repeat(var(--n, 1), minmax(0, 1fr)); background: var(--surface); border-bottom: 1px solid var(--line-2); }
 .cal-cols-1 { --n: 1; } .cal-cols-7 { --n: 7; }
 .cal-corner { border-right: 1px solid var(--line); }
@@ -180,7 +180,7 @@ body.cmdk-open { overflow: hidden; }
 .cal-ev.is-dragging { z-index: 8; opacity: 0.88; cursor: grabbing; box-shadow: var(--shadow); transition: none; }
 .cal-ev.is-dragging::after { content: attr(data-drop); position: absolute; right: 0.3rem; bottom: 0.2rem; font: 700 0.7rem var(--font-mono); color: var(--gold-3); }
 .cal-ev.is-short { flex-direction: row; align-items: center; gap: 0.4rem; padding-block: 0; }
-.cal-ev-time { font-size: 0.7rem; color: var(--text-2); }
+.cal-ev-time { white-space: nowrap; flex: none; font-size: 0.7rem; color: var(--text-2); }
 .cal-ev-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cal-ev-sub { font-weight: 400; font-size: 0.72rem; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cal-ev.st-pending, .cal-chip.st-pending { border-style: dashed; background: color-mix(in srgb, var(--c, var(--gold-2)) 10%, var(--surface-2)); }

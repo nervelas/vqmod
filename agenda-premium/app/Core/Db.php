@@ -31,6 +31,7 @@ final class Db
         ]);
         $pdo->exec("SET time_zone = '+00:00'");
         $pdo->exec("SET NAMES utf8mb4");
+        $pdo->exec('SET SESSION innodb_lock_wait_timeout = 15');
         if ($cfg !== null && self::$pdo === null) {
             self::$pdo = $pdo;
         }

@@ -1,0 +1,15 @@
+CRÉDITOS · Agenda Premium
+=========================
+Recurso                                   Autor / fuente                                   Licencia               Ubicación
+----------------------------------------  -----------------------------------------------  ---------------------  ---------------------------------------
+Fuente Fraunces (woff2)                   The Fraunces Project Authors · Undercase Type    SIL OFL 1.1            assets/fonts/fraunces-*.woff2
+Fuente Manrope (woff2)                    The Manrope Project Authors · Mikhail Sharanda   SIL OFL 1.1            assets/fonts/manrope-*.woff2
+Fuente Space Mono (woff2)                 The Space Mono Project Authors · Colophon Foundry SIL OFL 1.1           assets/fonts/space-mono-*.woff2
+qrcode-generator 2.0.4 (JavaScript)       Kazuhiko Arase                                   MIT                    assets/vendor/qrcode-generator/qrcode.js
+Iconos (sprite SVG)                       Original de este proyecto                        Propia (del producto)  assets/img/icons.svg
+Patrones guilloché y rosetas              Original: generados con fórmulas propias         Propia (del producto)  app/Core/Guilloche.php, assets/img/guilloche-*.svg
+Escenas ilustradas por profesión (SVG)    Original de este proyecto                        Propia (del producto)  assets/img/scenes/*.svg
+Emblema, favicon e iconos de la app       Original de este proyecto                        Propia (del producto)  assets/img/favicon.svg, icon-*.png
+
+Fotografías: este paquete NO incluye fotografías de terceros. Las composiciones SVG ilustradas sustituyen a las fotografías
+de profesionales y consultorios; el administrador puede subir las suyas desde el panel (Marca y ajustes / Anfitriones).

@@ -88,7 +88,35 @@ final class Settings
             'ics_cache_minutes' => '30',
             'api_rate_per_minute' => '60',
             'installed_version' => '1.0.0',
+            // Panel de ajustes (Admin4)
+            'backup_keep' => '7',
+            'last_backup_at' => '',
+            'onboarding_step' => '1',
         ];
+    }
+
+    /** Claves cuyo valor se guarda cifrado y nunca se muestra de nuevo. */
+    public const SECRET_KEYS = ['smtp_pass', 'wa_api_token', 'captcha_secret'];
+
+    /** Guarda un secreto cifrado (cadena vacía lo borra). */
+    public static function setSecret(string $key, string $plain): void
+    {
+        self::set($key, $plain === '' ? '' : Crypto::encrypt($plain));
+    }
+
+    /** Secreto descifrado ('' si no hay o no se puede descifrar). */
+    public static function secret(string $key): string
+    {
+        $raw = (string) self::get($key, '');
+        if ($raw === '') {
+            return '';
+        }
+        return Crypto::decrypt($raw) ?? '';
+    }
+
+    public static function hasSecret(string $key): bool
+    {
+        return (string) self::get($key, '') !== '';
     }
 
     private static function load(): array

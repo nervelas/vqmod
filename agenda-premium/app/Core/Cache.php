@@ -49,7 +49,7 @@ final class Cache
     /** Invalida toda la caché de disponibilidad (cualquier reserva/horario/ausencia la cambia). */
     public static function bumpAvailability(): void
     {
-        Settings::set('avail_version', (string) (microtime(true) * 1000 | 0));
+        Settings::set('avail_version', (string) (int) round(microtime(true) * 1000));
     }
 
     public static function availabilityVersion(): string

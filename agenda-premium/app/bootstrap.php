@@ -38,3 +38,10 @@ set_error_handler(static function (int $no, string $str, string $file, int $line
     \App\Core\Logger::error('PHP[' . $no . '] ' . $str . ' @ ' . str_replace(APP_ROOT, '', $file) . ':' . $line);
     return true;
 });
+
+register_shutdown_function(static function (): void {
+    $e = error_get_last();
+    if ($e !== null && in_array($e['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+        \App\Core\Logger::error('Error fatal: ' . $e['message'] . ' @ ' . str_replace(APP_ROOT, '', $e['file']) . ':' . $e['line']);
+    }
+});

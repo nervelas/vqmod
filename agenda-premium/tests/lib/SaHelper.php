@@ -139,4 +139,30 @@ final class SaHelper
         openssl_pkey_export_to_file($pk, $key);
         return [$crt, $key];
     }
+
+    /** Crea un tipo de evento mínimo (requiere T::boot). */
+    public static function makeEvent(array $o = []): int
+    {
+        $now = gmdate('Y-m-d H:i:s');
+        return \App\Core\Db::insert('event_types', $o + [
+            'slug' => 'ev-' . bin2hex(random_bytes(4)), 'name' => 'Consulta general', 'created_at' => $now, 'updated_at' => $now,
+        ]);
+    }
+
+    /** Crea una cita directamente en la base. Fechas en UTC. */
+    public static function makeBooking(int $eventId, array $o = []): int
+    {
+        $start = $o['starts_at'] ?? gmdate('Y-m-d H:i:s', time() + 5 * 86400);
+        $end = $o['ends_at'] ?? gmdate('Y-m-d H:i:s', strtotime($start . ' UTC') + 1800);
+        $now = gmdate('Y-m-d H:i:s');
+        $hostId = $o['host_id'] ?? (int) \App\Core\Db::val('SELECT id FROM hosts ORDER BY id LIMIT 1');
+        $id = \App\Core\Db::insert('bookings', $o + [
+            'token' => bin2hex(random_bytes(16)), 'event_type_id' => $eventId, 'host_id' => $hostId,
+            'starts_at' => $start, 'ends_at' => $end, 'blocked_start' => $start, 'blocked_end' => $end, 'duration' => 30,
+            'guest_name' => 'Lucía Méndez', 'guest_email' => 'lucia@example.test', 'guest_phone' => '55551234',
+            'guest_timezone' => 'America/Guatemala', 'status' => 'confirmed', 'created_at' => $now, 'updated_at' => $now,
+        ]);
+        \App\Core\Db::exec('INSERT IGNORE INTO booking_hosts (booking_id, host_id) VALUES (?, ?)', [$id, $hostId]);
+        return $id;
+    }
 }

@@ -174,7 +174,7 @@ T::eq('http://127.0.0.1:8107', (string) Db::val("SELECT v FROM settings WHERE k 
 
 T::section('Bloqueo de ejecuciones simultáneas');
 $holder = new PDO('mysql:host=127.0.0.1;dbname=' . T::$db . ';charset=utf8mb4', 'ap', 'ap_test_pw');
-T::eq(1, (int) $holder->query("SELECT GET_LOCK('ap_cron', 0)")->fetchColumn(), 'otra conexión toma el bloqueo ap_cron');
+T::eq(1, (int) $holder->query("SELECT GET_LOCK(CONCAT('ap_cron_', MD5(DATABASE())), 0)")->fetchColumn(), 'otra conexión toma el bloqueo del cron');
 $before = (string) Db::val("SELECT v FROM settings WHERE k = 'cron_last_run'");
 $r = CronService::run('cli');
 T::ok($r['locked'] === true && $r['ok'] === false && $r['tasks'] === [] && strpos((string) $r['error'], 'otra ejecución') !== false, 'run() con el bloqueo tomado: no ejecuta nada');
@@ -183,7 +183,7 @@ T::eq($before, (string) Db::val("SELECT v FROM settings WHERE k = 'cron_last_run
 T::ok($code === 1 && strpos($out, 'otra ejecución') !== false, 'php cron.php con bloqueo: código 1 y mensaje');
 [$st, , $b] = $http('?token=' . $token);
 T::ok($st === 409 && json_decode($b, true)['locked'] === true, 'por URL con bloqueo: 409');
-$holder->query("SELECT RELEASE_LOCK('ap_cron')");
+$holder->query("SELECT RELEASE_LOCK(CONCAT('ap_cron_', MD5(DATABASE())))");
 T::ok(CronService::run('cli')['ok'], 'liberado el bloqueo, vuelve a ejecutar');
 
 T::section('Dos procesos reales a la vez: solo uno trabaja');

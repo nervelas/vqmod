@@ -15,7 +15,8 @@ use Throwable;
 /** Tareas programadas. Se ejecuta desde cron.php (CLI o URL con token) o, en su defecto, desde las visitas. */
 final class CronService
 {
-    private const LOCK = 'ap_cron';
+    /** Nombre del bloqueo: 'ap_cron' + huella de la base, para que varias instalaciones en un mismo servidor MySQL no se bloqueen entre sí. */
+    private const LOCK_SQL = "CONCAT('ap_cron_', MD5(DATABASE()))";
 
     /**
      * @param string $origen 'cli' | 'url' | 'visita'
@@ -26,7 +27,7 @@ final class CronService
         $started = microtime(true);
         $res = ['ok' => true, 'locked' => false, 'origin' => $origen, 'started_at' => Clock::utc(), 'duration_ms' => 0, 'tasks' => [], 'errors' => [], 'error' => null];
         try {
-            if ((int) Db::val('SELECT GET_LOCK(?, 0)', [self::LOCK]) !== 1) {
+            if ((int) Db::val('SELECT GET_LOCK(' . self::LOCK_SQL . ', 0)') !== 1) {
                 return ['ok' => false, 'locked' => true, 'error' => 'Ya hay otra ejecución en curso.'] + $res;
             }
         } catch (Throwable $e) {
@@ -48,7 +49,7 @@ final class CronService
             Settings::set('cron_last_run', Clock::utc());
             Settings::set('cron_last_result', (string) json_encode(['ok' => $res['ok'], 'origin' => $origen, 'duration_ms' => $res['duration_ms'], 'errors' => array_keys($res['errors'])]));
         } finally {
-            Db::val('SELECT RELEASE_LOCK(?)', [self::LOCK]);
+            Db::val('SELECT RELEASE_LOCK(' . self::LOCK_SQL . ')');
         }
         return $res;
     }

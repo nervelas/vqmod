@@ -202,6 +202,7 @@ final class BookingsController extends Controller
             'sources' => A1Support::SOURCES,
             'scoped' => Auth::scopedHostId() !== null,
             'coreReady' => A1Support::hasBookingCore(),
+            'scripts' => ['js/admin-bookings.js'],
         ], 'layouts/admin');
         $r->status = $status;
         return $r;
@@ -414,6 +415,7 @@ final class BookingsController extends Controller
             'canMove' => in_array($status, ['pending', 'confirmed'], true),
             'publicUrl' => abs_url('/reserva/' . $b['token']),
             'wa' => $b['guest_phone'] ? A1Support::waLink((string) $b['guest_phone'], $text) : '',
+            'scripts' => ['js/admin-bookings.js'],
             'paymentsPanel' => is_file(APP_ROOT . '/app/Views/admin/payments/_booking_panel.php'),
         ], 'layouts/admin');
     }

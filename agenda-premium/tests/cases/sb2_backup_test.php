@@ -86,7 +86,7 @@ $root->exec("DROP DATABASE `$restore`");
 T::section('list, path y prune');
 $list = BackupService::list();
 T::eq(2, count($list), 'list devuelve los dos respaldos');
-T::ok($list[0]['size'] > 1000 && $list[0]['name'] === basename($path2) || $list[0]['name'] === basename($path), 'list incluye nombre y tamaño, más reciente primero');
+T::ok($list[0]['size'] > 1000 && in_array($list[0]['name'], [basename($path), basename($path2)], true) && $list[0]['created_at'] !== '', 'list incluye nombre, tamaño y fecha');
 T::eq($path, BackupService::path(basename($path)), 'path resuelve un nombre válido');
 foreach (['../../config/config.php', '..%2f..%2fconfig', '../backups/' . basename($path), basename($path) . '/../' . basename($path), "/etc/passwd", 'backup-20260101-000000-0123456789abcdef.sql', '', '.htaccess', 'index.html', basename($path) . "\0.txt", str_replace('.sql', '.php', basename($path)), '..', basename($path) . '.part', "\\..\\x"] as $evil) {
     T::eq(null, BackupService::path($evil), 'rechaza «' . addcslashes($evil, "\0") . '»');

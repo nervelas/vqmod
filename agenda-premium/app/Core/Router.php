@@ -13,7 +13,7 @@ final class Router
 
     public function add(string $method, string $pattern, array $handler, array $opts = []): void
     {
-        $regex = preg_replace_callback('/\{([a-z_]+)(?::([^}]+))?\}/i', static function (array $m): string {
+        $regex = preg_replace_callback('/\{([a-z_]+)(?::((?:[^{}]|\{[^{}]*\})+))?\}/i', static function (array $m): string {
             $re = $m[2] ?? '[^/]+';
             return '(?P<' . $m[1] . '>' . $re . ')';
         }, $pattern);

@@ -21,6 +21,7 @@ final class WebhooksController extends A3Controller
         'booking.cancelled' => 'Cita cancelada',
         'booking.completed' => 'Cita completada',
         'booking.no_show' => 'Cliente no asistió',
+        'workflow.custom' => 'Aviso desde un flujo automático',
     ];
 
     public function index(Request $req, array $p): Response

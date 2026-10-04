@@ -93,6 +93,15 @@ T::eq(2, (int) Db::val('SELECT COUNT(*) FROM payments'), 'pagos de ejemplo');
 T::eq(0, (int) Db::val("SELECT COUNT(*) FROM bookings WHERE status IN ('pending','confirmed') AND starts_at < UTC_TIMESTAMP()"), 'las citas activas de ejemplo están en el futuro');
 T::eq(0, (int) Db::val("SELECT COUNT(*) FROM bookings b JOIN bookings c ON b.host_id = c.host_id AND b.id < c.id AND b.status IN ('pending','confirmed') AND c.status IN ('pending','confirmed') AND b.blocked_start < c.blocked_end AND c.blocked_start < b.blocked_end"), 'sin doble agendado en los datos demo');
 
+T::section('Cambiar de profesión actualiza los textos de fábrica pero respeta lo editado');
+ProfessionService::apply('psicologo', false);
+T::eq(9, (int) Db::val('SELECT COUNT(*) FROM workflows'), 'cambiar de profesión no duplica flujos');
+T::ok(str_contains((string) Db::val("SELECT template FROM workflows WHERE trigger_key = 'booking.before_start' AND offset_minutes = 120"), 'sesión'), 'el texto de fábrica adopta la terminología nueva');
+Db::exec("UPDATE workflows SET template = 'Texto editado por el negocio' WHERE trigger_key = 'booking.no_show'");
+ProfessionService::apply('veterinario', false);
+T::eq('Texto editado por el negocio', Db::val("SELECT template FROM workflows WHERE trigger_key = 'booking.no_show'"), 'un flujo editado no se pisa');
+T::eq(9, (int) Db::val('SELECT COUNT(*) FROM workflows'), 'sigue habiendo 9 flujos');
+
 T::section('Profesión desconocida');
 $r = ProfessionService::apply('astronauta', false);
 T::eq('otro', Settings::get('profession'), 'una clave desconocida cae en «otro»');

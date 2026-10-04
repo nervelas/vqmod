@@ -176,37 +176,39 @@ final class ConfigPortabilityService
     public static function import(array $data, bool $replace): array
     {
         self::validateEnvelope($data);
-        $d = $data;
         foreach (['settings', 'schedules', 'holidays', 'resources', 'teams', 'hosts', 'events', 'custom_fields', 'workflows', 'routing_forms', 'packages', 'coupons', 'webhooks'] as $k) {
-            if (isset($d[$k]) && !is_array($d[$k])) {
+            if (isset($data[$k]) && !is_array($data[$k])) {
                 throw new \InvalidArgumentException('La sección «' . $k . '» del archivo no tiene el formato esperado.');
             }
         }
         self::$stats = ['created' => [], 'updated' => [], 'skipped' => [], 'notes' => []];
 
-        Db::tx(static function () use ($d, $replace): void {
-            if ($replace) {
-                self::wipe();
-            }
-            self::importSettings((array) ($d['settings'] ?? []), (array) ($d['legal'] ?? []));
-            $schedules = self::importSchedules((array) ($d['schedules'] ?? []));
-            self::importHolidays((array) ($d['holidays'] ?? []));
-            $resources = self::importNamed('resources', (array) ($d['resources'] ?? []));
-            $hosts = self::importHosts((array) ($d['hosts'] ?? []), $schedules);
-            $teams = self::importTeams((array) ($d['teams'] ?? []), $hosts);
-            $events = self::importEvents((array) ($d['events'] ?? []), $schedules, $teams, $hosts, $resources);
-            self::importFields(null, (array) ($d['custom_fields'] ?? []));
-            self::importWorkflows((array) ($d['workflows'] ?? []), $events);
-            self::importRouting((array) ($d['routing_forms'] ?? []), $events, $hosts, $teams);
-            self::importPackages((array) ($d['packages'] ?? []), $events);
-            self::importCoupons((array) ($d['coupons'] ?? []), $events);
-            self::importWebhooks((array) ($d['webhooks'] ?? []));
-            if ((int) Db::val('SELECT COUNT(*) FROM schedules WHERE is_default = 1') === 0) {
-                Db::exec('UPDATE schedules SET is_default = 1 ORDER BY id LIMIT 1');
-            }
-            Settings::set('avail_version', (string) (Settings::int('avail_version', 1) + 1));
-        });
-        Settings::flush();
+        try {
+            Db::tx(static function () use ($data, $replace): void {
+                if ($replace) {
+                    self::wipe();
+                }
+                self::importSettings((array) ($data['settings'] ?? []), (array) ($data['legal'] ?? []));
+                $schedules = self::importSchedules((array) ($data['schedules'] ?? []));
+                self::importHolidays((array) ($data['holidays'] ?? []));
+                $resources = self::importNamed('resources', (array) ($data['resources'] ?? []));
+                $hosts = self::importHosts((array) ($data['hosts'] ?? []), $schedules);
+                $teams = self::importTeams((array) ($data['teams'] ?? []), $hosts);
+                $events = self::importEvents((array) ($data['events'] ?? []), $schedules, $teams, $hosts, $resources);
+                self::importFields(null, (array) ($data['custom_fields'] ?? []));
+                self::importWorkflows((array) ($data['workflows'] ?? []), $events);
+                self::importRouting((array) ($data['routing_forms'] ?? []), $events, $hosts, $teams);
+                self::importPackages((array) ($data['packages'] ?? []), $events);
+                self::importCoupons((array) ($data['coupons'] ?? []), $events);
+                self::importWebhooks((array) ($data['webhooks'] ?? []));
+                if ((int) Db::val('SELECT COUNT(*) FROM schedules WHERE is_default = 1') === 0) {
+                    Db::exec('UPDATE schedules SET is_default = 1 ORDER BY id LIMIT 1');
+                }
+                Settings::set('avail_version', (string) (Settings::int('avail_version', 1) + 1));
+            });
+        } finally {
+            Settings::flush();
+        }
         return self::$stats;
     }
 

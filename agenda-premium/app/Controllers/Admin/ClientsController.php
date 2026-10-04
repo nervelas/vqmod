@@ -602,7 +602,7 @@ final class ClientsController extends Controller
             'notes' => (int) Db::val('SELECT COUNT(*) FROM client_notes WHERE client_id = ?', [$c['id']]),
             'files' => (int) Db::val("SELECT COUNT(*) FROM files WHERE owner_type = 'client' AND owner_id = ?", [$c['id']]),
         ] : [];
-        return $this->view('admin/clients/merge', ['title' => 'Fusionar clientes', 'a' => $ca, 'b' => $cb, 'sa' => $stats($ca), 'sb' => $stats($cb), 'error' => ''], 'layouts/admin');
+        return $this->view('admin/clients/merge', ['scripts' => ['js/admin-clients.js'], 'title' => 'Fusionar clientes', 'a' => $ca, 'b' => $cb, 'sa' => $stats($ca), 'sb' => $stats($cb), 'error' => ''], 'layouts/admin');
     }
 
     public function merge(Request $req, array $p): Response

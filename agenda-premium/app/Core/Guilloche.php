@@ -114,8 +114,8 @@ final class Guilloche
         $pts = max(60, (int) ($o['points'] ?? 220));
         $out = '';
         for ($j = 0; $j < $n; $j++) {
-            $a = (int) round($g->between(2, 7));
-            $b = $a + (int) round($g->between(1, 4));
+            $a = (int) round($g->between(2, 5));
+            $b = $a + (int) round($g->between(1, 3));
             $ph = $g->between(0, M_PI);
             $ax = $w * $g->between(0.38, 0.5);
             $ay = $h * $g->between(0.38, 0.5);

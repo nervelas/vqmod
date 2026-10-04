@@ -226,32 +226,47 @@ final class ProfessionService
         return [1, $rules];
     }
 
-    /** Flujos comunes a todas las profesiones. Devuelve cuántos se crearon. */
+    /**
+     * Flujos comunes a todas las profesiones. Un flujo se reconoce por disparador, acción, destinatario y desfase:
+     * si ya existe y sigue con el texto de fábrica de otra profesión, se actualiza con la terminología nueva; si el negocio lo editó, no se toca.
+     * Devuelve cuántos se crearon.
+     */
     private static function applyWorkflows(array $t, string $now): int
     {
         $n = 0;
         foreach (self::workflowDefs() as $i => $w) {
-            $exists = Db::val('SELECT id FROM workflows WHERE name = ? AND trigger_key = ? AND event_type_id IS NULL', [self::terms($w['name'], $t), $w['trigger']]);
-            if ($exists !== null) {
-                continue;
-            }
-            Db::insert('workflows', [
+            $row = [
                 'name' => self::terms($w['name'], $t),
-                'trigger_key' => $w['trigger'],
-                'offset_minutes' => $w['offset'] ?? 0,
-                'event_type_id' => null,
-                'action' => $w['action'],
-                'recipient' => $w['to'],
                 'subject' => isset($w['subject']) ? self::terms($w['subject'], $t) : null,
                 'template' => self::terms($w['text'], $t),
-                'action_value' => null,
-                'active' => 1,
-                'sort_order' => ($i + 1) * 10,
-                'created_at' => $now,
-            ]);
-            $n++;
+            ];
+            $found = Db::one(
+                'SELECT id, name, subject, template FROM workflows WHERE trigger_key = ? AND offset_minutes = ? AND action = ? AND recipient = ? AND event_type_id IS NULL ORDER BY id LIMIT 1',
+                [$w['trigger'], $w['offset'] ?? 0, $w['action'], $w['to']]
+            );
+            if ($found === null) {
+                Db::insert('workflows', $row + [
+                    'trigger_key' => $w['trigger'], 'offset_minutes' => $w['offset'] ?? 0, 'event_type_id' => null, 'action' => $w['action'],
+                    'recipient' => $w['to'], 'action_value' => null, 'active' => 1, 'sort_order' => ($i + 1) * 10, 'created_at' => $now,
+                ]);
+                $n++;
+            } elseif (self::isFactoryText($w, $found)) {
+                Db::update('workflows', $row, 'id = ?', [$found['id']]);
+            }
         }
         return $n;
+    }
+
+    /** ¿El flujo conserva el texto de fábrica (con la terminología de alguna profesión)? */
+    private static function isFactoryText(array $def, array $row): bool
+    {
+        foreach (ProfessionPresets::all() as $p) {
+            if ($row['template'] === self::terms($def['text'], $p['terms']) && $row['name'] === self::terms($def['name'], $p['terms'])
+                && $row['subject'] === (isset($def['subject']) ? self::terms($def['subject'], $p['terms']) : null)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Plantillas: variables {nombre} {evento} {fecha} {hora} {anfitrion} {enlace} {direccion} {zona}. */

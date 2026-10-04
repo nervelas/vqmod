@@ -112,7 +112,7 @@ $e = $edit ?: ['id' => 0, 'name' => '', 'description' => '', 'sessions' => 5, 'p
           <tr>
             <th scope="row"><?= e($s['client_name']) ?></th>
             <td><?= e($s['package_name']) ?></td>
-            <td><span class="mono"><?= (int) $s['remaining'] ?> / <?= (int) $s['sessions'] ?></span> <div class="progress" role="img" aria-label="<?= (int) $pct ?> % disponible"><span <?= vars(['--w' => $pct . '%']) ?>></span></div></td>
+            <td><span class="mono"><?= (int) $s['remaining'] ?> / <?= (int) $s['sessions'] ?></span> <div class="progress" role="img" aria-label="<?= (int) $pct ?> % disponible"><span <?= vars(['--p' => $pct]) ?>></span></div></td>
             <td class="nowrap"><?= $s['expires_at'] ? e(Fmt::dateShort((string) $s['expires_at'], $tz)) : 'Sin vencimiento' ?> <?php if ($expired) : ?><span class="badge badge-err">Vencido</span><?php endif; ?></td>
             <td class="hide-sm"><span class="badge <?= (int) $s['paid'] ? 'badge-ok' : 'badge-warn' ?>"><?= (int) $s['paid'] ? 'Pagado' : 'Por cobrar' ?></span></td>
           </tr>

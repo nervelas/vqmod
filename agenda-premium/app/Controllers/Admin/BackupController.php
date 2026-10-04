@@ -170,13 +170,13 @@ final class BackupController extends A4Controller
         }
         $data = $this->stripSecrets($data);
         $token = Str::token(16);
-        $dir = APP_ROOT . '/storage/cache';
+        $dir = APP_ROOT . '/storage/imports';
         if (!is_dir($dir)) {
             @mkdir($dir, 0750, true);
         }
         $this->purgeImports();
         if (@file_put_contents($dir . '/import-' . $token . '.json', json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) === false) {
-            return $this->fail($req, 'No pudimos guardar el archivo temporalmente (permisos de storage/cache).', '/admin/respaldo');
+            return $this->fail($req, 'No pudimos guardar el archivo temporalmente (permisos de storage).', '/admin/respaldo');
         }
         Session::set('a4_import', ['token' => $token, 'at' => Clock::now(), 'name' => Str::clean((string) ($f['name'] ?? 'configuracion.json'), 120)]);
         return $this->index($req, [], ['preview' => $this->diff($data), 'importToken' => $token, 'importName' => Str::clean((string) ($f['name'] ?? ''), 120)]);
@@ -190,7 +190,7 @@ final class BackupController extends A4Controller
         if (!is_array($st) || !hash_equals((string) ($st['token'] ?? ''), $token) || !preg_match('/^[a-f0-9]{32}$/', $token) || Clock::now() - (int) $st['at'] > self::IMPORT_TTL) {
             return $this->fail($req, 'La vista previa caducó. Sube el archivo de nuevo.', '/admin/respaldo');
         }
-        $file = APP_ROOT . '/storage/cache/import-' . $token . '.json';
+        $file = APP_ROOT . '/storage/imports/import-' . $token . '.json';
         $data = is_file($file) ? json_decode((string) file_get_contents($file), true) : null;
         if (!is_array($data)) {
             return $this->fail($req, 'No encontramos el archivo de la vista previa. Súbelo de nuevo.', '/admin/respaldo');
@@ -364,7 +364,7 @@ final class BackupController extends A4Controller
 
     private function purgeImports(): void
     {
-        foreach (glob(APP_ROOT . '/storage/cache/import-*.json') ?: [] as $f) {
+        foreach (glob(APP_ROOT . '/storage/imports/import-*.json') ?: [] as $f) {
             if (filemtime($f) < Clock::now() - self::IMPORT_TTL) {
                 @unlink($f);
             }

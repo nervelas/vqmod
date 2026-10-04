@@ -249,17 +249,36 @@
     var n = this.slotsG.children[this.focusIdx]; if (n && n.focus) n.focus();
   };
 
-  Dial.prototype.onPointer = function (e, start) {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    var list = this.inHalf(); if (!list.length) return;
+  Dial.prototype.nearest = function (e) {
+    var list = this.inHalf(); if (!list.length) return null;
     var rect = this.svg.getBoundingClientRect(), k = 320 / rect.width;
     var x = (e.clientX - rect.left) * k - C, y = (e.clientY - rect.top) * k - C, dist = Math.sqrt(x * x + y * y);
-    if (start && (dist < 24 || dist > 150)) return;
     var a = (Math.atan2(y, x) * 180 / Math.PI + 90 + 360) % 360, best = null, bd = 1e9;
     list.forEach(function (s) { var d = Math.abs(((ang(s.mins) - a) % 360 + 540) % 360 - 180); if (d < bd) { bd = d; best = s; } });
-    if (!best) return;
+    return { slot: best, dist: dist };
+  };
+
+  /* Ratón y lápiz: arrastrar la aguja. Táctil: un toque elige el horario más cercano (así no se bloquea el desplazamiento). */
+  Dial.prototype.onPointer = function (e, start) {
+    var self = this;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (e.pointerType === 'touch') {
+      if (!start) return;
+      var x0 = e.clientX, y0 = e.clientY;
+      var up = function (u) {
+        self.svg.removeEventListener('pointerup', up); self.svg.removeEventListener('pointercancel', cancel);
+        if (Math.abs(u.clientX - x0) < 10 && Math.abs(u.clientY - y0) < 10) {
+          var r = self.nearest(u); if (r && r.dist >= 24 && r.dist <= 152 && r.slot.id !== self.selId) self.choose(r.slot.id); else if (r && r.slot && r.dist >= 24 && r.dist <= 152) self.choose(r.slot.id);
+        }
+      };
+      var cancel = function () { self.svg.removeEventListener('pointerup', up); self.svg.removeEventListener('pointercancel', cancel); };
+      this.svg.addEventListener('pointerup', up); this.svg.addEventListener('pointercancel', cancel);
+      return;
+    }
+    var r2 = this.nearest(e); if (!r2) return;
+    if (start && (r2.dist < 24 || r2.dist > 152)) return;
     if (start) { this.dragging = true; this.svg.classList.add('is-drag'); try { this.svg.setPointerCapture(e.pointerId); } catch (x2) { /* nada */ } }
-    if (best.id !== this.selId) this.choose(best.id);
+    if (r2.slot.id !== this.selId) this.choose(r2.slot.id);
     if (e.cancelable) e.preventDefault();
   };
 

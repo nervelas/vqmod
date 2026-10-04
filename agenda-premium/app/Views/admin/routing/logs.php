@@ -21,7 +21,7 @@ $act = ['event' => 'Cita', 'host' => 'Anfitrión', 'team' => 'Equipo', 'message'
             <th scope="row"><?= $r['rule_id'] === null ? 'Ninguna coincidió (por defecto)' : 'Regla de prioridad ' . (int) $r['priority'] . ($r['active'] ? '' : ' (pausada)') ?></th>
             <td><?= e($act[$r['action']] ?? $r['action']) ?></td>
             <td class="right mono"><?= (int) $r['count'] ?></td>
-            <td><div class="p3-bar-row"><div class="progress" role="img" aria-label="<?= e((string) $r['pct']) ?> %"><span <?= vars(['--w' => min(100, (float) $r['pct']) . '%']) ?>></span></div><span class="mono"><?= e(number_format((float) $r['pct'], 1)) ?> %</span></div></td>
+            <td><div class="p3-bar-row"><div class="progress" role="img" aria-label="<?= e((string) $r['pct']) ?> %"><span <?= vars(['--p' => min(100, (float) $r['pct'])]) ?>></span></div><span class="mono"><?= e(number_format((float) $r['pct'], 1)) ?> %</span></div></td>
           </tr>
         <?php endforeach; ?>
       </tbody>

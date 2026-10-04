@@ -19,7 +19,7 @@ file_put_contents($dir . 'guilloche-card.svg', Guilloche::svg([
 ]));
 // Panel de acceso: rosetas grandes
 $auth = Guilloche::fragment('rosette', 900, 900, ['seed' => 21, 'curves' => 14, 'petals' => 12, 'depth' => 0.2, 'colors' => $gold, 'opacity' => 0.7, 'stroke' => 0.6])
-    . Guilloche::fragment('lissajous', 900, 900, ['seed' => 4, 'curves' => 3, 'points' => 260, 'colors' => $gold, 'opacity' => 0.35, 'stroke' => 0.6]);
+    . Guilloche::fragment('lissajous', 900, 900, ['seed' => 4, 'curves' => 3, 'points' => 360, 'colors' => $gold, 'opacity' => 0.35, 'stroke' => 0.6]);
 file_put_contents($dir . 'guilloche-auth.svg', '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" width="900" height="900" fill="none" stroke-linejoin="round">' . $auth . '</svg>');
 // Rosetón central
 file_put_contents($dir . 'guilloche-rosette.svg', Guilloche::svg([

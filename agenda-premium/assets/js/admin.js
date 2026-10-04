@@ -38,7 +38,49 @@
     var t = el.tagName;
     return t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT' || el.isContentEditable;
   }
-  window.A1 = { h: h, icon: icon, url: url, api: api, say: say, norm: norm, typing: typing, base: base };
+
+  /* Autocompletado accesible de clientes: opts = { input, list, url, onPick(item) } */
+  function clientSearch(o) {
+    var input = o.input, list = o.list, items = [], active = -1, timer = null, seq = 0;
+    function hide() { list.hidden = true; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-activedescendant'); active = -1; }
+    function mark(i) {
+      var els = $$('[role=option]', list);
+      els.forEach(function (el, k) { el.classList.toggle('is-active', k === i); el.setAttribute('aria-selected', k === i ? 'true' : 'false'); });
+      active = i;
+      if (els[i]) { input.setAttribute('aria-activedescendant', els[i].id); els[i].scrollIntoView({ block: 'nearest' }); }
+    }
+    function pick(i) { if (items[i]) { o.onPick(items[i]); hide(); input.value = ''; } }
+    function show(rows, q) {
+      items = rows; list.textContent = '';
+      if (!rows.length) { list.appendChild(h('li', { class: 'client-empty', role: 'presentation', text: 'No encontramos a nadie con «' + q + '». Escribe sus datos abajo para crear su ficha.' })); }
+      rows.forEach(function (c, i) {
+        list.appendChild(h('li', { role: 'option', id: list.id + '-o' + i, 'aria-selected': 'false', class: 'client-opt', onclick: function () { pick(i); } }, [h('strong', { text: c.title }), h('span', { class: 'muted small', text: ' ' + (c.sub || '') })]));
+      });
+      list.hidden = false; input.setAttribute('aria-expanded', 'true');
+      if (rows.length) { mark(0); }
+    }
+    input.addEventListener('input', function () {
+      var q = input.value.trim(); clearTimeout(timer);
+      if (q.length < 2) { hide(); return; }
+      var my = ++seq;
+      timer = setTimeout(function () {
+        fetch(o.url + '?scope=clients&q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+          .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+          .then(function (data) { if (my === seq) { show(data.results || [], q); } })
+          .catch(function () { hide(); });
+      }, 200);
+    });
+    input.addEventListener('keydown', function (e) {
+      if (list.hidden) { return; }
+      var n = $$('[role=option]', list).length;
+      if (e.key === 'ArrowDown' && n) { e.preventDefault(); mark((active + 1) % n); }
+      else if (e.key === 'ArrowUp' && n) { e.preventDefault(); mark((active - 1 + n) % n); }
+      else if (e.key === 'Enter' && active >= 0) { e.preventDefault(); pick(active); }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); hide(); }
+    });
+    input.addEventListener('blur', function () { setTimeout(hide, 150); });
+  }
+  window.A1 = { h: h, icon: icon, url: url, api: api, say: say, norm: norm, typing: typing, base: base, clientSearch: clientSearch };
 
   /* ---------- Contraseña: mostrar/ocultar y reglas ---------- */
   d.addEventListener('click', function (e) {

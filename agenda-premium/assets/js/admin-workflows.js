@@ -26,7 +26,7 @@
       n.hidden = list.indexOf(a) === -1;
     });
     // el asunto solo aplica a correos
-    if (a !== 'email' && subject) { subject.closest('.field').hidden = true; }
+    if (a !== 'email' && a !== 'review_request' && subject) { subject.closest('.field').hidden = true; }
     schedulePreview();
   }
 
@@ -64,10 +64,10 @@
   }
   function runPreview() {
     var a = action.value;
-    if (['email', 'whatsapp', 'whatsapp_api'].indexOf(a) === -1) { return; }
+    if (['email', 'whatsapp', 'whatsapp_api', 'review_request'].indexOf(a) === -1) { return; }
     var my = ++seq;
     note.textContent = 'Preparando la vista previa…';
-    var body = { template: template.value, subject: a === 'email' && subject ? subject.value : '', booking_id: prevSel ? parseInt(prevSel.value, 10) || 0 : 0 };
+    var body = { template: template.value, subject: (a === 'email' || a === 'review_request') && subject ? subject.value : '', booking_id: prevSel ? parseInt(prevSel.value, 10) || 0 : 0 };
     var csrf = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
     fetch(page.getAttribute('data-preview-url'), {
       method: 'POST', credentials: 'same-origin',
@@ -91,7 +91,7 @@
     pErr.hidden = true;
     note.hidden = false;
     note.textContent = d.sample ? 'Así se vería con una cita de ejemplo (María López).' : 'Así se vería con la cita elegida.';
-    if (action.value === 'email' && d.subject) { pSubject.textContent = d.subject; pSubject.hidden = false; } else { pSubject.hidden = true; }
+    if ((action.value === 'email' || action.value === 'review_request') && d.subject) { pSubject.textContent = d.subject; pSubject.hidden = false; } else { pSubject.hidden = true; }
     pBody.textContent = d.body;
     pBody.hidden = false;
   }

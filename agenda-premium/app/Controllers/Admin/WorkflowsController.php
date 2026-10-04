@@ -39,7 +39,7 @@ final class WorkflowsController extends A3Controller
     ];
     public const RECIPIENTS = ['guest' => 'La persona invitada', 'host' => 'El anfitrión', 'admin' => 'La administración'];
     public const VARS = ['nombre' => 'Nombre del invitado', 'evento' => 'Tipo de cita', 'fecha' => 'Fecha', 'hora' => 'Hora', 'anfitrion' => 'Anfitrión', 'enlace' => 'Enlace de la cita', 'direccion' => 'Dirección', 'zona' => 'Zona horaria', 'videollamada' => 'Enlace de videollamada', 'precio' => 'Precio', 'telefono_negocio' => 'Teléfono del negocio'];
-    private const STATUS_VALUES = ['confirmed' => 'Confirmada', 'completed' => 'Completada', 'no_show' => 'No asistió'];
+    private const STATUS_VALUES = ['confirmed' => 'Confirmada', 'completed' => 'Completada', 'no_show' => 'No asistió', 'cancelled' => 'Cancelada'];
 
     public function index(Request $req, array $p): Response
     {
@@ -121,12 +121,9 @@ final class WorkflowsController extends A3Controller
                 $subject = '';
                 break;
             case 'webhook':
-                $value = $req->str('action_value', 500);
-                if (!Validator::url($value)) {
-                    return $this->fail($req, 'Escribe la dirección completa del webhook (http:// o https://).', $back);
-                }
-                if ($this->svc('SafeHttp') && ($err = \App\Services\SafeHttp::validateUrl($value)) !== null) {
-                    return $this->fail($req, $err, $back);
+                $value = strtolower($req->str('action_value', 60));
+                if (!preg_match('/^[a-z0-9][a-z0-9._\-]{2,59}$/', $value)) {
+                    return $this->fail($req, 'El nombre del evento solo puede llevar letras minúsculas, números, puntos y guiones (por ejemplo workflow.custom).', $back);
                 }
                 $subject = '';
                 $template = '';
@@ -147,8 +144,7 @@ final class WorkflowsController extends A3Controller
                 $subject = '';
                 $template = '';
                 break;
-            default: // review_request
-                $subject = $subject !== '' ? $subject : '';
+            default: // review_request: asunto y texto son opcionales (hay un texto por defecto)
                 break;
         }
         $data = [
@@ -243,14 +239,22 @@ final class WorkflowsController extends A3Controller
         if ($bid <= 0 || !Db::val('SELECT id FROM bookings WHERE id = ?', [$bid])) {
             return $this->fail($req, 'Para probar un flujo necesitas al menos una cita. Crea una de prueba y vuelve a intentarlo.', $back);
         }
+        $send = $req->bool('enviar');
         try {
-            $r = \App\Services\WorkflowService::testRun((int) $w['id'], $bid);
+            $r = \App\Services\WorkflowService::testRun((int) $w['id'], $bid, $send);
         } catch (\Throwable $e) {
             Logger::error('Prueba de flujo', $e);
             return $this->fail($req, 'La prueba no se pudo completar. Revisa el flujo e inténtalo de nuevo.', $back);
         }
-        $ok = !empty($r['ok']);
-        $this->flash($ok ? 'success' : 'warn', $ok ? (string) ($r['message'] ?? 'Prueba ejecutada con la cita #' . $bid . '.') : (string) ($r['error'] ?? 'La prueba terminó con un aviso.'));
+        if (!empty($r['ok'])) {
+            $to = $r['to'] !== '' ? ' a ' . $r['to'] : '';
+            $what = $r['subject'] !== '' ? ' «' . $r['subject'] . '»' : '';
+            $this->flash('success', !empty($r['sent'])
+                ? 'Enviamos una prueba' . $to . ' con la cita #' . $bid . '.'
+                : 'La prueba con la cita #' . $bid . ' funciona: se enviaría' . $what . $to . '. No se mandó nada.');
+        } else {
+            $this->flash('warn', (string) ($r['error'] ?? 'La prueba terminó con un aviso.'));
+        }
         return $this->redirect($back);
     }
 

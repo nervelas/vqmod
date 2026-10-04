@@ -129,7 +129,7 @@ html.is-embed .bk { padding-top: 0; }
 .slot-group + .slot-group { margin-top: 1.1rem; }
 .slot-group-title { display: block; margin-bottom: 0.55rem; }
 .slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(6.4rem, 1fr)); gap: 0.5rem; }
-.slot-btn { appearance: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.1rem; min-height: 2.9rem; padding: 0.4rem 0.5rem; border-radius: var(--r); border: 1px solid var(--line-gold); background: var(--surface); color: var(--text); font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+.slot-btn { appearance: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.1rem; min-height: 2.9rem; padding: 0.4rem 0.2rem; border-radius: var(--r); border: 1px solid var(--line-gold); background: var(--surface); color: var(--text); font-size: 0.84rem; letter-spacing: -0.03em; white-space: nowrap; font-weight: 700; cursor: pointer; transition: all 0.2s; }
 .slot-btn small { font: 600 0.65rem/1 var(--font-sans); color: var(--text-3); }
 .slot-btn:hover { border-color: var(--gold-2); background: rgba(201, 160, 80, 0.12); }
 .slot-btn.is-sel, .slot-btn[aria-checked="true"] { background: var(--gold-grad); color: var(--on-gold); border-color: var(--gold-3); }

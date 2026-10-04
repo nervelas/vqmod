@@ -106,20 +106,30 @@ final class CronService
         return ['revisado' => true];
     }
 
-    /** @return array<string,int> */
+    /** Cada limpieza va aparte: si una falla, las demás siguen. @return array<string,int|string> */
     private static function cleanup(): array
     {
         $now = Clock::now();
         $d = static fn (int $days): string => Clock::utc($now - $days * 86400);
-        return [
-            'limites' => RateLimiter::purge(),
-            'accesos' => Db::exec('DELETE FROM login_attempts WHERE created_at < ?', [$d(30)]),
-            'correos' => Db::exec("DELETE FROM email_queue WHERE status IN ('sent','failed') AND COALESCE(sent_at, created_at) < ?", [$d(60)]),
-            'ejecuciones_flujos' => Db::exec("DELETE FROM workflow_runs WHERE status <> 'pending' AND created_at < ? AND scheduled_at < ?", [$d(90), $d(90)]),
-            'entregas_webhooks' => Db::exec("DELETE FROM webhook_deliveries WHERE status <> 'pending' AND created_at < ?", [$d(90)]),
-            'mensajes' => Db::exec("DELETE FROM message_queue WHERE status <> 'pending' AND created_at < ?", [$d(90)]),
-            'cache' => self::purgeCache($now),
+        $jobs = [
+            'limites' => static fn (): int => RateLimiter::purge(),
+            'accesos' => static fn (): int => Db::exec('DELETE FROM login_attempts WHERE created_at < ?', [$d(30)]),
+            'correos' => static fn (): int => Db::exec("DELETE FROM email_queue WHERE status IN ('sent','failed') AND COALESCE(sent_at, created_at) < ?", [$d(60)]),
+            'ejecuciones_flujos' => static fn (): int => Db::exec("DELETE FROM workflow_runs WHERE status <> 'pending' AND created_at < ? AND scheduled_at < ?", [$d(90), $d(90)]),
+            'entregas_webhooks' => static fn (): int => Db::exec("DELETE FROM webhook_deliveries WHERE status <> 'pending' AND created_at < ?", [$d(90)]),
+            'mensajes' => static fn (): int => Db::exec("DELETE FROM message_queue WHERE status <> 'pending' AND created_at < ?", [$d(90)]),
+            'cache' => static fn (): int => self::purgeCache($now),
         ];
+        $out = [];
+        foreach ($jobs as $name => $job) {
+            try {
+                $out[$name] = $job();
+            } catch (Throwable $e) {
+                $out[$name] = 'error';
+                Logger::error('Cron: falló la limpieza de ' . $name, $e);
+            }
+        }
+        return $out;
     }
 
     private static function purgeCache(int $now): int

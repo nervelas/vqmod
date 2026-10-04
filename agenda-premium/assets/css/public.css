@@ -149,7 +149,7 @@ html[data-theme="light"] .pub-hero-title { background: none; color: var(--text);
 .offer-event { font-size: 1.5rem; margin: 0; }
 .offer-when { font-size: 1.15rem; margin: 0; }
 .offer-clock strong { color: var(--gold-text); font-size: 1.2rem; }
-.rate { display: inline-flex; flex-direction: row-reverse; gap: 0.2rem; }
+.rate { display: inline-flex; flex-direction: row-reverse; justify-content: flex-end; gap: 0.2rem; }
 .rate label { cursor: pointer; line-height: 0; padding: 0.15rem; }
 .rate svg { fill: none; stroke: var(--gold-2); stroke-width: 1.2; transition: fill 0.15s, transform 0.2s var(--ease); }
 .rate label:hover svg, .rate label:hover ~ label svg, .rate input:checked ~ label svg { fill: var(--gold-2); }

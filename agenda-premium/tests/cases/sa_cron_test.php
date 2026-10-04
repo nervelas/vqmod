@@ -51,6 +51,8 @@ $recent = SaHelper::makeBooking($ev, ['starts_at' => gmdate('Y-m-d H:i:s', time(
 $stale = SaHelper::makeBooking($ev, ['starts_at' => gmdate('Y-m-d H:i:s', time() + 86400), 'status' => 'pending', 'created_at' => $ago(3)]);
 $fresh = SaHelper::makeBooking($ev, ['starts_at' => gmdate('Y-m-d H:i:s', time() + 86400), 'status' => 'pending']);
 Db::exec('DELETE FROM holidays WHERE date >= ?', [(gmdate('Y') + 1) . '-01-01']);
+Db::exec('DELETE FROM settings WHERE k = ?', ['holidays_seeded_' . (gmdate('Y') + 1)]);
+Settings::flush();
 $r = CronService::run('cli');
 T::ok($r['ok'] && !$r['locked'] && $r['origin'] === 'cli' && $r['errors'] === [] && $r['duration_ms'] >= 0, 'run() termina sin errores: ' . json_encode($r['errors']));
 T::eq(['citas_vencidas', 'citas_completadas', 'lista_espera', 'retencion', 'feriados', 'resumen_semanal', 'flujos', 'correo', 'webhooks', 'calendarios', 'limpieza'], array_keys($r['tasks']), 'tareas ejecutadas en el orden previsto');
@@ -61,7 +63,7 @@ T::eq('pending', Db::val('SELECT status FROM bookings WHERE id = ?', [$fresh]), 
 T::ok(Db::val("SELECT status FROM workflow_runs WHERE booking_id = ?", [$done]) === 'done', 'booking.completed disparó el flujo y se ejecutó en la misma pasada');
 T::ok(Db::val("SELECT status FROM email_queue WHERE to_email = 'visita@example.test'") === 'sent', 'y su correo salió en la misma pasada (flujos antes que correo)');
 $sent = SaHelper::jsonl($smtpOut);
-T::ok(count($sent) >= 1 && $sent[0]['rcpt'] === ['visita@example.test'], 'el servidor SMTP de prueba recibió el correo de agradecimiento');
+T::ok(count(array_filter($sent, static fn (array $m): bool => $m['rcpt'] === ['visita@example.test'])) === 1, 'el servidor SMTP de prueba recibió el correo de agradecimiento');
 T::ok((int) Db::val('SELECT COUNT(*) FROM holidays WHERE date >= ?', [(gmdate('Y') + 1) . '-01-01']) > 0, 'se aseguraron los feriados del año siguiente');
 T::ok(abs(strtotime((string) Settings::get('cron_last_run') . ' UTC') - time()) <= 5, 'cron_last_run actualizado');
 Settings::flush();
@@ -75,7 +77,8 @@ $done2 = SaHelper::makeBooking($ev, ['starts_at' => gmdate('Y-m-d H:i:s', time()
 $r = CronService::run('visita');
 Db::exec('RENAME TABLE webhook_deliveries_x TO webhook_deliveries');
 T::ok(!$r['ok'] && isset($r['errors']['webhooks']) && strpos($r['errors']['webhooks'], 'Falló') === 0 && $r['origin'] === 'visita', 'la tarea rota queda en errors sin lanzar');
-T::ok(isset($r['tasks']['correo'], $r['tasks']['limpieza'], $r['tasks']['calendarios']) && count($r['tasks']) === 10, 'las demás tareas sí corrieron (' . count($r['tasks']) . ' de 11)');
+T::ok(isset($r['tasks']['correo'], $r['tasks']['calendarios'], $r['tasks']['flujos']) && count($r['tasks']) === 10 && $r['errors'] === ['webhooks' => $r['errors']['webhooks']], 'las demás tareas sí corrieron (' . count($r['tasks']) . ' de 11)');
+T::ok(is_string($r['tasks']['limpieza']['entregas_webhooks']) && is_int($r['tasks']['limpieza']['correos']), 'en la limpieza, si una parte falla las demás siguen');
 T::ok(Db::val("SELECT status FROM email_queue WHERE to_email = 'segunda@example.test'") === 'sent', 'y el correo pendiente salió');
 $tail = implode("\n", \App\Core\Logger::tail(30));
 T::ok(strpos($tail, 'Cron: falló la tarea webhooks') !== false, 'el fallo quedó en el log');
@@ -127,7 +130,7 @@ T::ok($c['correos'] >= 2 && $c['accesos'] >= 1 && $c['cache'] >= 2, 'el resultad
 
 T::section('Resumen semanal: solo lunes por la mañana (hora del negocio)');
 Db::exec('DELETE FROM email_queue');
-Settings::setMany(['weekly_summary' => '1', 'admin_notify_email' => 'dueno@example.test', 'smtp_host' => '']);
+Settings::setMany(['weekly_summary' => '1', 'admin_notify_email' => 'dueno@example.test', 'smtp_host' => '127.0.0.1', 'smtp_port' => '25299', 'smtp_secure' => 'none']);
 $weekly = static fn () => (int) Db::val("SELECT COUNT(*) FROM email_queue WHERE to_email = 'dueno@example.test'");
 Clock::set(strtotime('2026-10-06 14:00:00 UTC')); // martes 8:00 en Guatemala
 $r = CronService::run('cli');

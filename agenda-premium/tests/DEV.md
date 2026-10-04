@@ -171,3 +171,8 @@ AP_CONFIG=/tmp/ap-<tu_nombre>.config.php php -S 127.0.0.1:<PUERTO> -t . tests/ro
 MariaDB local ya está encendido (usuario `ap` / `ap_test_pw`, host `127.0.0.1`). Puertos: Diseño 8101, Público 8102, Admin1 8103, Admin2 8104, Admin3 8105, Admin4 8106, Servicios A 8107, B1 8108, B2 8109.
 Navegador headless: Chromium + Playwright están instalados (`PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`; usa `executablePath: '/opt/pw-browsers/chromium'` si hace falta; módulo `playwright` vía `npm i playwright-core` en `/tmp`, NO dentro del proyecto). Sin acceso a internet general (solo npm/pip/apt). **No modifiques archivos de otros agentes**; si necesitas algo de otro dominio, déjalo anotado en tu informe final. Para revisar sintaxis: `php -l archivo.php`.
 Cada agente trabaja SOLO dentro de sus archivos (ver tu encargo). No hagas `git commit` (el coordinador lo hace).
+
+## 8. Pruebas automatizadas (obligatorio para servicios y APIs)
+- `tests/lib/T.php` (utilidad) y `tests/run.php` (ejecutor: `php tests/run.php [filtro]`). Cada prueba es un script `tests/cases/<prefijo>_<tema>_test.php` (prefijos: `ds`, `pub`, `a1`…`a4`, `sa`, `sb1`, `sb2`). Ejemplo en `tests/cases/core_test.php`: `T::boot('nombre')` crea la BD limpia `ap_t_nombre` e instala el sistema; luego usa `T::ok/eq/throws/section` y termina con `T::done()`.
+- Para probar HTTP real usa `php -S` en tu puerto con tu config (ver §7) y `curl`/Playwright. Las pruebas que levantan servidores deben apagarlos al terminar (usa el PID que tú mismo lanzaste; **no uses `pkill -f` con patrones amplios**).
+- Las pruebas deben cubrir casos felices, de error, seguridad (XSS/SQLi/CSRF/permisos/IDOR) y bordes.

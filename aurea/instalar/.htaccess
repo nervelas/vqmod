@@ -1,0 +1,2 @@
+# Bloqueo adicional: si existe config/installed.lock, index.php ya responde 403.
+Options -Indexes

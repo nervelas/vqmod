@@ -1,0 +1,19 @@
+AUREA · Créditos y licencias de componentes incluidos localmente
+=================================================================
+
+Fuentes (autohospedadas, formato woff2, licencia SIL Open Font License 1.1):
+  - Bodoni Moda — Owen Earl / Indestructible Type. https://fonts.google.com/specimen/Bodoni+Moda
+  - Hanken Grotesk — Hanken Design Co. https://fonts.google.com/specimen/Hanken+Grotesk
+  Distribuidas mediante los paquetes @fontsource (OFL-1.1). Ver assets/fonts/LICENSE-*.txt
+
+Biblioteca de códigos QR (licencia MIT):
+  - qrcode-generator 2.0.4 — Kazuhiko Arase. https://github.com/kazuhikoarase/qrcode-generator
+    Ver assets/vendor/LICENSE-qrcode-generator.txt
+
+Iconos: trazados de línea basados en Feather Icons (licencia MIT), incrustados en app/Core/helpers.php.
+
+Imágenes:
+  El paquete NO incluye fotografías de stock. Al construirlo, el entorno no tenía acceso a Unsplash/Pexels,
+  por lo que la portada usa una composición vectorial propia (SVG/CSS, sin derechos de terceros).
+  Desde Panel → Marca y ajustes puedes subir tu propia fotografía de portada, logo y fotos de cada profesional.
+  Si más adelante agregas fotografías de Unsplash o Pexels, anota aquí al autor y la fuente de cada una.

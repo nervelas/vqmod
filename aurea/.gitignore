@@ -1,0 +1,13 @@
+config/config.php
+config/installed.lock
+storage/logs/*
+storage/cache/*
+storage/sessions/*
+storage/private/*
+storage/backups/*
+!storage/*/.gitkeep
+uploads/*
+!uploads/.htaccess
+!uploads/index.html
+tests/results.json
+dist/*.tmp

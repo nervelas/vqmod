@@ -1,0 +1,26 @@
+# AUREA en Nginx (ajusta root, versión de PHP-FPM y dominio)
+server {
+    server_name tu-dominio.com;
+    root /var/www/aurea;
+    index index.php;
+
+    # Carpetas internas: nunca públicas
+    location ~ ^/(app|config|storage|database|lang|tools|tests)(/|$) { return 403; }
+    location ~* \.(sql|log|md|lock|bak|ini|sh|inc)$ { return 403; }
+
+    # Subidas públicas: sin ejecución de PHP
+    location ^~ /uploads/ { location ~ \.(php\d?|phtml|phar)$ { return 403; } }
+
+    location /instalar { try_files $uri /instalar/index.php?$query_string; }
+    location = /cron.php { include fastcgi_params; fastcgi_param SCRIPT_FILENAME $document_root/cron.php; fastcgi_pass unix:/run/php/php8.2-fpm.sock; }
+    location / { try_files $uri $uri/ /index.php?$query_string; }
+
+    location ~ ^/(index|instalar/index)\.php$ {
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+    }
+    location ~ \.php$ { return 404; }
+    location ~* \.(woff2|css|js|webp|svg)$ { expires 30d; access_log off; }
+}
+# LiteSpeed/OpenLiteSpeed leen el archivo .htaccess incluido sin cambios.

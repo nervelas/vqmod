@@ -1,0 +1,17 @@
+<form method="get" class="toolbar">
+  <div class="field"><label for="d1"><?= e(__('Desde')) ?></label><input id="d1" type="date" name="desde" value="<?= e($from) ?>"></div>
+  <div class="field"><label for="d2"><?= e(__('Hasta')) ?></label><input id="d2" type="date" name="hasta" value="<?= e($to) ?>"></div>
+  <div class="field"><label for="st"><?= e(__('Estado')) ?></label><select id="st" name="estado"><option value=""><?= e(__('Todos')) ?></option><option value="confirmed"<?= sel('confirmed', $status) ?>><?= e(__('Confirmados')) ?></option><option value="pending"<?= sel('pending', $status) ?>><?= e(__('Por revisar')) ?></option><option value="rejected"<?= sel('rejected', $status) ?>><?= e(__('Rechazados')) ?></option></select></div>
+  <button class="btn btn-ink" type="submit"><?= e(__('Filtrar')) ?></button>
+</form>
+<div class="kpis"><div class="kpi"><div class="l"><?= e(__('Cobrado en el periodo')) ?></div><div class="v num"><?= e(money($total)) ?></div></div></div>
+<div class="card"><h2><?= e(__('Pagos registrados')) ?></h2>
+<?php if (!$rows): ?><p class="hint"><?= e(__('Sin pagos en este periodo.')) ?></p><?php else: ?>
+<div class="tbl-wrap"><table class="tbl"><thead><tr><th><?= e(__('Fecha')) ?></th><th><?= e(term('client')) ?></th><th><?= e(__('Servicio')) ?></th><th><?= e(__('Método')) ?></th><th><?= e(__('Estado')) ?></th><th class="r"><?= e(__('Monto')) ?></th><th></th></tr></thead><tbody>
+<?php foreach ($rows as $p): ?><tr><td><?= e(fdatetime($p['paid_at'])) ?></td><td><a class="strong" href="<?= e(url('/admin/citas/' . $p['appointment_id'])) ?>"><?= e($p['client_name']) ?></a></td><td><?= e($p['service_name']) ?></td><td><?= e($methods[$p['method']] ?? $p['method']) ?><br><span class="hint"><?= e($p['reference']) ?></span></td>
+  <td><span class="badge <?= ['confirmed' => 'badge-ok', 'pending' => 'badge-warn', 'rejected' => 'badge-bad'][$p['status']] ?? '' ?>"><?= e(['confirmed' => __('Confirmado'), 'pending' => __('Por revisar'), 'rejected' => __('Rechazado')][$p['status']]) ?></span></td><td class="r num"><?= e(money($p['amount'])) ?></td>
+  <td class="acts"><?php if ($p['file_id']): ?><a class="btn btn-line btn-sm" href="<?= e(url('/admin/archivos/' . $p['file_id'])) ?>"><?= e(__('Comprobante')) ?></a> <?php endif; ?>
+    <?php if ($p['status'] === 'pending'): foreach (['confirmed' => ['Confirmar', 'btn-gold'], 'rejected' => ['Rechazar', 'btn-danger']] as $to2 => [$l, $c]): ?><form class="inline-form" method="post" action="<?= e(url('/admin/pagos/' . $p['id'] . '/estado')) ?>"><?= csrf_field() ?><input type="hidden" name="status" value="<?= $to2 ?>"><input type="hidden" name="back" value="pagos"><button class="btn <?= $c ?> btn-sm" type="submit"><?= e(__($l)) ?></button></form> <?php endforeach; endif; ?></td></tr><?php endforeach; ?></tbody></table></div><?php endif; ?></div>
+<div class="card"><h2><?= e(__('Citas próximas con saldo pendiente')) ?></h2>
+<?php if (!$pendingAppts): ?><p class="hint"><?= e(__('Todo al día.')) ?></p><?php endif; ?>
+<?php foreach ($pendingAppts as $a): ?><div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><a class="strong" style="font-weight:600;text-decoration:none;color:var(--fg)" href="<?= e(url('/admin/citas/' . $a['id'])) ?>"><?= e($a['client_name']) ?> · <?= e(fdatetime($a['start_at'])) ?></a><span><?= e(money($a['total'])) ?><?= (float)$a['deposit_required'] > 0 ? ' · ' . e(__('anticipo %s', money($a['deposit_required']))) : '' ?></span></div><?php endforeach; ?></div>

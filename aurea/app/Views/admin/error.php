@@ -1,0 +1,1 @@
+<div class="card empty-state"><div class="big num"><?= e((string)$code) ?></div><p><?= e($message) ?></p><a class="btn btn-gold" href="<?= e(url('/admin')) ?>"><?= e(__('Volver al inicio')) ?></a></div>

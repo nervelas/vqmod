@@ -161,7 +161,11 @@ final class Auth
         if (self::isLockedOut((string) $u['email'], $ip)) {
             return ['ok' => false, 'error' => 'Demasiados intentos. Espera 15 minutos e inténtalo de nuevo.'];
         }
-        if (!Totp::verify((string) $u['totp_secret'], $code)) {
+        $secret = (string) $u['totp_secret'];
+        if (strncmp($secret, 'v1:', 3) === 0) {
+            $secret = (string) Crypto::decrypt($secret);
+        }
+        if (!Totp::verify($secret, $code)) {
             self::record((string) $u['email'], $ip, false);
             return ['ok' => false, 'error' => 'El código no es correcto.'];
         }

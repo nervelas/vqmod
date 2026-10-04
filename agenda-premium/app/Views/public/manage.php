@@ -106,7 +106,7 @@ $tzGroups = \App\Controllers\Pub\PubSupport::tzGroups();
     <?php if ($active) : ?>
     <section class="pm-manage" aria-labelledby="pm-ger">
       <h2 id="pm-ger" class="serif">¿Necesitas hacer un cambio?</h2>
-      <?php if ($deadline !== '') : ?><p class="muted">Puedes cambiar o cancelar hasta el <?= e($deadline) ?>.</p><?php endif; ?>
+      <?php if ($deadline !== '') : ?><p class="muted">Puedes cambiar o cancelar hasta el <?= e($deadline) ?></p><?php endif; ?>
 
       <details class="bk-fold" data-resched-fold<?= $resched ? '' : ' data-disabled' ?>>
         <summary><?= icon('refresh') ?> Reprogramar mi cita</summary>

@@ -272,7 +272,7 @@
     var prefix = el.hasAttribute('data-prefix') ? el.getAttribute('data-prefix') : ((el.textContent.match(/^[^\d-]*/) || [''])[0].trim() || 'Q');
     var finalTxt = fmtNum(val, fmt, dec, prefix);
     if (reduce) { el.textContent = finalTxt; return; }
-    el.setAttribute('aria-label', finalTxt); el.textContent = '';
+    el.setAttribute('role', 'img'); el.setAttribute('aria-label', finalTxt); el.textContent = '';
     var wrap = d.createElement('span'); wrap.className = 'ticker'; wrap.setAttribute('aria-hidden', 'true'); el.appendChild(wrap);
     var cols = [], chars = finalTxt.split('');
     chars.forEach(function (ch) {

@@ -48,7 +48,7 @@ $err = static fn (string $t) => $error !== '' && $tab === $t ? '<div class="aler
           <div><button class="btn btn-danger" type="submit" data-confirm="¿Desactivar la verificación en dos pasos? Tu cuenta quedará menos protegida.">Desactivar</button></div>
         </form>
       <?php elseif ($setup !== '') : ?>
-        <p>1. Escanea este código con tu aplicación de autenticación (Google Authenticator, Microsoft Authenticator, Authy…).</p>
+        <p>1. Escanea este código con tu aplicación de autenticación (cualquier aplicación de códigos de un solo uso compatible con TOTP).</p>
         <div class="qr-box"><div id="qr" class="qr" data-otpauth="<?= e($otpauth) ?>" role="img" aria-label="Código QR para la aplicación de autenticación"></div>
           <div><p class="muted small">¿No puedes escanear? Escribe esta clave a mano:</p><p class="mono qr-key" id="totp-key"><?= e(trim(chunk_split($setup, 4, ' '))) ?></p>
           <button class="btn btn-ghost btn-sm" type="button" data-copy="<?= e($setup) ?>"><?= icon('copy') ?>Copiar clave</button></div></div>

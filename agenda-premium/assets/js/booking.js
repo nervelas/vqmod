@@ -386,9 +386,9 @@
     var tg = $('[data-side-toggle]', root), more = $('[data-side-more]', root);
     if (tg && more) {
       var mq = global.matchMedia('(min-width: 62rem)');
-      var setMore = function (open) { more.classList.toggle('is-open', open); tg.setAttribute('aria-expanded', open ? 'true' : 'false'); };
-      tg.addEventListener('click', function () { setMore(!more.classList.contains('is-open')); });
-      var sync = function () { if (mq.matches) { setMore(true); } };
+      var toggleMore = function (open) { more.classList.toggle('is-open', open); tg.setAttribute('aria-expanded', open ? 'true' : 'false'); };
+      tg.addEventListener('click', function () { toggleMore(!more.classList.contains('is-open')); });
+      var sync = function () { if (mq.matches) { toggleMore(true); } };
       if (mq.addEventListener) mq.addEventListener('change', sync); sync();
     }
 

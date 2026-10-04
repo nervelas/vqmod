@@ -81,6 +81,8 @@ final class Settings
             'wa_api_lang' => 'es',
             // Sistema
             'cron_token' => '',
+            'cron_last_result' => '',
+            'site_base_url' => '',
             'cron_last_run' => '',
             'session_idle_minutes' => '120',
             'avail_version' => '1',

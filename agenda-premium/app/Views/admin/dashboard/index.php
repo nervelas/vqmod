@@ -9,7 +9,6 @@ $hour = (int) Tz::formatTs(Clock::now(), $tz, 'G');
 $greeting = $hour < 12 ? 'Buenos días' : ($hour < 19 ? 'Buenas tardes' : 'Buenas noches');
 $first = trim(explode(' ', $userName)[0] ?? '');
 $todayLong = Fmt::dateLong(Tz::localToUtc($today . ' 12:00:00', $tz), $tz);
-$tomorrowLong = Fmt::dateLong(Tz::localToUtc($tomorrow . ' 12:00:00', $tz), $tz);
 $back = '/admin';
 ?>
 <div class="page">
@@ -39,7 +38,7 @@ $back = '/admin';
     </aside>
   <?php endif; ?>
 
-  <section class="kpis" aria-label="Indicadores">
+  <section class="kpis kpis-5" aria-label="Indicadores">
     <div class="stat">
       <span class="stat-label">Citas de hoy</span>
       <span class="stat-value serif" data-ticker="<?= (int) $kpis['today'] ?>"><?= (int) $kpis['today'] ?></span>
@@ -51,7 +50,7 @@ $back = '/admin';
     <?php if ($kpis['revenue'] !== null) : ?>
     <div class="stat">
       <span class="stat-label">Ingresos del mes</span>
-      <span class="stat-value serif" data-ticker="<?= e((string) round((float) $kpis['revenue'], 2)) ?>" data-ticker-prefix="<?= e((string) setting('currency_symbol', 'Q')) ?>" data-ticker-decimals="2"><?= e(money($kpis['revenue'])) ?></span>
+      <span class="stat-value serif" data-ticker="<?= e((string) round((float) $kpis['revenue'], 2)) ?>" data-format="money" data-prefix="<?= e((string) setting('currency_symbol', 'Q')) ?>" data-decimals="2"><?= e(money($kpis['revenue'])) ?></span>
     </div>
     <?php else : ?>
     <div class="stat">
@@ -67,7 +66,7 @@ $back = '/admin';
       <span class="stat-label">Ocupación (7 días)</span>
       <?php if ($kpis['occupancy'] !== null) : ?>
         <span class="stat-value serif"><span data-ticker="<?= (int) $kpis['occupancy'] ?>"><?= (int) $kpis['occupancy'] ?></span>%</span>
-        <span class="progress" role="img" aria-label="<?= (int) $kpis['occupancy'] ?> por ciento de ocupación"><span class="progress-bar" <?= vars(['--p' => (int) $kpis['occupancy'] . '%']) ?>></span></span>
+        <span class="progress" role="img" aria-label="<?= (int) $kpis['occupancy'] ?> por ciento de ocupación"><span <?= vars(['--p' => (int) $kpis['occupancy']]) ?>></span></span>
       <?php else : ?>
         <span class="stat-value serif muted">—</span>
         <span class="stat-delta muted">Define tus horarios para medirla</span>

@@ -344,17 +344,22 @@ final class BackupController extends A4Controller
 
     private function resultLine(array $r): string
     {
+        $labels = ['created' => 'creados', 'updated' => 'actualizados', 'skipped' => 'omitidos'];
         $parts = [];
-        foreach ($r as $k => $v) {
-            if (is_int($v) || is_float($v)) {
-                $parts[] = str_replace('_', ' ', (string) $k) . ': ' . $v;
-            } elseif (is_array($v) && !$v) {
-                continue;
-            } elseif (is_array($v) && array_keys($v) === range(0, count($v) - 1) && $v && is_scalar($v[0])) {
-                $parts[] = str_replace('_', ' ', (string) $k) . ': ' . count($v);
+        foreach ($labels as $k => $label) {
+            if (isset($r[$k]) && is_array($r[$k]) && $r[$k]) {
+                $bits = [];
+                foreach ($r[$k] as $name => $n) {
+                    if (is_int($n)) {
+                        $bits[] = str_replace('_', ' ', (string) $name) . ' ' . $n;
+                    }
+                }
+                if ($bits) {
+                    $parts[] = $label . ': ' . implode(', ', array_slice($bits, 0, 8));
+                }
             }
         }
-        return implode(', ', array_slice($parts, 0, 12));
+        return implode('; ', $parts);
     }
 
     private function purgeImports(): void

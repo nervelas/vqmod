@@ -27,6 +27,7 @@ foreach (ProfessionPresets::all() as $k => $p) {
     }
     T::ok(isset($all[$k]['icon'], $all[$k]['short'], $all[$k]['events'][0]['name']), "$k expone clave, icono, descripción y vista previa");
     foreach ($p['fields'] as $f) {
+        T::ok(!array_filter($f['options'] ?? [], static fn ($o) => str_contains($o, ',')), "$k: las opciones de «{$f['name']}» no llevan comas (el motor separa por coma)");
         if (isset($f['condition'])) {
             $names = array_column($p['fields'], 'name');
             T::ok(in_array($f['condition'][0], $names, true), "$k: la condición de «{$f['name']}» apunta a una pregunta existente");

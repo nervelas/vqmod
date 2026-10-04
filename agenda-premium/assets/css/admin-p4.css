@@ -177,7 +177,7 @@
 .p4-blocks { display: flex; flex-wrap: wrap; gap: 0.6rem 1.25rem; }
 .p4-day:not(.is-on) .p4-blocks { display: none; }
 .p4-block { display: flex; align-items: center; gap: 0.5rem; }
-.p4-block .input { width: 8.5rem; min-width: 0; padding-inline: 0.6rem; }
+.p4-block .input { width: 10.5rem; min-width: 0; padding-inline: 0.5rem; font-size: 0.9rem; }
 .p4-closed { grid-column: 2; }
 @media (max-width: 759px) { .p4-closed { grid-column: 1; } }
 .p4-day.is-on .p4-closed { display: none; }

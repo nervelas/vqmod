@@ -178,7 +178,7 @@ final class BookingController extends Controller
             'captchaProvider' => CaptchaService::provider(),
             'colorOverride' => $color,
             'styles' => ['css/booking.css'],
-            'scripts' => ['js/dial.js', 'js/booking.js'],
+            'scripts' => ['js/public.js', 'js/dial.js', 'js/booking.js'],
             'bodyClass' => 'pub-booking' . ($embed ? ' is-embed' : ''),
         ], 'layouts/public');
     }

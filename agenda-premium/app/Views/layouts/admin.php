@@ -9,7 +9,7 @@ use App\Core\Session;
 $user = Auth::user();
 $styles = $styles ?? [];
 $scripts = $scripts ?? [];
-$active = $active ?? '';
+$active = ($active ?? '') !== '' ? $active : (string) ($GLOBALS['__request']->path ?? '');
 $brand = (string) setting('business_name', 'Agenda Premium');
 $theme = $user['theme'] ?? 'dark';
 $flash = Session::pullFlash();
@@ -40,13 +40,13 @@ $flash = Session::pullFlash();
 <a class="skip-link" href="#main">Saltar al contenido</a>
 <div class="app">
   <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
-    <a class="sb-brand" href="<?= e(url('/admin')) ?>"><?= icon('sparkle', 'sb-mark') ?><span class="serif"><?= e($brand) ?></span></a>
-    <nav class="sb-nav">
+    <a class="sb-brand" href="<?= e(url('/admin')) ?>" aria-label="<?= e($brand) ?>, ir al inicio"><?= icon('sparkle', 'sb-mark') ?><span class="serif"><?= e($brand) ?></span></a>
+    <nav class="sb-nav" aria-label="Secciones del panel">
       <?php foreach (AdminNav::visible() as $sec) : ?>
         <div class="sb-section">
           <p class="sb-title"><?= e($sec['title']) ?></p>
           <?php foreach ($sec['items'] as $it) :
-              $isActive = $it['path'] === '/admin' ? $active === '/admin' : strpos($active, $it['path']) === 0; ?>
+              $isActive = $it['path'] === '/admin' ? $active === '/admin' : ($active === $it['path'] || strpos($active, $it['path'] . '/') === 0); ?>
             <a class="sb-link<?= $isActive ? ' is-active' : '' ?>" href="<?= e(url($it['path'])) ?>"<?= $isActive ? ' aria-current="page"' : '' ?>><?= icon($it['icon']) ?><span><?= e($it['label']) ?></span></a>
           <?php endforeach; ?>
         </div>
@@ -65,7 +65,7 @@ $flash = Session::pullFlash();
         <form method="post" action="<?= e(url('/admin/salir')) ?>" class="inline"><?= csrf_field() ?><button class="btn btn-ghost btn-icon" type="submit" aria-label="Cerrar sesión"><?= icon('logout') ?></button></form>
       </div>
     </header>
-    <main class="main" id="main">
+    <main class="main" id="main" tabindex="-1">
       <?php foreach ($flash as $f) : ?>
         <div class="alert alert-<?= e($f['type'] === 'error' ? 'err' : ($f['type'] === 'success' ? 'ok' : $f['type'])) ?>" role="status"><?= e($f['msg']) ?></div>
       <?php endforeach; ?>
@@ -74,7 +74,7 @@ $flash = Session::pullFlash();
   </div>
 </div>
 <div id="cmdk-root" data-search-url="<?= e(url('/admin/buscar')) ?>" data-nav="<?= ej(AdminNav::visible()) ?>" data-base="<?= e(BASE_PATH) ?>"></div>
-<div id="toasts" class="toasts" aria-live="polite"></div>
+<div id="toasts" class="toasts" aria-live="polite" role="region" aria-label="Avisos"></div>
 <?php foreach (array_merge(['js/ui.js', 'js/admin.js'], $scripts) as $js) : ?><script src="<?= e(asset($js)) ?>" defer></script>
 <?php endforeach; ?>
 </body>

@@ -141,7 +141,7 @@ final class WebhooksController extends A3Controller
         if (!$hook) {
             throw new HttpException(404);
         }
-        $payload = ['event' => 'test.ping', 'created_at' => gmdate('Y-m-d\TH:i:s\Z'), 'data' => ['mensaje' => 'Evento de prueba enviado desde el panel.']];
+        $payload = ['id' => Str::token(), 'event' => 'test.ping', 'created_at' => \App\Core\Tz::iso(Clock::utc()), 'data' => ['mensaje' => 'Evento de prueba enviado desde el panel.']];
         $did = Db::insert('webhook_deliveries', [
             'webhook_id' => $hook['id'], 'event' => 'test.ping', 'payload' => (string) json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             'status' => 'pending', 'attempts' => 0, 'next_attempt_at' => Clock::utc(), 'created_at' => Clock::utc(),

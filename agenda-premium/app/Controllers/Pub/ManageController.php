@@ -283,7 +283,7 @@ final class ManageController extends Controller
             'resched' => $resched,
             'boot' => $boot,
             'styles' => ['css/booking.css'],
-            'scripts' => ['js/dial.js', 'js/booking.js', 'js/public.js'],
+            'scripts' => ['js/public.js', 'js/dial.js', 'js/booking.js'],
             'bodyClass' => 'pub-manage',
         ], 'layouts/public');
         $r->status = $status;

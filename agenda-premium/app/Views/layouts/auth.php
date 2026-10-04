@@ -27,10 +27,9 @@ $flash = Session::started() ? Session::pullFlash() : [];
 </head>
 <body class="auth">
 <a class="skip-link" href="#main">Saltar al contenido</a>
-<div class="auth-stage" aria-hidden="true"></div>
 <main class="auth-shell" id="main">
   <a class="auth-brand" href="<?= e(url('/')) ?>">
-    <?php if ($logo !== '') : ?><img class="auth-logo" src="<?= e($logo) ?>" alt="" width="44" height="44"><?php else : ?><span class="auth-mark"><?= icon('sparkle') ?></span><?php endif; ?>
+    <?php if ($logo !== '') : ?><img class="auth-logo" src="<?= e($logo) ?>" alt="" width="44" height="44"><?php else : ?><?= icon('sparkle') ?><?php endif; ?>
     <span class="serif auth-name"><?= e($brand) ?></span>
   </a>
   <section class="auth-card">

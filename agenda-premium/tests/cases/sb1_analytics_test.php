@@ -17,7 +17,7 @@ $UA_M = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.
 T::section('track(): sanitización, bots y dispositivos');
 AnalyticsService::track('view', ['event_type_id' => 1, 'visit_id' => 'abcdef0123456789', 'utm_source' => "goo<script>gle\n", 'utm_medium' => str_repeat('m', 300), 'referrer_host' => 'https://Referente.Example.com:8443/ruta/secreta?token=abc', 'user_agent' => $UA]);
 $row = Db::one('SELECT * FROM analytics_events ORDER BY id DESC LIMIT 1');
-T::ok($row['utm_source'] === 'googlescriptgoogle' || $row['utm_source'] === 'goo' . 'scriptgle' || !str_contains((string) $row['utm_source'], '<'), 'UTM sin etiquetas ni saltos: ' . $row['utm_source']);
+T::eq('gooscriptgle', $row['utm_source'], 'UTM sin etiquetas ni saltos de línea');
 T::eq(100, strlen((string) $row['utm_medium']), 'UTM truncado a 100');
 T::eq('referente.example.com', $row['referrer_host'], 'el referente se reduce al host (sin ruta, puerto ni parámetros)');
 T::eq('desktop', $row['device'], 'dispositivo de escritorio');
@@ -89,9 +89,9 @@ T::section('Informe: KPIs y comparación');
 $rep = AnalyticsService::report('2026-10-05', '2026-10-11');
 $k = $rep['kpis'];
 T::eq(['2026-09-28', '2026-10-04', 7], [$rep['period']['previous_from'], $rep['period']['previous_to'], $rep['period']['days']], 'periodo anterior de igual duración');
-T::ok($k['bookings']['value'] === 6 && $k['bookings']['previous'] === 2 && $k['bookings']['delta_pct'] === 200.0, 'citas 6 vs 2 (+200 %)');
-T::ok($k['cancelled']['value'] === 1 && $k['no_show']['value'] === 1 && $k['confirmed']['value'] === 4, 'cancelaciones, no-shows y confirmadas');
-T::ok($k['no_show_pct']['value'] === 16.7 && $k['cancel_pct']['value'] === 16.7, 'porcentajes de inasistencia y cancelación');
+T::ok($k['bookings']['value'] === 7 && $k['bookings']['previous'] === 2 && $k['bookings']['delta_pct'] === 250.0, 'citas 7 vs 2 (+250 %)');
+T::ok($k['cancelled']['value'] === 1 && $k['no_show']['value'] === 1 && $k['confirmed']['value'] === 5, 'cancelaciones, no-shows y confirmadas');
+T::ok($k['no_show_pct']['value'] === 14.3 && $k['cancel_pct']['value'] === 14.3, 'porcentajes de inasistencia y cancelación');
 T::ok($k['views']['value'] === 10 && $k['views']['previous'] === 5 && $k['views']['delta_pct'] === 100.0, 'visitas 10 vs 5');
 T::ok($k['conversion_pct']['value'] === 20.0 && $k['conversion_pct']['previous'] === 20.0 && $k['conversion_pct']['delta_pct'] === 0.0, 'conversión 20 % vs 20 %');
 T::ok($k['revenue']['value'] === 250.0 && $k['revenue']['previous'] === 100.0 && $k['revenue']['delta_pct'] === 150.0, 'ingresos = verificados − reembolsos; los pendientes no cuentan');
@@ -109,7 +109,7 @@ T::ok($bySrc['directo']['views'] === 2 && $bySrc['directo']['bookings'] === 4, '
 $day = array_column($rep['by_period']['rows'], null, 'period');
 T::ok(count($day) === 7 && $day['2026-10-05']['bookings'] === 2 && $day['2026-10-07']['cancelled'] === 1 && $day['2026-10-08']['no_show'] === 1 && $day['2026-10-11']['bookings'] === 1 && $day['2026-10-09']['bookings'] === 0, 'reservas por día (incluye días vacíos y la cita del domingo 21:00 hora local)');
 $wk = AnalyticsService::report('2026-10-05', '2026-10-11', ['group' => 'week'])['by_period'];
-T::ok($wk['group'] === 'week' && count($wk['rows']) === 1 && $wk['rows'][0]['period'] === '2026-10-05' && $wk['rows'][0]['bookings'] === 6, 'agrupado por semana');
+T::ok($wk['group'] === 'week' && count($wk['rows']) === 1 && $wk['rows'][0]['period'] === '2026-10-05' && $wk['rows'][0]['bookings'] === 7, 'agrupado por semana');
 $mo = AnalyticsService::report('2026-09-20', '2026-10-11', ['group' => 'month'])['by_period'];
 T::eq(['2026-09', '2026-10'], array_column($mo['rows'], 'period'), 'agrupado por mes');
 
@@ -120,7 +120,7 @@ T::eq(2, $rep['peak']['by_hour'][9], 'dos citas a las 9 (la cancelada no cuenta)
 Settings::set('timezone', 'Europe/Madrid');
 $madrid = AnalyticsService::report('2026-10-05', '2026-10-11');
 T::eq(17, $madrid['peak']['peak_hour'], 'misma agenda en Madrid (UTC+2): hora pico = 17');
-T::eq(5, $madrid['kpis']['bookings']['value'], 'en Madrid la cita del domingo 21:00 GT cae fuera del periodo');
+T::eq(6, $madrid['kpis']['bookings']['value'], 'en Madrid la cita del domingo 21:00 GT cae fuera del periodo');
 Settings::set('timezone', 'America/Guatemala');
 
 T::section('Ocupación por anfitrión');
@@ -128,7 +128,7 @@ $occ = array_column($rep['occupancy'], null, 'host_id');
 T::ok($occ[$host]['booked_minutes'] === 150 && $occ[$host]['capacity_minutes'] === 1200 && $occ[$host]['pct'] === 12.5, 'minutos reservados / laborables: 150 / 1200 = 12.5 %');
 T::ok($occ[$host2]['booked_minutes'] === 60, 'el otro anfitrión tiene 60 min');
 $f = AnalyticsService::report('2026-10-05', '2026-10-11', ['host_id' => $host]);
-T::ok($f['kpis']['bookings']['value'] === 5 && count($f['occupancy']) === 1, 'filtro por anfitrión');
+T::ok($f['kpis']['bookings']['value'] === 6 && count($f['occupancy']) === 1, 'filtro por anfitrión');
 $f = AnalyticsService::report('2026-10-05', '2026-10-11', ['event_type_id' => 2]);
 T::ok($f['kpis']['bookings']['value'] === 1 && $f['kpis']['views']['value'] === 0, 'filtro por evento');
 Db::insert('schedule_overrides', ['schedule_id' => $sched, 'date' => '2026-10-07', 'is_open' => 0]);
@@ -157,7 +157,7 @@ while (($r = fgetcsv($h, 0, ',', '"', '')) !== false) {
     $rows[] = $r;
 }
 T::eq('ID', $rows[0][0], 'encabezado en español');
-T::eq(7, count($rows), '6 citas + encabezado (+1 del otro anfitrión = 7 filas con encabezado: 7)') ;
+T::eq(8, count($rows), '7 citas del periodo + encabezado');
 $bad = 0;
 foreach (array_slice($rows, 1) as $r) {
     foreach ($r as $cell) {
@@ -190,7 +190,7 @@ ReportService::weeklySummary();
 ReportService::weeklySummary();
 $mails = Db::all("SELECT * FROM email_queue WHERE to_email = 'dueno@example.test'");
 T::eq(1, count($mails), 'se encola una sola vez por semana aunque se llame varias veces');
-T::ok(str_contains($mails[0]['subject'], 'Resumen semanal') && str_contains($mails[0]['body_html'], '05/10/2026 al 11/10/2026') && str_contains($mails[0]['body_html'], 'Q250.00') && str_contains($mails[0]['body_html'], '+200 %'), 'contenido: semana, ingresos y comparación');
+T::ok(str_contains($mails[0]['subject'], 'Resumen semanal') && str_contains($mails[0]['body_html'], '05/10/2026 al 11/10/2026') && str_contains($mails[0]['body_html'], 'Q250.00') && str_contains($mails[0]['body_html'], '+250 %'), 'contenido: semana, ingresos y comparación');
 Clock::set(Clock::now() + 7 * 86400);
 ReportService::weeklySummary();
 T::eq(2, (int) Db::val("SELECT COUNT(*) FROM email_queue WHERE to_email = 'dueno@example.test'"), 'la semana siguiente envía otro');

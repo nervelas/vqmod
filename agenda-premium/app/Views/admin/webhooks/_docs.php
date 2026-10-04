@@ -7,7 +7,7 @@ $marca   = $_SERVER['HTTP_X_AGENDA_TIMESTAMP'] ?? '';
 $firma   = $_SERVER['HTTP_X_AGENDA_SIGNATURE'] ?? '';
 
 $esperada = 'sha256=' . hash_hmac('sha256', $marca . '.' . $cuerpo, $secreto);
-if (!hash_equals($esperada, $firma)) {
+if (!hash_equals($esperada, $firma) || abs(time() - (int) $marca) > 300) {
     http_response_code(401);
     exit('Firma no válida');
 }
@@ -28,7 +28,8 @@ app.post('/avisos', express.raw({ type: '*/*' }), (req, res) => {
     .digest('hex');
 
   const a = Buffer.from(esperada), b = Buffer.from(firma);
-  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+  const vencido = Math.abs(Date.now() / 1000 - Number(marca)) > 300;
+  if (vencido || a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
     return res.status(401).send('Firma no válida');
   }
   const evento = JSON.parse(req.body.toString('utf8'));
@@ -46,7 +47,7 @@ CODE;
       <tbody>
         <tr><th scope="row" class="mono">X-Agenda-Event</th><td>Nombre del evento, por ejemplo <span class="mono">booking.created</span>.</td></tr>
         <tr><th scope="row" class="mono">X-Agenda-Delivery</th><td>Identificador único de la entrega. Úsalo para ignorar repetidos.</td></tr>
-        <tr><th scope="row" class="mono">X-Agenda-Timestamp</th><td>Marca de tiempo del envío.</td></tr>
+        <tr><th scope="row" class="mono">X-Agenda-Timestamp</th><td>Momento del envío en segundos Unix. Rechaza avisos con más de 5 minutos de antigüedad para evitar repeticiones.</td></tr>
         <tr><th scope="row" class="mono">X-Agenda-Signature</th><td><span class="mono">sha256=</span> seguido del HMAC-SHA256 en hexadecimal de <span class="mono">marca.cuerpo</span> (la marca, un punto y el cuerpo tal cual llegó).</td></tr>
       </tbody>
     </table></div>

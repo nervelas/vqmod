@@ -1,0 +1,6 @@
+Options -ExecCGI
+<FilesMatch "\.(php\d?|phtml|phar)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+</FilesMatch>

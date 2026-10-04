@@ -8,3 +8,10 @@
 *.log
 .DS_Store
 /fuentedevida-web.zip
+
+# Agenda Premium
+agenda-premium/config/config.php
+agenda-premium/config/installed.lock
+agenda-premium/storage/*
+!agenda-premium/storage/.gitkeep
+node_modules/

@@ -335,7 +335,7 @@ Instala desde cero por HTTP contra MariaDB real y ejecuta peticiones reales (cUR
 | 1. php -l y PHP 8.0 | Cumplido (8.3 + 8.0.30 real) |
 | 2. MariaDB y servidor PHP locales | Cumplido |
 | 3. Instalación desde cero y bloqueo | Cumplido |
-| 4. Suite automatizada (reserva, token, feriados, buffers, aviso/anticipación, grupos, 50 concurrentes, cupones, paquetes, espera, roles/IDOR, CSRF, SQLi/XSS, archivos maliciosos, límite de login, cola SMTP, cron CLI/URL, .ics, CSV) | Cumplido (229 pruebas) |
+| 4. Suite automatizada (reserva, token, feriados, buffers, aviso/anticipación, grupos, 50 concurrentes, cupones, paquetes, espera, roles/IDOR, CSRF, SQLi/XSS, archivos maliciosos, límite de login, cola SMTP, cron CLI/URL, .ics, CSV) | Cumplido (232 pruebas) |
 | 5. Navegador headless 360/768/1440 | Cumplido (ver límites de accesibilidad) |
 | 6. Revisión de higiene | Cumplido |
 | 7. Corregir y repetir | Cumplido (ver sección 9) |

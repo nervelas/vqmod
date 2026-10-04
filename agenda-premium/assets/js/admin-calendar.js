@@ -1,6 +1,6 @@
 /* Agenda Premium · calendario (día, semana, mes). Vanilla ES2020.
  * Las fechas viajan en UTC ISO; todo se muestra en la zona horaria del negocio (boot.tz).
- * Todo el contenido dinámico se arma con textContent (nunca innerHTML) para evitar XSS. */
+ * Todo el contenido dinámico se arma con textContent (nunca HTML en cadena) para evitar XSS. */
 (function () {
   'use strict';
   var d = document, A = window.A1, Ap = window.Ap;
@@ -45,6 +45,10 @@
     var hh = Math.floor(min / 60) % 24, mm = min % 60;
     if (boot.timeFormat === '24') { return pad(hh) + ':' + pad(mm); }
     return ((hh % 12) || 12) + ':' + pad(mm) + ' ' + (hh < 12 ? 'a. m.' : 'p. m.');
+  }
+  function hourLabel(hr) {
+    if (boot.timeFormat === '24') { return pad(hr) + ':00'; }
+    return ((hr % 12) || 12) + ' ' + (hr < 12 ? 'a. m.' : 'p. m.');
   }
   function hm(min) { return pad(Math.floor(min / 60)) + ':' + pad(min % 60); }
 
@@ -147,7 +151,7 @@
     body.style.setProperty('--hh', HH + 'px');
     body.style.height = total + 'px';
     var gutter = h('div', { class: 'cal-gutter', 'aria-hidden': 'true' });
-    for (var hr = startH; hr < endH; hr++) { var lab = h('span', { class: 'cal-hr mono', text: clock(hr * 60) }); lab.style.top = ((hr - startH) * HH) + 'px'; gutter.appendChild(lab); }
+    for (var hr = startH; hr < endH; hr++) { var lab = h('span', { class: 'cal-hr mono', text: hourLabel(hr) }); lab.style.top = ((hr - startH) * HH) + 'px'; gutter.appendChild(lab); }
     body.appendChild(gutter);
 
     var nowInfo = local(new Date().toISOString());
@@ -202,7 +206,7 @@
 
   function eventBlock(it, startMin, col) {
     var b = it.b, top = (it.startMin - startMin) / 60 * HH, hgt = Math.max(24, (it.endMin - it.startMin) / 60 * HH - 2);
-    var el = h('button', { type: 'button', class: 'cal-ev st-' + b.status + (state.selected === b.id ? ' is-selected' : ''), 'data-id': String(b.id), 'aria-label': label(b, it.startMin) }, [
+    var el = h('button', { type: 'button', class: 'cal-ev st-' + b.status + (hgt < 40 ? ' is-short' : '') + (state.selected === b.id ? ' is-selected' : ''), 'data-id': String(b.id), 'aria-label': label(b, it.startMin) }, [
       h('span', { class: 'cal-ev-time mono', text: clock(it.startMin) }),
       h('span', { class: 'cal-ev-title', text: b.guest }),
       hgt > 44 ? h('span', { class: 'cal-ev-sub', text: b.event_name }) : null

@@ -12,7 +12,7 @@ use App\Core\Config;
  *    (IPv4 e IPv6, incluidas las notaciones decimal, hex y octal y las IPv4 mapeadas en IPv6)
  *    y la conexión se fija a esa IP (evita el "DNS rebinding").
  *  - Cada redirección se valida de nuevo (máx. 3). Límite de 2 MB y 10 s.
- * Excepción: Config 'allow_private_http' === true (solo pruebas).
+ * Excepción: Config 'allow_private_http' === true (solo pruebas; también admite una lista de "host:puerto").
  */
 final class SafeHttp
 {
@@ -51,9 +51,11 @@ final class SafeHttp
 
     // ------------------------------------------------------------ validación
 
-    private static function allowPrivate(): bool
+    /** true = todo permitido (pruebas); una lista de "host:puerto" permite solo esos destinos (pruebas de redirecciones). */
+    private static function allowPrivate(string $host, int $port): bool
     {
-        return Config::get('allow_private_http') === true;
+        $cfg = Config::get('allow_private_http');
+        return $cfg === true || (is_array($cfg) && in_array($host . ':' . $port, $cfg, true));
     }
 
     /** @return array{error:?string,scheme:string,host:string,port:int,ip:string,target:string} */
@@ -103,7 +105,7 @@ final class SafeHttp
                 }
                 $host = $ascii;
             }
-            if (!self::allowPrivate() && ($host === 'localhost' || str_ends_with($host, '.localhost'))) {
+            if (!self::allowPrivate($host, $port) && ($host === 'localhost' || str_ends_with($host, '.localhost'))) {
                 return $fail(self::MSG_PRIVATE);
             }
             $ips = self::resolveHost($host);
@@ -111,7 +113,7 @@ final class SafeHttp
                 return $fail('No encontramos ese sitio. Revisa que la dirección esté bien escrita.');
             }
         }
-        if (!self::allowPrivate()) {
+        if (!self::allowPrivate($host, $port)) {
             foreach ($ips as $ip) {
                 if (!self::isPublicIp($ip)) {
                     return $fail(self::MSG_PRIVATE);
@@ -168,14 +170,14 @@ final class SafeHttp
     {
         $ips = [];
         if (function_exists('dns_get_record')) {
-            foreach ((array) @dns_get_record($host, DNS_A | DNS_AAAA) as $r) {
+            foreach (@dns_get_record($host, DNS_A | DNS_AAAA) ?: [] as $r) {
                 $ip = $r['ip'] ?? $r['ipv6'] ?? null;
                 if (is_string($ip)) {
                     $ips[] = $ip;
                 }
             }
         }
-        foreach ((array) @gethostbynamel($host) as $ip) {
+        foreach (@gethostbynamel($host) ?: [] as $ip) {
             $ips[] = (string) $ip;
         }
         return array_values(array_unique($ips));
@@ -251,11 +253,8 @@ final class SafeHttp
             $r = (function_exists('curl_init') && Config::get('safehttp_no_curl') !== true)
                 ? self::viaCurl($method, $url, $body, $list, $t, $remaining, $maxBytes)
                 : self::viaStreams($method, $url, $body, $list, $t, $remaining, $maxBytes);
-            if ($r['error'] !== null || !in_array($r['status'], [301, 302, 303, 307, 308], true) || $maxRedirects === 0) {
-                return $r;
-            }
             $loc = $r['headers']['location'] ?? '';
-            if ($loc === '') {
+            if ($loc === '' || $maxRedirects === 0 || !in_array($r['status'], [301, 302, 303, 307, 308], true)) {
                 return $r;
             }
             if (++$redirects > $maxRedirects) {
@@ -321,7 +320,7 @@ final class SafeHttp
         $tooLarge = false;
         $resp = [];
         $opts = [
-            CURLOPT_RESOLVE => [$t['host'] . ':' . $t['port'] . ':' . $t['ip']],
+            CURLOPT_RESOLVE => [$t['host'] . ':' . $t['port'] . ':' . (strpos($t['ip'], ':') !== false ? '[' . $t['ip'] . ']' : $t['ip'])],
             CURLOPT_FOLLOWLOCATION => false,
             CURLOPT_PROXY => '',
             CURLOPT_NOPROXY => '*',

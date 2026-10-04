@@ -97,11 +97,11 @@ $pstat = ['none' => 'Sin cobro', 'pending' => 'Pago pendiente', 'partial' => 'Pa
         <?php if (!$history) : ?>
           <div class="empty"><p class="empty-text">Aún no hay movimientos registrados.</p></div>
         <?php else : ?>
-          <ol class="timeline card-body">
+          <div class="card-body"><ol class="timeline">
             <?php foreach ($history as $h) : ?>
               <li><span class="tl-dot"></span><div><strong><?= e($h['action']) ?></strong><?php if ($h['detail']) : ?> <span class="muted">· <?= e($h['detail']) ?></span><?php endif; ?><br><span class="small muted"><?= e(Fmt::dateShort($h['created_at'], $tz)) ?> <?= e(Fmt::time($h['created_at'], $tz)) ?><?= $h['actor'] ? ' · ' . e($h['actor']) : '' ?></span></div></li>
             <?php endforeach; ?>
-          </ol>
+          </ol></div>
         <?php endif; ?>
       </section>
     </div>

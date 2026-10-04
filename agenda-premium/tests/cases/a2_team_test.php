@@ -1,0 +1,116 @@
+<?php
+declare(strict_types=1);
+
+require __DIR__ . '/../lib/T.php';
+require __DIR__ . '/../lib/A2Http.php';
+T::boot('a2_team');
+
+use App\Core\Clock;
+use App\Core\Db;
+use App\Core\Str;
+
+A2Http::start('a2_team', 8192);
+register_shutdown_function([A2Http::class, 'stop']);
+$tmp = sys_get_temp_dir() . '/a2team_' . getmypid();
+@mkdir($tmp);
+
+$admin = new A2Http();
+T::ok($admin->login('admin@test.local', 'Prueba#Segura2026'), 'el administrador entra');
+
+T::section('Anfitriones');
+$r = $admin->post('/admin/anfitriones/nuevo', ['name' => 'Dra. Lucía Morales', 'title' => 'Psicóloga', 'timezone' => 'America/Guatemala', 'color' => '#3B5B8C', 'email' => 'lucia@example.test', 'phone' => '5555 1234', 'whatsapp' => '+502 5555 1234', 'public_profile' => '1', 'active' => '1']);
+T::eq(302, $r['status'], 'crea anfitrión');
+$h = Db::one("SELECT * FROM hosts WHERE email = 'lucia@example.test'");
+T::ok((bool) $h, 'el anfitrión existe');
+T::eq('dra-lucia-morales', $h['slug'], 'slug sin tildes');
+T::eq('50255551234', $h['phone'], 'teléfono normalizado con 502');
+T::eq(32, strlen((string) $h['ics_token']), 'token ICS de 128 bits');
+$hid = (int) $h['id'];
+$page = $admin->get('/admin/anfitriones/' . $hid . '/editar');
+T::ok(str_contains($page['body'], '/ics/' . $h['ics_token'] . '.ics'), 'muestra el enlace ICS');
+$old = $h['ics_token'];
+$admin->post('/admin/anfitriones/' . $hid . '/token');
+T::ok(Db::val('SELECT ics_token FROM hosts WHERE id = ?', [$hid]) !== $old, 'regenera el token');
+T::eq(422, $admin->post('/admin/anfitriones/nuevo', ['name' => 'X', 'timezone' => 'Mars/Base'])['status'], 'zona horaria inválida');
+T::eq(422, $admin->post('/admin/anfitriones/nuevo', ['name' => 'X', 'timezone' => 'America/Guatemala', 'email' => 'no-es-correo'])['status'], 'correo inválido');
+T::eq(422, $admin->post('/admin/anfitriones/nuevo', ['name' => 'X', 'timezone' => 'America/Guatemala', 'phone' => '12'])['status'], 'teléfono inválido');
+T::eq(422, $admin->post('/admin/anfitriones/nuevo', ['name' => 'Otro', 'slug' => 'dra-lucia-morales', 'timezone' => 'America/Guatemala'])['status'], 'slug repetido');
+$r = $admin->post('/admin/anfitriones/nuevo', ['name' => '<img src=x onerror=alert(1)>', 'timezone' => 'America/Guatemala', 'bio' => "'; DROP TABLE hosts;--"]);
+T::ok(!str_contains($admin->get('/admin/anfitriones')['body'], '<img src=x'), 'nombre escapado en la lista');
+T::ok((int) Db::val('SELECT COUNT(*) FROM hosts') >= 2, 'la tabla hosts sigue viva');
+
+T::section('Foto: subida segura');
+$png = $tmp . '/ok.png';
+$im = imagecreatetruecolor(40, 40);
+imagepng($im, $png);
+$up = static fn (string $path, string $name, string $type) => $admin->post('/admin/anfitriones/' . $hid . '/editar', ['name' => 'Dra. Lucía Morales', 'timezone' => 'America/Guatemala', 'photo' => new CURLFile($path, $type, $name)]);
+$r = $up($png, 'foto.png', 'image/png');
+T::eq(302, $r['status'], 'PNG válido aceptado');
+$fid = (int) Db::val('SELECT photo_file_id FROM hosts WHERE id = ?', [$hid]);
+T::ok($fid > 0, 'la foto quedó ligada');
+T::eq(1, (int) Db::val('SELECT is_public FROM files WHERE id = ?', [$fid]), 'foto pública');
+T::eq('host', Db::val('SELECT kind FROM files WHERE id = ?', [$fid]), 'tipo host');
+$shell = $tmp . '/shell.php';
+file_put_contents($shell, '<?php system($_GET["c"]); ?>');
+$n0 = (int) Db::val('SELECT COUNT(*) FROM files');
+T::eq(422, $up($shell, 'shell.php', 'image/jpeg')['status'], '.php rechazado');
+copy($shell, $tmp . '/dbl.php.jpg');
+T::eq(422, $up($tmp . '/dbl.php.jpg', 'dbl.php.jpg', 'image/jpeg')['status'], 'doble extensión rechazada');
+copy($shell, $tmp . '/fake.jpg');
+$r = $up($tmp . '/fake.jpg', 'fake.jpg', 'image/jpeg');
+T::eq(422, $r['status'], 'MIME falso (PHP con extensión .jpg) rechazado');
+T::ok(str_contains($r['body'], 'no coincide'), 'mensaje de contenido distinto');
+file_put_contents($tmp . '/x.svg', '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+T::eq(422, $up($tmp . '/x.svg', 'x.svg', 'image/svg+xml')['status'], 'SVG rechazado');
+file_put_contents($tmp . '/doc.pdf', "%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF");
+T::eq(422, $up($tmp . '/doc.pdf', 'doc.pdf', 'application/pdf')['status'], 'PDF no sirve como foto');
+T::eq($n0, (int) Db::val('SELECT COUNT(*) FROM files'), 'ningún archivo malicioso se guardó');
+T::eq($fid, (int) Db::val('SELECT photo_file_id FROM hosts WHERE id = ?', [$hid]), 'la foto previa se conserva');
+
+T::section('Equipos');
+$r = $admin->post('/admin/equipos/nuevo', ['name' => 'Salud mental', 'description' => 'Equipo', 'active' => '1', 'hosts' => [$hid]]);
+T::eq(302, $r['status'], 'crea equipo');
+$tid = (int) Db::val("SELECT id FROM teams WHERE name = 'Salud mental'");
+T::eq(1, (int) Db::val('SELECT COUNT(*) FROM team_hosts WHERE team_id = ?', [$tid]), 'miembro guardado');
+T::eq(422, $admin->post('/admin/equipos/nuevo', ['name' => ''])['status'], 'equipo sin nombre');
+T::eq(302, $admin->post('/admin/equipos/' . $tid . '/editar', ['name' => 'Salud mental 2', 'active' => '1'])['status'], 'edita equipo');
+T::eq(0, (int) Db::val('SELECT COUNT(*) FROM team_hosts WHERE team_id = ?', [$tid]), 'quitar miembros');
+$admin->post('/admin/equipos/' . $tid . '/eliminar');
+T::eq(0, (int) Db::val('SELECT COUNT(*) FROM teams WHERE id = ?', [$tid]), 'elimina equipo');
+
+T::section('Usuarios: invitaciones y roles');
+$r = $admin->post('/admin/usuarios/invitar', ['name' => 'Rosa Recepción', 'email' => 'rosa@example.test', 'role' => 'reception']);
+T::eq(302, $r['status'], 'invita');
+$u = Db::one("SELECT * FROM users WHERE email = 'rosa@example.test'");
+T::eq(0, (int) $u['active'], 'queda inactivo');
+T::eq('reception', $u['role'], 'rol asignado');
+T::ok($u['password_hash'] === null, 'sin contraseña hasta aceptar');
+$page = $admin->get('/admin/usuarios');
+T::ok((bool) preg_match('~/admin/invitacion/([a-f0-9]{32})"~', $page['body'], $m), 'muestra el enlace con token de 128 bits');
+T::eq(hash('sha256', $m[1]), $u['invite_token_hash'], 'se guarda solo el hash SHA-256');
+$days = (strtotime($u['invite_expires_at'] . ' UTC') - Clock::now()) / 86400;
+T::ok($days > 6.9 && $days <= 7.01, 'vence en 7 días');
+T::ok(!str_contains($admin->get('/admin/usuarios')['body'], $m[1]), 'el enlace se muestra una sola vez');
+$tok1 = $u['invite_token_hash'];
+$admin->post('/admin/usuarios/' . $u['id'] . '/enlace');
+T::ok(Db::val('SELECT invite_token_hash FROM users WHERE id = ?', [$u['id']]) !== $tok1, 'restablecer genera otro enlace');
+T::eq(302, $admin->post('/admin/usuarios/invitar', ['name' => 'Rosa', 'email' => 'admin@test.local', 'role' => 'host'])['status'], 'correo existente: vuelve con error');
+T::eq(1, (int) Db::val("SELECT COUNT(*) FROM users WHERE email = 'admin@test.local'"), 'sin duplicados');
+$admin->post('/admin/usuarios/invitar', ['name' => 'Mal', 'email' => 'no-correo', 'role' => 'host']);
+T::eq(0, (int) Db::val("SELECT COUNT(*) FROM users WHERE name = 'Mal'"), 'correo inválido no crea usuario');
+$admin->post('/admin/usuarios/invitar', ['name' => 'Rol', 'email' => 'rol@example.test', 'role' => 'superadmin']);
+T::eq(0, (int) Db::val("SELECT COUNT(*) FROM users WHERE email = 'rol@example.test'"), 'rol inexistente rechazado');
+
+$adminId = (int) Db::val("SELECT id FROM users WHERE email = 'admin@test.local'");
+$admin->post('/admin/usuarios/' . $adminId . '/rol', ['role' => 'host']);
+T::eq('admin', Db::val('SELECT role FROM users WHERE id = ?', [$adminId]), 'no se puede quitar el último administrador');
+$admin->post('/admin/usuarios/' . $adminId . '/activo');
+T::eq(1, (int) Db::val('SELECT active FROM users WHERE id = ?', [$adminId]), 'no se puede desactivar al último administrador');
+$admin2 = Db::insert('users', ['name' => 'Segundo', 'email' => 'dos@example.test', 'password_hash' => password_hash('Dos#Prueba2026', PASSWORD_BCRYPT), 'role' => 'admin', 'active' => 1, 'created_at' => Clock::utc(), 'updated_at' => Clock::utc()]);
+$admin->post('/admin/usuarios/' . $admin2 . '/rol', ['role' => 'reception']);
+T::eq('reception', Db::val('SELECT role FROM users WHERE id = ?', [$admin2]), 'con dos administradores sí se puede cambiar el rol de uno');
+$admin->post('/admin/usuarios/' . $admin2 . '/rol', ['role' => 'admin']);
+$admin->post('/admin/usuarios/' . $admin2 . '/activo');
+T::eq(0, (int) Db::val('SELECT active FROM users WHERE id = ?', [$admin2]), 'desactivar al otro administrador');
+T::ok((int) Db::val("SELECT COUNT(*) FROM audit_log WHERE action LIKE 'users.%'") >= 5, 'auditoría de usuarios registrada');
+T::done();

@@ -40,7 +40,8 @@
   function stamp(seal) {
     if (!seal) return;
     seal.classList.add('is-stamped');
-    if (!reduced() && global.navigator && global.navigator.vibrate) { try { global.navigator.vibrate([14, 60, 24]); } catch (e) { /* nada */ } }
+    var ua = global.navigator && global.navigator.userActivation;
+    if (!reduced() && global.navigator && global.navigator.vibrate && (!ua || ua.hasBeenActive)) { try { global.navigator.vibrate([14, 60, 24]); } catch (e) { /* nada */ } }
   }
 
   function localTimes() {

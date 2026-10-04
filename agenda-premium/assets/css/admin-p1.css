@@ -64,15 +64,15 @@
 .dash-grid { display: grid; gap: 1.25rem; grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 1024px) {
   .dash-grid { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
-  .dash-agenda { grid-row: span 2; }
 }
-.dash-grid > .card { margin: 0; }
+.dash-col { min-width: 0; }
+.dash-col > .card { margin: 0; }
 .ag-list, .up-list, .pend-list { list-style: none; margin: 0; padding: 0; }
 .ag-row, .up-row { display: flex; align-items: center; gap: 0.9rem; padding: 0.85rem 1.25rem; color: var(--text); text-decoration: none; border-top: 1px solid var(--line); border-left: 3px solid var(--c, var(--gold-2)); transition: background-color 0.2s; }
 .ag-list li:first-child .ag-row, .up-list li:first-child .up-row { border-top: 0; }
 .ag-row:hover, .up-row:hover { background: rgba(201, 160, 80, 0.07); }
-.ag-time { flex: none; min-width: 5.2rem; font-size: 0.95rem; color: var(--gold-text); }
-.up-date { flex: none; min-width: 5.2rem; font-size: 0.8rem; line-height: 1.35; color: var(--gold-text); }
+.ag-time { flex: none; min-width: 6.2rem; font-size: 0.95rem; color: var(--gold-text); }
+.up-date { flex: none; min-width: 5.6rem; font-size: 0.8rem; line-height: 1.35; color: var(--gold-text); }
 .ag-main { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .ag-main strong, .ag-main span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ag-completed .ag-main strong { color: var(--text-2); }
@@ -154,7 +154,7 @@ body.cmdk-open { overflow: hidden; }
 .cal-scroll { overflow: auto; max-height: calc(100vh - 17rem); min-height: 24rem; position: relative; }
 .cal-grid { min-width: 100%; }
 .cal-grid.cal-cols-7 { min-width: 52rem; }
-.cal-head { position: sticky; top: 0; z-index: 6; display: grid; grid-template-columns: 3.6rem repeat(var(--n, 1), minmax(0, 1fr)); background: var(--surface); border-bottom: 1px solid var(--line-2); }
+.cal-head { position: sticky; top: 0; z-index: 6; display: grid; grid-template-columns: 4.6rem repeat(var(--n, 1), minmax(0, 1fr)); background: var(--surface); border-bottom: 1px solid var(--line-2); }
 .cal-cols-1 { --n: 1; } .cal-cols-7 { --n: 7; }
 .cal-corner { border-right: 1px solid var(--line); }
 .cal-dayhead { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; padding: 0.5rem 0.25rem; color: var(--text-2); background: none; border: 0; border-left: 1px solid var(--line); cursor: pointer; min-width: 0; }
@@ -163,10 +163,10 @@ body.cmdk-open { overflow: hidden; }
 .cal-dom { font-size: 1.5rem; line-height: 1.1; color: var(--text); }
 .cal-dayhead.is-today .cal-dom { display: grid; place-items: center; width: 2.2rem; height: 2.2rem; color: var(--on-gold); background: var(--gold-grad); border-radius: 50%; font-size: 1.15rem; }
 .cal-hol { font-size: 0.68rem; padding: 0.05rem 0.45rem; color: var(--warn-fg); background: var(--warn-bg); border: 1px solid var(--warn-line); border-radius: 99px; }
-.cal-body { position: relative; display: grid; grid-template-columns: 3.6rem repeat(var(--n, 1), minmax(0, 1fr)); }
+.cal-body { position: relative; display: grid; grid-template-columns: 4.6rem repeat(var(--n, 1), minmax(0, 1fr)); }
 .cal-grid.cal-cols-1 .cal-body { --n: 1; } .cal-grid.cal-cols-7 .cal-body { --n: 7; }
 .cal-gutter { position: relative; border-right: 1px solid var(--line); }
-.cal-hr { position: absolute; right: 0.45rem; transform: translateY(-50%); font-size: 0.7rem; color: var(--text-3); background: var(--surface); padding-inline: 0.15rem; }
+.cal-hr { white-space: nowrap; position: absolute; right: 0.45rem; transform: translateY(-50%); font-size: 0.7rem; color: var(--text-3); background: var(--surface); padding-inline: 0.15rem; }
 .cal-body .cal-gutter .cal-hr:first-child { transform: none; }
 .cal-col { position: relative; border-left: 1px solid var(--line); cursor: cell; background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--hh) - 1px), var(--line) calc(var(--hh) - 1px), var(--line) var(--hh)); }
 .cal-col.is-today { background-color: rgba(201, 160, 80, 0.045); }
@@ -179,6 +179,7 @@ body.cmdk-open { overflow: hidden; }
 .cal-ev.is-selected { outline: 2px solid var(--gold-3); z-index: 5; }
 .cal-ev.is-dragging { z-index: 8; opacity: 0.88; cursor: grabbing; box-shadow: var(--shadow); transition: none; }
 .cal-ev.is-dragging::after { content: attr(data-drop); position: absolute; right: 0.3rem; bottom: 0.2rem; font: 700 0.7rem var(--font-mono); color: var(--gold-3); }
+.cal-ev.is-short { flex-direction: row; align-items: center; gap: 0.4rem; padding-block: 0; }
 .cal-ev-time { font-size: 0.7rem; color: var(--text-2); }
 .cal-ev-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cal-ev-sub { font-weight: 400; font-size: 0.72rem; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -227,3 +228,15 @@ html[data-theme="light"] .qr-key { color: var(--gold-1); }
 @media (prefers-reduced-motion: reduce) {
   .cal-ev, .ag-row, .up-row { transition: none; }
 }
+
+.card-body > p > a, .card-body.stack > p > a { display: inline-flex; align-items: center; gap: 0.5rem; }
+.card-body > .stack > p > a { display: inline-flex; align-items: center; gap: 0.5rem; }
+
+@media (max-width: 479.98px) {
+  .ag-row, .up-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.2rem 0.75rem; padding-inline: 1rem; }
+  .ag-time, .up-date { grid-column: 1 / -1; min-width: 0; }
+  .up-date br { display: none; }
+  .cal-hr { font-size: 0.64rem; }
+}
+@media (min-width: 640px) { .only-xs { display: none !important; } }
+.row-link { gap: 0.4rem; flex-wrap: wrap; }

@@ -1,0 +1,28 @@
+AGENDA PREMIUM · PLUGIN DE WORDPRESS
+====================================
+
+Para qué sirve
+  Muestra tu agenda de reservas dentro de cualquier página o entrada de WordPress, sin tocar código.
+
+Instalación
+  1. Comprime la carpeta "wordpress" (o solo el archivo agenda-premium-embed.php) en un .zip.
+  2. En WordPress: Plugins > Añadir nuevo > Subir plugin, elige el .zip y pulsa "Activar".
+
+Uso
+  Escribe el shortcode en la página donde quieras la agenda:
+
+    [agenda_premium url="https://tudominio.com/agenda" evento="consulta-general"]
+
+  Atributos
+    url        Dirección donde instalaste Agenda Premium (obligatorio).
+    evento     Identificador (slug) del evento; lo ves en la dirección /e/identificador (obligatorio).
+    modo       inline (por defecto: la reserva aparece en la página), popup o boton (ventana emergente
+               desde un botón) y flotante (botón fijo en la esquina).
+    texto      Texto del botón en los modos popup, boton y flotante. Por defecto "Reservar cita".
+    color      Color de acento en hexadecimal, por ejemplo C9A050 (opcional).
+    anfitrion  Identificador del anfitrión si quieres fijar una persona (opcional).
+
+Notas
+  - En Agenda Premium, el panel > Insertar te genera estos códigos ya listos.
+  - Si tu WordPress usa una política de contenido (CSP) estricta, permite el dominio de Agenda Premium en script-src y frame-src.
+  - En "Ajustes > Insertar" de Agenda Premium puedes limitar qué sitios pueden mostrar tu reserva.

@@ -1,0 +1,117 @@
+<?php
+declare(strict_types=1);
+
+require __DIR__ . '/../lib/T.php';
+require __DIR__ . '/a1_http.inc.php';
+T::boot('a1_bookings');
+
+use App\Core\Db;
+use App\Core\Tz;
+
+A1Http::start(8115, '/tmp/ap-t-a1_bookings.config.php');
+$admin = new A1Client();
+$admin->login('admin@test.local', 'Prueba#Segura2026');
+$day = date('Y-m-d', strtotime('+4 day'));
+$new = static function (array $over = []) use ($admin, $day): array {
+    return $admin->postForm('/admin/citas/nueva', '/admin/citas/nueva', array_merge(['origen' => 'whatsapp', 'name' => 'Paola Girón', 'phone' => '5544 3322', 'email' => 'paola@example.test', 'event_id' => '1', 'duration' => '30', 'fecha' => $day, 'hora' => '10:00', 'status' => 'confirmed'], $over));
+};
+
+T::section('Cita manual');
+$admin->get('/admin/citas/nueva');
+T::eq(200, $admin->last['status'], 'el formulario carga');
+$r = $new();
+T::eq(302, $r['status'], 'crea la cita manual');
+preg_match('#/admin/citas/(\d+)#', $admin->location(), $m);
+$id = (int) ($m[1] ?? 0);
+T::ok($id > 0, 'redirige al detalle');
+$b = Db::one('SELECT * FROM bookings WHERE id = ?', [$id]);
+T::eq(Tz::localToUtc("$day 10:00:00", 'America/Guatemala'), $b['starts_at'], 'la hora local se guarda en UTC');
+T::eq('admin', $b['created_via'], 'origen administrativo');
+T::eq('whatsapp', $b['utm_source'], 'se registra el origen WhatsApp');
+T::eq('50255443322', $b['guest_phone'], 'teléfono con +502');
+T::ok((int) $b['client_id'] > 0, 'se creó la ficha del cliente');
+$r = $new(['name' => 'Otra Persona', 'phone' => '5511 0000', 'email' => 'otra@example.test']);
+T::eq(422, $r['status'], 'nunca doble agendado (mismo horario)');
+T::ok(str_contains($r['body'], 'alert-err'), 'se muestra el motivo');
+$r = $new(['name' => 'Otra Persona', 'phone' => '5511 0000', 'email' => 'otra@example.test', 'force' => '1']);
+T::eq(422, $r['status'], 'ni siquiera forzando se agenda sobre otra cita');
+$r = $new(['name' => '', 'hora' => '11:00']);
+T::eq(422, $r['status'], 'el nombre es obligatorio');
+$r = $new(['phone' => '123', 'hora' => '11:00']);
+T::eq(422, $r['status'], 'teléfono inválido rechazado');
+$r = $new(['hora' => '03:00', 'name' => 'Madrugada']);
+T::eq(422, $r['status'], 'fuera de horario sin forzar se rechaza');
+$r = $new(['hora' => '03:00', 'name' => 'Madrugada', 'force' => '1']);
+T::eq(302, $r['status'], 'fuera de horario forzado se permite');
+preg_match('#/admin/citas/(\d+)#', $admin->location(), $m2);
+$idForced = (int) ($m2[1] ?? 0);
+
+T::section('Horarios libres');
+$j = $admin->getJson('/admin/slots?evento=1&duracion=30&fecha=' . $day);
+T::eq(200, $j['status'], 'slots responde');
+$starts = array_column($j['json']['slots'] ?? [], 'local');
+T::ok(count($starts) > 0 && !in_array('10:00', $starts, true), 'el horario ocupado no aparece');
+T::eq(422, $admin->getJson('/admin/slots?evento=1&fecha=mal')['status'], 'fecha inválida => 422');
+
+T::section('Lista, filtros y CSV');
+$admin->get('/admin/citas?q=Gir%C3%B3n');
+T::ok(str_contains($admin->last['body'], 'Paola Girón'), 'la búsqueda por nombre funciona');
+$admin->get('/admin/citas?estado=cancelled');
+T::ok(!str_contains($admin->last['body'], 'Paola Girón'), 'el filtro por estado excluye');
+$admin->get('/admin/citas?desde=' . $day . '&hasta=' . $day);
+T::ok(str_contains($admin->last['body'], 'Paola Girón'), 'el filtro por fechas incluye el día');
+$admin->get('/admin/citas/exportar?q=Paola');
+T::eq(200, $admin->last['status'], 'exporta CSV');
+T::ok(str_contains($admin->last['headers'], 'text/csv') && str_contains($admin->last['body'], 'Paola Girón'), 'CSV con la cita');
+T::ok(str_starts_with($admin->last['body'], "\xEF\xBB\xBF"), 'CSV con BOM para Excel');
+
+T::section('Estado, mover, nota y cancelar');
+$r = $admin->request('POST', "/admin/citas/$id/estado", ['_csrf' => $admin->csrf(), 'status' => 'completed']);
+T::eq(302, $r['status'], 'completar una cita futura responde con aviso');
+T::eq('confirmed', Db::val('SELECT status FROM bookings WHERE id = ?', [$id]), 'no se completa antes de empezar');
+$r = $admin->request('POST', "/admin/citas/$id/estado", ['_csrf' => $admin->csrf(), 'status' => 'rejected']);
+T::eq('confirmed', Db::val('SELECT status FROM bookings WHERE id = ?', [$id]), 'transición no permitida ignorada');
+$r = $admin->request('POST', "/admin/citas/$id/nota", ['_csrf' => $admin->csrf(), 'internal_note' => 'Prefiere la tarde']);
+T::eq('Prefiere la tarde', Db::val('SELECT internal_note FROM bookings WHERE id = ?', [$id]), 'guarda la nota interna');
+$r = $admin->postJson("/admin/citas/$id/mover", ['start_local' => "$day 14:00", 'force' => 0]);
+T::eq(200, $r['status'], 'mover a un hueco libre');
+T::eq(Tz::localToUtc("$day 14:00:00", 'America/Guatemala'), Db::val('SELECT starts_at FROM bookings WHERE id = ?', [$id]), 'nueva hora guardada en UTC');
+$r = $admin->postJson("/admin/citas/$id/mover", ['start_local' => "$day 03:00", 'force' => 0]);
+$jr = json_decode($r['body'], true);
+T::ok($r['status'] === 422 && !empty($jr['can_force']), 'fuera de horario ofrece forzar');
+$r = $admin->postJson("/admin/citas/$id/mover", ['start_local' => "$day 03:00", 'force' => 1]);
+T::eq(200, $r['status'], 'forzar fuera de horario');
+$r = $admin->postJson("/admin/citas/$id/mover", ['start_local' => "$day 03:00", 'force' => 1]);
+$admin->postJson("/admin/citas/$idForced/mover", ['start_local' => "$day 03:00", 'force' => 1]);
+$r = $admin->postJson("/admin/citas/$idForced/mover", ['start_local' => "$day 03:00", 'force' => 1]);
+T::ok(in_array($r['status'], [200, 422], true), 'mover sobre la misma hora no rompe');
+$other = $new(['hora' => '16:00', 'name' => 'Para Chocar']);
+preg_match('#/admin/citas/(\d+)#', $admin->location(), $m3);
+$idB = (int) ($m3[1] ?? 0);
+$r = $admin->postJson("/admin/citas/$idB/mover", ['start_local' => "$day 03:00", 'force' => 1]);
+T::eq(422, $r['status'], 'jamás se mueve encima de otra cita, ni forzando');
+$r = $admin->request('GET', "/admin/citas/$id/ics");
+T::ok(in_array($r['status'], [200, 302], true), 'descarga .ics (o aviso)');
+$r = $admin->postJson("/admin/citas/$idB/cancelar", ['reason' => 'Prueba']);
+T::eq(200, $r['status'], 'cancela la cita');
+T::eq('cancelled', Db::val('SELECT status FROM bookings WHERE id = ?', [$idB]), 'estado cancelada');
+$r = $admin->postJson("/admin/citas/$idB/cancelar", ['reason' => 'otra vez']);
+T::eq(422, $r['status'], 'no se cancela dos veces');
+
+T::section('Pendientes y estados con cita pasada');
+$p = $new(['hora' => '09:00', 'name' => 'Pendiente Uno', 'status' => 'pending']);
+preg_match('#/admin/citas/(\d+)#', $admin->location(), $m4);
+$idP = (int) ($m4[1] ?? 0);
+T::eq('pending', Db::val('SELECT status FROM bookings WHERE id = ?', [$idP]), 'se crea pendiente');
+$r = $admin->postJson("/admin/citas/$idP/estado", ['status' => 'confirmed']);
+T::eq(200, $r['status'], 'aprobar');
+T::eq('confirmed', Db::val('SELECT status FROM bookings WHERE id = ?', [$idP]), 'quedó confirmada');
+Db::update('bookings', ['starts_at' => gmdate('Y-m-d H:i:s', time() - 7200), 'ends_at' => gmdate('Y-m-d H:i:s', time() - 5400), 'blocked_start' => gmdate('Y-m-d H:i:s', time() - 7200), 'blocked_end' => gmdate('Y-m-d H:i:s', time() - 5400)], 'id = ?', [$idP]);
+$r = $admin->postJson("/admin/citas/$idP/estado", ['status' => 'no_show']);
+T::eq(200, $r['status'], 'marcar no asistió una cita pasada');
+T::eq(1, (int) Db::val('SELECT noshow_count FROM clients WHERE id = (SELECT client_id FROM bookings WHERE id = ?)', [$idP]), 'suma una inasistencia al cliente');
+$audit = (int) Db::val("SELECT COUNT(*) FROM audit_log WHERE action IN ('booking_create','booking_status','booking_move','booking_cancel')");
+T::ok($audit >= 6, 'las acciones quedan en la auditoría (' . $audit . ')');
+$admin->get("/admin/citas/$idP");
+T::eq(200, $admin->last['status'], 'el detalle carga');
+T::done();

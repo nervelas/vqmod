@@ -89,16 +89,16 @@ $hasFilters = $f['q'] !== '' || $f['anfitrion'] || $f['evento'] || $f['desde'] !
           <thead><tr>
             <th scope="col">Fecha y hora</th><th scope="col">Persona</th><th scope="col" class="hide-sm">Tipo de cita</th>
             <?php if (!$scoped) : ?><th scope="col" class="hide-sm"><?= e(ucfirst((string) setting('host_label', 'profesional'))) ?></th><?php endif; ?>
-            <th scope="col">Estado</th><th scope="col" class="hide-sm right">Pago</th>
+            <th scope="col" class="hide-sm">Estado</th><th scope="col" class="hide-sm right">Pago</th>
           </tr></thead>
           <tbody>
           <?php foreach ($rows as $r) : ?>
             <tr>
               <td class="nowrap"><a class="row-link" href="<?= e(url('/admin/citas/' . $r['id'])) ?>"><span class="mono"><?= e(Fmt::dateShort($r['starts_at'], $tz)) ?></span> <span class="mono muted"><?= e(Fmt::time($r['starts_at'], $tz)) ?></span></a></td>
-              <td><strong><?= e($r['guest_name']) ?></strong><?php if ($r['guest_phone']) : ?><br><span class="muted small mono"><?= e(\App\Core\Str::phoneDisplay($r['guest_phone'])) ?></span><?php endif; ?></td>
+              <td><strong><?= e($r['guest_name']) ?></strong><?php if ($r['guest_phone']) : ?><br><span class="muted small mono"><?= e(\App\Core\Str::phoneDisplay($r['guest_phone'])) ?></span><?php endif; ?><br class="only-xs"><span class="only-xs badge <?= e(A1Support::statusBadge($r['status'])) ?>"><?= e(A1Support::statusLabel($r['status'])) ?></span></td>
               <td class="hide-sm"><span class="dot-c" <?= vars(['--c' => $r['event_color']]) ?>></span> <?= e($r['event_name']) ?></td>
               <?php if (!$scoped) : ?><td class="hide-sm"><?= e($r['host_name']) ?></td><?php endif; ?>
-              <td><span class="badge <?= e(A1Support::statusBadge($r['status'])) ?>"><?= e(A1Support::statusLabel($r['status'])) ?></span></td>
+              <td class="hide-sm"><span class="badge <?= e(A1Support::statusBadge($r['status'])) ?>"><?= e(A1Support::statusLabel($r['status'])) ?></span></td>
               <td class="hide-sm right mono"><?= (float) $r['total'] > 0 ? e(money($r['total'])) : '<span class="muted">—</span>' ?></td>
             </tr>
           <?php endforeach; ?>

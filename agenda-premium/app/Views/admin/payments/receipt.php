@@ -10,6 +10,7 @@ $bk = $r['booking'];
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title><?= e($title . ' · ' . $brand) ?></title>
+<link rel="icon" href="<?= e(asset('img/favicon.svg')) ?>">
 <link rel="stylesheet" href="<?= e(asset('css/fonts.css')) ?>">
 <link rel="stylesheet" href="<?= e(asset('css/core.css')) ?>">
 <link rel="stylesheet" href="<?= e(asset('css/admin-p3.css')) ?>">

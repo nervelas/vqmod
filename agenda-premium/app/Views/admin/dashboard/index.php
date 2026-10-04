@@ -75,6 +75,7 @@ $back = '/admin';
   </section>
 
   <div class="dash-grid">
+    <div class="stack dash-col">
     <section class="card dash-agenda" aria-labelledby="h-agenda">
       <div class="card-head row row-between">
         <h2 class="serif" id="h-agenda">Agenda de hoy</h2>
@@ -105,6 +106,33 @@ $back = '/admin';
       <?php endif; ?>
     </section>
 
+    <section class="card dash-upcoming" aria-labelledby="h-up">
+      <div class="card-head row row-between">
+        <h2 class="serif" id="h-up">Próximos eventos</h2>
+        <a class="btn btn-ghost btn-sm" href="<?= e(url('/admin/citas', ['desde' => $tomorrow])) ?>">Ver lista</a>
+      </div>
+      <?php if (!$upcoming) : ?>
+        <div class="empty">
+          <?= icon('inbox') ?>
+          <p class="empty-title serif">Aún no hay próximas citas</p>
+          <p class="empty-text">Comparte tu enlace de reservas para recibir nuevas citas.</p>
+        </div>
+      <?php else : ?>
+        <ul class="up-list">
+          <?php foreach ($upcoming as $b) : ?>
+            <li>
+              <a class="up-row" href="<?= e(url('/admin/citas/' . $b['id'])) ?>" <?= vars(['--c' => $b['host_color']]) ?>>
+                <span class="up-date mono"><?= e(Fmt::dateShort($b['starts_at'], $tz)) ?><br><?= e(Fmt::time($b['starts_at'], $tz)) ?></span>
+                <span class="ag-main"><strong><?= e($b['guest_name']) ?></strong><span class="muted"><?= e($b['event_name']) ?> · <?= e($b['host_name']) ?></span></span>
+                <?php if ($b['status'] === 'pending') : ?><span class="badge badge-warn">Pendiente</span><?php endif; ?>
+              </a>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+      <?php endif; ?>
+    </section>
+    </div>
+    <div class="stack dash-col">
     <section class="card dash-pending" aria-labelledby="h-pend">
       <div class="card-head row row-between">
         <h2 class="serif" id="h-pend">Por aprobar<?php if ($pendingTotal > 0) : ?> <span class="badge badge-warn"><?= (int) $pendingTotal ?></span><?php endif; ?></h2>
@@ -170,30 +198,6 @@ $back = '/admin';
       <?php endif; ?>
     </section>
 
-    <section class="card dash-upcoming" aria-labelledby="h-up">
-      <div class="card-head row row-between">
-        <h2 class="serif" id="h-up">Próximos eventos</h2>
-        <a class="btn btn-ghost btn-sm" href="<?= e(url('/admin/citas', ['desde' => $tomorrow])) ?>">Ver lista</a>
-      </div>
-      <?php if (!$upcoming) : ?>
-        <div class="empty">
-          <?= icon('inbox') ?>
-          <p class="empty-title serif">Aún no hay próximas citas</p>
-          <p class="empty-text">Comparte tu enlace de reservas para recibir nuevas citas.</p>
-        </div>
-      <?php else : ?>
-        <ul class="up-list">
-          <?php foreach ($upcoming as $b) : ?>
-            <li>
-              <a class="up-row" href="<?= e(url('/admin/citas/' . $b['id'])) ?>" <?= vars(['--c' => $b['host_color']]) ?>>
-                <span class="up-date mono"><?= e(Fmt::dateShort($b['starts_at'], $tz)) ?><br><?= e(Fmt::time($b['starts_at'], $tz)) ?></span>
-                <span class="ag-main"><strong><?= e($b['guest_name']) ?></strong><span class="muted"><?= e($b['event_name']) ?> · <?= e($b['host_name']) ?></span></span>
-                <?php if ($b['status'] === 'pending') : ?><span class="badge badge-warn">Pendiente</span><?php endif; ?>
-              </a>
-            </li>
-          <?php endforeach; ?>
-        </ul>
-      <?php endif; ?>
-    </section>
+    </div>
   </div>
 </div>

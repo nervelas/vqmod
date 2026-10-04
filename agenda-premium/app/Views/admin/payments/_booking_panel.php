@@ -54,7 +54,7 @@ $open = !in_array($b['status'], ['cancelled', 'rejected'], true);
         <?php foreach ($pays as $p) : $ps = $stPay[$p['status']] ?? ['—', 'badge-muted']; ?>
           <tr>
             <td class="nowrap mono"><?= e(Fmt::dateShort((string) $p['created_at'], $tzb)) ?></td>
-            <td><?= e(PaymentService::methodLabel((string) $p['method'])) ?><?php if ($p['reference']) : ?><div class="muted"><?= e($p['reference']) ?></div><?php endif; ?><?php if ($p['proof_token']) : ?><div><a class="text-gold" href="<?= e(url('/f/' . $p['proof_token'])) ?>" target="_blank" rel="noopener"><?= icon('paperclip') ?>Ver comprobante</a></div><?php endif; ?></td>
+            <td><?= e(PaymentService::methodLabel((string) $p['method'])) ?><?php if ($p['reference']) : ?><div class="muted"><?= e($p['reference']) ?></div><?php endif; ?><?php if ($p['proof_token']) : ?><div class="nowrap"><a class="text-gold" href="<?= e(url('/f/' . $p['proof_token'])) ?>" target="_blank" rel="noopener"><?= icon('paperclip') ?>Ver comprobante</a></div><?php endif; ?></td>
             <td class="right mono nowrap"><?= $p['status'] === 'refunded' ? '−' : '' ?><?= e(money($p['amount'])) ?></td>
             <td><span class="badge <?= e($ps[1]) ?>"><?= e($ps[0]) ?></span></td>
             <?php if ($canManage) : ?>

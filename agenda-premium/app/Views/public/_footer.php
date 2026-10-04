@@ -16,7 +16,7 @@
   </div>
   <?php if ($biz['cookies_notice'] !== '') : ?>
   <div class="pub-cookies" id="cookie-note" role="region" aria-label="Aviso sobre cookies" hidden>
-    <p><?= e($biz['cookies_notice']) ?></p>
+    <div class="prose"><?= \App\Core\Str::richText($biz['cookies_notice']) ?></div>
     <button type="button" class="btn btn-outline btn-sm" data-dismiss-cookie>Entendido</button>
   </div>
   <?php endif; ?>

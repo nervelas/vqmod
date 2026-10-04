@@ -19,8 +19,8 @@ final class AdminNav
             ]],
             ['title' => 'Agenda', 'items' => [
                 ['path' => '/admin/eventos', 'label' => 'Tipos de evento', 'icon' => 'layers', 'area' => 'events', 'keywords' => 'servicios citas reuniones'],
-                ['path' => '/admin/horarios', 'label' => 'Horarios', 'icon' => 'clock', 'area' => 'schedules', 'keywords' => 'disponibilidad'],
-                ['path' => '/admin/ausencias', 'label' => 'Ausencias', 'icon' => 'sun', 'area' => 'schedules', 'keywords' => 'vacaciones permisos'],
+                ['path' => '/admin/horarios', 'label' => 'Horarios', 'icon' => 'clock', 'area' => 'availability', 'keywords' => 'disponibilidad'],
+                ['path' => '/admin/ausencias', 'label' => 'Ausencias', 'icon' => 'sun', 'area' => 'availability', 'keywords' => 'vacaciones permisos'],
                 ['path' => '/admin/feriados', 'label' => 'Feriados', 'icon' => 'flag', 'area' => 'schedules', 'keywords' => 'guatemala festivos'],
                 ['path' => '/admin/calendarios', 'label' => 'Calendarios externos', 'icon' => 'link', 'area' => 'calendars', 'keywords' => 'ics google outlook apple'],
                 ['path' => '/admin/recursos', 'label' => 'Recursos y salas', 'icon' => 'building', 'area' => 'schedules'],

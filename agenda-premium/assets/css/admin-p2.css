@@ -240,3 +240,15 @@
 /* Ajustes de ancho en móvil */
 .p2-day, .p2-day > *, .p2-day-blocks, .p2-block, .p2-sched-main, .p2-sched-main > *, .p2-ex, .p2-exlist > * { min-width: 0; }
 .p2-block .input { width: auto; flex: 1 1 0; min-width: 0; max-width: 9rem; }
+.card-foot.p2-actions { justify-content: flex-start; }
+
+/* Tablas que se apilan en pantallas medianas y pequeñas */
+@media (max-width: 899px) {
+  .p2-users thead, .p2-holidays thead { display: none; }
+  .p2-users, .p2-users tbody, .p2-holidays, .p2-holidays tbody { display: block; width: 100%; }
+  .p2-users tr, .p2-holidays tr { display: grid; gap: 0.5rem 1rem; padding: 0.9rem 1rem; border-top: 1px solid var(--line); grid-template-columns: minmax(0, 1fr); }
+  .p2-users tr:first-child, .p2-holidays tr:first-child { border-top: 0; }
+  .p2-users td, .p2-holidays td { display: block; padding: 0; border: 0; min-width: 0; }
+  .p2-users td.right, .p2-holidays td.right { text-align: left; white-space: normal; }
+  .p2-users .hide-sm, .p2-holidays .hide-sm { display: block; }
+}

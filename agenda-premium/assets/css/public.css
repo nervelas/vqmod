@@ -123,9 +123,10 @@ html[data-theme="light"] .pub-hero-title { background: none; color: var(--text);
 .pf-links { display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; }
 .pf-links a { color: var(--text-2); font-size: 0.88rem; }
 .pf-copy { margin: 0; color: var(--text-3); font-size: 0.78rem; }
-.pub-cookies { position: fixed; inset: auto 0.8rem 0.8rem 0.8rem; z-index: 40; max-width: 36rem; margin-inline: auto; display: flex; gap: 1rem; align-items: center; padding: 0.9rem 1.1rem; background: var(--surface-2); border: 1px solid var(--line-gold); border-radius: var(--r); box-shadow: var(--shadow); font-size: 0.85rem; }
+.pub-cookies { max-width: 72rem; margin: 1.5rem auto 0; display: flex; gap: 1rem; align-items: flex-start; justify-content: space-between; padding: 0.9rem 1.1rem; background: var(--surface-2); border: 1px solid var(--line-gold); border-radius: var(--r); font-size: 0.82rem; max-height: 14rem; overflow: auto; }
 .pub-cookies[hidden] { display: none; }
-.pub-cookies p { margin: 0; color: var(--text-2); }
+.pub-cookies .prose { color: var(--text-2); }
+.pub-cookies .btn { flex: none; }
 
 /* ---------- Legales, encuestas, ofertas, reseñas ---------- */
 .pub-legal-in { max-width: 46rem; }

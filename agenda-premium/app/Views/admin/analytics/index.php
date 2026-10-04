@@ -97,7 +97,7 @@ $fv = static function ($v, string $type): string {
       </section>
     </div>
 
-    <div class="grid cols-2 mb-4">
+    <div class="stack mb-4">
       <section class="card" aria-labelledby="h-ev">
         <div class="card-head"><h2 id="h-ev" class="serif">Conversión por servicio</h2></div>
         <?php if (!$report['by_event']) : ?><div class="card-body"><p class="muted">Sin datos en este periodo.</p></div><?php else : ?>

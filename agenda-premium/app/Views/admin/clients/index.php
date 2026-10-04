@@ -70,7 +70,7 @@ $hasFilters = $f['q'] !== '' || $f['etiqueta'] !== '' || $f['estado'] !== '';
           <tbody>
           <?php foreach ($rows as $r) : ?>
             <tr>
-              <td><a class="row-link" href="<?= e(url('/admin/clientes/' . $r['id'])) ?>"><span class="avatar avatar-sm" aria-hidden="true"><?= e(mb_strtoupper(mb_substr((string) $r['name'], 0, 1))) ?></span> <strong><?= e($r['name']) ?></strong></a></td>
+              <td><a class="row-link" href="<?= e(url('/admin/clientes/' . $r['id'])) ?>"><span class="avatar avatar-sm" aria-hidden="true"><?= e(mb_strtoupper(mb_substr((string) $r['name'], 0, 1))) ?></span> <strong><?= e($r['name']) ?></strong></a><?php if ((int) $r['blocked']) : ?> <span class="only-xs badge badge-err">Bloqueado</span><?php elseif ((int) $r['noshow_count'] > 0) : ?> <span class="only-xs badge badge-warn"><?= (int) $r['noshow_count'] ?> no asistió</span><?php endif; ?></td>
               <td class="hide-sm"><?= $r['email'] ? e($r['email']) : '' ?><?= $r['email'] && $r['phone'] ? '<br>' : '' ?><?= $r['phone'] ? '<span class="mono small">' . e(Str::phoneDisplay($r['phone'])) . '</span>' : '' ?></td>
               <td class="hide-sm"><?php foreach (\App\Controllers\Admin\A1Support::tagList($r['tags']) as $t) : ?><span class="badge badge-muted"><?= e($t) ?></span> <?php endforeach; ?></td>
               <td class="right mono"><?= (int) $r['n_bookings'] ?></td>

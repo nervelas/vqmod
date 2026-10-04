@@ -79,12 +79,10 @@ T::eq(Tz::localToUtc("$day 14:00:00", 'America/Guatemala'), Db::val('SELECT star
 $r = $admin->postJson("/admin/citas/$id/mover", ['start_local' => "$day 03:00", 'force' => 0]);
 $jr = json_decode($r['body'], true);
 T::ok($r['status'] === 422 && !empty($jr['can_force']), 'fuera de horario ofrece forzar');
-$r = $admin->postJson("/admin/citas/$id/mover", ['start_local' => "$day 03:00", 'force' => 1]);
+$r = $admin->postJson("/admin/citas/$id/mover", ['start_local' => "$day 04:00", 'force' => 1]);
 T::eq(200, $r['status'], 'forzar fuera de horario');
 $r = $admin->postJson("/admin/citas/$id/mover", ['start_local' => "$day 03:00", 'force' => 1]);
-$admin->postJson("/admin/citas/$idForced/mover", ['start_local' => "$day 03:00", 'force' => 1]);
-$r = $admin->postJson("/admin/citas/$idForced/mover", ['start_local' => "$day 03:00", 'force' => 1]);
-T::ok(in_array($r['status'], [200, 422], true), 'mover sobre la misma hora no rompe');
+T::eq(422, $r['status'], 'forzar sobre la cita de las 3:00 sigue prohibido');
 $other = $new(['hora' => '16:00', 'name' => 'Para Chocar']);
 preg_match('#/admin/citas/(\d+)#', $admin->location(), $m3);
 $idB = (int) ($m3[1] ?? 0);

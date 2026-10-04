@@ -298,7 +298,7 @@ final class IcsService
 
     public static function isCalendar(string $ics): bool
     {
-        return (bool) preg_match('/^\xEF\xBB\xBF?\s*BEGIN:VCALENDAR/i', substr($ics, 0, 512));
+        return (bool) preg_match('/^(?:\xEF\xBB\xBF)?\s*BEGIN:VCALENDAR/i', substr($ics, 0, 512));
     }
 
     /** @return array<int,array{0:int,1:int}> intervalos ocupados [inicio, fin] (timestamps UTC) dentro de [$fromTs, $toTs]. */

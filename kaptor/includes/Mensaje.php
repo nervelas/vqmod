@@ -137,6 +137,31 @@ final class Mensaje
         return $id;
     }
 
+    /**
+     * Las piezas del mensaje, para quien no lo manda por SMTP.
+     *
+     * Las API de correo —Brevo y las demás— no quieren un mensaje MIME
+     * armado: quieren los trozos y lo montan ellas. Esto los da tal cual,
+     * sin que nadie tenga que meter la mano en las propiedades privadas.
+     *
+     * @return array{de:string,de_nombre:string,para:string,para_nombre:string,asunto:string,html:string,texto:string,responder_a:string,cabeceras:array<string,string>,adjuntos:array<int,array{nombre:string,tipo:string,datos:string}>}
+     */
+    public function partes(): array
+    {
+        return [
+            'de'          => $this->de,
+            'de_nombre'   => $this->deNombre,
+            'para'        => $this->para,
+            'para_nombre' => $this->paraNombre,
+            'asunto'      => $this->asunto,
+            'html'        => $this->html,
+            'texto'       => $this->texto,
+            'responder_a' => $this->responderA,
+            'cabeceras'   => $this->extras,
+            'adjuntos'    => $this->adjuntos,
+        ];
+    }
+
     /** Devuelve el mensaje completo listo para enviar por SMTP. */
     public function construir(): string
     {

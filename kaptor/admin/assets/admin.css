@@ -256,3 +256,9 @@ html[data-tema="claro"] .panel-cuerpo .aurora{opacity:.16}
   font:12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   white-space:pre-wrap;word-break:break-word;max-height:360px;overflow:auto;
 }
+
+/* Buzón por API: sin servidor, puerto ni usuario que rellenar. */
+form.es-api .solo-smtp,
+form.es-api .etiqueta-smtp,
+form:not(.es-api) .solo-api,
+form:not(.es-api) .etiqueta-api{display:none}

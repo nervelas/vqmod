@@ -40,8 +40,12 @@ final class Remitente
         if (!filter_var($correo, FILTER_VALIDATE_EMAIL)) {
             return ['ok' => false, 'error' => 'La dirección del remitente no es válida.'];
         }
+        $via = (string) ($datos['via'] ?? 'smtp');
+        if ($via !== 'smtp' && !ApiCorreo::esApi($via)) { $via = 'smtp'; }
+
+        // Por API no hay servidor que escribir: la dirección la pone Kaptor.
         $host = trim((string) ($datos['host'] ?? ''));
-        if ($host === '') {
+        if ($via === 'smtp' && $host === '') {
             return ['ok' => false, 'error' => 'Escribe el servidor SMTP (por ejemplo mail.tudominio.com).'];
         }
         $responder = trim((string) ($datos['responder_a'] ?? ''));
@@ -54,9 +58,12 @@ final class Remitente
             'de_correo'   => $correo,
             'de_nombre'   => mb_substr(trim((string) ($datos['de_nombre'] ?? '')), 0, 120),
             'responder_a' => $responder,
-            'host'        => mb_substr($host, 0, 190),
+            'via'         => $via,
+            'host'        => mb_substr($host !== '' ? $host : 'api.brevo.com', 0, 190),
             'puerto'      => max(1, min(65535, (int) ($datos['puerto'] ?? 587))),
-            'seguridad'   => in_array($datos['seguridad'] ?? 'tls', ['tls', 'ssl', 'ninguna'], true) ? $datos['seguridad'] : 'tls',
+            // Ojo con el ?? aquí: si el valor no venía, lo que se guardaba
+            // era el dato que falta, no el 'tls' de la comprobación.
+            'seguridad'   => in_array($seguridad = (string) ($datos['seguridad'] ?? 'tls'), ['tls', 'ssl', 'ninguna'], true) ? $seguridad : 'tls',
             'usuario'     => mb_substr(trim((string) ($datos['usuario'] ?? $correo)), 0, 190),
             'limite_hora' => max(1, min(5000, (int) ($datos['limite_hora'] ?? 60))),
             'limite_dia'  => max(1, min(50000, (int) ($datos['limite_dia'] ?? 300))),
@@ -68,7 +75,9 @@ final class Remitente
         if ($clave !== '') {
             $fila['clave'] = Cripto::cifrar($clave);
         } elseif ($id === 0) {
-            return ['ok' => false, 'error' => 'Escribe la contraseña del buzón.'];
+            return ['ok' => false, 'error' => $via === 'smtp'
+                ? 'Escribe la contraseña del buzón.'
+                : 'Pega la clave de API del proveedor.'];
         }
 
         if ($id > 0) {
@@ -96,7 +105,7 @@ final class Remitente
         $antes = self::obtener($id);
         if (!$antes) { return true; }
 
-        foreach (['host', 'puerto', 'seguridad', 'usuario'] as $campo) {
+        foreach (['via', 'host', 'puerto', 'seguridad', 'usuario'] as $campo) {
             if ((string) ($fila[$campo] ?? '') !== (string) ($antes[$campo] ?? '')) { return true; }
         }
         return false;
@@ -132,10 +141,14 @@ final class Remitente
         $fila = self::obtener($id);
         if (!$fila) { return ['ok' => false, 'error' => 'El buzón no existe.']; }
 
-        $smtp = self::smtp($fila);
-        $r = $smtp->probar();
-        $r['registro'] = $smtp->registro();
-        $r['clave']    = self::resumenClave($fila);
+        if (ApiCorreo::esApi((string) ($fila['via'] ?? 'smtp'))) {
+            $r = ApiCorreo::probar($fila);
+        } else {
+            $smtp = self::smtp($fila);
+            $r = $smtp->probar();
+            $r['registro'] = $smtp->registro();
+        }
+        $r['clave'] = self::resumenClave($fila);
 
         BD::actualizar('cr_remitentes', [
             'probado_en'   => date('Y-m-d H:i:s'),
@@ -201,9 +214,13 @@ final class Remitente
             (string) $fila['responder_a']
         );
 
-        $smtp = self::smtp($fila);
-        $r = $smtp->enviar($mensaje);
-        $smtp->cerrar();
+        if (ApiCorreo::esApi((string) ($fila['via'] ?? 'smtp'))) {
+            $r = ApiCorreo::enviar($fila, $mensaje);
+        } else {
+            $smtp = self::smtp($fila);
+            $r = $smtp->enviar($mensaje);
+            $smtp->cerrar();
+        }
 
         BD::actualizar('cr_remitentes', [
             'probado_en'   => date('Y-m-d H:i:s'),

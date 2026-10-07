@@ -14,7 +14,7 @@ declare(strict_types=1);
 final class Esquema
 {
     /** Se sube de uno en uno cada vez que cambia la estructura. */
-    public const VERSION = 16;
+    public const VERSION = 17;
 
     /** Aplica los cambios pendientes. Se llama desde bootstrap.php. */
     public static function actualizar(): void
@@ -92,6 +92,11 @@ final class Esquema
             // Archivos que viajan con el correo de una plantilla.
             16 => static function (): void {
                 self::columna('cr_plantillas', 'adjuntos', 'TEXT NULL AFTER `cuerpo`');
+            },
+            // Por dónde sale cada buzón: SMTP de toda la vida, o la API del
+            // proveedor cuando el hosting no deja salir el SMTP.
+            17 => static function (): void {
+                self::columna('cr_remitentes', 'via', "VARCHAR(20) NOT NULL DEFAULT 'smtp' AFTER `responder_a`");
             },
         ];
 

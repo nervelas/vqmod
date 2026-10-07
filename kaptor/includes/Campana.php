@@ -205,7 +205,7 @@ final class Campana
         $inicio   = microtime(true);
         $enviados = 0;
         $aviso    = '';
-        /** @var array<int,Smtp> Conexiones abiertas, una por buzón. */
+        /** @var array<int,Smtp> Conexiones abiertas, una por buzón de SMTP. */
         $conexiones = [];
 
         while ($enviados < $cupoHora) {
@@ -220,12 +220,16 @@ final class Campana
             $envio = self::siguienteEnvio($id);
             if (!$envio) { break; }
 
-            $rid = (int) $remitente['id'];
-            if (!isset($conexiones[$rid])) {
-                $conexiones[$rid] = Remitente::smtp($remitente);
+            // Por API no hay conexión que mantener: cada correo es una
+            // petición HTTPS que se abre y se cierra sola.
+            $rid  = (int) $remitente['id'];
+            $smtp = null;
+            if (!ApiCorreo::esApi((string) ($remitente['via'] ?? 'smtp'))) {
+                $conexiones[$rid] ??= Remitente::smtp($remitente);
+                $smtp = $conexiones[$rid];
             }
 
-            $resultado = self::enviarUno($campana, $plantilla, $envio, $remitente, $conexiones[$rid], $adjuntos);
+            $resultado = self::enviarUno($campana, $plantilla, $envio, $remitente, $smtp, $adjuntos);
             if ($resultado['enviado']) { $enviados++; }
 
             // Pausa aleatoria: imita el ritmo de una persona escribiendo.
@@ -254,7 +258,7 @@ final class Campana
      *
      * @return array{enviado:bool,error?:string}
      */
-    private static function enviarUno(array $campana, array $plantilla, array $envio, array $remitente, Smtp $smtp, array $adjuntos = []): array
+    private static function enviarUno(array $campana, array $plantilla, array $envio, array $remitente, ?Smtp $smtp, array $adjuntos = []): array
     {
         $contacto = BD::fila('SELECT * FROM `cr_contactos` WHERE `id` = ?', [(int) $envio['contacto_id']]) ?? [];
 
@@ -265,7 +269,7 @@ final class Campana
         }
 
         $mensaje = self::construirMensaje($campana, $plantilla, $contacto, $envio, $remitente, $adjuntos);
-        $r = $smtp->enviar($mensaje);
+        $r = $smtp !== null ? $smtp->enviar($mensaje) : ApiCorreo::enviar($remitente, $mensaje);
 
         if (!empty($r['ok'])) {
             BD::actualizar('cr_envios', [
@@ -484,9 +488,13 @@ final class Campana
             $mensaje->adjuntar($a['nombre'], $a['datos'], $a['tipo']);
         }
 
-        $smtp = Remitente::smtp($remitente);
-        $r = $smtp->enviar($mensaje);
-        $smtp->cerrar();
+        if (ApiCorreo::esApi((string) ($remitente['via'] ?? 'smtp'))) {
+            $r = ApiCorreo::enviar($remitente, $mensaje);
+        } else {
+            $smtp = Remitente::smtp($remitente);
+            $r = $smtp->enviar($mensaje);
+            $smtp->cerrar();
+        }
 
         BD::actualizar('cr_remitentes', [
             'probado_en'   => date('Y-m-d H:i:s'),

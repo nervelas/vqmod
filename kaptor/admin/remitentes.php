@@ -38,7 +38,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 // nombre se lee como si fuera del que uno tiene en la cabeza,
                 // y se acaba buscando el fallo en el buzón equivocado.
                 'buzon'    => $cual ? (string) $cual['de_correo'] : '',
-                'servidor' => $cual ? $cual['host'] . ':' . $cual['puerto'] . ' · ' . strtoupper((string) $cual['seguridad']) : '',
+                'servidor' => $cual
+                    ? (ApiCorreo::esApi((string) ($cual['via'] ?? 'smtp'))
+                        ? 'API de Brevo · HTTPS 443'
+                        : $cual['host'] . ':' . $cual['puerto'] . ' · ' . strtoupper((string) $cual['seguridad']))
+                    : '',
                 'usuario'  => $cual ? (string) $cual['usuario'] : '',
             ];
             break;
@@ -130,8 +134,13 @@ if ($diag && !empty($diag['registro'])): ?>
                 <div class="pequeno suave"><?= e((string) ($b['de_nombre'] ?: $b['nombre'])) ?></div>
               </td>
               <td class="pequeno">
-                <span class="mono"><?= e((string) $b['host'] . ':' . $b['puerto']) ?></span>
-                <div><span class="chip chip-gris"><?= e(strtoupper((string) $b['seguridad'])) ?></span></div>
+                <?php if (ApiCorreo::esApi((string) ($b['via'] ?? 'smtp'))): ?>
+                  <span class="mono">api.brevo.com</span>
+                  <div><span class="chip chip-neon">API · HTTPS 443</span></div>
+                <?php else: ?>
+                  <span class="mono"><?= e((string) $b['host'] . ':' . $b['puerto']) ?></span>
+                  <div><span class="chip chip-gris"><?= e(strtoupper((string) $b['seguridad'])) ?></span></div>
+                <?php endif; ?>
               </td>
               <td class="pequeno"><?= (int) $b['limite_hora'] ?>/hora · <?= (int) $b['limite_dia'] ?>/día</td>
               <td class="pequeno">
@@ -212,8 +221,24 @@ if ($diag && !empty($diag['registro'])): ?>
       <hr>
 
       <div class="campo-grupo">
+        <label class="etiqueta" for="via">Cómo sale el correo</label>
+        <select id="via" name="via" class="campo">
+          <option value="smtp" <?= ($editar['via'] ?? 'smtp') === 'smtp' ? 'selected' : '' ?>>SMTP (servidor de correo)</option>
+          <?php foreach (ApiCorreo::PROVEEDORES as $v => $t): ?>
+            <option value="<?= e($v) ?>" <?= ($editar['via'] ?? 'smtp') === $v ? 'selected' : '' ?>><?= e($t) ?></option>
+          <?php endforeach; ?>
+        </select>
+        <p class="pequeno suave" style="margin-top:6px">
+          Si tu hosting bloquea el SMTP saliente —se pide conexión al proveedor
+          y contesta tu propio servidor—, usa la API: va por el puerto 443, el
+          mismo de la web, y ningún hosting lo cierra.
+        </p>
+      </div>
+
+      <div class="solo-smtp">
+      <div class="campo-grupo">
         <label class="etiqueta" for="host">Servidor SMTP</label>
-        <input type="text" id="host" name="host" class="campo mono" required
+        <input type="text" id="host" name="host" class="campo mono"
                placeholder="mail.tudominio.com" value="<?= e((string) ($editar['host'] ?? '')) ?>">
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
@@ -236,9 +261,19 @@ if ($diag && !empty($diag['registro'])): ?>
         <input type="text" id="usuario" name="usuario" class="campo mono"
                placeholder="normalmente la misma dirección" value="<?= e((string) ($editar['usuario'] ?? '')) ?>">
       </div>
+      </div><!-- /.solo-smtp -->
+
       <div class="campo-grupo">
-        <label class="etiqueta" for="clave">Contraseña <?= $editar ? '<span class="suave">(déjala vacía para no cambiarla)</span>' : '' ?></label>
+        <label class="etiqueta" for="clave">
+          <span class="etiqueta-smtp">Contraseña</span>
+          <span class="etiqueta-api">Clave de API</span>
+          <?= $editar ? '<span class="suave">(déjala vacía para no cambiarla)</span>' : '' ?>
+        </label>
         <input type="password" id="clave" name="clave" class="campo" <?= $editar ? '' : 'required' ?> autocomplete="new-password">
+        <p class="pequeno suave solo-api" style="margin-top:6px">
+          En Brevo: <b>SMTP y API</b> → pestaña <b>Claves API y MCP</b> → generar una.
+          Empieza por <span class="mono">xkeysib-</span>. No es la clave SMTP.
+        </p>
       </div>
 
       <hr>
@@ -268,6 +303,24 @@ if ($diag && !empty($diag['registro'])): ?>
         <a class="btn btn-fantasma btn-bloque" style="margin-top:10px" href="remitentes.php">Cancelar</a>
       <?php endif; ?>
     </form>
+
+    <script>
+      // Por API no hay servidor, puerto ni usuario que rellenar: se esconden
+      // para que nadie los deje a medias y luego no sepa por qué no sale.
+      (function () {
+        var via = document.getElementById('via');
+        if (!via) { return; }
+        var caja = via.closest('form');
+        function pintar() {
+          var api = via.value !== 'smtp';
+          caja.classList.toggle('es-api', api);
+          var host = document.getElementById('host');
+          if (host) { host.required = !api; }
+        }
+        via.addEventListener('change', pintar);
+        pintar();
+      })();
+    </script>
   </div>
 
   <div class="tarjeta">

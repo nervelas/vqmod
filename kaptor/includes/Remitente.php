@@ -72,12 +72,34 @@ final class Remitente
         }
 
         if ($id > 0) {
+            // Se cambian los datos de conexión: el error de antes ya no dice
+            // nada del buzón de ahora. Si se deja puesto, la ficha sigue en
+            // rojo con un fallo que a lo mejor ya no existe y parece que
+            // guardar no sirvió de nada.
+            if (self::cambiaLaConexion($fila, $id)) {
+                $fila['ultimo_error'] = null;
+                $fila['probado_en']   = null;
+            }
             BD::actualizar('cr_remitentes', $fila, '`id` = ?', [$id]);
             return ['ok' => true, 'id' => $id];
         }
 
         $fila['creado'] = date('Y-m-d H:i:s');
         return ['ok' => true, 'id' => BD::insertar('cr_remitentes', $fila)];
+    }
+
+    /** ¿Tocan estos datos algo de lo que hace falta para conectar? */
+    private static function cambiaLaConexion(array $fila, int $id): bool
+    {
+        if (array_key_exists('clave', $fila)) { return true; }
+
+        $antes = self::obtener($id);
+        if (!$antes) { return true; }
+
+        foreach (['host', 'puerto', 'seguridad', 'usuario'] as $campo) {
+            if ((string) ($fila[$campo] ?? '') !== (string) ($antes[$campo] ?? '')) { return true; }
+        }
+        return false;
     }
 
     /** Borra un buzón. */

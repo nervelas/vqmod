@@ -61,6 +61,23 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             cr_flash('info', 'Campaña cancelada.');
             break;
 
+        case 'ajustes':
+            $elegidos = array_map('intval', (array) cr_post('remitentes', []));
+            if (!$elegidos) {
+                cr_flash('error', 'Elige al menos un buzón de salida.');
+                break;
+            }
+            $min = max(0, min(600, (int) cr_post('pausa_min', 8)));
+            $max = max(0, min(900, (int) cr_post('pausa_max', 30)));
+            BD::actualizar('cr_campanas', [
+                'remitentes'  => implode(',', $elegidos),
+                'limite_hora' => max(1, min(5000, (int) cr_post('limite_hora', 40))),
+                'pausa_min'   => $min,
+                'pausa_max'   => max($min, $max),
+            ], '`id` = ?', [$id]);
+            cr_flash('exito', 'Ajustes de la campaña guardados.');
+            break;
+
         case 'enviar_prueba':
             $c = Campana::obtener($id);
             $pl = $c ? BD::fila('SELECT * FROM `cr_plantillas` WHERE `id` = ?', [(int) $c['plantilla_id']]) : null;
@@ -268,6 +285,25 @@ if (!$campana):
     </div>
   </div>
 
+  <?php
+  // Una campaña se queda sin buzones si se borra el que usaba. Entonces no
+  // manda nada y la cifra «0 buzón(es)» pasa desapercibida entre el resto
+  // de la línea, así que se dice en grande y con el arreglo al lado.
+  $buzonesVivos = $buzonesIds
+      ? BD::todos('SELECT `id`,`de_correo`,`activo` FROM `cr_remitentes` WHERE `id` IN ('
+          . implode(',', array_fill(0, count($buzonesIds), '?')) . ')', $buzonesIds)
+      : [];
+  $utilizables = array_filter($buzonesVivos, static fn(array $b): bool => (int) $b['activo'] === 1);
+  if (!$utilizables): ?>
+    <div class="aviso aviso-error" style="margin:14px 0">
+      <span>
+        <b>Esta campaña no tiene ningún buzón de salida activo, así que no enviará nada.</b>
+        <?= $buzonesIds ? 'El que usaba se borró o se desactivó.' : '' ?>
+        Elígelo abajo, en <b>Buzones y ritmo</b>, y guarda.
+      </span>
+    </div>
+  <?php endif; ?>
+
   <div class="barra-progreso" id="barra-envio"><i style="width:<?= $stats['total'] > 0 ? (int) round($stats['enviados'] / max(1, $stats['total']) * 100) : 0 ?>%"></i></div>
   <p class="progreso-url" id="m-aviso">
     Lista <b><?= e((string) ($lista['nombre'] ?? '—')) ?></b> ·
@@ -297,6 +333,65 @@ if (!$campana):
       <br><b style="color:var(--error)">Falta la clave del cron: genérala en Ajustes → Campañas.</b>
     <?php endif; ?>
   </span>
+</div>
+
+<div class="tarjeta" style="margin-bottom:18px">
+  <h3>Buzones y ritmo</h3>
+  <p class="pequeno suave">
+    Se puede cambiar con la campaña ya creada: no hay que rehacerla ni se
+    pierde lo enviado. Los cambios valen para los correos que falten.
+  </p>
+  <form method="post" style="margin-top:12px">
+    <?= Seguridad::campoCsrf() ?>
+    <input type="hidden" name="accion" value="ajustes">
+    <input type="hidden" name="id" value="<?= $id ?>">
+
+    <?php $buzonesTodos = Remitente::todos(); ?>
+    <?php if (!$buzonesTodos): ?>
+      <p class="pequeno" style="color:var(--error)">
+        No hay ningún buzón dado de alta. <a href="remitentes.php">Crea uno</a> y vuelve aquí.
+      </p>
+    <?php else: ?>
+      <div class="campo-grupo">
+        <label class="etiqueta">Buzones de salida</label>
+        <?php foreach ($buzonesTodos as $b): ?>
+          <label class="interruptor" style="display:flex;margin-bottom:8px">
+            <input type="checkbox" name="remitentes[]" value="<?= (int) $b['id'] ?>"
+                   <?= in_array((int) $b['id'], array_map('intval', $buzonesIds), true) ? 'checked' : '' ?>>
+            <span class="pista" aria-hidden="true"></span>
+            <span class="txt"><?= e((string) $b['de_correo']) ?>
+              <span class="suave pequeno">
+                (<?= ApiCorreo::esApi((string) ($b['via'] ?? 'smtp')) ? 'API' : e((string) $b['host']) ?>
+                 · <?= (int) $b['limite_hora'] ?>/h<?= (int) $b['activo'] === 1 ? '' : ' · inactivo' ?>)
+              </span></span>
+          </label>
+        <?php endforeach; ?>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px">
+        <div class="campo-grupo">
+          <label class="etiqueta" for="c_limite">Correos por hora</label>
+          <input type="number" id="c_limite" name="limite_hora" class="campo" min="1" max="5000"
+                 value="<?= (int) $campana['limite_hora'] ?>">
+        </div>
+        <div class="campo-grupo">
+          <label class="etiqueta" for="c_min">Pausa mínima (s)</label>
+          <input type="number" id="c_min" name="pausa_min" class="campo" min="0" max="600"
+                 value="<?= (int) $campana['pausa_min'] ?>">
+        </div>
+        <div class="campo-grupo">
+          <label class="etiqueta" for="c_max">Pausa máxima (s)</label>
+          <input type="number" id="c_max" name="pausa_max" class="campo" min="0" max="900"
+                 value="<?= (int) $campana['pausa_max'] ?>">
+        </div>
+      </div>
+      <p class="pequeno suave" style="margin:-4px 0 14px">
+        El ritmo real es el menor de los dos: el de aquí y el del propio buzón.
+      </p>
+
+      <button class="btn btn-peq">Guardar ajustes</button>
+    <?php endif; ?>
+  </form>
 </div>
 
 <div class="rejilla rejilla-2" style="align-items:start">

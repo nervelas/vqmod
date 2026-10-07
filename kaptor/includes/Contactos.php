@@ -42,7 +42,7 @@ final class Contactos
      */
     public static function agregar(int $listaId, string $correo, array $datos = []): bool
     {
-        $correo = mb_strtolower(trim($correo));
+        $correo = self::limpiarCorreo($correo);
         if ($correo === '' || !filter_var($correo, FILTER_VALIDATE_EMAIL)) { return false; }
         if (Supresion::esta($correo)) { return false; }
 
@@ -64,6 +64,38 @@ final class Contactos
         } catch (PDOException) {
             return false;   // ya estaba en la lista
         }
+    }
+
+    /**
+     * Deja la dirección como debería haberse escrito.
+     *
+     * Las listas que vienen de una web traen direcciones sacadas de enlaces
+     * «mailto:», y ahí los espacios y los acentos viajan codificados: lo que
+     * se copia es %20direccion@… o …sacatep%c3%a9quez@…. El % es una letra
+     * válida en un correo, así que la comprobación de siempre las da por
+     * buenas y entran en la lista para rebotar después.
+     *
+     * Se descodifica y se recorta; si lo que queda no es una dirección
+     * válida, se devuelve vacío y quien llama la descarta. Una dirección
+     * que use el % de verdad no se toca: solo se acepta el descodificado
+     * cuando sigue siendo una dirección correcta.
+     */
+    public static function limpiarCorreo(string $correo): string
+    {
+        $correo = trim($correo, " \t\n\r\0\x0B<>\"',;:");
+        $correo = (string) preg_replace('~^mailto:~i', '', $correo);
+
+        if (str_contains($correo, '%')) {
+            $suelto = rawurldecode($correo);
+            // Lo que venía codificado era un espacio o un carácter de
+            // control: sobra, no forma parte de la dirección.
+            $suelto = (string) preg_replace('~[\s\x00-\x1F]+~', '', $suelto);
+            if (filter_var(mb_strtolower($suelto), FILTER_VALIDATE_EMAIL)) {
+                $correo = $suelto;
+            }
+        }
+
+        return mb_strtolower(trim($correo));
     }
 
     /**

@@ -22,6 +22,9 @@
 
 # Capturas que dejan las pruebas de Playwright al correr.
 /slider.png
+/filtro-ext.png
+/niveles.png
+/menu-abierto.png
 /kaptor/slider.png
 /kaptor/menu-abierto.png
 /kaptor/niveles.png

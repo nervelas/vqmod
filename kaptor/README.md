@@ -1,4 +1,4 @@
-# Kaptor 6.8
+# Kaptor 6.9
 
 Caja de herramientas para vender servicios web. Dos mitades:
 
@@ -504,6 +504,28 @@ que mire el sitio desde fuera puede leerla —ni Kaptor ni ninguna otra
 herramienta—, así que aquí no se inventa: se dice en el informe. Lo que sí
 está escrito en el código es todo lo de arriba; y lo que de verdad decide el
 posicionamiento (título, H1 y texto) sale en la misma pantalla.
+
+## Vista previa del correo
+
+En **Plantillas** y en cada **campaña** se ve el correo **tal como va a llegar**:
+con las variables ya sustituidas, los enlaces pinchables y el pie de baja
+puesto. No es el texto de la plantilla con sus `{{centro}}` a la vista: es el
+mensaje terminado.
+
+Se enseña dentro de un marco aparte (`admin/vista.php`) a propósito. Un correo
+trae su propio `<html>` y sus propios estilos, y pintarlo dentro del panel los
+mezclaría con los del panel: lo que se vería no sería lo que recibe nadie.
+Dentro del marco, sí.
+
+Dos botones: **Ver en teléfono**, que estrecha el marco a 390 px —que es donde
+se leen siete de cada diez correos—, y **Abrir en una pestaña**.
+
+En la campaña, además, se usa **el primer contacto real de la lista** y el
+buzón que va a enviar, así que la firma y el nombre del centro son los de
+verdad. Y se avisa de los archivos que lleva adjuntos.
+
+Lo que la vista previa **no** trae: el píxel de apertura ni los enlaces de
+seguimiento. Mirar un correo no puede contar como que alguien lo abrió.
 
 ## Archivos adjuntos en las campañas
 

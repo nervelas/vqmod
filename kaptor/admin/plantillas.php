@@ -178,6 +178,28 @@ admin_cabecera(['titulo' => 'Plantillas', 'activo' => 'plantillas.php']);
       <?php endif; ?>
     </form>
 
+    <?php if ($editar): ?>
+      <!-- ===================== Vista previa ===================== -->
+      <h3 style="margin:26px 0 4px">Así va a llegar</h3>
+      <p class="pequeno suave">
+        El correo de verdad, con las variables ya sustituidas y su pie de baja.
+        <b>Asunto:</b> <?= e(Campana::vistaPrevia($editar)['asunto']) ?>
+      </p>
+      <div class="previa-marco">
+        <iframe src="vista.php?plantilla=<?= (int) $editar['id'] ?>&amp;v=<?= e((string) strtotime((string) ($editar['actualizado'] ?? 'now'))) ?>"
+                title="Vista previa del correo" loading="lazy"></iframe>
+      </div>
+      <div class="acciones-fila" style="margin-top:10px">
+        <a class="btn btn-fantasma btn-peq" target="_blank" rel="noopener"
+           href="vista.php?plantilla=<?= (int) $editar['id'] ?>">Abrir en una pestaña</a>
+        <button type="button" class="btn btn-fantasma btn-peq" onclick="
+          var m=this.closest('.tarjeta').querySelector('.previa-marco');
+          m.classList.toggle('previa-movil');
+          this.textContent = m.classList.contains('previa-movil') ? 'Ver en ordenador' : 'Ver en teléfono';
+        ">Ver en teléfono</button>
+      </div>
+    <?php endif; ?>
+
     <!-- ===================== Archivos adjuntos ===================== -->
     <h3 style="margin:26px 0 4px">Archivos adjuntos</h3>
     <?php if (!$editar): ?>

@@ -222,3 +222,21 @@ html[data-tema="claro"] .panel-cuerpo .aurora{opacity:.16}
   background:var(--error-fondo);color:var(--error);
 }
 .aviso-tema[hidden]{display:none}
+
+/* --- Vista previa del correo ------------------------------------------------
+   El correo se enseña dentro de un marco aparte para que sus estilos no se
+   mezclen con los del panel: lo que se ve es lo que recibe el destinatario. */
+.previa-marco{
+  margin-top:12px;border:1px solid var(--borde);border-radius:var(--r-sm);
+  overflow:hidden;background:#f6f3eb;transition:max-width .2s ease;
+}
+.previa-marco iframe{
+  display:block;width:100%;height:520px;border:0;background:#f6f3eb;
+}
+/* En «teléfono» se estrecha a lo que mide una pantalla de móvil. */
+.previa-marco.previa-movil{max-width:390px;margin-left:auto;margin-right:auto}
+.previa-marco.previa-movil iframe{height:620px}
+
+@media (max-width:720px){
+  .previa-marco iframe{height:420px}
+}

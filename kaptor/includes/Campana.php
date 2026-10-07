@@ -372,6 +372,53 @@ final class Campana
         return $mensaje;
     }
 
+    /**
+     * El correo tal como va a llegar, para poder mirarlo antes de enviarlo.
+     *
+     * Hace lo mismo que construirMensaje —sustituye las variables y envuelve
+     * el cuerpo con su pie de baja— pero sin dos cosas que no deben estar en
+     * una previsualización: el píxel de apertura, que contaría una apertura
+     * falsa, y los enlaces reescritos, que llevarían a un contador en vez de
+     * al sitio. Lo que se ve es el correo; lo que no se ve es la medición.
+     *
+     * @param array $contacto si no se da, se inventa uno de muestra
+     * @return array{asunto:string,html:string,contacto:array,adjuntos:array}
+     */
+    public static function vistaPrevia(array $plantilla, ?array $contacto = null, ?array $remitente = null): array
+    {
+        $contacto ??= [
+            'nombre'   => 'Director',
+            'centro'   => 'Colegio de Muestra',
+            'correo'   => 'direccion@colegiodemuestra.edu.gt',
+            'dominio'  => 'colegiodemuestra.edu.gt',
+            'telefono' => '',
+        ];
+
+        if ($remitente === null) {
+            $remitente = BD::fila('SELECT * FROM `cr_remitentes` WHERE `activo` = 1 ORDER BY `id` LIMIT 1')
+                ?: ['de_correo' => Ajustes::obtener('sitio_correo', 'info@ejemplo.com'),
+                    'de_nombre' => Ajustes::obtener('sitio_nombre', 'Kaptor'),
+                    'responder_a' => ''];
+        }
+
+        // La baja lleva a la página de verdad, pero sin token: así se ve el
+        // pie tal cual y no se da de baja a nadie por mirar.
+        $urlBaja = cr_url('baja.php');
+        $vars    = self::variables($contacto, $remitente, $urlBaja);
+
+        return [
+            'asunto'    => self::sustituir((string) ($plantilla['asunto'] ?? ''), $vars),
+            'html'      => self::envolver(
+                self::sustituir((string) ($plantilla['cuerpo'] ?? ''), $vars),
+                $urlBaja,
+                $remitente
+            ),
+            'contacto'  => $contacto,
+            'remitente' => $remitente,
+            'adjuntos'  => Adjuntos::deLaPlantilla($plantilla),
+        ];
+    }
+
     /** Variables disponibles en asunto y cuerpo. */
     private static function variables(array $contacto, array $remitente, string $urlBaja): array
     {

@@ -309,12 +309,28 @@ if (!$campana):
   </div>
 
   <div class="tarjeta">
-    <h3>Vista previa del mensaje</h3>
-    <p class="pequeno suave">Asunto: <b><?= e((string) ($plantilla['asunto'] ?? '')) ?></b></p>
-    <div style="max-height:380px;overflow:auto;border:1px solid var(--borde);border-radius:var(--r-sm);padding:14px;margin-top:10px;background:#fff;color:#16181c">
-      <?= nl2br(e(cr_recortar((string) ($plantilla['cuerpo'] ?? ''), 1500))) ?>
+    <?php $previa = Campana::vistaPrevia($plantilla ?: [], null, null); ?>
+    <h3>Así va a llegar</h3>
+    <p class="pequeno suave">
+      Asunto: <b><?= e($previa['asunto']) ?></b><br>
+      Con los datos de <b><?= e((string) ($previa['contacto']['correo'] ?? '')) ?></b>, el primero de la lista.
+      <?php if ($previa['adjuntos']): ?>
+        <br>Lleva <?= count($previa['adjuntos']) ?> archivo(s) adjunto(s):
+        <?= e(implode(', ', array_column($previa['adjuntos'], 'nombre'))) ?>.
+      <?php endif; ?>
+    </p>
+    <div class="previa-marco">
+      <iframe src="vista.php?plantilla=<?= (int) $campana['plantilla_id'] ?>&amp;campana=<?= $id ?>"
+              title="Vista previa del correo" loading="lazy"></iframe>
     </div>
     <div class="acciones-fila" style="margin-top:14px">
+      <a class="btn btn-fantasma btn-peq" target="_blank" rel="noopener"
+         href="vista.php?plantilla=<?= (int) $campana['plantilla_id'] ?>&amp;campana=<?= $id ?>">Abrir en una pestaña</a>
+      <button type="button" class="btn btn-fantasma btn-peq" onclick="
+        var m=this.closest('.tarjeta').querySelector('.previa-marco');
+        m.classList.toggle('previa-movil');
+        this.textContent = m.classList.contains('previa-movil') ? 'Ver en ordenador' : 'Ver en teléfono';
+      ">Ver en teléfono</button>
       <a class="btn btn-fantasma btn-peq" href="plantillas.php?editar=<?= (int) $campana['plantilla_id'] ?>">Editar plantilla</a>
       <form method="post"><?= Seguridad::campoCsrf() ?>
         <input type="hidden" name="accion" value="preparar"><input type="hidden" name="id" value="<?= $id ?>">

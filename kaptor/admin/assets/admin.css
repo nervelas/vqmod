@@ -237,6 +237,14 @@ html[data-tema="claro"] .panel-cuerpo .aurora{opacity:.16}
 .previa-marco.previa-movil{max-width:390px;margin-left:auto;margin-right:auto}
 .previa-marco.previa-movil iframe{height:620px}
 
+/* Enviar una prueba: el campo y el botón van juntos en una línea. */
+.previa-prueba{margin-top:14px}
+.previa-prueba-fila{display:flex;gap:8px;align-items:stretch;margin-top:6px}
+.previa-prueba-fila .campo{flex:1 1 auto;min-width:0;margin:0}
+.previa-prueba-fila .btn{flex:0 0 auto;white-space:nowrap}
+
 @media (max-width:720px){
   .previa-marco iframe{height:420px}
+  .previa-prueba-fila{flex-wrap:wrap}
+  .previa-prueba-fila .btn{width:100%}
 }

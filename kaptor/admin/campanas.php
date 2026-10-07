@@ -61,6 +61,27 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             cr_flash('info', 'Campaña cancelada.');
             break;
 
+        case 'enviar_prueba':
+            $c = Campana::obtener($id);
+            $pl = $c ? BD::fila('SELECT * FROM `cr_plantillas` WHERE `id` = ?', [(int) $c['plantilla_id']]) : null;
+            if (!$pl) {
+                cr_flash('error', 'La campaña no tiene plantilla.');
+                break;
+            }
+            $ids = Campana::remitentesDe($c);
+            $bz  = $ids ? BD::fila('SELECT * FROM `cr_remitentes` WHERE `id` = ?', [(int) $ids[0]]) : null;
+            $ct  = BD::fila(
+                'SELECT * FROM `cr_contactos` WHERE `lista_id` = ? AND `estado` = \'activo\' ORDER BY `id` LIMIT 1',
+                [(int) $c['lista_id']]
+            ) ?: null;
+            $r = Campana::enviarPrueba($pl, (string) cr_post('destino'), $bz, $ct);
+            cr_flash($r['ok'] ? 'exito' : 'error', $r['ok']
+                ? ('Prueba enviada a ' . cr_post('destino') . ' desde ' . $r['buzon']
+                   . ($r['adjuntos'] ? ' con ' . $r['adjuntos'] . ' adjunto(s)' : '')
+                   . '. Mira la bandeja de entrada y la de spam.')
+                : ($r['error'] ?? 'Error.'));
+            break;
+
         case 'borrar':
             BD::ejecutar('DELETE FROM `cr_envios` WHERE `campana_id` = ?', [$id]);
             BD::ejecutar('DELETE FROM `cr_campanas` WHERE `id` = ?', [$id]);
@@ -309,11 +330,26 @@ if (!$campana):
   </div>
 
   <div class="tarjeta">
-    <?php $previa = Campana::vistaPrevia($plantilla ?: [], null, null); ?>
+    <?php
+    // Con el primer contacto de la lista y el buzón que usará la campaña: lo
+    // que se lee aquí es lo que va a leer esa persona, no una muestra.
+    $buzonPrevia = $buzonesIds
+        ? BD::fila('SELECT * FROM `cr_remitentes` WHERE `id` = ?', [(int) $buzonesIds[0]])
+        : null;
+    $contactoPrevia = BD::fila(
+        'SELECT * FROM `cr_contactos` WHERE `lista_id` = ? AND `estado` = \'activo\' ORDER BY `id` LIMIT 1',
+        [(int) $campana['lista_id']]
+    ) ?: null;
+    $previa = Campana::vistaPrevia($plantilla ?: [], $contactoPrevia, $buzonPrevia);
+    ?>
     <h3>Así va a llegar</h3>
     <p class="pequeno suave">
       Asunto: <b><?= e($previa['asunto']) ?></b><br>
-      Con los datos de <b><?= e((string) ($previa['contacto']['correo'] ?? '')) ?></b>, el primero de la lista.
+      <?php if ($contactoPrevia): ?>
+        Con los datos de <b><?= e((string) $contactoPrevia['correo']) ?></b>, el primero de la lista.
+      <?php else: ?>
+        La lista está vacía, así que se ve con datos de muestra.
+      <?php endif; ?>
       <?php if ($previa['adjuntos']): ?>
         <br>Lleva <?= count($previa['adjuntos']) ?> archivo(s) adjunto(s):
         <?= e(implode(', ', array_column($previa['adjuntos'], 'nombre'))) ?>.
@@ -323,6 +359,23 @@ if (!$campana):
       <iframe src="vista.php?plantilla=<?= (int) $campana['plantilla_id'] ?>&amp;campana=<?= $id ?>"
               title="Vista previa del correo" loading="lazy"></iframe>
     </div>
+    <form method="post" class="previa-prueba">
+      <?= Seguridad::campoCsrf() ?>
+      <input type="hidden" name="accion" value="enviar_prueba">
+      <input type="hidden" name="id" value="<?= $id ?>">
+      <label class="etiqueta" for="destino_prueba">Enviar una prueba a:</label>
+      <div class="previa-prueba-fila">
+        <input type="email" id="destino_prueba" name="destino" class="campo" required
+               placeholder="tucorreo@tudominio.com"
+               value="<?= e((string) (Auth::usuario()['email'] ?? '')) ?>">
+        <button class="btn btn-peq">Enviar prueba</button>
+      </div>
+      <p class="pequeno suave" style="margin-top:6px">
+        Sale del buzón de la campaña, con el mismo asunto, los mismos adjuntos y el
+        mismo pie. No cuenta como envío ni gasta destinatarios de la lista.
+      </p>
+    </form>
+
     <div class="acciones-fila" style="margin-top:14px">
       <a class="btn btn-fantasma btn-peq" target="_blank" rel="noopener"
          href="vista.php?plantilla=<?= (int) $campana['plantilla_id'] ?>&amp;campana=<?= $id ?>">Abrir en una pestaña</a>

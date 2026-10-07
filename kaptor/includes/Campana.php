@@ -419,6 +419,92 @@ final class Campana
         ];
     }
 
+
+    /**
+     * Manda a una dirección suya el correo tal como va a salir.
+     *
+     * Es el mismo mensaje que recibirá la lista: variables sustituidas, pie
+     * de baja, archivos adjuntos y el buzón de verdad. Lo único que no lleva
+     * es la medición —ni píxel de apertura ni enlaces reescritos—, por dos
+     * razones: que los enlaces se puedan pinchar y lleven al sitio, y que
+     * mirar la prueba no sume una apertura falsa a ninguna campaña. Tampoco
+     * se apunta en `cr_envios`: una prueba no es un envío.
+     *
+     * @param array      $plantilla fila de cr_plantillas
+     * @param string     $destino   a dónde mandarla
+     * @param array|null $remitente buzón a usar; si no, el primero activo
+     * @param array|null $contacto  datos con los que personalizar
+     * @return array{ok:bool,error?:string,asunto?:string,adjuntos?:int,buzon?:string}
+     */
+    public static function enviarPrueba(array $plantilla, string $destino, ?array $remitente = null, ?array $contacto = null): array
+    {
+        $destino = trim($destino);
+        if ($destino === '') {
+            return ['ok' => false, 'error' => 'Escribe la dirección a la que quieres la prueba.'];
+        }
+        if (!filter_var($destino, FILTER_VALIDATE_EMAIL)) {
+            return ['ok' => false, 'error' => 'La dirección «' . $destino . '» no es válida.'];
+        }
+        if (trim((string) ($plantilla['asunto'] ?? '')) === '' || trim((string) ($plantilla['cuerpo'] ?? '')) === '') {
+            return ['ok' => false, 'error' => 'La plantilla no tiene asunto o no tiene mensaje.'];
+        }
+
+        if ($remitente === null) {
+            $remitente = BD::fila('SELECT * FROM `cr_remitentes` WHERE `activo` = 1 ORDER BY `id` LIMIT 1');
+        }
+        if (!$remitente || empty($remitente['host'])) {
+            return ['ok' => false, 'error' => 'No hay ningún buzón de salida configurado y activo.'];
+        }
+
+        $previa = self::vistaPrevia($plantilla, $contacto, $remitente);
+
+        $mensaje = new Mensaje(
+            (string) $remitente['de_correo'],
+            (string) $remitente['de_nombre'],
+            $destino,
+            '',
+            (string) $previa['asunto'],
+            (string) $previa['html'],
+            '',
+            (string) ($remitente['responder_a'] ?? '')
+        );
+
+        // Las mismas cabeceras que llevará el envío de verdad, para que la
+        // prueba pase por los mismos filtros. La baja va sin token: nadie se
+        // da de baja por probar.
+        $urlBaja = cr_url('baja.php');
+        $mensaje->cabecera('List-Unsubscribe', '<' . $urlBaja . '>, <mailto:' . $remitente['de_correo'] . '?subject=Baja>');
+        $mensaje->cabecera('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
+        $mensaje->cabecera('X-Mailer', 'Kaptor ' . CR_VERSION);
+        $mensaje->cabecera('X-Kaptor-Prueba', '1');
+        $mensaje->cabecera('Auto-Submitted', 'auto-generated');
+
+        $adjuntos = Adjuntos::cargar(Adjuntos::deLaPlantilla($plantilla));
+        foreach ($adjuntos as $a) {
+            $mensaje->adjuntar($a['nombre'], $a['datos'], $a['tipo']);
+        }
+
+        $smtp = Remitente::smtp($remitente);
+        $r = $smtp->enviar($mensaje);
+        $smtp->cerrar();
+
+        BD::actualizar('cr_remitentes', [
+            'probado_en'   => date('Y-m-d H:i:s'),
+            'ultimo_error' => $r['ok'] ? null : mb_substr((string) ($r['error'] ?? ''), 0, 500),
+        ], '`id` = ?', [(int) ($remitente['id'] ?? 0)]);
+
+        if (!$r['ok']) {
+            return ['ok' => false, 'error' => (string) ($r['error'] ?? 'No se pudo enviar la prueba.')];
+        }
+
+        return [
+            'ok'       => true,
+            'asunto'   => (string) $previa['asunto'],
+            'adjuntos' => count($adjuntos),
+            'buzon'    => (string) $remitente['de_correo'],
+        ];
+    }
+
     /** Variables disponibles en asunto y cuerpo. */
     private static function variables(array $contacto, array $remitente, string $urlBaja): array
     {

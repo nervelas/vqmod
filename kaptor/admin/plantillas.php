@@ -33,6 +33,23 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         cr_redirigir('admin/plantillas.php?editar=' . $id);
     }
 
+    // --- Enviar una prueba a un correo --------------------------------------
+    if ($accion === 'enviar_prueba') {
+        $p = $id > 0 ? BD::fila('SELECT * FROM `cr_plantillas` WHERE `id` = ?', [$id]) : null;
+        if (!$p) {
+            cr_flash('error', 'Guarda la plantilla antes de enviar una prueba.');
+            cr_redirigir('admin/plantillas.php');
+        }
+        $destino = (string) cr_post('destino');
+        $r = Campana::enviarPrueba($p, $destino);
+        cr_flash($r['ok'] ? 'exito' : 'error', $r['ok']
+            ? ('Prueba enviada a ' . $destino . ' desde ' . $r['buzon']
+               . ($r['adjuntos'] ? ' con ' . $r['adjuntos'] . ' adjunto(s)' : '')
+               . '. Mira la bandeja de entrada y la de spam.')
+            : ($r['error'] ?? 'Error.'));
+        cr_redirigir('admin/plantillas.php?editar=' . $id);
+    }
+
     // --- Adjuntar un archivo ------------------------------------------------
     if ($accion === 'adjuntar') {
         $p = $id > 0 ? BD::fila('SELECT * FROM `cr_plantillas` WHERE `id` = ?', [$id]) : null;
@@ -189,6 +206,23 @@ admin_cabecera(['titulo' => 'Plantillas', 'activo' => 'plantillas.php']);
         <iframe src="vista.php?plantilla=<?= (int) $editar['id'] ?>&amp;v=<?= e((string) strtotime((string) ($editar['actualizado'] ?? 'now'))) ?>"
                 title="Vista previa del correo" loading="lazy"></iframe>
       </div>
+      <form method="post" class="previa-prueba">
+        <?= Seguridad::campoCsrf() ?>
+        <input type="hidden" name="accion" value="enviar_prueba">
+        <input type="hidden" name="id" value="<?= (int) $editar['id'] ?>">
+        <label class="etiqueta" for="destino_prueba">Enviar una prueba a:</label>
+        <div class="previa-prueba-fila">
+          <input type="email" id="destino_prueba" name="destino" class="campo" required
+                 placeholder="tucorreo@tudominio.com"
+                 value="<?= e((string) (Auth::usuario()['email'] ?? '')) ?>">
+          <button class="btn btn-peq">Enviar prueba</button>
+        </div>
+        <p class="pequeno suave" style="margin-top:6px">
+          Sale del primer buzón activo, con el mismo asunto, los mismos adjuntos y el
+          mismo pie que el envío de verdad. No cuenta como envío.
+        </p>
+      </form>
+
       <div class="acciones-fila" style="margin-top:10px">
         <a class="btn btn-fantasma btn-peq" target="_blank" rel="noopener"
            href="vista.php?plantilla=<?= (int) $editar['id'] ?>">Abrir en una pestaña</a>

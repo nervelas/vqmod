@@ -46,7 +46,7 @@ if ($camId > 0) {
         }
         if ($contacto === null) {
             $contacto = BD::fila(
-                'SELECT * FROM `cr_contactos` WHERE `lista_id` = ? AND `activo` = 1 ORDER BY `id` LIMIT 1',
+                'SELECT * FROM `cr_contactos` WHERE `lista_id` = ? AND `estado` = \'activo\' ORDER BY `id` LIMIT 1',
                 [(int) $campana['lista_id']]
             ) ?: null;
         }

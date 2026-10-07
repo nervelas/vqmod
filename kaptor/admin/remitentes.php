@@ -28,11 +28,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             // Se guarda la conversación con el servidor para poder mirarla en
             // la página: cuando el fallo es «usuario o contraseña incorrectos»
             // lo único que lo resuelve es ver qué contestó de verdad.
+            $cual = Remitente::obtener($id);
             $_SESSION['_smtp_diag'] = [
                 'id'       => $id,
                 'ok'       => (bool) $r['ok'],
                 'registro' => (string) ($r['registro'] ?? ''),
                 'clave'    => (string) ($r['clave'] ?? ''),
+                // De qué buzón es: con varios dados de alta, un registro sin
+                // nombre se lee como si fuera del que uno tiene en la cabeza,
+                // y se acaba buscando el fallo en el buzón equivocado.
+                'buzon'    => $cual ? (string) $cual['de_correo'] : '',
+                'servidor' => $cual ? $cual['host'] . ':' . $cual['puerto'] . ' · ' . strtoupper((string) $cual['seguridad']) : '',
+                'usuario'  => $cual ? (string) $cual['usuario'] : '',
             ];
             break;
 
@@ -77,9 +84,18 @@ unset($_SESSION['_smtp_diag']);
 if ($diag && !empty($diag['registro'])): ?>
   <div class="tarjeta" style="margin-bottom:18px">
     <h3>Qué contestó el servidor</h3>
+    <?php if (!empty($diag['buzon'])): ?>
+      <p class="pequeno">
+        Buzón <b><?= e((string) $diag['buzon']) ?></b> ·
+        <span class="mono"><?= e((string) $diag['servidor']) ?></span> ·
+        usuario <span class="mono"><?= e((string) $diag['usuario']) ?></span>
+      </p>
+    <?php endif; ?>
     <p class="pequeno suave">
       La conversación tal cual. Las credenciales no aparecen. Si tu hosting te
       pide pruebas de que el fallo es suyo, esto es lo que hay que enseñarle.
+      Comprueba que el nombre que te saluda en la primera línea es el del
+      servidor que pusiste: si no lo es, la contraseña está yendo a otro sitio.
     </p>
     <?php if (!empty($diag['clave'])): ?>
       <p class="pequeno"><b>Lo que hay guardado:</b> <?= e((string) $diag['clave']) ?></p>

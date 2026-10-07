@@ -26,3 +26,7 @@
 /kaptor/menu-abierto.png
 /kaptor/niveles.png
 /kaptor/filtro-ext.png
+
+# Archivos que el usuario adjunta a sus plantillas: son suyos, no del programa.
+/kaptor/storage/adjuntos/*
+!/kaptor/storage/adjuntos/index.html

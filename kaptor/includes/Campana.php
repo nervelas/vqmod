@@ -195,6 +195,11 @@ final class Campana
             return self::progreso($campana, 0, 'La plantilla ya no existe.');
         }
 
+        // Los archivos de la plantilla se leen UNA vez y se reparten entre
+        // todos los correos de esta tanda: abrir el mismo PDF cien veces no
+        // tiene sentido y además se comería la memoria del hosting.
+        $adjuntos = Adjuntos::cargar(Adjuntos::deLaPlantilla($plantilla));
+
         $pausaMin = max(0, (int) $campana['pausa_min']);
         $pausaMax = max($pausaMin, (int) $campana['pausa_max']);
         $inicio   = microtime(true);
@@ -220,7 +225,7 @@ final class Campana
                 $conexiones[$rid] = Remitente::smtp($remitente);
             }
 
-            $resultado = self::enviarUno($campana, $plantilla, $envio, $remitente, $conexiones[$rid]);
+            $resultado = self::enviarUno($campana, $plantilla, $envio, $remitente, $conexiones[$rid], $adjuntos);
             if ($resultado['enviado']) { $enviados++; }
 
             // Pausa aleatoria: imita el ritmo de una persona escribiendo.
@@ -249,7 +254,7 @@ final class Campana
      *
      * @return array{enviado:bool,error?:string}
      */
-    private static function enviarUno(array $campana, array $plantilla, array $envio, array $remitente, Smtp $smtp): array
+    private static function enviarUno(array $campana, array $plantilla, array $envio, array $remitente, Smtp $smtp, array $adjuntos = []): array
     {
         $contacto = BD::fila('SELECT * FROM `cr_contactos` WHERE `id` = ?', [(int) $envio['contacto_id']]) ?? [];
 
@@ -259,7 +264,7 @@ final class Campana
             return ['enviado' => false];
         }
 
-        $mensaje = self::construirMensaje($campana, $plantilla, $contacto, $envio, $remitente);
+        $mensaje = self::construirMensaje($campana, $plantilla, $contacto, $envio, $remitente, $adjuntos);
         $r = $smtp->enviar($mensaje);
 
         if (!empty($r['ok'])) {
@@ -322,7 +327,7 @@ final class Campana
     // ======================================================== construcción
 
     /** Arma el mensaje personalizado de un destinatario. */
-    public static function construirMensaje(array $campana, array $plantilla, array $contacto, array $envio, array $remitente): Mensaje
+    public static function construirMensaje(array $campana, array $plantilla, array $contacto, array $envio, array $remitente, array $adjuntos = []): Mensaje
     {
         $token   = (string) $envio['token'];
         $urlBaja = cr_url('baja.php?t=' . $token);
@@ -356,6 +361,13 @@ final class Campana
         $mensaje->cabecera('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
         $mensaje->cabecera('List-Id', mb_substr((string) $campana['nombre'], 0, 60) . ' <campana-' . (int) $campana['id'] . '.' . cr_host_de_url(cr_url('')) . '>');
         $mensaje->cabecera('X-Mailer', 'Kaptor ' . CR_VERSION);
+
+        // Los archivos de la plantilla. Si quien llama no los pasó ya leídos
+        // —una prueba suelta, por ejemplo—, se leen aquí.
+        if (!$adjuntos) { $adjuntos = Adjuntos::cargar(Adjuntos::deLaPlantilla($plantilla)); }
+        foreach ($adjuntos as $a) {
+            $mensaje->adjuntar($a['nombre'], $a['datos'], $a['tipo']);
+        }
 
         return $mensaje;
     }

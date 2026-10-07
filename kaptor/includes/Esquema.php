@@ -14,7 +14,7 @@ declare(strict_types=1);
 final class Esquema
 {
     /** Se sube de uno en uno cada vez que cambia la estructura. */
-    public const VERSION = 15;
+    public const VERSION = 16;
 
     /** Aplica los cambios pendientes. Se llama desde bootstrap.php. */
     public static function actualizar(): void
@@ -89,6 +89,10 @@ final class Esquema
             },
             // Seguimiento: palabras vigiladas y los dominios de cada una.
             15 => static function (): void { self::tablasSeguimiento(); },
+            // Archivos que viajan con el correo de una plantilla.
+            16 => static function (): void {
+                self::columna('cr_plantillas', 'adjuntos', 'TEXT NULL AFTER `cuerpo`');
+            },
         ];
 
         $fallaron = [];

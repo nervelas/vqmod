@@ -33,11 +33,60 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         cr_redirigir('admin/plantillas.php?editar=' . $id);
     }
 
+    // --- Adjuntar un archivo ------------------------------------------------
+    if ($accion === 'adjuntar') {
+        $p = $id > 0 ? BD::fila('SELECT * FROM `cr_plantillas` WHERE `id` = ?', [$id]) : null;
+        if (!$p) {
+            cr_flash('error', 'Guarda la plantilla antes de adjuntarle archivos.');
+            cr_redirigir('admin/plantillas.php');
+        }
+
+        $yaHay = Adjuntos::deLaPlantilla($p);
+        $r = Adjuntos::subir($_FILES['archivo'] ?? [], $yaHay);
+
+        if (!$r['ok']) {
+            cr_flash('error', (string) $r['error']);
+        } else {
+            $yaHay[] = $r['ficha'];
+            BD::actualizar('cr_plantillas', [
+                'adjuntos'    => json_encode($yaHay, JSON_UNESCAPED_UNICODE),
+                'actualizado' => date('Y-m-d H:i:s'),
+            ], '`id` = ?', [$id]);
+            cr_flash('exito', 'Archivo adjuntado: ' . $r['ficha']['nombre']
+                . ' (' . Adjuntos::enMegas((int) $r['ficha']['peso']) . ').');
+        }
+        cr_redirigir('admin/plantillas.php?editar=' . $id);
+    }
+
+    // --- Quitar un archivo --------------------------------------------------
+    if ($accion === 'quitar_adjunto') {
+        $p = $id > 0 ? BD::fila('SELECT * FROM `cr_plantillas` WHERE `id` = ?', [$id]) : null;
+        if ($p) {
+            $cual  = (string) cr_post('archivo', '');
+            $quedan = [];
+            foreach (Adjuntos::deLaPlantilla($p) as $f) {
+                if (($f['archivo'] ?? '') === $cual) { Adjuntos::borrar($f); continue; }
+                $quedan[] = $f;
+            }
+            BD::actualizar('cr_plantillas', [
+                'adjuntos'    => $quedan ? json_encode($quedan, JSON_UNESCAPED_UNICODE) : null,
+                'actualizado' => date('Y-m-d H:i:s'),
+            ], '`id` = ?', [$id]);
+            cr_flash('exito', 'Archivo quitado.');
+        }
+        cr_redirigir('admin/plantillas.php?editar=' . $id);
+    }
+
     if ($accion === 'borrar') {
         $enUso = (int) BD::valor('SELECT COUNT(*) FROM `cr_campanas` WHERE `plantilla_id` = ?', [$id], 0);
         if ($enUso > 0) {
             cr_flash('error', 'No se puede borrar: la usan ' . $enUso . ' campaña(s).');
         } else {
+            // Los archivos se van con la plantilla; si no, quedan ahí para siempre.
+            $p = BD::fila('SELECT * FROM `cr_plantillas` WHERE `id` = ?', [$id]);
+            if ($p) {
+                foreach (Adjuntos::deLaPlantilla($p) as $f) { Adjuntos::borrar($f); }
+            }
             BD::ejecutar('DELETE FROM `cr_plantillas` WHERE `id` = ?', [$id]);
             cr_flash('exito', 'Plantilla eliminada.');
         }
@@ -128,6 +177,59 @@ admin_cabecera(['titulo' => 'Plantillas', 'activo' => 'plantillas.php']);
         <a class="btn btn-fantasma btn-bloque" style="margin-top:10px" href="plantillas.php">Nueva plantilla</a>
       <?php endif; ?>
     </form>
+
+    <!-- ===================== Archivos adjuntos ===================== -->
+    <h3 style="margin:26px 0 4px">Archivos adjuntos</h3>
+    <?php if (!$editar): ?>
+      <p class="pequeno suave">Guarda la plantilla y aquí podrás adjuntarle archivos.</p>
+    <?php else:
+      $fichas = Adjuntos::deLaPlantilla($editar);
+      $suma   = Adjuntos::peso($fichas); ?>
+
+      <p class="pequeno suave">
+        Viajan con cada correo. Hasta <?= Adjuntos::MAX_ARCHIVOS ?> archivos y
+        <?= e(Adjuntos::enMegas(Mensaje::MAX_TOTAL)) ?> entre todos.
+      </p>
+
+      <?php if ($fichas): ?>
+        <?php foreach ($fichas as $f): ?>
+          <div class="estado-linea">
+            <span>
+              <b><?= e((string) $f['nombre']) ?></b>
+              <em><?= e(Adjuntos::enMegas((int) $f['peso'])) ?> · <?= e((string) $f['tipo']) ?></em>
+            </span>
+            <form method="post" style="margin:0" onsubmit="return confirm('¿Quitar este archivo?')">
+              <?= Seguridad::campoCsrf() ?>
+              <input type="hidden" name="accion" value="quitar_adjunto">
+              <input type="hidden" name="id" value="<?= (int) $editar['id'] ?>">
+              <input type="hidden" name="archivo" value="<?= e((string) $f['archivo']) ?>">
+              <button class="btn btn-fantasma btn-peq" style="color:var(--error)">Quitar</button>
+            </form>
+          </div>
+        <?php endforeach; ?>
+        <p class="pequeno suave" style="margin:10px 0 0">
+          Pesan <b><?= e(Adjuntos::enMegas($suma)) ?></b> en total.
+        </p>
+      <?php endif; ?>
+
+      <?php if (count($fichas) < Adjuntos::MAX_ARCHIVOS): ?>
+        <form method="post" enctype="multipart/form-data" style="margin-top:14px">
+          <?= Seguridad::campoCsrf() ?>
+          <input type="hidden" name="accion" value="adjuntar">
+          <input type="hidden" name="id" value="<?= (int) $editar['id'] ?>">
+          <input type="file" name="archivo" class="campo" required
+                 accept=".<?= e(implode(',.', array_keys(Mensaje::TIPOS))) ?>">
+          <button class="btn btn-fantasma btn-bloque" style="margin-top:10px">Adjuntar archivo</button>
+        </form>
+      <?php endif; ?>
+
+      <div class="aviso aviso-info" style="margin-top:16px">
+        <span><b>Antes de adjuntar, piénsalo:</b> en un envío en frío un adjunto <b>baja la
+          entrega</b> —los filtros desconfían de un archivo que nadie pidió, y el correo pesa
+          más—. Para una presentación comercial entra mucho mejor <b>subir el PDF a tu web y
+          poner el enlace en el mensaje</b>. Si aun así lo quieres adjuntar, aquí está.</span>
+      </div>
+    <?php endif; ?>
   </div>
 
   <div class="tarjeta">

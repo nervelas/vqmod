@@ -275,6 +275,7 @@ CREATE TABLE IF NOT EXISTS `cr_plantillas` (
   `nombre`      VARCHAR(160) NOT NULL,
   `asunto`      VARCHAR(300) NOT NULL,
   `cuerpo`      MEDIUMTEXT   NOT NULL,
+  `adjuntos`   TEXT NULL,
   `creado`      DATETIME NOT NULL,
   `actualizado` DATETIME NOT NULL,
   PRIMARY KEY (`id`)

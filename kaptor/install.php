@@ -14,7 +14,7 @@ ini_set('display_errors', '1');
 @set_time_limit(180);
 
 define('CR_RAIZ', __DIR__);
-define('CR_VERSION', '6.7.0');
+define('CR_VERSION', '6.8.0');
 const PHP_MINIMO = '8.0.0';
 
 $rutaConfig = CR_RAIZ . '/config/config.php';
@@ -217,7 +217,7 @@ if (!$yaInstalado && !$faltaAlgo && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST
             @chmod($rutaConfig, 0644);
 
             // 5) Carpetas de trabajo y bloqueo del instalador
-            foreach (['storage/logs', 'storage/cache', 'storage/uploads', 'storage/sessions', 'storage/serp'] as $dir) {
+            foreach (['storage/logs', 'storage/cache', 'storage/uploads', 'storage/sessions', 'storage/serp', 'storage/adjuntos'] as $dir) {
                 if (!is_dir(CR_RAIZ . '/' . $dir)) { @mkdir(CR_RAIZ . '/' . $dir, 0755, true); }
             }
             @file_put_contents(CR_RAIZ . '/storage/.htaccess', "Require all denied\nDeny from all\n");

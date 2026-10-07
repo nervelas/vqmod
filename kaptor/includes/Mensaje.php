@@ -15,7 +15,36 @@ declare(strict_types=1);
 
 final class Mensaje
 {
+    /** Tope de un adjunto, y de todos juntos. */
+    public const MAX_ADJUNTO = 7340032;    // 7 MB
+    public const MAX_TOTAL   = 10485760;   // 10 MB, que es lo que aceptan casi todos
+
+    /** Lo que se puede adjuntar. Nada ejecutable, por razones obvias. */
+    public const TIPOS = [
+        'pdf'  => 'application/pdf',
+        'doc'  => 'application/msword',
+        'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'xls'  => 'application/vnd.ms-excel',
+        'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'ppt'  => 'application/vnd.ms-powerpoint',
+        'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'png'  => 'image/png',
+        'jpg'  => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'webp' => 'image/webp',
+        'gif'  => 'image/gif',
+        'txt'  => 'text/plain',
+        'csv'  => 'text/csv',
+        'zip'  => 'application/zip',
+    ];
+
     private string $frontera;
+
+    /** Frontera de la envoltura exterior, solo cuando hay adjuntos. */
+    private string $fronteraMixta;
+
+    /** @var array<int,array{nombre:string,tipo:string,datos:string}> */
+    private array $adjuntos = [];
 
     /** @var array<string,string> Cabeceras adicionales. */
     private array $extras = [];
@@ -30,10 +59,52 @@ final class Mensaje
         private string $texto = '',
         private string $responderA = ''
     ) {
-        $this->frontera = '=_Kaptor_' . bin2hex(random_bytes(12));
+        $this->frontera      = '=_Kaptor_' . bin2hex(random_bytes(12));
+        $this->fronteraMixta = '=_KaptorAdj_' . bin2hex(random_bytes(12));
         if ($this->texto === '') {
             $this->texto = self::htmlATexto($this->html);
         }
+    }
+
+    /**
+     * Añade un archivo al mensaje.
+     *
+     * El contenido se pasa ya leído, no la ruta: así el mismo archivo se lee
+     * una vez y sirve para los cientos de correos de una campaña.
+     */
+    public function adjuntar(string $nombre, string $datos, string $tipo = ''): self
+    {
+        if ($datos === '') { return $this; }
+
+        $nombre = self::nombreSeguro($nombre);
+        if ($tipo === '') {
+            $ext  = strtolower((string) pathinfo($nombre, PATHINFO_EXTENSION));
+            $tipo = self::TIPOS[$ext] ?? 'application/octet-stream';
+        }
+
+        $this->adjuntos[] = ['nombre' => $nombre, 'tipo' => self::limpiar($tipo), 'datos' => $datos];
+        return $this;
+    }
+
+    /** ¿Lleva archivos? */
+    public function tieneAdjuntos(): bool
+    {
+        return $this->adjuntos !== [];
+    }
+
+    /**
+     * Un nombre de archivo que no pueda hacer daño.
+     *
+     * Sin rutas, sin saltos de línea y sin comillas: el nombre va dentro de
+     * una cabecera del mensaje, y ahí un salto de línea es una cabecera nueva.
+     */
+    public static function nombreSeguro(string $nombre): string
+    {
+        $nombre = basename(str_replace('\\', '/', $nombre));
+        $nombre = (string) preg_replace('~[\r\n\t"\x00-\x1F]+~', '', $nombre);
+        $nombre = trim($nombre, '. ');
+        if ($nombre === '') { $nombre = 'archivo'; }
+        return mb_substr($nombre, 0, 120);
     }
 
     /** Añade una cabecera personalizada (por ejemplo List-Unsubscribe). */
@@ -76,7 +147,11 @@ final class Mensaje
             'To'           => self::direccion($this->para, $this->paraNombre),
             'Subject'      => self::codificarAsunto($this->asunto),
             'MIME-Version' => '1.0',
-            'Content-Type' => 'multipart/alternative; boundary="' . $this->frontera . '"',
+            // Con archivos, el mensaje es una caja (multipart/mixed) que lleva
+            // dentro el texto en sus dos formatos y, al lado, cada adjunto.
+            'Content-Type' => $this->adjuntos
+                ? 'multipart/mixed; boundary="' . $this->fronteraMixta . '"'
+                : 'multipart/alternative; boundary="' . $this->frontera . '"',
         ];
         if ($this->responderA !== '') {
             $cabeceras['Reply-To'] = self::direccion($this->responderA, '');
@@ -93,6 +168,11 @@ final class Mensaje
         $salida .= "\r\n";
         $salida .= "Este mensaje usa varios formatos. Si lo lees así, tu programa de correo no admite MIME.\r\n\r\n";
 
+        if ($this->adjuntos) {
+            $salida .= '--' . $this->fronteraMixta . "\r\n";
+            $salida .= 'Content-Type: multipart/alternative; boundary="' . $this->frontera . "\"\r\n\r\n";
+        }
+
         // Parte de texto
         $salida .= '--' . $this->frontera . "\r\n";
         $salida .= "Content-Type: text/plain; charset=UTF-8\r\n";
@@ -106,6 +186,21 @@ final class Mensaje
         $salida .= self::quotedPrintable($this->html) . "\r\n\r\n";
 
         $salida .= '--' . $this->frontera . "--\r\n";
+
+        // Y ahora los archivos, cada uno en su parte.
+        foreach ($this->adjuntos as $a) {
+            $salida .= "\r\n" . '--' . $this->fronteraMixta . "\r\n";
+            $salida .= 'Content-Type: ' . $a['tipo'] . '; name="' . $a['nombre'] . "\"\r\n";
+            $salida .= "Content-Transfer-Encoding: base64\r\n";
+            $salida .= 'Content-Disposition: attachment; filename="' . $a['nombre'] . "\"\r\n\r\n";
+            // En base64 las líneas van de 76 caracteres: es lo que manda el
+            // estándar y lo que esperan los servidores de correo.
+            $salida .= chunk_split(base64_encode($a['datos']), 76, "\r\n");
+        }
+
+        if ($this->adjuntos) {
+            $salida .= "\r\n" . '--' . $this->fronteraMixta . "--\r\n";
+        }
 
         return $salida;
     }

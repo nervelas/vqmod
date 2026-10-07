@@ -1,4 +1,4 @@
-# Kaptor 6.7
+# Kaptor 6.8
 
 Caja de herramientas para vender servicios web. Dos mitades:
 
@@ -504,6 +504,29 @@ que mire el sitio desde fuera puede leerla —ni Kaptor ni ninguna otra
 herramienta—, así que aquí no se inventa: se dice en el informe. Lo que sí
 está escrito en el código es todo lo de arriba; y lo que de verdad decide el
 posicionamiento (título, H1 y texto) sale en la misma pantalla.
+
+## Archivos adjuntos en las campañas
+
+En **Panel → Plantillas**, una vez guardada la plantilla, aparece *Archivos
+adjuntos*. Se suben ahí y viajan con cada correo de las campañas que usen esa
+plantilla.
+
+Hasta **5 archivos** y **10 MB entre todos** (7 MB por archivo). Por encima de
+eso el mensaje lo rechaza medio mundo, y en base64 un adjunto crece un tercio.
+
+Se admiten documentos, hojas, presentaciones, imágenes, texto y zip. **Nada
+ejecutable**, y se comprueba el contenido real del archivo, no su extensión: un
+`.exe` renombrado a `.pdf` se queda fuera.
+
+Los archivos se guardan en `storage/adjuntos` —nunca en la base de datos— y se
+borran con la plantilla. En cada tanda de envío se leen **una sola vez** y se
+reparten entre todos los correos.
+
+> **Conviene saberlo:** en un envío en frío un adjunto **baja la entrega**. Los
+> filtros desconfían de un archivo que nadie pidió y el correo pesa más. Para
+> una presentación comercial entra mucho mejor subir el PDF a tu web y poner el
+> enlace en el mensaje. Kaptor lo avisa en la misma pantalla, y luego hace lo
+> que le digas.
 
 ## Seguimiento de posiciones
 

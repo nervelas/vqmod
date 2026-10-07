@@ -132,13 +132,45 @@ final class Remitente
         $fila = self::obtener($id);
         if (!$fila) { return ['ok' => false, 'error' => 'El buzón no existe.']; }
 
-        $r = self::smtp($fila)->probar();
+        $smtp = self::smtp($fila);
+        $r = $smtp->probar();
+        $r['registro'] = $smtp->registro();
+        $r['clave']    = self::resumenClave($fila);
+
         BD::actualizar('cr_remitentes', [
             'probado_en'   => date('Y-m-d H:i:s'),
             'ultimo_error' => $r['ok'] ? null : mb_substr((string) ($r['error'] ?? ''), 0, 500),
         ], '`id` = ?', [$id]);
 
         return $r;
+    }
+
+    /**
+     * Qué contraseña hay guardada, sin enseñarla.
+     *
+     * Cuando un servidor dice «usuario o contraseña incorrectos» lo primero
+     * que hay que descartar es que lo guardado no sea lo que se escribió: un
+     * espacio que se coló al pegar, el campo que se quedó a medias. De la
+     * contraseña no se enseña ni un solo carácter: solo cuántos son y si
+     * trae algo raro pegado.
+     */
+    public static function resumenClave(array $fila): string
+    {
+        $clave = Cripto::descifrar((string) ($fila['clave'] ?? ''));
+        if ($clave === '') { return 'No hay ninguna contraseña guardada.'; }
+
+        $partes = [mb_strlen($clave) . ' caracteres'];
+        if ($clave !== trim($clave)) {
+            $partes[] = 'EMPIEZA O ACABA EN ESPACIO (eso la invalida: vuelve a escribirla a mano)';
+        }
+        if (preg_match('~[\r\n\t]~', $clave)) {
+            $partes[] = 'LLEVA UN SALTO DE LÍNEA (se coló al pegarla)';
+        }
+        if (preg_match('~[^\x20-\x7E]~', $clave)) {
+            $partes[] = 'lleva algún carácter no inglés (tildes, ñ o similares)';
+        }
+
+        return implode(' · ', $partes);
     }
 
     /** Envía un correo de prueba a la dirección indicada. */

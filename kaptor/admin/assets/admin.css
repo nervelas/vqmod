@@ -248,3 +248,11 @@ html[data-tema="claro"] .panel-cuerpo .aurora{opacity:.16}
   .previa-prueba-fila{flex-wrap:wrap}
   .previa-prueba-fila .btn{width:100%}
 }
+
+/* La conversación con el servidor SMTP, para copiar y pegar tal cual. */
+.smtp-diag{
+  margin-top:10px;padding:12px 14px;border:1px solid var(--borde);
+  border-radius:var(--r-sm);background:rgba(0,0,0,.25);
+  font:12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  white-space:pre-wrap;word-break:break-word;max-height:360px;overflow:auto;
+}

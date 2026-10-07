@@ -25,6 +25,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $r = Remitente::probar($id);
             cr_flash($r['ok'] ? 'exito' : 'error',
                 $r['ok'] ? ('Conexión correcta. ' . ($r['detalle'] ?? '') . ($r['aviso'] ?? '')) : ($r['error'] ?? 'Error.'));
+            // Se guarda la conversación con el servidor para poder mirarla en
+            // la página: cuando el fallo es «usuario o contraseña incorrectos»
+            // lo único que lo resuelve es ver qué contestó de verdad.
+            $_SESSION['_smtp_diag'] = [
+                'id'       => $id,
+                'ok'       => (bool) $r['ok'],
+                'registro' => (string) ($r['registro'] ?? ''),
+                'clave'    => (string) ($r['clave'] ?? ''),
+            ];
             break;
 
         case 'enviar_prueba':
@@ -59,6 +68,25 @@ admin_cabecera(['titulo' => 'Buzones de salida', 'activo' => 'remitentes.php']);
     Cuantos más buzones añadas, más rápido podrás enviar sin forzar ninguno.
   </span>
 </div>
+
+<?php
+// Lo que contesto el servidor la ultima vez que se pulso Probar. Se ensena
+// una sola vez y se borra: es para mirarlo ahora, no un registro permanente.
+$diag = $_SESSION['_smtp_diag'] ?? null;
+unset($_SESSION['_smtp_diag']);
+if ($diag && !empty($diag['registro'])): ?>
+  <div class="tarjeta" style="margin-bottom:18px">
+    <h3>Qué contestó el servidor</h3>
+    <p class="pequeno suave">
+      La conversación tal cual. Las credenciales no aparecen. Si tu hosting te
+      pide pruebas de que el fallo es suyo, esto es lo que hay que enseñarle.
+    </p>
+    <?php if (!empty($diag['clave'])): ?>
+      <p class="pequeno"><b>Lo que hay guardado:</b> <?= e((string) $diag['clave']) ?></p>
+    <?php endif; ?>
+    <pre class="smtp-diag"><?= e((string) $diag['registro']) ?></pre>
+  </div>
+<?php endif; ?>
 
 <div class="rejilla rejilla-2" style="align-items:start">
 

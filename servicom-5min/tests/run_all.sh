@@ -25,6 +25,9 @@ run "Panel (2FA, ajustes, diagnóstico)" php tests/e2e/panel.php
 run "SSL real (CA local)" php tests/e2e/ssl.php
 run "Seguridad del portal" php tests/e2e/security.php
 run "cPanel por localhost (SSL)" php tests/e2e/cpanel_ssl.php
+run "Fotos de stock (servidores simulados)" php tests/stock/run.php
+run "LUXE: 5 webs con poca información + QA visual + editor en vivo" bash tests/luxe/run.sh
+run "mu-plugin Servicom Core (roles, editor, instrucciones, vista previa…)" bash -c "cd wp-pack/mu-plugins/servicom-core/tests && bash run_all.sh --fresh > /tmp/mu_suite.txt 2>&1; php t_editor.php >> /tmp/mu_suite.txt 2>&1; ! grep -E 'FAIL|[1-9][0-9]* fallos' /tmp/mu_suite.txt"
 mkdir -p /tmp/oldzip && git show e4201a1:servicom-5min/entrega/servicom-5min-portal.zip > /tmp/oldzip/old.zip 2>/dev/null
 ./build/make_patch.sh >/dev/null 2>&1
 run "Parche de acceso sobre instalación existente" php tests/e2e/parche.php /tmp/oldzip/old.zip dist/parche-acceso.zip

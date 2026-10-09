@@ -7,7 +7,7 @@ section('Rol sc_cliente');
 $role = get_role('sc_cliente');
 ok($role !== null, 'rol existe');
 eq(wp_roles()->get_names()['sc_cliente'] ?? '', 'Cliente de Servicom', 'nombre del rol');
-$must = ['read', 'upload_files', 'edit_theme_options', 'edit_pages', 'edit_others_pages', 'edit_published_pages', 'publish_pages', 'delete_pages', 'edit_posts', 'edit_others_posts', 'publish_posts', 'edit_published_posts', 'customize'];
+$must = ['read', 'upload_files', 'edit_theme_options', 'edit_pages', 'edit_others_pages', 'edit_published_pages', 'publish_pages', 'delete_pages', 'edit_posts', 'edit_others_posts', 'publish_posts', 'edit_published_posts', 'customize', 'sc_edit_site'];
 foreach ($must as $c) { ok(user_can($cid, $c), "cliente PUEDE $c"); }
 $never = ['manage_options', 'install_plugins', 'activate_plugins', 'edit_plugins', 'delete_plugins', 'update_plugins', 'install_themes', 'switch_themes', 'edit_themes', 'delete_themes', 'update_themes', 'edit_files', 'update_core', 'unfiltered_html', 'unfiltered_upload', 'edit_users', 'create_users', 'delete_users', 'list_users', 'promote_users', 'remove_users', 'import', 'export', 'edit_css', 'manage_network', 'view_woocommerce_reports', 'update_languages'];
 foreach ($never as $c) { ok(!user_can($cid, $c), "cliente NO puede $c"); }
@@ -16,6 +16,8 @@ $woo = sc_client_caps(true); $nowoo = sc_client_caps(false);
 foreach (['manage_woocommerce', 'edit_products', 'edit_others_products', 'publish_products', 'read_shop_order', 'edit_shop_orders', 'assign_product_terms'] as $c) { ok(in_array($c, $woo, true) && !in_array($c, $nowoo, true), "caps Woo: $c solo con WooCommerce"); }
 ok(!in_array('view_woocommerce_reports', $woo, true) && !in_array('manage_options', $woo, true), 'caps Woo sin informes ni manage_options');
 ok(sc_is_client($cid) && !sc_is_client(1), 'sc_is_client');
+ok(user_can(1, 'sc_edit_site'), 'el administrador también puede editar el sitio (sc_edit_site)');
+ok(in_array('sc_edit_site', sc_client_caps(false), true) && in_array('sc_edit_site', sc_client_caps(true), true), 'sc_edit_site forma parte de las capacidades del cliente');
 
 section('sc_create_client_user');
 $mails = 0; add_filter('pre_wp_mail', function () use (&$mails) { $mails++; return true; });

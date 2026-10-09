@@ -181,8 +181,13 @@ function sc_ed_op_text( array &$site, array $op ): array {
 		throw new SC_Ed_Error( 'Ese texto no se puede editar.' );
 	}
 	$leaf = end( $parts );
-	if ( in_array( $leaf, array( 'id', 'seed', 'on', 'type', 'post', 'origen', 'url', 'icon', 'icono', 'seal_icon', 'badge_icon', 'limit', 'v' ), true ) ) {
+	if ( in_array( $leaf, array( 'id', 'seed', 'on', 'type', 'post', 'origen', 'url', 'icon', 'icono', 'seal_icon', 'badge_icon', 'limit', 'side', 'v' ), true ) ) {
 		throw new SC_Ed_Error( 'Ese valor no es un texto editable.' );
+	}
+	$parent = array_slice( $parts, 0, -1 );
+	list( $pf, $pv ) = sc_ed_find( $site, $parent );
+	if ( $pf && is_array( $pv ) && array_key_exists( 'url', $pv ) && array_key_exists( 'text', $pv ) ) {
+		throw new SC_Ed_Error( 'Los botones se editan con su ventana de enlace.' );
 	}
 	list( $found, $cur ) = sc_ed_find( $site, $parts );
 	if ( ! $found || ! is_string( $cur ) ) {
@@ -503,7 +508,19 @@ function sc_ed_svc_menu_items( int $n, int $pid ): array {
 
 function sc_ed_svc_menu_add( int $n, int $pid, string $title ): void {
 	$menu = sc_ed_primary_menu();
-	if ( ! $menu || ! $pid || sc_ed_svc_menu_items( $n, $pid ) ) {
+	if ( ! $menu || ! $pid ) {
+		return;
+	}
+	// entradas viejas con la misma clave pero que apuntan a otra página: se descartan
+	$have = false;
+	foreach ( sc_ed_svc_menu_items( $n, $pid ) as $mid ) {
+		if ( (int) get_post_meta( $mid, '_menu_item_object_id', true ) === $pid ) {
+			$have = true;
+		} else {
+			wp_delete_post( $mid, true );
+		}
+	}
+	if ( $have ) {
 		return;
 	}
 	if ( file_exists( ABSPATH . 'wp-admin/includes/nav-menu.php' ) ) {
@@ -1172,6 +1189,8 @@ function sc_ed_rest_edit( WP_REST_Request $req ) {
 	$coalesce = '';
 	if ( 1 === count( $results ) && 'text' === $results[0]['op'] ) {
 		$coalesce = 'text:' . $results[0]['path'];
+	} elseif ( 1 === count( $results ) && 'design' === $results[0]['op'] ) {
+		$coalesce = 'design';
 	}
 	sc_ed_history_push( $old, implode( ',', $changed ), $coalesce );
 
@@ -1181,6 +1200,12 @@ function sc_ed_rest_edit( WP_REST_Request $req ) {
 		}
 	} catch ( Throwable $e ) {
 		return sc_ed_fail( 'No se pudo completar el cambio: ' . $e->getMessage(), 500 );
+	}
+	foreach ( $results as $k => $r ) {
+		if ( in_array( $r['op'], array( 'svc_add', 'svc_dup' ), true ) ) {
+			$pid = (int) ( $site['services'][ $r['n'] ]['post'] ?? 0 );
+			$results[ $k ]['url'] = $pid ? (string) get_permalink( $pid ) : '';
+		}
 	}
 	update_option( 'sc_site', $site, false );
 	if ( function_exists( 'sc_site_reload' ) ) {

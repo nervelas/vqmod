@@ -31,6 +31,7 @@ function orphans(string $slug, int $dbCountBefore, int $usersBefore): array {
     if (count(sim_users()) !== $usersBefore) { $o[] = 'usuario-bd'; }
     return $o;
 }
+reset_limits();
 $dbs0 = count(sim_dbs()); $us0 = count(sim_users());
 as_www('chmod -R u+w /tmp/s5test/sim');
 
@@ -63,6 +64,7 @@ $cases = [
     'falla la instalación de WordPress' => ['provision_install' => 'Error simulado instalando WordPress'],
 ];
 foreach ($cases as $name => $f) {
+    $dbs0 = count(sim_dbs()); $us0 = count(sim_users());
     $setFail($f);
     [$c, $tok, $id] = draft('Taller Falla ' . substr(md5($name), 0, 4)); start($c, $tok); $st = drive($id);
     $clear();
@@ -90,7 +92,7 @@ mysql_val("UPDATE s5test.s5_orders SET host_id=1 WHERE id=$id");
 as_www('php -r ' . escapeshellarg('define("S5_ROOT","/tmp/s5test/portal");require "/tmp/s5test/portal/app/bootstrap.php";S5\Services\Pipeline::start(' . $id . ');'));
 $killed = 0; $st = '';
 for ($i = 0; $i < 60; $i++) {
-    shell_exec('runuser -u www-data -- env S5_CONFIG_FILE=/tmp/s5test/config.php timeout -s KILL 2 php /home/user/vqmod/servicom-5min/tests/e2e/tick.php ' . $id . ' 25 >/dev/null 2>&1');
+    shell_exec('runuser -u www-data -- env S5_CONFIG_FILE=/tmp/s5test/config.php S5_SITE_PORT=8200 S5_QA_RESOLVE=127.0.0.1 S5_AI_URL=http://127.0.0.1:8210/v1/messages S5_PORTAL_URL=http://crear.servicom.test:8201 timeout -s KILL 2 php /home/user/vqmod/servicom-5min/tests/e2e/tick.php ' . $id . ' 25 >/dev/null 2>&1');
     $killed++;
     mysql_val("UPDATE s5test.s5_orders SET build_lock=NULL WHERE id=$id");   // el candado vencería a los 90 s
     $st = mysql_val("SELECT status FROM s5test.s5_orders WHERE id=$id");

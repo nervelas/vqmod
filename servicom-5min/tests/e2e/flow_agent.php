@@ -2,6 +2,7 @@
 declare(strict_types=1);
 /** Segundo hosting vía agente: construcción remota, seguridad HMAC, anti-repetición, URLs firmadas de un solo uso. */
 require __DIR__ . '/lib.php';
+require dirname(__DIR__, 2) . '/app/Provision/Hmac.php';
 use S5\Provision\Hmac;
 $cfg = require '/tmp/s5test/agent/storage/config.php'; $secret = $cfg['secret'];
 function call(string $secret, string $op, array $args = [], array $over = []): array {
@@ -30,6 +31,7 @@ $r = call($secret, 'writeFile', ['docroot' => '/tmp/s5test/webs2/x', 'rel' => '.
 $r = call($secret, 'stageJob', ['docroot' => '/tmp/s5test/webs2/zz', 'jobId' => 'abcdef123456', 'manifest_b64' => base64_encode('{}'), 'assets' => [['path' => 'assets/a1.jpg', 'url' => 'http://evil.example/x.jpg']], 'secret' => 'x']); t_ok(empty($r['json']['ok']), 'descarga desde URL ajena rechazada', substr($r['body'], 0, 120));
 
 echo "== URL firmada de un solo uso\n";
+$pc0 = new Client(); $pc0->page('/crear'); $pc0->api('POST', '/api/borrador', ['plan' => 'info']);
 $oid = (int) mysql_val('SELECT id FROM s5test.s5_orders ORDER BY id DESC LIMIT 1'); $tok = (string) mysql_val("SELECT token FROM s5test.s5_orders WHERE id=$oid");
 @mkdir("/tmp/s5test/portal/storage/jobs/$oid/assets", 0777, true); file_put_contents("/tmp/s5test/portal/storage/jobs/$oid/assets/a1.jpg", "\xFF\xD8\xFFtest"); @chmod("/tmp/s5test/portal/storage/jobs/$oid/assets/a1.jpg", 0666); @chmod("/tmp/s5test/portal/storage/jobs/$oid", 0777); @chmod("/tmp/s5test/portal/storage/jobs/$oid/assets", 0777);
 $exp = time() + 300; $n = bin2hex(random_bytes(8)); $sig = Hmac::assetSig($secret, $tok, 'a1.jpg', $exp, $n);

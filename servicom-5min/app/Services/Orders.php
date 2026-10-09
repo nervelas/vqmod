@@ -120,7 +120,7 @@ final class Orders
 
     public static function previewUrl(array $o, bool $withKey = true): string
     {
-        $fq = (string) ($o['fqdn'] ?? '');
+        $fq = (string) (($o['domain_assigned'] ?? '') ?: ($o['fqdn'] ?? ''));
         if ($fq === '') {
             return '';
         }

@@ -14,6 +14,7 @@ $fotos = ($opts['fotos'] ?? '1') === '1';
 $idioma = $opts['idioma'] ?? 'es';
 $largo = $opts['largo'] ?? 'normal';
 $nombre = $opts['nombre'] ?? 'Bufete Ñandú & Asociados';
+reset_limits();
 $tmp = sys_get_temp_dir() . '/s5e2e'; @mkdir($tmp, 0777, true);
 
 $c = new Client();

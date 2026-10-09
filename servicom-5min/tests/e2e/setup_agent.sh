@@ -4,7 +4,7 @@ set -euo pipefail
 PROJ="$(cd "$(dirname "$0")/../.." && pwd)"; T=/tmp/s5test
 rm -rf $T/agent $T/webs2 /tmp/servicom-agent-secrets; mkdir -p $T/agent $T/webs2
 (cd $T/agent && unzip -q "$PROJ/dist/servicom-5min-agente-TEST.zip")
-SECRET=$(head -c 32 /dev/urandom | xxd -p -c 64)
+SECRET=$(openssl rand -hex 32)
 mkdir -p $T/agent/storage
 cat > $T/agent/storage/config.php <<PHP
 <?php

@@ -2,6 +2,7 @@
 declare(strict_types=1);
 /** Ciclo de vida: reservados, regeneración, pago rechazado, publicación, renovación, suspensión, dominio, borrado a los 15 días. */
 require __DIR__ . '/lib.php';
+reset_limits();
 $W = '/tmp/s5test/webs'; $V = '/tmp/s5test/vroot';
 $sql = fn(string $q) => mysql_val($q);
 
@@ -76,7 +77,7 @@ t_ok($sql("SELECT status FROM s5test.s5_orders WHERE id={$s['id']}") === 'public
 echo "== Renovación, suspensión, dominio\n";
 mysql_val("UPDATE s5test.s5_orders SET renewal_at='" . gmdate('Y-m-d', time() + 10 * 86400) . "', renewal_notified=0 WHERE id={$s['id']}");
 as_www('php /tmp/s5test/portal/tools/cron.php');
-t_ok((int) $sql("SELECT COUNT(*) FROM s5test.s5_alerts WHERE order_id={$s['id']} AND message LIKE 'Renovación%'") >= 1, 'alerta de renovación a 30 días');
+t_ok((int) $sql("SELECT COUNT(*) FROM s5test.s5_alerts WHERE order_id={$s['id']} AND message LIKE 'Renovaci%'") >= 1, 'alerta de renovación a 30 días');
 t_ok(str_contains(implode('', array_map('file_get_contents', glob('/tmp/s5test/mail/*.json'))), 'Renovación próxima'), 'correo de renovación al dueño');
 mysql_val("UPDATE s5test.s5_orders SET renewal_at='" . gmdate('Y-m-d', time() - 3 * 86400) . "' WHERE id={$s['id']}");
 as_www('php /tmp/s5test/portal/tools/cron.php');
@@ -88,8 +89,9 @@ $adm->form("/admin/pedido/{$s['id']}/accion", ['accion' => 'suspender']);
 $h = $site->req('GET', '/'); t_ok($h['status'] === 503 && str_contains($h['body'], 'suspendido'), 'suspendido: 503 con aviso', (string) $h['status']);
 $adm->form("/admin/pedido/{$s['id']}/accion", ['accion' => 'reactivar']);
 $h = $site->req('GET', '/'); t_ok($h['status'] === 200, 'reactivado: 200', (string) $h['status']);
-$adm->form("/admin/pedido/{$s['id']}/accion", ['accion' => 'dominio', 'dominio' => 'servicom.gt']);
-t_ok($sql("SELECT IFNULL(domain_assigned,'')") === null || $sql("SELECT domain_assigned FROM s5test.s5_orders WHERE id={$s['id']}") === null, 'dominio de Servicom rechazado');
+$adm->form("/admin/pedido/{$s['id']}/accion", ['accion' => 'dominio', 'dominio' => 'servicom.test']);
+$adm->form("/admin/pedido/{$s['id']}/accion", ['accion' => 'dominio', 'dominio' => 'www.servicom.test']);
+t_ok($sql("SELECT domain_assigned FROM s5test.s5_orders WHERE id={$s['id']}") === 'NULL' && !is_link("$V/servicom.test"), 'el dominio base de Servicom (y sus subdominios) no se puede asignar a un cliente');
 $adm->form("/admin/pedido/{$s['id']}/accion", ['accion' => 'dominio', 'dominio' => 'cliente-demo.test']);
 t_ok($sql("SELECT domain_assigned FROM s5test.s5_orders WHERE id={$s['id']}") === 'cliente-demo.test', 'dominio asignado');
 t_ok(is_link("$V/cliente-demo.test"), 'host virtual del dominio creado');
@@ -104,6 +106,7 @@ $pdb = mysql_val("SELECT db_name FROM s5test.s5_orders WHERE id={$p1['id']}"); $
 t_ok(is_dir("$W/{$p1['slug']}") && is_link("$V/{$p1['slug']}.servicom.test") && is_dir("/tmp/s5test/portal/storage/uploads/{$p1['id']}"), 'recursos de la vista previa existen antes del cron');
 mysql_val("UPDATE s5test.s5_orders SET expires_at='" . gmdate('Y-m-d H:i:s', time() - 60) . "' WHERE id={$p1['id']}");
 $out = as_www('php /tmp/s5test/portal/tools/cron.php'); echo "  cron: " . trim($out) . "\n";
+clearstatcache();
 t_ok($sql("SELECT status FROM s5test.s5_orders WHERE id={$p1['id']}") === 'eliminada', 'vista previa vencida eliminada');
 t_ok(!is_dir("$W/{$p1['slug']}") && !is_link("$V/{$p1['slug']}.servicom.test"), 'carpeta y host virtual eliminados');
 t_ok(!in_array($pdb, sim_dbs(), true) && !in_array($pus, sim_users(), true), 'base de datos y usuario eliminados');

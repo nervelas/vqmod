@@ -101,7 +101,8 @@ final class SimCpanelApi implements CpanelApi
 
     public function subdomainExists(string $sub, string $root): bool
     {
-        return isset($this->vh()[strtolower($sub . '.' . $root)]);
+        $fq = strtolower($sub . '.' . $root);
+        return isset($this->vh()[$fq]) || ($this->vroot !== '' && is_link($this->vroot . '/' . $fq));
     }
 
     public function dbRealName(string $short): string

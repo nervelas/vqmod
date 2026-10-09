@@ -148,7 +148,14 @@ final class Lifecycle
             throw new \RuntimeException('El dominio no es válido.');
         }
         $base = Settings::baseDomain();
-        if ($domain === $base || str_ends_with($domain, '.' . $base)) {
+        $protected = array_filter(array_map('trim', array_merge([$base], explode(',', strtolower((string) Settings::get('dominios_protegidos', ''))))));
+        $isProtected = false;
+        foreach ($protected as $pd) {
+            if ($domain === $pd || str_ends_with($domain, '.' . $pd)) {
+                $isProtected = true;
+            }
+        }
+        if ($isProtected) {
             throw new \RuntimeException('Ese dominio pertenece a Servicom; no se puede asignar a un cliente.');
         }
         if ((int) Db::val('SELECT COUNT(*) FROM ' . Db::t('orders') . ' WHERE domain_assigned=? AND id<>? AND status<>?', [$domain, $id, Orders::ST_ELIMINADA]) > 0) {

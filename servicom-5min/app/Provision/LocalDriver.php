@@ -504,11 +504,10 @@ final class LocalDriver implements HostDriver
 
     public function removeSite(string $docroot): void
     {
-        $docroot = rtrim($docroot, '/');
+        $docroot = $this->safeDocroot(rtrim($docroot, '/'));
         if (!is_dir($docroot) && !is_link($docroot)) {
             return;
         }
-        $docroot = $this->safeDocroot($docroot);
         Fs::rmTreeSafe($docroot, [$this->webs]);
     }
 

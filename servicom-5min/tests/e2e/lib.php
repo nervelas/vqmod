@@ -123,8 +123,10 @@ function admin_client(): Client
 
 function as_www(string $cmd): string
 {
-    return (string) shell_exec('runuser -u www-data -- env S5_CONFIG_FILE=/tmp/s5test/config.php S5_MAIL_SINK=/tmp/s5test/mail ' . $cmd . ' 2>&1');
+    return (string) shell_exec('runuser -u www-data -- env S5_CONFIG_FILE=/tmp/s5test/config.php S5_MAIL_SINK=/tmp/s5test/mail S5_SITE_PORT=8200 S5_QA_RESOLVE=127.0.0.1 S5_AI_URL=http://127.0.0.1:8210/v1/messages S5_PORTAL_URL=http://crear.servicom.test:8201 S5_SKIP_DNS_CHECK=1 ' . $cmd . ' 2>&1');
 }
 
 function sim_dbs(): array { return array_filter(explode("\n", trim((string) shell_exec("mysql -N -e \"SHOW DATABASES LIKE 'sim\\_%'\"")))); }
 function sim_users(): array { return array_filter(explode("\n", trim((string) shell_exec("mysql -N -e \"SELECT user FROM mysql.user WHERE user LIKE 'sim\\_%'\"")))); }
+
+function reset_limits(): void { mysql_val('DELETE FROM s5test.s5_rate_limits'); }

@@ -36,6 +36,7 @@ t_ok(!password_verify('corta', (string) mysql_val("SELECT pass_hash FROM s5test.
 $out->form('/admin/cuenta', ['accion' => 'password', 'actual' => 'Contrasena-Segura-123', 'nueva' => 'Contrasena-Segura-123']);
 echo "== Diagnóstico y prueba de IA\n";
 $d = $out->page('/admin/diagnostico'); t_ok($d['status'] === 200 && str_contains($d['body'], 'Versión de PHP') && str_contains($d['body'], 'paquete base'), 'diagnóstico completo');
+t_ok(str_contains($d['body'], 'Tablas del portal') && !str_contains($d['body'], 'Conexión a la base de datos</span> —'), 'diagnóstico: comprobación de tablas de la BD (consulta preparada real, sin emulación)');
 t_ok(!str_contains($d['body'], 'token_secreto') && !str_contains($d['body'], 's5adminpass'), 'el diagnóstico no filtra secretos');
 $r = $out->form('/admin/diagnostico', ['accion' => 'ia']); t_ok(str_contains($r['body'], 'La API respondió correctamente'), 'prueba mínima de IA OK (mock)');
 $r = $out->form('/admin/diagnostico', ['accion' => 'cron']); t_ok(str_contains($r['body'], 'borrados'), 'ejecutar cron desde diagnóstico');

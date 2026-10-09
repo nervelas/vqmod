@@ -30,6 +30,10 @@ final class CpanelHttpApi implements CpanelApi
         $this->user = (string) ($cfg['user'] ?? '');
         $this->token = (string) ($cfg['token'] ?? '');
         $this->verify = !array_key_exists('verify_ssl', $cfg) || (bool) $cfg['verify_ssl'];
+        // Conexión de bucle local (el mismo servidor): el certificado de cPanel nunca coincide con «localhost» y el tráfico no sale de la máquina.
+        if (in_array(strtolower($this->host), ['localhost', '127.0.0.1', '::1'], true)) {
+            $this->verify = false;
+        }
         $this->home = rtrim((string) ($cfg['home'] ?? ''), '/');
         $this->transport = $cfg['transport'] ?? null;
     }

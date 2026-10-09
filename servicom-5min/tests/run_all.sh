@@ -24,6 +24,7 @@ run "Demos y enlaces de la barra" php tests/e2e/demo.php
 run "Panel (2FA, ajustes, diagnóstico)" php tests/e2e/panel.php
 run "SSL real (CA local)" php tests/e2e/ssl.php
 run "Seguridad del portal" php tests/e2e/security.php
+run "cPanel por localhost (SSL)" php tests/e2e/cpanel_ssl.php
 mkdir -p /tmp/oldzip && git show e4201a1:servicom-5min/entrega/servicom-5min-portal.zip > /tmp/oldzip/old.zip 2>/dev/null
 ./build/make_patch.sh >/dev/null 2>&1
 run "Parche de acceso sobre instalación existente" php tests/e2e/parche.php /tmp/oldzip/old.zip dist/parche-acceso.zip

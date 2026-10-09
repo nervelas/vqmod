@@ -41,7 +41,7 @@ final class Diagnostics
             $d[] = self::item('Conexión a la base de datos', true);
             $missing = [];
             foreach (Schema::statements(Db::prefix()) as $sql) {
-                if (preg_match('/EXISTS `([^`]+)`/', $sql, $m) && !Db::val('SHOW TABLES LIKE ?', [$m[1]])) {
+                if (preg_match('/EXISTS `([^`]+)`/', $sql, $m) && !Db::val('SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?', [$m[1]])) {
                     $missing[] = $m[1];
                 }
             }

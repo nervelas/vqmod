@@ -40,7 +40,7 @@ t_ok(!$login('info@servicom.gt', 'Con-Espacio-Final-77'), 'ANTES del parche: sin
 echo "== Se aplica el parche encima (unzip -o)\n";
 $names = trim((string) shell_exec('unzip -Z1 ' . escapeshellarg($patch)));
 $list = explode("\n", $names);
-t_ok(count($list) === 5, 'el parche trae solo 5 archivos', $names);
+t_ok(count($list) === 7, 'el parche trae solo 7 archivos', $names);
 foreach ($list as $f) { t_ok(!preg_match('#(config|install|\.htaccess|storage|tools|library|wp-pack)#', $f), "no toca configuración/datos: $f"); }
 shell_exec("cd $W/portal && unzip -oq " . escapeshellarg($patch));
 $start();

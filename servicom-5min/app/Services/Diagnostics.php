@@ -66,7 +66,7 @@ final class Diagnostics
         foreach (Hosts::all() as $host) {
             try {
                 $r = Hosts::driver((int) $host['id'])->ping();
-                $h[] = self::item('Hosting «' . $host['name'] . '»: conexión y token', !empty($r['cpanel']['ok']), (string) ($r['cpanel']['message'] ?? ''));
+                $h[] = self::item('Conexión con cPanel y token', !empty($r['cpanel']['ok']), (string) ($r['cpanel']['message'] ?? ''));
                 $h[] = self::item('«' . $host['name'] . '»: paquete base (WordPress ' . ($r['wp_version'] ?? '?') . ')', !empty($r['base_ok']), !empty($r['base_ok']) ? '' : 'Falta webs-clientes/_base: ejecute tools/build_base.php');
                 $h[] = self::item('«' . $host['name'] . '»: Elementor', !empty($r['plugins']['elementor']));
                 $h[] = self::item('«' . $host['name'] . '»: WooCommerce', !empty($r['plugins']['woocommerce']), 'Solo necesario para tiendas');
@@ -81,9 +81,9 @@ final class Diagnostics
             }
         }
         if (!$h) {
-            $h[] = self::item('Hostings configurados', false, 'Agregue al menos uno en Hostings');
+            $h[] = self::item('Hosting configurado', false, 'Configure el token de cPanel en Ajustes → cPanel');
         }
-        $out['Hostings'] = $h;
+        $out['Hosting (cPanel)'] = $h;
 
         $a = [];
         $a[] = self::item('Clave de la IA configurada', Settings::has('ai_key'), Settings::has('ai_key') ? 'Guardada (cifrada)' : 'Sin clave: se usarán textos base');

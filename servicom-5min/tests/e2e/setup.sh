@@ -35,8 +35,9 @@ TOK=$(curl -s -c $J -H "$H" http://127.0.0.1:8201/install.php | grep -o 'name="t
 RES=$(curl -s -b $J -H "$H" -X POST http://127.0.0.1:8201/install.php \
   --data-urlencode "t=$TOK" --data-urlencode db_host=localhost --data-urlencode db_name=s5test --data-urlencode db_user=s5t --data-urlencode db_pass=s5tpass \
   --data-urlencode db_prefix=s5_ --data-urlencode dominio=servicom.test --data-urlencode portal=crear --data-urlencode email=dueno@servicom.test \
-  --data-urlencode 'pass=Contrasena-Segura-123' --data-urlencode webs=$T/webs)
-echo "$RES" | grep -q "Listo" && echo "instalado" || { echo "$RES" | sed 's/<[^>]*>/ /g' | tr -s ' \n' | head -20; exit 1; }
+  --data-urlencode 'pass=Contrasena-Segura-123' --data-urlencode webs=$T/webs \
+  --data-urlencode cp_host=localhost --data-urlencode cp_port=2083 --data-urlencode cp_user=sc_cuenta --data-urlencode cp_token=TOKENDEPRUEBA123 --data-urlencode cp_home=$T)
+echo "$RES" | grep -q "Listo" && echo "instalado (el aviso de cPanel es lo esperado: no hay cPanel real aquí)" || { echo "$RES" | sed 's/<[^>]*>/ /g' | tr -s ' \n' | head -20; exit 1; }
 [ ! -f $T/portal/install.php ] && echo "install.php eliminado" || { echo "install.php NO se eliminó"; exit 1; }
 echo "== paquete base"
 chown -R www-data:www-data $T

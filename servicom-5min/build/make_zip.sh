@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Genera dist/servicom-5min-portal.zip y dist/servicom-5min-agente.zip
+# Genera dist/servicom-5min-portal.zip
 # Uso: build/make_zip.sh [--with-sim]   (--with-sim incluye el simulador de cPanel: SOLO para pruebas locales)
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -27,18 +27,5 @@ printf 'Require all denied\nDeny from all\n' > "$P/storage/.htaccess"
 for d in app library wp-pack vendor tools; do printf 'Require all denied\nDeny from all\n' > "$P/$d/.htaccess"; done
 find "$P" -name '.DS_Store' -delete
 rm -f "$DIST/$OUT_NAME.zip"; (cd "$P" && zip -qr -9 "$DIST/$OUT_NAME.zip" . -x '*.orig')
-# --- agente
-A="$STAGE/agente"; mkdir -p "$A/app/Core" "$A/app/Provision" "$A/app/Services" "$A/tools" "$A/storage"
-cp agent/agent.php agent/instalar-agente.php agent/.htaccess "$A/"
-cp agent/app/bootstrap_agent.php "$A/app/"
-cp app/Core/Fs.php "$A/app/Core/"
-cp app/Provision/{ProvisionException,Hmac,CpanelApi,CpanelHttpApi,HostDriver,LocalDriver,AgentServer}.php "$A/app/Provision/"
-[ $WITH_SIM = 1 ] && cp app/Provision/SimCpanelApi.php "$A/app/Provision/"
-cp app/Services/BaseBuilder.php "$A/app/Services/"
-cp agent/tools/build_base_agent.php "$A/tools/"; printf 'Require all denied\nDeny from all\n' > "$A/tools/.htaccess"; printf 'Require all denied\nDeny from all\n' > "$A/app/.htaccess"; printf 'Require all denied\nDeny from all\n' > "$A/storage/.htaccess"
-mkdir -p "$A/wp-pack"; rsync -a --exclude 'tests' --exclude 'tests-only' --exclude '*.sh' wp-pack/ "$A/wp-pack/"; printf 'Require all denied\nDeny from all\n' > "$A/wp-pack/.htaccess"
-[ -f agent/LEEME-AGENTE.md ] && cp agent/LEEME-AGENTE.md "$A/" || true
-AOUT="servicom-5min-agente"; [ $WITH_SIM = 1 ] && AOUT="servicom-5min-agente-TEST"
-rm -f "$DIST/$AOUT.zip"; (cd "$A" && zip -qr -9 "$DIST/$AOUT.zip" .)
 rm -rf "$STAGE"
 ls -la "$DIST"

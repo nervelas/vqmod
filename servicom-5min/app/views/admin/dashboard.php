@@ -1,4 +1,4 @@
-<?php /** Vars: $counts $pay $alerts $soon $prep $ai $hostCounts $hosts */
+<?php /** Vars: $counts $pay $alerts $soon $prep $ai */
 use S5\Services\Orders;
 $lab = Orders::LABELS; ?>
 <h1>Resumen</h1>
@@ -20,5 +20,3 @@ $lab = Orders::LABELS; ?>
 <dt>Hoy</dt><dd>$<?= number_format((float) ($ai['dia']['total'] ?? 0), 4) ?></dd>
 <dt>Total</dt><dd>$<?= number_format((float) ($ai['total']['total'] ?? 0), 4) ?></dd>
 </dl><p><a class="btn sec" href="/admin/ia">Ver detalle</a></p></div>
-<h2>Webs por hosting</h2>
-<div class="card"><?php foreach ($hosts as $h): ?><p><?= e($h['name']) ?>: <b><?= (int) ($hostCounts[(int) $h['id']] ?? 0) ?></b> webs</p><?php endforeach; if (!$hosts): ?><p class="warn">Aún no hay hostings configurados. <a href="/admin/hostings">Agregar</a></p><?php endif; ?></div>

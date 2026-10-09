@@ -46,8 +46,6 @@ final class AdminController
         $r->get('/admin/ia', fn() => self::ai());
         $r->get('/admin/ajustes', fn() => self::settings());
         $r->post('/admin/ajustes', fn() => self::settingsSave());
-        $r->get('/admin/hostings', fn() => self::hosts());
-        $r->post('/admin/hostings', fn() => self::hostSave());
         $r->get('/admin/bitacora', fn() => self::audit());
         $r->get('/admin/diagnostico', fn() => self::diagnostics());
         $r->post('/admin/diagnostico', fn() => self::diagnosticsAction());
@@ -155,7 +153,7 @@ final class AdminController
         $alerts = Db::all('SELECT * FROM ' . Db::t('alerts') . ' WHERE resolved=0 ORDER BY id DESC LIMIT 30');
         $soon = Db::all('SELECT id, business_name, fqdn, renewal_at FROM ' . Db::t('orders') . ' WHERE status IN (?,?) AND renewal_at IS NOT NULL AND renewal_at<=? ORDER BY renewal_at LIMIT 20', [Orders::ST_PUBLICADA, Orders::ST_VENCIDA, gmdate('Y-m-d', time() + 30 * 86400)]);
         $prep = Db::all('SELECT id, business_name, fqdn FROM ' . Db::t('orders') . ' WHERE status=? ORDER BY updated_at', [Orders::ST_PREPARANDO]);
-        self::render('dashboard', compact('counts', 'pay', 'alerts', 'soon', 'prep') + ['ai' => AiBudget::resumen(), 'hostCounts' => Hosts::counts(), 'hosts' => Hosts::all()]);
+        self::render('dashboard', compact('counts', 'pay', 'alerts', 'soon', 'prep') + ['ai' => AiBudget::resumen()]);
     }
 
     private static function resolveAlert(int $id): void
@@ -195,8 +193,8 @@ final class AdminController
         }
         $w = implode(' AND ', $where);
         $total = (int) Db::val('SELECT COUNT(*) FROM ' . Db::t('orders') . ' WHERE ' . $w, $params);
-        $rows = Db::all('SELECT id,status,plan,business_name,slug,fqdn,host_id,client_email,client_phone,is_demo,renewal_at,created_at,updated_at FROM ' . Db::t('orders') . ' WHERE ' . $w . ' ORDER BY updated_at DESC LIMIT ' . $per . ' OFFSET ' . (($page - 1) * $per), $params);
-        self::render('orders', ['rows' => $rows, 'total' => $total, 'page' => $page, 'per' => $per, 'status' => $status, 'q' => $q, 'plan' => $plan, 'hostNames' => array_column(Hosts::all(), 'name', 'id')]);
+        $rows = Db::all('SELECT id,status,plan,business_name,slug,fqdn,client_email,client_phone,is_demo,renewal_at,created_at,updated_at FROM ' . Db::t('orders') . ' WHERE ' . $w . ' ORDER BY updated_at DESC LIMIT ' . $per . ' OFFSET ' . (($page - 1) * $per), $params);
+        self::render('orders', ['rows' => $rows, 'total' => $total, 'page' => $page, 'per' => $per, 'status' => $status, 'q' => $q, 'plan' => $plan]);
     }
 
     private static function order(int $id): void
@@ -216,7 +214,7 @@ final class AdminController
         $ai = Db::all('SELECT kind, model, tokens_in, tokens_out, cost_usd, ok, created_at FROM ' . Db::t('ai_usage') . ' WHERE order_id=? ORDER BY id DESC LIMIT 20', [$id]);
         self::render('order', [
             'o' => $o, 'b' => $b, 'analysis' => $analysis, 'proof' => $proof, 'steps' => $steps, 'log' => $log, 'ai' => $ai,
-            'hosts' => Hosts::all(true), 'previewUrl' => Orders::previewUrl($o, true), 'siteUrl' => Orders::previewUrl($o, false),
+            'previewUrl' => Orders::previewUrl($o, true), 'siteUrl' => Orders::previewUrl($o, false),
             'total' => Orders::total($o), 'qa' => $o['qa_result'] ? json_decode((string) $o['qa_result'], true) : null,
             'texts' => $o['texts'] ? json_decode((string) $o['texts'], true) : null,
         ]);
@@ -255,18 +253,9 @@ final class AdminController
                     self::flash('Construcción reanudada.');
                     break;
                 case 'iniciar':
-                    $hid = (int) ($_POST['host_id'] ?? 0);
-                    if ($hid && Hosts::get($hid)) { Orders::set($id, ['host_id' => $hid]); }
                     Pipeline::start($id);
                     Pipeline::tick($id, 8);
                     self::flash('Construcción iniciada.');
-                    break;
-                case 'host':
-                    if ($o['fqdn']) { throw new \RuntimeException('El hosting solo se puede cambiar antes de construir.'); }
-                    $hid = (int) ($_POST['host_id'] ?? 0);
-                    if (!$hid || !Hosts::get($hid)) { throw new \RuntimeException('Hosting no válido.'); }
-                    Orders::set($id, ['host_id' => $hid]);
-                    self::flash('Hosting asignado.');
                     break;
                 case 'borrar':
                     if (!Lifecycle::deletePreview($id, 'manual por el dueño')) { throw new \RuntimeException('No se puede borrar: ' . (Lifecycle::deletable($o) ?? 'verifique el estado') . '.'); }
@@ -315,7 +304,7 @@ final class AdminController
     {
         self::require();
         $rows = Db::all('SELECT id,business_name,fqdn,status,plan,data FROM ' . Db::t('orders') . ' WHERE is_demo=1 AND status<>? ORDER BY id DESC', [Orders::ST_ELIMINADA]);
-        self::render('demos', ['rows' => $rows, 'hosts' => Hosts::all(true)]);
+        self::render('demos', ['rows' => $rows]);
     }
 
     private static function demoCreate(): void
@@ -325,9 +314,9 @@ final class AdminController
         $plan = ($_POST['plan'] ?? '') === 'tienda' ? 'tienda' : 'info';
         $rubro = in_array($_POST['rubro'] ?? '', Brief::RUBROS, true) ? $_POST['rubro'] : 'otro';
         $style = Sanitize::intRange($_POST['estilo'] ?? 1, 1, 5);
-        $hid = (int) ($_POST['host_id'] ?? 0) ?: Hosts::defaultId();
+        $hid = Hosts::defaultId();
         if (!$hid) {
-            self::flash('Configure primero un hosting.', 'err');
+            self::flash('Configure primero cPanel en Ajustes.', 'err');
             Http::redirect('/admin/demos');
         }
         $o = Orders::create($plan);
@@ -392,7 +381,7 @@ final class AdminController
         foreach (self::FIELDS as $k => [$t, $sec]) {
             $vals[$k] = $sec ? (Settings::has($k) ? '__guardado__' : '') : (string) Settings::get($k, '');
         }
-        self::render('settings', ['vals' => $vals, 'defaults' => Settings::defaults()]);
+        self::render('settings', ['vals' => $vals, 'defaults' => Settings::defaults(), 'cp' => Hosts::mainConfig()]);
     }
 
     private static function settingsSave(): void
@@ -428,6 +417,21 @@ final class AdminController
             if ($t === 'num' && $v === '' && in_array($k, ['precio_info', 'precio_tienda', 'precio_tarjeta'], true)) { $errors[] = 'Precio no válido.'; continue; }
             Settings::set($k, $v, (bool) $sec);
         }
+        // hosting único: cPanel (token cifrado; vacío = se conserva)
+        if (isset($_POST['cp_user']) || isset($_POST['cp_host'])) {
+            $webs = rtrim(Sanitize::text($_POST['cp_webs'] ?? '', 300), '/');
+            if ($webs !== '' && (!str_starts_with($webs, '/') || str_contains($webs, '..'))) {
+                $errors[] = 'La ruta de las webs de clientes debe ser absoluta.';
+            } else {
+                $home = rtrim(Sanitize::text($_POST['cp_home'] ?? '', 200), '/');
+                if ($home !== '' && (!str_starts_with($home, '/') || str_contains($home, '..'))) {
+                    $errors[] = 'La carpeta personal debe ser una ruta absoluta (ej. /home/USUARIO).';
+                } else {
+                    Hosts::saveMain(['host' => Sanitize::text($_POST['cp_host'] ?? 'localhost', 190), 'port' => (int) ($_POST['cp_port'] ?? 2083), 'user' => Sanitize::text($_POST['cp_user'] ?? '', 60), 'token' => trim((string) ($_POST['cp_token'] ?? '')), 'home' => $home, 'webs_path' => $webs]);
+                    if ($webs !== '') { Settings::set('webs_path', $webs); }
+                }
+            }
+        }
         // protección: el dominio base nunca puede quedar vacío ni la lista de reservados sin lo esencial
         $res = array_filter(explode(',', (string) Settings::get('reservados', '')));
         foreach (['www', 'mail', 'webmail', 'cpanel', 'whm', 'ftp', 'smtp', 'imap', 'pop', 'ns1', 'ns2', 'autodiscover', 'autoconfig', 'admin', 'panel', 'portal', 'api', 'crear', 'cpw', 'ctv', 'demo', 'test', 'dev', 'staging', 'blog', 'tienda', 'soporte'] as $must) {
@@ -437,67 +441,6 @@ final class AdminController
         Log::audit('ajustes_guardados');
         self::flash($errors ? implode(' ', $errors) : 'Ajustes guardados.', $errors ? 'err' : 'ok');
         Http::redirect('/admin/ajustes');
-    }
-
-    // ---------------------------------------------------------------- hostings
-    private static function hosts(): void
-    {
-        self::require();
-        $rows = Hosts::all();
-        foreach ($rows as &$h) {
-            unset($h['cfg']['token'], $h['cfg']['agent_secret']);
-        }
-        unset($h);
-        self::render('hosts', ['rows' => $rows, 'counts' => Hosts::counts(), 'defaultId' => Hosts::defaultId(), 'webs' => Hosts::defaultWebsPath()]);
-    }
-
-    private static function hostSave(): void
-    {
-        self::require();
-        self::post();
-        $act = (string) ($_POST['accion'] ?? 'guardar');
-        try {
-            if ($act === 'predeterminado') {
-                Settings::set('default_host', (string) (int) $_POST['id']);
-                self::flash('Hosting predeterminado actualizado.');
-                Http::redirect('/admin/hostings');
-            }
-            $id = (int) ($_POST['id'] ?? 0) ?: null;
-            $old = $id ? Hosts::get($id) : null;
-            if ($act === 'activar' && $old) {
-                Hosts::save($id, $old['name'], $old['kind'], $old['cfg'], empty($_POST['valor']) ? false : true);
-                self::flash('Hosting actualizado.');
-                Http::redirect('/admin/hostings');
-            }
-            $kind = in_array($_POST['kind'] ?? '', ['cpanel', 'agent'], true) ? $_POST['kind'] : 'cpanel';
-            $name = Sanitize::text($_POST['name'] ?? '', 120);
-            if ($name === '') { throw new \RuntimeException('Escriba un nombre para el hosting.'); }
-            $cfg = $old['cfg'] ?? [];
-            $keep = fn(string $k, string $v) => ($v === '' || $v === '__guardado__') ? ($cfg[$k] ?? '') : $v;
-            $cfg['domain_root'] = strtolower(Sanitize::text($_POST['domain_root'] ?? Settings::baseDomain(), 120)) ?: Settings::baseDomain();
-            $webs = rtrim(Sanitize::text($_POST['webs_path'] ?? '', 300), '/');
-            if ($webs !== '' && (!str_starts_with($webs, '/') || str_contains($webs, '..'))) { throw new \RuntimeException('La ruta debe ser absoluta.'); }
-            $cfg['webs_path'] = $webs;
-            $cfg['verify_ssl'] = !empty($_POST['verify_ssl']);
-            if ($kind === 'cpanel') {
-                $cfg['host'] = Sanitize::text($_POST['host'] ?? 'localhost', 190) ?: 'localhost';
-                $cfg['port'] = (int) ($_POST['port'] ?? 2083) ?: 2083;
-                $cfg['user'] = Sanitize::text($_POST['user'] ?? '', 60);
-                $cfg['token'] = $keep('token', trim((string) ($_POST['token'] ?? '')));
-                $cfg['home'] = rtrim(Sanitize::text($_POST['home'] ?? '', 200), '/');
-            } else {
-                $cfg['agent_url'] = Sanitize::url($_POST['agent_url'] ?? '');
-                $cfg['agent_secret'] = $keep('agent_secret', trim((string) ($_POST['agent_secret'] ?? '')));
-                if ($cfg['agent_url'] === '' || strlen((string) $cfg['agent_secret']) < 32) { throw new \RuntimeException('Indique la URL del agente y un secreto de al menos 32 caracteres.'); }
-            }
-            $hid = Hosts::save($id, $name, $kind, $cfg, true);
-            if (!Settings::has('default_host')) { Settings::set('default_host', (string) $hid); }
-            Log::audit('hosting_guardado', $name);
-            self::flash('Hosting guardado.');
-        } catch (\Throwable $e) {
-            self::flash($e->getMessage(), 'err');
-        }
-        Http::redirect('/admin/hostings');
     }
 
     // ---------------------------------------------------------------- diagnóstico

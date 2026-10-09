@@ -1,8 +1,7 @@
 # Informe final — «Tu web en 5 minutos» (Servicom)
 
 ## Qué se entrega
-- `servicom-5min-portal.zip` — portal completo (sube a la carpeta del subdominio del portal). Incluye instalador web, panel del dueño, API del formulario, constructor por pasos, tema `servicom` (5 estilos), mu-plugin «Servicom Core», script de aprovisionamiento, IA (redacción + análisis de presentaciones), cron y herramientas.
-- `servicom-5min-agente.zip` — agente para el segundo hosting.
+- `servicom-5min-portal.zip` — portal completo (sube a la carpeta del subdominio del portal; **un solo hosting**: el de servicom.gt). Incluye instalador web, panel del dueño, API del formulario, constructor por pasos, tema `servicom` (5 estilos), mu-plugin «Servicom Core», script de aprovisionamiento, IA (redacción + análisis de presentaciones), cron y herramientas.
 - `LEEME.md` (instalación), `DECISIONES.md` (decisiones tomadas), este informe.
 
 ## Qué se probó y resultado (entorno local propio: Apache real + MariaDB + simulador de cPanel)
@@ -16,11 +15,10 @@ Todo se ejecuta con `tests/run_all.sh`. **Resultado final: 0 fallos.**
 | Presentaciones por HTTP (análisis asíncrono, revisión, prioridad del formulario, inyección de prompt, IA caída/sin crédito/JSON inválido, límite de 3) | 60/60 |
 | Ciclo de vida: reservados, regeneración (máx. 3), pago rechazado, renovación (aviso a 30 días, vencida, renovar), suspender/reactivar, **asignar dominio** (URLs reemplazadas, sin restos), **borrado a los 15 días** sin tocar publicados/_base/ajenos | 51/51 |
 | Fallos simulados: IA caída, crédito agotado, tope de gasto, token inválido, disco lleno (BD y copia a medias), fallo de paginado/instalación, subdominio ya existente, **kill -9 en medio de los pasos**, análisis interrumpido → rollback **sin huérfanos** y mensajes amables | 43/43 |
-| Segundo hosting por agente: HMAC, marca de tiempo, nonce anti-repetición, IP, URLs de un solo uso, confinamiento de rutas, flujo completo remoto | 23/23 |
 | Constructor por HTTP firmado (hosting sin `proc_open`) | 5/5 |
 | SSL real con CA local: espera de certificado, límite, aviso, reanudación, HTTPS válido, HSTS, cookie Secure | 10/10 |
-| Seguridad: SQLi, XSS, CSRF, subidas maliciosas (php/svg/html/polyglot), IDOR, fuerza bruta, accesos directos a app/ storage/ uploads, cabeceras | 70/70 |
-| Panel: 2FA TOTP (vector RFC 6238), contraseña, ajustes (secretos cifrados), diagnóstico, prueba de IA, hostings, búsqueda y filtros | 29/29 |
+| Seguridad: SQLi, XSS, CSRF, subidas maliciosas (php/svg/html/polyglot), IDOR, fuerza bruta, accesos directos a app/ storage/ uploads, cabeceras | 69/69 |
+| Panel: 2FA TOTP (vector RFC 6238), contraseña, ajustes (secretos cifrados, sección cPanel del hosting único, sin pantalla ni selector de hostings), diagnóstico, prueba de IA, búsqueda y filtros | 33/33 |
 | Demos desde el panel y enlaces de la barra de vista previa | 17/17 |
 | Navegador (Chromium) contra el backend real: wizard completo con presentación a 360/390/768/1024/1440 px y tienda con 60 productos; sin errores de consola ni scroll horizontal | todos OK |
 | Matriz de webs generadas (9 rubros × 5 estilos, 1 y 30 servicios, tienda 1 y 60 productos, con/sin logo y fotos, textos larguísimos/cortos, emojis, inglés): 19 sitios × 7 páginas × 5 anchos | sin desbordes, imágenes rotas, errores de consola ni mensajes PHP |
@@ -34,6 +32,9 @@ Todo se ejecuta con `tests/run_all.sh`. **Resultado final: 0 fallos.**
 6. **Desbordes horizontales en producción**: el QA automático del portal no los mide (requiere navegador); lo garantiza el CSS del tema y se verificó con Playwright en las pruebas.
 7. Navegadores distintos de Chromium (iOS/Safari), lector de pantalla.
 
+## Alcance: un solo hosting
+Se quitó el agente del segundo hosting (código, instalador, ZIP, pruebas) y la pantalla/selector de hostings. Quedan, **desactivados y sin interfaz**, la tabla `hosts`, la columna `orders.host_id` y la interfaz `HostDriver` para añadir un segundo hosting en el futuro.
+
 ## Decisiones importantes (todas en `DECISIONES.md`)
 - Las webs viven en `webs-clientes/<slug>` (fuera de `public_html`); `servicom.gt` nunca se toca: subdominios reservados, un subdominio ya existente jamás se adopta, nombres de BD/usuario nunca se adoptan ni se borran si no son nuestros, borrado confinado a `webs-clientes` con doble verificación y bitácora.
 - La vista previa es **privada** (clave `?scpk=` entregada solo por el portal; la barra enlaza con esa clave, nunca con el token del borrador) y `noindex`.
@@ -43,7 +44,6 @@ Todo se ejecuta con `tests/run_all.sh`. **Resultado final: 0 fallos.**
 
 ## Los 5 pasos para ponerlo a funcionar
 1. Suba y descomprima `servicom-5min-portal.zip` en el docroot de `crear.servicom.gt`; cree BD+usuario MySQL y abra `/install.php`.
-2. En cPanel cree un **token de API** y en el panel → *Hostings → Agregar* ingréselo (servidor `localhost`, usuario, home, carpeta de webs).
+2. En cPanel cree un **token de API** y regístrelo en el propio instalador (servidor `localhost`, usuario, token, home); luego se edita en *Ajustes → cPanel*.
 3. Ejecute `php tools/build_base.php` (descarga WordPress + Elementor + WooCommerce de wordpress.org).
 4. Cron diario: `0 3 * * * php /ruta/portal/tools/cron.php`. En *Ajustes*: datos bancarios, correo/WhatsApp, clave de IA (y cargue crédito), SMTP. Revise *Diagnóstico* y cree una **demo** como primera prueba.
-5. (Opcional) segundo hosting: `servicom-5min-agente.zip` → `instalar-agente.php` → `php tools/build_base_agent.php` → agregarlo como hosting tipo *Agente*.

@@ -15,7 +15,6 @@ $router->get('/vista-previa/{token}', fn($p) => PortalController::status($p));
 $router->get('/pago/{token}', fn($p) => PortalController::pay($p));
 $router->get('/vp/{key}/{action}', fn($p) => PortalController::previewLink($p));
 $router->get('/f/{token}/{id}', fn($p) => FileController::client($p));
-$router->get('/ag/asset', fn() => FileController::agentAsset());
 
 // --- API
 $router->post('/api/borrador', fn() => ApiController::start());

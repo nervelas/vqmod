@@ -1,4 +1,4 @@
-<?php /** Vars: $vals $defaults */
+<?php /** Vars: $vals $defaults $cp */
 $f = function (string $k, string $label, string $type = 'text', string $help = '') use ($vals) {
     $n = str_replace(['.', '-'], '_', $k); $v = $vals[$k] ?? '';
     echo '<div><label for="' . e($n) . '">' . e($label) . '</label><input id="' . e($n) . '" name="' . e($n) . '" type="' . e($type) . '" value="' . e($type === 'password' ? '' : $v) . '"' . ($type === 'password' && $v === '__guardado__' ? ' placeholder="•••••• (guardada; escriba para reemplazar)"' : '') . ($type === 'number' ? ' step="any"' : '') . ' autocomplete="off">' . ($help ? '<small class="mut">' . e($help) . '</small>' : '') . '</div>';
@@ -8,7 +8,17 @@ $f = function (string $k, string $label, string $type = 'text', string $help = '
 <details class="card" open><summary>Precios (Q por año)</summary><div class="row"><?php $f('precio_info', 'Página informativa', 'number'); $f('precio_tienda', 'Tienda virtual', 'number'); $f('precio_tarjeta', 'Extra tarjeta', 'number'); ?></div></details>
 <details class="card" open><summary>Datos bancarios de Servicom (se muestran al pagar)</summary><div class="row"><?php $f('banco_nombre', 'Banco'); $f('banco_cuenta', 'Número de cuenta'); $f('banco_titular', 'Titular'); $f('banco_tipo', 'Tipo de cuenta'); ?></div></details>
 <details class="card" open><summary>Contacto del dueño</summary><div class="row"><?php $f('owner_email', 'Correo para avisos', 'email'); $f('wa_servicom', 'WhatsApp de Servicom (solo dígitos, con código de país)', 'text'); $f('footer_credit', 'Créditos del pie de las webs'); ?></div></details>
-<details class="card"><summary>Dominios y rutas</summary><div class="row"><?php $f('dominio_base', 'Dominio base de las webs (ej. servicom.gt)'); $f('portal_sub', 'Subdominio del portal (ej. crear)'); $f('webs_path', 'Ruta de las webs de clientes (vacío = ../webs-clientes)'); $f('force_scheme', 'Esquema forzado (vacío = https)', 'text', 'Solo para pruebas: http'); ?></div>
+<details class="card" open><summary>cPanel (hosting de las webs de clientes)</summary>
+<p class="mut" style="margin:.4rem 0">Un solo hosting: el de servicom.gt. El token se guarda cifrado; déjelo vacío para conservar el actual.</p>
+<div class="row">
+<div><label for="cp_host">Servidor cPanel</label><input id="cp_host" name="cp_host" value="<?= e($cp['host']) ?>" autocomplete="off"></div>
+<div><label for="cp_port">Puerto</label><input id="cp_port" name="cp_port" type="number" value="<?= (int) $cp['port'] ?>"></div>
+<div><label for="cp_user">Usuario de cPanel</label><input id="cp_user" name="cp_user" value="<?= e($cp['user']) ?>" autocomplete="off"></div>
+<div><label for="cp_token">Token de API</label><input id="cp_token" name="cp_token" type="password" autocomplete="new-password" placeholder="<?= $cp['has_token'] ? '•••••• (guardado; escriba para reemplazar)' : 'Pegue el token de cPanel' ?>"></div>
+<div><label for="cp_home">Carpeta personal (home)</label><input id="cp_home" name="cp_home" value="<?= e($cp['home']) ?>" placeholder="/home/USUARIO"></div>
+<div><label for="cp_webs">Carpeta de las webs de clientes (absoluta, fuera de public_html)</label><input id="cp_webs" name="cp_webs" value="<?= e($cp['webs_path']) ?>" placeholder="/home/USUARIO/webs-clientes"></div>
+</div><p class="mut" style="margin:.4rem 0">Para comprobar el token, use <a href="/admin/diagnostico">Diagnóstico</a>.</p></details>
+<details class="card"><summary>Dominios</summary><div class="row"><?php $f('dominio_base', 'Dominio base de las webs (ej. servicom.gt)'); $f('portal_sub', 'Subdominio del portal (ej. crear)'); $f('force_scheme', 'Esquema forzado (vacío = https)', 'text', 'Solo para pruebas: http'); ?></div>
 <label for="reservados">Subdominios reservados (separados por coma; los esenciales siempre se conservan)</label><textarea id="reservados" name="reservados"><?= e($vals['reservados'] ?? '') ?></textarea></details>
 <details class="card"><summary>Inteligencia artificial</summary><div class="row"><?php $f('ai_key', 'Clave de API de Claude', 'password'); $f('ai_model_main', 'Modelo principal'); $f('ai_model_fallback', 'Modelo de respaldo'); $f('ai_model_extract', 'Modelo para analizar presentaciones'); $f('ai_cap_day', 'Tope diario (USD)', 'number'); $f('ai_cap_total', 'Tope total (USD)', 'number'); $f('pres_max_mb', 'Tamaño máximo de presentación (MB)', 'number'); ?></div>
 <h2>Precios por millón de tokens (USD) — para estimar el gasto</h2><div class="row"><?php $f('ai_price_in_claude-sonnet-5-5', 'Sonnet entrada', 'number'); $f('ai_price_out_claude-sonnet-5-5', 'Sonnet salida', 'number'); $f('ai_price_in_claude-haiku-5-5', 'Haiku entrada', 'number'); $f('ai_price_out_claude-haiku-5-5', 'Haiku salida', 'number'); ?></div></details>

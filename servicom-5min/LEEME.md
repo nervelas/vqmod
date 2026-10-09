@@ -5,8 +5,8 @@ Requisitos del hosting: PHP 8.0+ (zip, dom, xml, mbstring, fileinfo, curl, gd o 
 
 ## 1. Subir e instalar (5 pasos)
 1. **Subir el ZIP** `servicom-5min-portal.zip` a la carpeta del subdominio del portal (p. ej. el docroot de `crear.servicom.gt`) y descomprimir. **Nunca** en el docroot de `servicom.gt`.
-2. En cPanel cree una base de datos y un usuario (todos los privilegios). Abra `https://crear.servicom.gt/install.php`: verifica requisitos, pide BD, dominio base (`servicom.gt`), subdominio del portal (`crear`), carpeta de webs (por defecto `/home/USUARIO/webs-clientes`, **fuera** de `public_html`) y crea su usuario. El instalador se elimina solo y guarda la configuración en `../servicom-secrets/config.php` (fuera del docroot) si puede.
-3. **Token de cPanel**: cPanel → Seguridad → *Administrar tokens de API* → crear token (conserve el valor). En el panel (`/admin`) → **Hostings → Agregar**: tipo *cPanel*, servidor `localhost`, su usuario, el token, la carpeta personal (`/home/USUARIO`) y la ruta de webs.
+2. En cPanel cree una base de datos y un usuario (todos los privilegios) y un **token de API** (cPanel → Seguridad → *Administrar tokens de API*; copie el valor). Abra `https://crear.servicom.gt/install.php`: verifica requisitos y pide la BD, el dominio base (`servicom.gt`), el subdominio del portal (`crear`), la carpeta de webs (por defecto `/home/USUARIO/webs-clientes`, **fuera** de `public_html`), los datos de cPanel (servidor `localhost`, usuario, token y carpeta personal `/home/USUARIO`) y su usuario. Comprueba el token al instalar. El instalador se elimina solo y guarda la configuración en `../servicom-secrets/config.php` (fuera del docroot) si puede.
+3. **Hosting único** (no hay selector ni pantalla de hostings; la estructura interna queda lista para un segundo hosting en el futuro, desactivado): el portal y TODAS las webs de clientes viven en este mismo hosting (el de servicom.gt). Si cambia el token, edítelo en el panel → *Ajustes → cPanel*.
 4. **Paquete base** (una sola vez; repetir para actualizar): por SSH o por *Cron Jobs* ejecute
    `php /home/USUARIO/.../tools/build_base.php` — descarga WordPress, Elementor y WooCommerce **solo de wordpress.org** (la última versión compatible con PHP 8.0; si alguna exige más, lo avisa) y copia el tema/mu-plugin de Servicom a `webs-clientes/_base`.
 5. **Cron diario** (borra vistas previas vencidas a los 15 días con todos sus archivos, avisa renovaciones, reanuda construcciones):
@@ -21,20 +21,13 @@ Luego, en el panel → **Ajustes**: datos bancarios, correo y WhatsApp del dueñ
 - **AutoSSL** emite el certificado de cada subdominio en unos minutos; el portal muestra «Preparando tu vista previa» y espera (por defecto hasta 15 min) antes de mostrar el enlace. Si su hosting ofrece **certificado comodín** (`*.servicom.gt`) instálelo en cPanel → SSL/TLS: las vistas previas quedan con HTTPS al instante; no afecta a `servicom.gt`.
 - El DNS debe resolver `*.servicom.gt` al hosting (registro A comodín o un A por subdominio; cPanel suele crearlo al crear el subdominio).
 
-## 3. Segundo hosting (agente)
-1. Suba `servicom-5min-agente.zip` a una carpeta con URL propia del segundo hosting (p. ej. `https://hosting2.../agente/`).
-2. Abra `instalar-agente.php`: pida usuario/token de cPanel de **ese** hosting, ruta de webs y URL del portal. Muestra la URL del agente y un **secreto** (cópielo).
-3. Ejecute `php tools/build_base_agent.php` (construye su propio `_base`).
-4. En el portal → Hostings → Agregar tipo *Agente* con la URL y el secreto. Al crear/demos puede elegir en qué hosting se crea cada web.
-Seguridad: mensajes firmados con HMAC + marca de tiempo + nonce de un solo uso; lista de IP opcional; los archivos del cliente se descargan con URLs firmadas de un solo uso.
-
-## 4. Flujo diario
+## 3. Flujo diario
 1. El cliente llena el formulario (o sube su presentación) → vista previa real en `slug.servicom.gt` (privada, noindex).
 2. El cliente sube el comprobante → en el panel verá **Pago por revisar** → **Aprobar** (publica, crea el usuario del cliente y le envía el enlace para definir su contraseña) o **Rechazar** con motivo.
 3. Usted recibe por correo la lista de **correos y dominio** a crear manualmente (el cliente espera 2 días hábiles). Más tarde: botón **Asignar dominio** cuando el dominio ya apunte al hosting.
 4. Renovación = publicación + 365 días; aviso 30 días antes; botones *Marcar renovado* y *Suspender*.
 
-## 5. Costos de IA
+## 4. Costos de IA
 Tope diario y total en Ajustes (por defecto USD 1/día y USD 10 total); al alcanzarlo se usan textos base automáticamente. Cargue crédito inicial en console.anthropic.com. Hay máx. 3 análisis de presentación y 3 regeneraciones por pedido, y límites por IP.
 
 ## Decisiones y limitaciones

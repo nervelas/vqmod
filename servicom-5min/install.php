@@ -68,6 +68,7 @@ foreach ($reqs as $q) {
 $in = $_POST + [
     'db_host' => 'localhost', 'db_name' => '', 'db_user' => '', 'db_pass' => '', 'db_prefix' => 's5_',
     'dominio' => 'servicom.gt', 'portal' => 'crear', 'email' => '', 'pass' => '', 'webs' => dirname(S5_ROOT) . '/webs-clientes',
+    'cp_host' => 'localhost', 'cp_port' => '2083', 'cp_user' => '', 'cp_token' => '', 'cp_home' => dirname(S5_ROOT),
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -89,6 +90,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($webs === '' || $webs[0] !== '/' || str_contains($webs, '..')) { $err[] = 'La carpeta de webs debe ser una ruta absoluta.'; }
     if (!$err && (realpath($webs) === realpath(S5_ROOT) || str_starts_with($webs . '/', S5_ROOT . '/'))) { $err[] = 'La carpeta de webs no puede estar dentro de la carpeta del portal.'; }
 
+    $cpUser = trim((string) $in['cp_user']);
+    $cpToken = trim((string) $in['cp_token']);
+    if (($cpUser === '') !== ($cpToken === '')) { $err[] = 'Para configurar cPanel indique el usuario Y el token de API (o deje ambos vacíos para completarlo luego en Ajustes).'; }
+    if (!preg_match('/^[a-z0-9._-]{0,60}$/i', $cpUser) || !preg_match('/^[A-Za-z0-9]{0,128}$/', $cpToken)) { $err[] = 'Usuario o token de cPanel con caracteres no válidos.'; }
+    $cpHome = rtrim(trim((string) $in['cp_home']), '/');
+    if ($cpHome !== '' && ($cpHome[0] !== '/' || str_contains($cpHome, '..'))) { $err[] = 'La carpeta personal de cPanel debe ser una ruta absoluta (ej. /home/USUARIO).'; }
     $pdo = null;
     if (!$err) {
         try {
@@ -133,6 +140,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             Settings::set('portal_sub', $sub);
             Settings::set('owner_email', strtolower((string) $in['email']));
             Settings::set('webs_path', $webs);
+            \S5\Services\Hosts::saveMain(['host' => trim((string) $in['cp_host']) ?: 'localhost', 'port' => (int) $in['cp_port'], 'user' => $cpUser, 'token' => $cpToken, 'home' => $cpHome, 'webs_path' => $webs]);
+            $cpCheck = '';
+            if ($cpUser !== '' && $cpToken !== '') {
+                try {
+                    $pg = (new \S5\Provision\CpanelHttpApi(['host' => trim((string) $in['cp_host']) ?: 'localhost', 'port' => (int) $in['cp_port'], 'user' => $cpUser, 'token' => $cpToken, 'home' => $cpHome]))->ping();
+                    $cpCheck = $pg['ok'] ? 'ok' : (string) $pg['message'];
+                } catch (Throwable $e) {
+                    $cpCheck = 'No se pudo conectar con cPanel.';
+                }
+            }
             @mkdir($webs . '/_base', 0755, true);
             @file_put_contents($webs . '/.htaccess', "# Servicom: esta carpeta no se sirve directamente\nOptions -Indexes\n");
             $ok = true;
@@ -151,7 +168,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php if ($ok): ?>
 <div class="card"><p class="ok"><b>¡Listo!</b> El sistema quedó instalado y este instalador se eliminó.</p>
 <p>Configuración guardada en:<br><code><?= $h($loc) ?></code></p>
-<p><a href="/admin/login" style="color:#e8cf94">Entrar al panel</a>. Siguientes pasos (ver LEEME.md): configurar el hosting (token de cPanel), construir el paquete base (<code>php tools/build_base.php</code>), el cron diario y completar datos bancarios y clave de IA en Ajustes.</p></div>
+<?php if (!empty($cpCheck) && $cpCheck !== 'ok'): ?><p class="no">Aviso: no se pudo verificar el token de cPanel (<?= $h($cpCheck) ?>). Revíselo en Ajustes → cPanel y en Diagnóstico.</p><?php elseif (($cpCheck ?? '') === 'ok'): ?><p class="ok">cPanel respondió correctamente con ese token.</p><?php elseif (($cpCheck ?? '') === ''): ?><p class="no">Falta el token de cPanel: complételo en Ajustes → cPanel antes de crear webs.</p><?php endif; ?>
+<p><a href="/admin/login" style="color:#e8cf94">Entrar al panel</a>. Siguientes pasos (ver LEEME.md): construir el paquete base (<code>php tools/build_base.php</code>), el cron diario y completar datos bancarios y clave de IA en Ajustes.</p></div>
 <?php else: ?>
 <div class="card"><b>Requisitos</b><?php foreach ($reqs as $q): ?><div><?= $q[1] ? '<span class="ok">✔</span>' : '<span class="no">✖</span>' ?> <?= $h($q[0]) ?> <small><?= $h($q[2]) ?></small></div><?php endforeach; ?></div>
 <?php foreach ($err as $e): ?><div class="err" role="alert"><?= $h($e) ?></div><?php endforeach; ?>
@@ -166,6 +184,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <label>Dominio base de las webs de clientes</label><input name="dominio" value="<?= $h($in['dominio']) ?>" required><small>Cada web vivirá en slug.<i>este dominio</i>. Nunca se tocan sus archivos, DNS ni correos.</small>
 <label>Subdominio del portal</label><input name="portal" value="<?= $h($in['portal']) ?>" required>
 <label>Carpeta de las webs de clientes (distinta de sus demás páginas)</label><input name="webs" value="<?= $h($in['webs']) ?>" required></div>
+<div class="card"><b>cPanel de este hosting (donde vivirán todas las webs)</b>
+<label>Servidor cPanel</label><input name="cp_host" value="<?= $h($in['cp_host']) ?>"><small>Normalmente <i>localhost</i>.</small>
+<label>Puerto</label><input name="cp_port" value="<?= $h($in['cp_port']) ?>">
+<label>Usuario de cPanel</label><input name="cp_user" value="<?= $h($in['cp_user']) ?>" autocomplete="off">
+<label>Token de API de cPanel</label><input type="password" name="cp_token" autocomplete="new-password"><small>cPanel → Seguridad → Administrar tokens de API. Puede dejarlo vacío y completarlo luego en Ajustes.</small>
+<label>Carpeta personal (home)</label><input name="cp_home" value="<?= $h($in['cp_home']) ?>"></div>
 <div class="card"><b>Dueño del sistema</b>
 <label>Correo</label><input type="email" name="email" value="<?= $h($in['email']) ?>" required>
 <label>Contraseña (mínimo 12 caracteres)</label><input type="password" name="pass" minlength="12" required autocomplete="new-password"></div>

@@ -6,7 +6,7 @@ reset_limits();
 $adm = admin_client();
 $r = $adm->page('/admin/demos'); t_ok($r['status'] === 200 && str_contains($r['body'], 'Crear demo'), 'pantalla de demos');
 foreach ([['info', 'abogado', 1], ['tienda', 'ropa', 4]] as [$plan, $rubro, $estilo]) {
-    $r = $adm->form('/admin/demos', ['plan' => $plan, 'rubro' => $rubro, 'estilo' => $estilo, 'host_id' => 1]);
+    $r = $adm->form('/admin/demos', ['plan' => $plan, 'rubro' => $rubro, 'estilo' => $estilo]);
     t_ok($r['status'] === 302, "demo $plan/$rubro iniciada", (string) $r['status']);
     $id = (int) mysql_val('SELECT MAX(id) FROM s5test.s5_orders');
     for ($i = 0; $i < 60; $i++) { $b = $adm->req('GET', "/admin/construir/$id"); $j = $b['json'] ?? []; if (($j['estado'] ?? '') !== 'construyendo') { break; } usleep(700000); }

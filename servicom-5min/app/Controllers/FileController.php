@@ -4,12 +4,10 @@ namespace S5\Controllers;
 
 use S5\Core\Auth;
 use S5\Core\Fs;
-use S5\Services\AssetUrls;
 use S5\Services\Files;
-use S5\Services\Manifest;
 use S5\Services\Orders;
 
-/** Entrega de archivos privados (miniaturas del cliente, comprobante para el dueño, recursos para el agente). */
+/** Entrega de archivos privados (miniaturas del cliente, comprobante para el dueño). */
 final class FileController
 {
     private static function send(string $path, string $mime, string $name, bool $inline = true): void
@@ -69,24 +67,5 @@ final class FileController
         }
         $inline = str_starts_with((string) $db['mime'], 'image/') || $db['mime'] === 'application/pdf';
         self::send($path, (string) $db['mime'], (string) ($db['orig_name'] ?: 'archivo'), $inline);
-    }
-
-    /** Descarga de recurso por el agente: URL firmada de un solo uso. */
-    public static function agentAsset(): void
-    {
-        $tok = (string) ($_GET['t'] ?? '');
-        $id = (string) ($_GET['id'] ?? '');
-        if (!preg_match('/^[a-f0-9]{64}$/', $tok) || !preg_match('/^a\d{1,4}\.[a-z0-9]{2,5}$/', $id)
-            || !AssetUrls::consume($tok, $id, (int) ($_GET['exp'] ?? 0), (string) ($_GET['n'] ?? ''), (string) ($_GET['sig'] ?? ''))) {
-            http_response_code(403);
-            exit;
-        }
-        $o = Orders::byToken($tok);
-        if (!$o) {
-            http_response_code(404);
-            exit;
-        }
-        $path = Manifest::jobDir((int) $o['id']) . '/assets/' . $id;
-        self::send($path, mime_content_type($path) ?: 'application/octet-stream', $id, false);
     }
 }

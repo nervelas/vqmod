@@ -4,7 +4,7 @@ namespace S5\Provision;
 
 use S5\Core\Fs;
 
-/** Driver que opera en la MISMA máquina donde corre este código (portal o agente). */
+/** Driver que opera en la MISMA máquina donde corre este código (el portal). */
 final class LocalDriver implements HostDriver
 {
     private string $webs;
@@ -313,8 +313,6 @@ final class LocalDriver implements HostDriver
                 if (!@copy((string) $a['local'], $dst)) {
                     throw new ProvisionException('No se pudo copiar un recurso del cliente.', false);
                 }
-            } elseif (!empty($a['url'])) {
-                $this->download((string) $a['url'], $dst, (int) ($a['size'] ?? 0));
             } else {
                 throw new ProvisionException('Recurso sin origen.', false);
             }
@@ -323,39 +321,6 @@ final class LocalDriver implements HostDriver
                 throw new ProvisionException('Un recurso del cliente llegó dañado.', true);
             }
         }
-    }
-
-    private function download(string $url, string $dst, int $expectSize): void
-    {
-        $fh = fopen($dst . '.part', 'wb');
-        if (!$fh) {
-            throw new ProvisionException('No se pudo escribir un recurso.', false);
-        }
-        $max = max(1048576, $expectSize + 1024);
-        $got = 0;
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_TIMEOUT => 60,
-            CURLOPT_CONNECTTIMEOUT => 10,
-            CURLOPT_SSL_VERIFYPEER => $this->cfg['verify_ssl'] ?? true,
-            CURLOPT_SSL_VERIFYHOST => ($this->cfg['verify_ssl'] ?? true) ? 2 : 0,
-            CURLOPT_WRITEFUNCTION => function ($ch, $data) use ($fh, &$got, $max) {
-                $got += strlen($data);
-                if ($got > $max + 20971520) {
-                    return 0;
-                }
-                return fwrite($fh, $data);
-            },
-        ]);
-        $ok = curl_exec($ch);
-        $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-        curl_close($ch);
-        fclose($fh);
-        if (!$ok || $code !== 200) {
-            @unlink($dst . '.part');
-            throw new ProvisionException('No se pudo descargar un recurso del cliente (HTTP ' . $code . ').', true);
-        }
-        rename($dst . '.part', $dst);
     }
 
     public function phpCli(): string

@@ -36,3 +36,4 @@
 - [Arquitecto] La vista previa es privada: requiere la clave `?scpk=` (la entrega solo el portal); quien tenga ese enlace puede aprobar/editar ese pedido.
 - [Arquitecto] Al publicar se borran presentación original, imágenes extraídas y fotos subidas del portal (ya están en la biblioteca de WordPress); se conserva el comprobante.
 - [Arquitecto] El QA de producción no mide desbordes horizontales (requiere navegador): lo garantiza el CSS del tema y se verificó con Playwright en pruebas (tests/e2e/shots_sites.mjs).
+- [Arquitecto] ALCANCE: un solo hosting (el de servicom.gt). Se eliminó el agente (agent.php, instalador, ZIP, pruebas, URLs firmadas, HMAC) y la pantalla/selector de hostings. El instalador pide los datos de cPanel (token cifrado) y crea el hosting único; se edita en Ajustes → cPanel. Quedan, desactivados y sin interfaz, la tabla `hosts`, `orders.host_id`, la interfaz `HostDriver` y la fábrica `Hosts::driver()` para añadir un segundo hosting más adelante.

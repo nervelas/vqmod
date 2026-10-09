@@ -12,7 +12,7 @@ Settings::set('max_drafts_ip_day', '5000'); Settings::set('max_analysis_ip_day',
 Settings::set('webs_path', $T . '/webs');
 Settings::set('ai_key', 'sk-test-mock', true);
 Settings::set('owner_email', 'dueno@servicom.test');
-$id = Hosts::save(null, 'Hosting simulado 1', 'sim', [
+$id = Hosts::save(Hosts::defaultId() ?: null, 'Hosting principal (simulado)', 'sim', [
     'webs_path' => $T . '/webs', 'domain_root' => 'servicom.test', 'sim_dir' => $T . '/sim', 'sim_vroot' => $T . '/vroot',
     'sim_db' => ['dsn' => 'mysql:host=localhost;charset=utf8mb4', 'user' => 's5admin', 'pass' => 's5adminpass', 'host' => 'localhost'], 'sim_prefix' => 'sim_',
     'php_cli' => '/usr/bin/php', 'loopback_url' => 'http://127.0.0.1:8200',

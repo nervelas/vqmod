@@ -81,7 +81,7 @@ $r = $c2->upload($tk3, 'presentacion', "$tmp/p.pdf", 'application/pdf'); t_ok(em
 
 echo "== Panel y fuerza bruta\n";
 $r = $c->req('GET', '/admin'); t_ok($r['status'] === 302 && str_contains($r['headers'], '/admin/login'), 'panel exige sesión');
-foreach (['/admin/pedidos', '/admin/ajustes', '/admin/hostings', '/admin/archivo/1', '/admin/construir/1', '/admin/diagnostico'] as $p) { $r = $c->req('GET', $p); t_ok(in_array($r['status'], [302, 403], true), "ruta admin protegida $p", (string) $r['status']); }
+foreach (['/admin/pedidos', '/admin/ajustes', '/admin/archivo/1', '/admin/construir/1', '/admin/diagnostico'] as $p) { $r = $c->req('GET', $p); t_ok(in_array($r['status'], [302, 403], true), "ruta admin protegida $p", (string) $r['status']); }
 $bf = new Client(); $bf->page('/admin/login'); $locked = false;
 for ($i = 0; $i < 16; $i++) {
     $bf->form('/admin/login', ['email' => 'dueno@servicom.test', 'password' => 'mala' . $i]);

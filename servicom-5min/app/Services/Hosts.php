@@ -6,14 +6,17 @@ use S5\Core\Crypto;
 use S5\Core\Db;
 use S5\Core\Fs;
 use S5\Core\Settings;
-use S5\Provision\AgentDriver;
 use S5\Provision\CpanelHttpApi;
 use S5\Provision\HostDriver;
 use S5\Provision\LocalDriver;
 use S5\Provision\ProvisionException;
 use S5\Provision\SimCpanelApi;
 
-/** Hostings configurados y fábrica de drivers. La configuración se guarda cifrada. */
+/**
+ * Hosting de las webs de clientes. HOY solo se usa UNO (el de servicom.gt, configurado en el instalador y editable en Ajustes → cPanel).
+ * La tabla `hosts`, `orders.host_id` y la interfaz HostDriver quedan listas para un segundo hosting en el futuro,
+ * pero está desactivado y no tiene interfaz. La configuración se guarda cifrada.
+ */
 final class Hosts
 {
     public static function all(bool $onlyActive = false): array
@@ -50,6 +53,42 @@ final class Hosts
         return Db::insert('hosts', ['name' => $name, 'kind' => $kind, 'config' => $enc, 'active' => $active ? 1 : 0, 'created_at' => Db::now()]);
     }
 
+    /** Datos del hosting único (sin secretos) para el panel. */
+    public static function mainConfig(): array
+    {
+        $h = self::get(self::defaultId());
+        if (!$h) {
+            return ['kind' => 'cpanel', 'host' => 'localhost', 'port' => 2083, 'user' => '', 'home' => '', 'has_token' => false, 'webs_path' => self::defaultWebsPath()];
+        }
+        $c = $h['cfg'];
+        return ['kind' => $h['kind'], 'host' => $c['host'] ?? 'localhost', 'port' => $c['port'] ?? 2083, 'user' => $c['user'] ?? '', 'home' => $c['home'] ?? '', 'has_token' => !empty($c['token']), 'webs_path' => ($c['webs_path'] ?? '') ?: self::defaultWebsPath()];
+    }
+
+    /** Crea o actualiza el hosting único. El token vacío conserva el guardado. */
+    public static function saveMain(array $in): int
+    {
+        $id = self::defaultId() ?: null;
+        $old = $id ? self::get($id) : null;
+        $cfg = $old['cfg'] ?? [];
+        $kind = $old['kind'] ?? 'cpanel';
+        if ($kind === 'cpanel') {
+            $cfg['host'] = (string) ($in['host'] ?? ($cfg['host'] ?? 'localhost')) ?: 'localhost';
+            $cfg['port'] = (int) ($in['port'] ?? ($cfg['port'] ?? 2083)) ?: 2083;
+            $cfg['user'] = (string) ($in['user'] ?? ($cfg['user'] ?? ''));
+            $tok = trim((string) ($in['token'] ?? ''));
+            if ($tok !== '' && $tok !== '__guardado__') {
+                $cfg['token'] = $tok;
+            }
+            $cfg['home'] = rtrim((string) ($in['home'] ?? ($cfg['home'] ?? '')), '/');
+            $cfg['verify_ssl'] = $cfg['verify_ssl'] ?? true;
+        }
+        $cfg['domain_root'] = Settings::baseDomain();
+        $cfg['webs_path'] = (string) (($in['webs_path'] ?? '') ?: ($cfg['webs_path'] ?? '') ?: self::defaultWebsPath());
+        $hid = self::save($id, $old['name'] ?? 'Hosting principal', $kind, $cfg, true);
+        Settings::set('default_host', (string) $hid);
+        return $hid;
+    }
+
     public static function defaultId(): int
     {
         $d = Settings::int('default_host', 0);
@@ -58,16 +97,6 @@ final class Hosts
         }
         $first = Db::val('SELECT id FROM ' . Db::t('hosts') . ' WHERE active=1 ORDER BY id LIMIT 1');
         return $first ? (int) $first : 0;
-    }
-
-    /** Número de webs por hosting (excluye eliminadas). */
-    public static function counts(): array
-    {
-        $out = [];
-        foreach (Db::all('SELECT host_id, COUNT(*) c FROM ' . Db::t('orders') . ' WHERE host_id IS NOT NULL AND status NOT IN (?,?) GROUP BY host_id', [Orders::ST_ELIMINADA, Orders::ST_BORRADOR]) as $r) {
-            $out[(int) $r['host_id']] = (int) $r['c'];
-        }
-        return $out;
     }
 
     public static function driver(int $hostId): HostDriver
@@ -79,12 +108,6 @@ final class Hosts
         $c = $h['cfg'];
         $root = (string) ($c['domain_root'] ?? Settings::baseDomain());
         switch ($h['kind']) {
-            case 'agent':
-                return new AgentDriver([
-                    'agent_url' => $c['agent_url'], 'agent_secret' => $c['agent_secret'], 'webs_path' => $c['webs_path'] ?? '',
-                    'verify_ssl' => $c['verify_ssl'] ?? true,
-                    'asset_signer' => fn(array $a) => AssetUrls::sign($a, (string) $c['agent_secret']),
-                ]);
             case 'sim':
                 $api = new SimCpanelApi($c);
                 return new LocalDriver([

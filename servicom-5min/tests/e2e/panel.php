@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-/** Panel: 2FA TOTP, cambio de contraseña, diagnóstico, prueba de IA, ajustes, hostings, filtros y búsqueda. */
+/** Panel: 2FA TOTP, cambio de contraseña, diagnóstico, prueba de IA, ajustes (incl. cPanel), filtros y búsqueda. */
 require __DIR__ . '/lib.php';
 define('S5_ROOT', '/tmp/s5test/portal');
 require_once S5_ROOT . '/app/Core/Totp.php';
@@ -49,9 +49,14 @@ $h = (new Client())->page('/'); t_ok(str_contains($h['body'], 'Q1,300') && str_c
 $out->form('/admin/ajustes', ['precio_info' => '1250', 'precio_tienda' => '1750', 'precio_tarjeta' => '750']);
 $out->form('/admin/ajustes', ['dominio_base' => 'no es dominio']); t_ok(mysql_val("SELECT v FROM s5test.s5_settings WHERE k='dominio_base'") === 'servicom.test', 'dominio base inválido rechazado');
 t_ok(mysql_val("SELECT is_secret FROM s5test.s5_settings WHERE k='ai_key'") === '1' && !str_contains((string) mysql_val("SELECT v FROM s5test.s5_settings WHERE k='ai_key'"), 'sk-test'), 'clave de IA cifrada en la base de datos');
-echo "== Hostings, pedidos, filtros\n";
-$hs = $out->page('/admin/hostings'); t_ok($hs['status'] === 200 && str_contains($hs['body'], 'Hosting simulado 1') && !str_contains($hs['body'], 's5adminpass'), 'lista de hostings sin secretos');
-$nh = (int) mysql_val('SELECT COUNT(*) FROM s5test.s5_hosts'); $out->form('/admin/hostings', ['accion' => 'guardar', 'name' => 'X', 'kind' => 'agent', 'agent_url' => 'https://x.test/agent.php', 'agent_secret' => 'corto']); t_ok((int) mysql_val('SELECT COUNT(*) FROM s5test.s5_hosts') === $nh, 'agente con secreto corto rechazado');
+echo "== Hosting único (cPanel en Ajustes), pedidos, filtros\n";
+$hs = $out->page('/admin/hostings'); t_ok($hs['status'] === 404, 'ya no existe la pantalla Hostings (404)');
+$st = $out->page('/admin/ajustes'); t_ok(str_contains($st['body'], 'cPanel (hosting de las webs de clientes)') && !str_contains($st['body'], 'name="host_id"'), 'Ajustes tiene la sección cPanel y no hay selector de hosting');
+t_ok((int) mysql_val('SELECT COUNT(*) FROM s5test.s5_hosts') === 1, 'hay un único hosting configurado');
+$dm = $out->page('/admin/demos'); t_ok(!str_contains($dm['body'], 'host_id') && !str_contains($dm['body'], 'Hosting'), 'Demos sin selector de hosting');
+$out->form('/admin/ajustes', ['cp_host' => 'localhost', 'cp_port' => '2083', 'cp_user' => 'otra_cuenta', 'cp_token' => '', 'cp_home' => '/home/otra', 'cp_webs' => '/tmp/s5test/webs']);
+$kind = mysql_val('SELECT kind FROM s5test.s5_hosts LIMIT 1'); t_ok($kind === 'sim', 'el simulador de pruebas no se altera (tipo ' . $kind . ')');
+$out->form('/admin/ajustes', ['cp_user' => 'x', 'cp_host' => 'localhost', 'cp_webs' => 'relativa/ruta']); t_ok(mysql_val("SELECT v FROM s5test.s5_settings WHERE k='webs_path'") === '/tmp/s5test/webs', 'una ruta de webs relativa no se acepta (se conserva la anterior)');
 $p = $out->page('/admin/pedidos?q=' . rawurlencode("' OR 1=1 --")); t_ok($p['status'] === 200 && !str_contains($p['body'], 'SQL'), 'búsqueda resistente a inyección');
 $p = $out->page('/admin/pedidos?estado=publicada&plan=info&q=a'); t_ok($p['status'] === 200, 'filtros combinados');
 $p = $out->page('/admin/pedido/999999'); t_ok($p['status'] === 404, 'pedido inexistente 404');

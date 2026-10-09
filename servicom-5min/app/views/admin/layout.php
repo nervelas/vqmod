@@ -1,6 +1,6 @@
 <?php /** Layout del panel. Vars: $content, $user, $flash, $alertCount, $nonce */
 $cur = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
-$items = ['/admin' => 'Resumen', '/admin/pedidos' => 'Pedidos', '/admin/demos' => 'Demos', '/admin/correos' => 'Correos y dominios', '/admin/renovaciones' => 'Renovaciones', '/admin/ia' => 'Consumo de IA', '/admin/hostings' => 'Hostings', '/admin/ajustes' => 'Ajustes', '/admin/bitacora' => 'Bitácora', '/admin/diagnostico' => 'Diagnóstico', '/admin/cuenta' => 'Mi cuenta'];
+$items = ['/admin' => 'Resumen', '/admin/pedidos' => 'Pedidos', '/admin/demos' => 'Demos', '/admin/correos' => 'Correos y dominios', '/admin/renovaciones' => 'Renovaciones', '/admin/ia' => 'Consumo de IA', '/admin/ajustes' => 'Ajustes', '/admin/bitacora' => 'Bitácora', '/admin/diagnostico' => 'Diagnóstico', '/admin/cuenta' => 'Mi cuenta'];
 ?><!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#0d0d10">
 <title>Panel · Servicom</title><link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="<?= e(asset('admin/admin.css')) ?>"></head>

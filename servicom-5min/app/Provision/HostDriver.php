@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace S5\Provision;
 
-/** Operaciones sobre un hosting (local o remoto vía agente). Todas idempotentes. */
+/** Operaciones sobre un hosting (hoy solo LocalDriver; la interfaz permite añadir otro en el futuro). Todas idempotentes. */
 interface HostDriver
 {
     public function ping(): array;

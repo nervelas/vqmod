@@ -1,5 +1,5 @@
 <?php
-/** Vars: $o $b $analysis $proof $steps $log $ai $hosts $previewUrl $siteUrl $total $qa $texts */
+/** Vars: $o $b $analysis $proof $steps $log $ai $previewUrl $siteUrl $total $qa $texts */
 use S5\Services\Orders;
 $csrf = '<input type="hidden" name="_csrf" value="' . e(csrf_token()) . '">';
 $act = fn(string $a, string $label, string $cls = 'btn sec', string $confirm = '', string $extra = '') => '<form method="post" action="/admin/pedido/' . (int) $o['id'] . '/accion"' . ($confirm ? ' data-confirm="' . e($confirm) . '"' : '') . '>' . $csrf . '<input type="hidden" name="accion" value="' . e($a) . '">' . $extra . '<button class="' . $cls . '">' . e($label) . '</button></form>';
@@ -38,11 +38,7 @@ $st = $o['status'];
 <div style="flex:0 0 auto"><button class="btn sec">Asignar dominio</button></div></form>
 <p class="mut" style="font-size:.85rem">El dominio debe apuntar ya a este hosting (DNS). Se verifica antes de cambiar nada.</p>
 <?php endif; ?>
-<?php if (!$o['fqdn'] && $hosts): ?>
-<form method="post" action="/admin/pedido/<?= (int) $o['id'] ?>/accion" class="row" style="margin-top:.8rem"><?= $csrf ?><input type="hidden" name="accion" value="host">
-<div><label for="hid">Hosting donde se creará</label><select id="hid" name="host_id"><?php foreach ($hosts as $h): ?><option value="<?= (int) $h['id'] ?>"<?= (int) $o['host_id'] === (int) $h['id'] ? ' selected' : '' ?>><?= e($h['name']) ?></option><?php endforeach; ?></select></div>
-<div style="flex:0 0 auto"><button class="btn sec">Asignar hosting</button></div></form>
-<?php endif; ?></div>
+</div>
 
 <div class="card"><h2 style="margin-top:0">Datos</h2><dl class="kv">
 <dt>Dirección</dt><dd><?= e($o['fqdn'] ?: '—') ?><?= $o['domain_assigned'] ? ' → <b>' . e($o['domain_assigned']) . '</b>' : '' ?></dd>

@@ -36,6 +36,11 @@ final class Lifecycle
         if (empty($r['ok'])) {
             throw new ProvisionException((string) ($r['error'] ?? 'Falló el paso ' . $step), !empty($r['retry']));
         }
+        try {
+            Pipeline::restoreHtaccess($o);
+        } catch (\Throwable $e) {
+            Log::error('restoreHtaccess: ' . $e->getMessage());
+        }
         return $r['data'] ?? [];
     }
 

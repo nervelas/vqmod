@@ -123,7 +123,7 @@ final class Diagnostics
         }
         $model = (string) Settings::get('ai_model_fallback', 'claude-haiku-5-5');
         $body = json_encode(['model' => $model, 'max_tokens' => 16, 'messages' => [['role' => 'user', 'content' => 'Responde solo con la palabra: listo']]]);
-        $r = AiClient::transporteCurl('https://api.anthropic.com/v1/messages', ['x-api-key: ' . Settings::get('ai_key'), 'anthropic-version: 2023-06-01', 'content-type: application/json'], (string) $body);
+        $r = AiClient::transporteCurl((string) (getenv('S5_AI_URL') ?: AiClient::URL), ['x-api-key: ' . Settings::get('ai_key'), 'anthropic-version: 2023-06-01', 'content-type: application/json'], (string) $body);
         $j = json_decode((string) ($r['body'] ?? ''), true);
         $ok = ($r['status'] ?? 0) === 200 && is_array($j);
         if ($ok) {

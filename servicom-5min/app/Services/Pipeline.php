@@ -505,7 +505,22 @@ final class Pipeline
     private static function step_medios(array $o, int $left): string { return self::prov($o, 'media', $left); }
     private static function step_paginas(array $o, int $left): string { return self::prov($o, 'pages', $left); }
     private static function step_tienda(array $o, int $left): string { return self::prov($o, 'store', $left); }
-    private static function step_finalizar(array $o, int $left): string { return self::prov($o, 'finish', $left); }
+    private static function step_finalizar(array $o, int $left): string
+    {
+        $r = self::prov($o, 'finish', $left);
+        if ($r === 'done') {
+            self::restoreHtaccess($o);
+        }
+        return $r;
+    }
+
+    /** WordPress puede reescribir el bloque de rutas del .htaccess (vacío si corre fuera de Apache): se restablece el nuestro. */
+    public static function restoreHtaccess(array $o): void
+    {
+        $d = self::driver($o);
+        $susp = ($o['status'] ?? '') === Orders::ST_SUSPENDIDA;
+        $d->writeFile((string) $o['site_path'], '.htaccess', WpFiles::htaccess(Settings::scheme() === 'https', $susp), 0644);
+    }
 
     private static function step_ssl(array $o, int $left): string
     {

@@ -19,6 +19,8 @@ run "Ciclo de vida" php tests/e2e/lifecycle.php
 run "Fallos simulados y rollback" php tests/e2e/faults.php
 run "Agente (segundo hosting)" php tests/e2e/flow_agent.php
 run "Constructor por HTTP firmado" php tests/e2e/flow_httprunner.php
+run "Demos y enlaces de la barra" php tests/e2e/demo.php
+run "Panel (2FA, ajustes, diagnóstico)" php tests/e2e/panel.php
 run "SSL real (CA local)" php tests/e2e/ssl.php
 run "Seguridad del portal" php tests/e2e/security.php
 echo "== Navegador (Chromium)"

@@ -12,11 +12,13 @@ P="$STAGE/portal"; mkdir -p "$P"
 cd "$ROOT"
 cp index.php install.php .htaccess .user.ini robots.txt "$P/"
 [ -f LEEME.md ] && cp LEEME.md "$P/" || true
+[ -f INFORME.md ] && cp INFORME.md "$P/" || true
+[ -f docs/DECISIONES.md ] && cp docs/DECISIONES.md "$P/DECISIONES.md" || true
 rsync -a --exclude 'config.php' --exclude '.DS_Store' app/ "$P/app/"
 [ $WITH_SIM = 0 ] && rm -f "$P/app/Provision/SimCpanelApi.php"
 rsync -a assets/ "$P/assets/"
 rsync -a library/ "$P/library/"
-mkdir -p "$P/tools"; cp tools/cron.php tools/build_base.php tools/worker.php tools/.htaccess "$P/tools/" 2>/dev/null || cp tools/cron.php tools/build_base.php tools/worker.php "$P/tools/"
+mkdir -p "$P/tools"; cp tools/cron.php tools/build_base.php tools/worker.php tools/stock_add.php "$P/tools/"
 mkdir -p "$P/vendor/phpmailer"; rsync -a vendor/phpmailer/src "$P/vendor/phpmailer/"; cp vendor/.htaccess "$P/vendor/" 2>/dev/null || true
 mkdir -p "$P/wp-pack"
 rsync -a --exclude 'tests' --exclude 'tests-only' --exclude '*.sh' wp-pack/ "$P/wp-pack/"

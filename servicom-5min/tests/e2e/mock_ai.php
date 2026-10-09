@@ -9,6 +9,9 @@ $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 @file_put_contents('/tmp/s5test/run/ai-calls.log', date('c') . " $mode $path\n", FILE_APPEND);
 header('Content-Type: application/json');
 if ($path !== '/v1/messages') { http_response_code(404); echo '{}'; return; }
+// Como la API real: exige la cabecera x-api-key con valor.
+$key = $_SERVER['HTTP_X_API_KEY'] ?? '';
+if (trim($key) === '') { http_response_code(401); echo json_encode(['type' => 'error', 'error' => ['type' => 'authentication_error', 'message' => 'x-api-key header is required']]); return; }
 $body = json_decode((string) file_get_contents('php://input'), true) ?: [];
 if ($mode === 'error500') { http_response_code(500); echo json_encode(['type' => 'error', 'error' => ['type' => 'api_error', 'message' => 'boom']]); return; }
 if ($mode === 'credit') { http_response_code(400); echo json_encode(['type' => 'error', 'error' => ['type' => 'invalid_request_error', 'message' => 'Your credit balance is too low to access the Anthropic API.']]); return; }

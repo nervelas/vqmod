@@ -8,8 +8,11 @@
 <label for="code">Código de verificación (aplicación de autenticación)</label>
 <input id="code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required autofocus>
 <?php else: ?>
-<label for="email">Correo</label><input id="email" type="email" name="email" autocomplete="username" required autofocus>
-<label for="password">Contraseña</label><input id="password" type="password" name="password" autocomplete="current-password" required>
+<label for="email">Correo</label><input id="email" type="email" name="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required autofocus>
+<label for="password">Contraseña</label><input id="password" type="password" name="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" required>
+<p><label style="display:flex;gap:.5rem;align-items:center"><input type="checkbox" data-show-pass> Mostrar contraseña</label></p>
 <?php endif; ?>
 <p><button class="btn" type="submit" style="width:100%">Entrar</button></p>
-</form></div></div>
+</form>
+<p style="text-align:center"><small><a href="/admin/recuperar">¿No puede entrar?</a></small></p></div></div>
+<script src="<?= e(asset('admin/admin.js')) ?>" nonce="<?= e($nonce ?? '') ?>"></script>

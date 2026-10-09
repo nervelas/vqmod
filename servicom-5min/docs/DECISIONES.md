@@ -38,3 +38,9 @@
 - [Arquitecto] El QA de producción no mide desbordes horizontales (requiere navegador): lo garantiza el CSS del tema y se verificó con Playwright en pruebas (tests/e2e/shots_sites.mjs).
 - [Arquitecto] ALCANCE: un solo hosting (el de servicom.gt). Se eliminó el agente (agent.php, instalador, ZIP, pruebas, URLs firmadas, HMAC) y la pantalla/selector de hostings. El instalador pide los datos de cPanel (token cifrado) y crea el hosting único; se edita en Ajustes → cPanel. Quedan, desactivados y sin interfaz, la tabla `hosts`, `orders.host_id`, la interfaz `HostDriver` y la fábrica `Hosts::driver()` para añadir un segundo hosting más adelante.
 - [Arquitecto] Sin dependencia de sodium: los secretos se cifran con AES-256-GCM (OpenSSL, formato `enc2:`). Los valores antiguos `enc1:` (libsodium) solo se leen si la extensión existe. Probado con sodium desactivado en PHP 8.3 y con PHP 8.0 WASM.
+
+## Recuperación de acceso (parche posterior a la entrega 1)
+- Motivo: un dueño no pudo entrar tras instalar. Causa no reproducible en laboratorio; se atienden las probables (espacio final del teclado móvil, reintentos del instalador, bloqueo por intentos).
+- Login tolerante a espacios al inicio/fin (contraseña) y a mayúsculas (correo); atributos anti-autocorrección y «Mostrar contraseña».
+- `/admin/recuperar`: la prueba de propiedad es crear `recuperar-<clave>.txt` en la raíz del portal (requiere acceso al hosting). Deja un único usuario, apaga 2FA, limpia límites y se autodestruye el archivo. Bitácora `acceso_recuperado`.
+- Instalador: un solo envío atómico, confirmación de contraseña, el `config.php` se escribe al final y se verifica el inicio de sesión antes de terminar.

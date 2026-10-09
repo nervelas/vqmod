@@ -9,6 +9,7 @@ use S5\Core\Csrf;
 use S5\Core\Db;
 use S5\Core\Http;
 use S5\Core\Log;
+use S5\Core\RateLimit;
 use S5\Core\Router;
 use S5\Core\Sanitize;
 use S5\Core\Session;
@@ -36,6 +37,8 @@ final class AdminController
         $r->get('/admin/login', fn() => self::loginForm());
         $r->post('/admin/login', fn() => self::loginPost());
         $r->post('/admin/logout', fn() => self::logout());
+        $r->get('/admin/recuperar', fn() => self::recoverForm());
+        $r->post('/admin/recuperar', fn() => self::recoverPost());
         $r->get('/admin/pedidos', fn() => self::orders());
         $r->get('/admin/pedido/{id}', fn($p) => self::order((int) $p['id']));
         $r->post('/admin/pedido/{id}/accion', fn($p) => self::action((int) $p['id']));
@@ -132,6 +135,100 @@ final class AdminController
         }
         self::flash((string) ($r['error'] ?? 'No se pudo iniciar sesión.'), 'err');
         Http::redirect('/admin/login');
+    }
+
+    // ---------------------------------------------------------------- recuperar acceso
+    /** Clave del archivo de prueba: el dueño demuestra acceso al hosting creando recuperar-CLAVE.txt en la carpeta del portal. */
+    private static function recoverToken(): string
+    {
+        return substr(Crypto::sign('recuperar-acceso'), 0, 12);
+    }
+
+    private static function recoverFile(): string
+    {
+        return S5_ROOT . '/recuperar-' . self::recoverToken() . '.txt';
+    }
+
+    private static function recoverView(?string $error = null, ?string $ok = null): void
+    {
+        Session::start();
+        View::render('admin/recuperar', [
+            'token' => self::recoverToken(),
+            'hasFile' => is_file(self::recoverFile()),
+            'error' => $error,
+            'ok' => $ok,
+            'email' => (string) Db::val('SELECT email FROM ' . Db::t('users') . ' ORDER BY id LIMIT 1'),
+        ], 'admin/layout_bare');
+    }
+
+    private static function recoverForm(): void
+    {
+        self::recoverView();
+    }
+
+    private static function recoverPost(): void
+    {
+        self::post();
+        if (!RateLimit::hit('recuperar-ip-' . Http::ip(), 10, 900)) {
+            self::recoverView('Demasiados intentos. Espere unos minutos.');
+            return;
+        }
+        if (!is_file(self::recoverFile())) {
+            self::recoverView('Todavía no se encuentra el archivo de comprobación. Créelo en cPanel y vuelva a intentar.');
+            return;
+        }
+        $email = Sanitize::email((string) ($_POST['email'] ?? ''));
+        $pass = trim((string) ($_POST['password'] ?? ''));
+        if ($email === '') {
+            self::recoverView('El correo no es válido.');
+            return;
+        }
+        if (mb_strlen($pass) < 12) {
+            self::recoverView('La contraseña debe tener al menos 12 caracteres (sin contar espacios al inicio o al final).');
+            return;
+        }
+        if ($pass !== trim((string) ($_POST['password2'] ?? ''))) {
+            self::recoverView('Las dos contraseñas no coinciden.');
+            return;
+        }
+        $hash = Auth::hash($pass);
+        if (!password_verify($pass, $hash)) {
+            self::recoverView('No se pudo generar la contraseña. Inténtelo de nuevo.');
+            return;
+        }
+        $pdo = Db::pdo();
+        $pdo->beginTransaction();
+        try {
+            $id = (int) Db::val('SELECT id FROM ' . Db::t('users') . ' ORDER BY id LIMIT 1');
+            if ($id > 0) {
+                Db::q('DELETE FROM ' . Db::t('users') . ' WHERE id<>?', [$id]);
+                Db::update('users', ['email' => $email, 'pass_hash' => $hash, 'totp_secret' => null, 'totp_enabled' => 0], 'id=?', [$id]);
+            } else {
+                Db::insert('users', ['email' => $email, 'pass_hash' => $hash, 'created_at' => gmdate('Y-m-d H:i:s')]);
+            }
+            Db::q('DELETE FROM ' . Db::t('rate_limits') . ' WHERE k LIKE ?', ['%']);
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            Log::error('recuperar: ' . $e->getMessage());
+            self::recoverView('No se pudo guardar. Inténtelo de nuevo.');
+            return;
+        }
+        $row = Db::one('SELECT pass_hash FROM ' . Db::t('users') . ' WHERE email=?', [$email]);
+        if (!$row || !password_verify($pass, (string) $row['pass_hash'])) {
+            self::recoverView('No se pudo verificar el cambio. Inténtelo de nuevo.');
+            return;
+        }
+        if (!@unlink(self::recoverFile())) {
+            Log::error('recuperar: no se pudo borrar el archivo de comprobación');
+        }
+        Settings::set('owner_email', $email);
+        Log::audit('acceso_recuperado', $email);
+        Session::destroy();
+        Session::start();
+        self::recoverView(null, 'Listo. Ya puede entrar con ' . $email . ' y la contraseña nueva.');
     }
 
     private static function logout(): void

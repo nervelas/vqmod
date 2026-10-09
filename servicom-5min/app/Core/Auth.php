@@ -35,7 +35,16 @@ final class Auth
         }
         $u = $email ? Db::one('SELECT * FROM ' . Db::t('users') . ' WHERE email=?', [$email]) : null;
         $hash = $u['pass_hash'] ?? '$2y$10$abcdefghijklmnopqrstuuYB5V0Z0aXOUkp4yE0cH0RlK1T9yGq6e';
-        $good = password_verify($pass, $hash) && $u;
+        // Tolerancia a espacios sobrantes (teclados de teléfono que agregan un espacio al autocompletar).
+        $good = false;
+        $okPass = $pass;
+        foreach (array_unique([$pass, trim($pass), rtrim($pass), ltrim($pass), trim($pass) . ' ', ' ' . trim($pass), ' ' . trim($pass) . ' ']) as $cand) {
+            if ($cand !== '' && password_verify($cand, $hash)) {
+                $good = (bool) $u;
+                $okPass = $cand;
+                break;
+            }
+        }
         if (!$good) {
             if ($email) {
                 RateLimit::hit('login-u-' . $email, 6, 900);
@@ -60,7 +69,7 @@ final class Auth
         $_SESSION['2fa_ok'] = true;
         $_SESSION['csrf'] = bin2hex(random_bytes(32));
         if (password_needs_rehash($u['pass_hash'], PASSWORD_DEFAULT)) {
-            Db::update('users', ['pass_hash' => password_hash($pass, PASSWORD_DEFAULT)], 'id=?', [$u['id']]);
+            Db::update('users', ['pass_hash' => password_hash($okPass, PASSWORD_DEFAULT)], 'id=?', [$u['id']]);
         }
         Log::audit('login', $email);
         return ['ok' => true];

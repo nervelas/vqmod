@@ -30,5 +30,9 @@ Luego, en el panel → **Ajustes**: datos bancarios, correo y WhatsApp del dueñ
 ## 4. Costos de IA
 Tope diario y total en Ajustes (por defecto USD 1/día y USD 10 total); al alcanzarlo se usan textos base automáticamente. Cargue crédito inicial en console.anthropic.com. Hay máx. 3 análisis de presentación y 3 regeneraciones por pedido, y límites por IP.
 
+## 5. No puedo entrar al panel
+1. El acceso tolera espacios sobrantes (frecuentes en teclados de teléfono) y el correo no distingue mayúsculas. Use «Mostrar contraseña» para verificar lo que escribe. Tras 6 intentos fallidos el acceso se bloquea 15 minutos.
+2. Si aun así no entra: abra `https://crear.servicom.gt/admin/recuperar`. La pantalla muestra un nombre de archivo (`recuperar-XXXXXXXXXXXX.txt`). Créelo (vacío) con el Administrador de archivos de cPanel en la carpeta del portal, vuelva a la pantalla, defina correo y contraseña nuevos. Esto demuestra que usted controla el hosting; el archivo se borra solo y la verificación en dos pasos se desactiva.
+
 ## Decisiones y limitaciones
 Ver `INFORME.md` y `docs/DECISIONES.md` (si no vienen en el ZIP, están en el repositorio). Fotos de stock: ver `library/FALTANTES.md`.

@@ -1,4 +1,5 @@
 (function(){
+  document.querySelectorAll('[data-show-pass]').forEach(function(c){c.addEventListener('change',function(){document.querySelectorAll('input[name^="password"]').forEach(function(i){i.type=c.checked?'text':'password';});});});
   var b=document.querySelector('button.menu'),n=document.querySelector('nav.side');
   if(b&&n){b.addEventListener('click',function(){var o=n.classList.toggle('open');b.setAttribute('aria-expanded',o?'true':'false');});}
   document.querySelectorAll('[data-confirm]').forEach(function(f){f.addEventListener('submit',function(e){if(!confirm(f.getAttribute('data-confirm'))){e.preventDefault();}});});

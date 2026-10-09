@@ -24,6 +24,9 @@ run "Demos y enlaces de la barra" php tests/e2e/demo.php
 run "Panel (2FA, ajustes, diagnóstico)" php tests/e2e/panel.php
 run "SSL real (CA local)" php tests/e2e/ssl.php
 run "Seguridad del portal" php tests/e2e/security.php
+mkdir -p /tmp/oldzip && git show e4201a1:servicom-5min/entrega/servicom-5min-portal.zip > /tmp/oldzip/old.zip 2>/dev/null
+./build/make_patch.sh >/dev/null 2>&1
+run "Parche de acceso sobre instalación existente" php tests/e2e/parche.php /tmp/oldzip/old.zip dist/parche-acceso.zip
 echo "== Navegador (Chromium)"
 ( cd tests/portal/e2e && for w in 360 390 768 1024 1440; do run "Wizard real $w px" bash -c "node flowReal.js $w | tee /dev/stderr | grep -q 'errores consola: \[\] overflows: 0'"; done )
 run "Tienda 60 productos (390 px)" bash -c 'cd tests/portal/e2e && node flowRealB.js 390 60 | tee /dev/stderr | grep -q "errores consola: \[\]"'

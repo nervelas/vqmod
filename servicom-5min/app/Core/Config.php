@@ -58,6 +58,13 @@ final class Config
         return $c;
     }
 
+    /** Vuelve a leer config.php (instalador). */
+    public static function reset(): void
+    {
+        self::$data = null;
+        self::$file = null;
+    }
+
     /** Solo para pruebas / instalador */
     public static function override(array $data): void
     {

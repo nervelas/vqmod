@@ -86,7 +86,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!preg_match('/^[a-z0-9-]{1,40}$/', $sub)) { $err[] = 'Subdominio del portal no válido (ejemplo: crear).'; }
     if (!preg_match('/^[a-z0-9_]{1,12}$/i', $pref)) { $err[] = 'Prefijo de tablas no válido.'; }
     if (!filter_var($in['email'], FILTER_VALIDATE_EMAIL)) { $err[] = 'Correo del dueño no válido.'; }
-    if (strlen((string) $in['pass']) < 12) { $err[] = 'La contraseña debe tener al menos 12 caracteres.'; }
+    $pw = trim((string) $in['pass']);
+    if (strlen($pw) < 12) { $err[] = 'La contraseña debe tener al menos 12 caracteres (sin contar espacios al principio o al final).'; }
+    if ($pw !== trim((string) ($in['pass2'] ?? ''))) { $err[] = 'Las dos contraseñas no coinciden. Escríbalas de nuevo con cuidado.'; }
     $webs = rtrim((string) $in['webs'], '/');
     if ($webs === '' || $webs[0] !== '/' || str_contains($webs, '..')) { $err[] = 'La carpeta de webs debe ser una ruta absoluta.'; }
     if (!$err && (realpath($webs) === realpath(S5_ROOT) || str_starts_with($webs . '/', S5_ROOT . '/'))) { $err[] = 'La carpeta de webs no puede estar dentro de la carpeta del portal.'; }
@@ -106,17 +108,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     if (!$err) {
+        $lock = @fopen(S5_ROOT . '/storage/.install.lock', 'c');
+        if ($lock && !flock($lock, LOCK_EX | LOCK_NB)) {
+            $err[] = 'La instalación ya está en curso (¿tocó el botón dos veces?). Espere unos segundos y recargue la página.';
+            $lock = null;
+        }
+    }
+    if (!$err) {
+        // Doble envío: si otra petición terminó mientras tanto, no se pisa nada.
+        Config::reset();
+        if (Config::installed()) {
+            $err[] = 'El sistema ya quedó instalado. Entre al panel con el correo y la contraseña que acaba de crear.';
+        }
+    }
+    if (!$err) {
         try {
             @mkdir($webs, 0755, true);
             if (!is_dir($webs) || !is_writable($webs)) {
                 throw new RuntimeException('No se puede escribir en la carpeta de webs: ' . $webs);
             }
+            $ownerEmail = strtolower(trim((string) $in['email']));
+            $ownerPass = trim((string) $in['pass']);
             $key = Crypto::newKey();
             $cfg = [
                 'db' => ['host' => $in['db_host'], 'name' => $in['db_name'], 'user' => $in['db_user'], 'pass' => $in['db_pass'], 'prefix' => $pref],
                 'secret_key' => $key,
                 'installed_at' => gmdate('c'),
             ];
+            // 1) Todo el trabajo en la base de datos con la configuración solo en memoria: si algo falla, NO queda nada "instalado" y se puede reintentar.
+            Config::override($cfg);
+            \S5\Core\Db::reset();
+            Settings::flush();
+            Schema::install($pdo, $pref);
+            foreach (['users', 'settings', 'hosts'] as $t) {
+                $pdo->exec('DELETE FROM `' . $pref . $t . '`');
+            }
+            $pdo->prepare('INSERT INTO `' . $pref . 'users` (email, pass_hash, created_at) VALUES (?,?,?)')->execute([$ownerEmail, password_hash($ownerPass, PASSWORD_DEFAULT), gmdate('Y-m-d H:i:s')]);
+            $chk = $pdo->prepare('SELECT pass_hash FROM `' . $pref . 'users` WHERE email=?');
+            $chk->execute([$ownerEmail]);
+            if (!password_verify($ownerPass, (string) $chk->fetchColumn())) {
+                throw new RuntimeException('No se pudo verificar la cuenta del dueño recién creada.');
+            }
+            Settings::flush();
+            Settings::set('dominio_base', $dom);
+            Settings::set('portal_sub', $sub);
+            Settings::set('owner_email', $ownerEmail);
+            Settings::set('webs_path', $webs);
+            \S5\Services\Hosts::saveMain(['host' => trim((string) $in['cp_host']) ?: 'localhost', 'port' => (int) $in['cp_port'], 'user' => $cpUser, 'token' => $cpToken, 'home' => $cpHome, 'webs_path' => $webs]);
+            $cpCheck = '';
+            if ($cpUser !== '' && $cpToken !== '') {
+                try {
+                    $pg = (new \S5\Provision\CpanelHttpApi(['host' => trim((string) $in['cp_host']) ?: 'localhost', 'port' => (int) $in['cp_port'], 'user' => $cpUser, 'token' => $cpToken, 'home' => $cpHome]))->ping();
+                    $cpCheck = $pg['ok'] ? 'ok' : (string) $pg['message'];
+                } catch (Throwable $e) {
+                    $cpCheck = 'No se pudo conectar con cPanel.';
+                }
+            }
+            @mkdir($webs . '/_base', 0755, true);
+            @file_put_contents($webs . '/.htaccess', "# Servicom: esta carpeta no se sirve directamente\nOptions -Indexes\n");
+            // 2) Al final se escribe la configuración (esto es lo que marca el sistema como instalado).
             $envFile = getenv('S5_CONFIG_FILE');
             $secDir = dirname(S5_ROOT) . '/servicom-secrets';
             if ($envFile) {
@@ -132,33 +182,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new RuntimeException('No se pudo escribir la configuración en ' . $target);
             }
             @chmod($target, 0640);
-            Config::override($cfg);
-            \S5\Core\Db::reset();
-            Schema::install($pdo, $pref);
-            $pdo->prepare('INSERT INTO `' . $pref . 'users` (email, pass_hash, created_at) VALUES (?,?,?)')->execute([strtolower((string) $in['email']), password_hash((string) $in['pass'], PASSWORD_DEFAULT), gmdate('Y-m-d H:i:s')]);
-            Settings::flush();
-            Settings::set('dominio_base', $dom);
-            Settings::set('portal_sub', $sub);
-            Settings::set('owner_email', strtolower((string) $in['email']));
-            Settings::set('webs_path', $webs);
-            \S5\Services\Hosts::saveMain(['host' => trim((string) $in['cp_host']) ?: 'localhost', 'port' => (int) $in['cp_port'], 'user' => $cpUser, 'token' => $cpToken, 'home' => $cpHome, 'webs_path' => $webs]);
-            $cpCheck = '';
-            if ($cpUser !== '' && $cpToken !== '') {
-                try {
-                    $pg = (new \S5\Provision\CpanelHttpApi(['host' => trim((string) $in['cp_host']) ?: 'localhost', 'port' => (int) $in['cp_port'], 'user' => $cpUser, 'token' => $cpToken, 'home' => $cpHome]))->ping();
-                    $cpCheck = $pg['ok'] ? 'ok' : (string) $pg['message'];
-                } catch (Throwable $e) {
-                    $cpCheck = 'No se pudo conectar con cPanel.';
-                }
+            if (function_exists('opcache_invalidate')) {
+                @opcache_invalidate($target, true);
             }
-            @mkdir($webs . '/_base', 0755, true);
-            @file_put_contents($webs . '/.htaccess', "# Servicom: esta carpeta no se sirve directamente\nOptions -Indexes\n");
+            $back = @include $target;
+            if (!is_array($back) || ($back['secret_key'] ?? '') !== $key) {
+                @unlink($target);
+                throw new RuntimeException('La configuración no se guardó correctamente en ' . $target);
+            }
             $ok = true;
             $loc = $target;
-            // auto-eliminación
+            $loginEmail = $ownerEmail;
             @unlink(__FILE__);
         } catch (Throwable $e) {
-            $err[] = 'No se pudo completar la instalación: ' . $e->getMessage();
+            $err[] = 'No se pudo completar la instalación (puede volver a intentarlo; no quedó nada a medias): ' . $e->getMessage();
         }
     }
 }
@@ -170,6 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="card"><p class="ok"><b>¡Listo!</b> El sistema quedó instalado y este instalador se eliminó.</p>
 <p>Configuración guardada en:<br><code><?= $h($loc) ?></code></p>
 <?php if (!empty($cpCheck) && $cpCheck !== 'ok'): ?><p class="no">Aviso: no se pudo verificar el token de cPanel (<?= $h($cpCheck) ?>). Revíselo en Ajustes → cPanel y en Diagnóstico.</p><?php elseif (($cpCheck ?? '') === 'ok'): ?><p class="ok">cPanel respondió correctamente con ese token.</p><?php elseif (($cpCheck ?? '') === ''): ?><p class="no">Falta el token de cPanel: complételo en Ajustes → cPanel antes de crear webs.</p><?php endif; ?>
+<p>Entre al panel con este correo: <b><?= $h($loginEmail ?? '') ?></b> y la contraseña que acaba de escribir.</p>
 <p><a href="/admin/login" style="color:#e8cf94">Entrar al panel</a>. Siguientes pasos (ver LEEME.md): construir el paquete base (<code>php tools/build_base.php</code>), el cron diario y completar datos bancarios y clave de IA en Ajustes.</p></div>
 <?php else: ?>
 <div class="card"><b>Requisitos</b><?php foreach ($reqs as $q): ?><div><?= $q[1] ? '<span class="ok">✔</span>' : '<span class="no">✖</span>' ?> <?= $h($q[0]) ?> <small><?= $h($q[2]) ?></small></div><?php endforeach; ?></div>
@@ -192,8 +230,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <label>Token de API de cPanel</label><input type="password" name="cp_token" autocomplete="new-password"><small>cPanel → Seguridad → Administrar tokens de API. Puede dejarlo vacío y completarlo luego en Ajustes.</small>
 <label>Carpeta personal (home)</label><input name="cp_home" value="<?= $h($in['cp_home']) ?>"></div>
 <div class="card"><b>Dueño del sistema</b>
-<label>Correo</label><input type="email" name="email" value="<?= $h($in['email']) ?>" required>
-<label>Contraseña (mínimo 12 caracteres)</label><input type="password" name="pass" minlength="12" required autocomplete="new-password"></div>
+<label>Correo (con este entrará al panel)</label><input type="email" name="email" value="<?= $h($in['email']) ?>" required autocapitalize="none" autocorrect="off" spellcheck="false">
+<label>Contraseña (mínimo 12 caracteres)</label><input type="password" name="pass" minlength="12" required autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false">
+<label>Repita la contraseña</label><input type="password" name="pass2" minlength="12" required autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false">
+<small>Los espacios al principio o al final se ignoran (algunos teclados de celular los agregan solos).</small></div>
 <button type="submit"<?= $reqOk ? '' : ' disabled' ?>>Instalar</button></form>
 <?php endif; ?>
 </main></body></html>

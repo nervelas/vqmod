@@ -364,12 +364,22 @@ final class Pipeline
         $id = (int) $o['id'];
         $b = Orders::data($o);
         $slug = (string) $o['slug'];
+        $d = self::driver($o);
+        $st = self::state($o);
         if ($slug === '') {
             $slug = Slugs::generate((string) $b['negocio']['nombre'], $id);
             Orders::set($id, ['slug' => $slug]);
         }
         if (Slugs::isReserved($slug)) {
             throw new ProvisionException('Nombre de subdominio reservado.', false);
+        }
+        // Nunca se adopta un subdominio que ya existe y no creamos nosotros (protege sitios ajenos y servicom.gt)
+        for ($n = 0; empty($st['sub_created']) && $d->subdomainExists($slug); $n++) {
+            if ($n >= 6) {
+                throw new ProvisionException('No se encontró un nombre de subdominio libre.', false);
+            }
+            $slug = substr(Slugs::generate((string) $b['negocio']['nombre'], $id), 0, 28) . '-' . bin2hex(random_bytes(2));
+            Orders::set($id, ['slug' => $slug]);
         }
         $d = self::driver($o);
         $root = self::domainRoot($o);

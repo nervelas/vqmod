@@ -84,6 +84,7 @@ final class AgentServer
             switch ($req['op']) {
                 case 'ping': $r = $d->ping(); break;
                 case 'subdomainCreate': $r = $d->subdomainCreate((string) $a['slug'], (string) $a['docroot']); break;
+                case 'subdomainExists': $r = $d->subdomainExists((string) $a['slug']); break;
                 case 'subdomainDelete': $d->subdomainDelete((string) $a['slug']); $r = true; break;
                 case 'dbCreate': $r = $d->dbCreate((string) $a['shortDb'], (string) $a['shortUser'], (string) $a['pass']); break;
                 case 'dbDelete': $d->dbDelete((string) $a['db'], (string) $a['user']); $r = true; break;

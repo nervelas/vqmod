@@ -89,6 +89,11 @@ final class AgentDriver implements HostDriver
         return (array) $this->call('subdomainCreate', ['slug' => $slug, 'docroot' => $docroot]);
     }
 
+    public function subdomainExists(string $slug): bool
+    {
+        return (bool) $this->call('subdomainExists', ['slug' => $slug]);
+    }
+
     public function subdomainDelete(string $slug): void
     {
         $this->call('subdomainDelete', ['slug' => $slug]);

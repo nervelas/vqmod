@@ -8,7 +8,7 @@ for name in ${@:-info1 info30 tienda1 tienda60 nofotos largo corto emoji special
   echo "== $name" >> /tmp/t2b/shots.log
   (cd /tmp && NODE_PATH=/opt/node-tools/node_modules node $HERE/shots.js $S $port $name 360,390,768,1024,1440 /,/contacto/ 2>&1 | tail -8) >> /tmp/t2b/shots.log
   (cd /tmp && MAXP=9 NODE_PATH=/opt/node-tools/node_modules node $HERE/shots.js $S $port ${name}-all 390 2>&1 | tail -8) >> /tmp/t2b/shots.log
-  kill $(cat $S/.php.pid) 2>/dev/null
+  bash "$HERE/kill-sites.sh"
   port=$((port+1)); [ $port -gt 8129 ] && port=8121
 done
 echo FIN >> /tmp/t2b/shots.log

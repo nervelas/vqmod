@@ -3,7 +3,7 @@ declare(strict_types=1);
 /**
  * Construye el paquete base de WordPress en <webs>/_base (una sola vez; repetir para actualizar).
  *   php tools/build_base.php [--webs=/ruta] [--locale=es_ES] [--wp-dir=/ruta/wordpress] [--plugins-dir=/ruta] [--skip-download]
- * Descarga SOLO de wordpress.org: WordPress, Elementor, WooCommerce y Fluent Forms (versiones gratuitas oficiales).
+ * Descarga SOLO de wordpress.org: WordPress, Elementor y WooCommerce (versiones gratuitas oficiales).
  */
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 define('S5_ROOT', dirname(__DIR__));

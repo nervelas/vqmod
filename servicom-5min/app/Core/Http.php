@@ -62,6 +62,7 @@ final class Http
             CURLOPT_SSL_VERIFYHOST => ($opts['verify'] ?? true) ? 2 : 0,
             CURLOPT_HTTPHEADER => $headers,
             CURLOPT_USERAGENT => 'ServicomPortal/1.0',
+            CURLOPT_COOKIEFILE => '',
         ]);
         if (isset($opts['body'])) {
             curl_setopt($ch, CURLOPT_POSTFIELDS, $opts['body']);

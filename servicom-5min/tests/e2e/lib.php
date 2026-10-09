@@ -98,3 +98,33 @@ function mysql_val(string $sql): ?string
     $o = trim((string) shell_exec('mysql -N -e ' . escapeshellarg($sql) . ' 2>/dev/null'));
     return $o === '' ? null : $o;
 }
+
+/** Construye una vista previa vía flow_basic (sin publicar). Devuelve [id, token, slug, url] o null. */
+function build_site(array $args = []): ?array
+{
+    $a = '';
+    foreach ($args as $k => $v) { $a .= ' --' . $k . '=' . escapeshellarg((string) $v); }
+    @unlink('/tmp/s5test/run/last_url');
+    shell_exec('cd ' . escapeshellarg(dirname(__DIR__, 2)) . ' && timeout 600 php tests/e2e/flow_basic.php --skip-publish=1' . $a . ' 2>&1');
+    $row = mysql_val('SELECT CONCAT(id,"|",token,"|",IFNULL(slug,"")) FROM s5test.s5_orders ORDER BY id DESC LIMIT 1');
+    if (!$row) { return null; }
+    [$id, $tok, $slug] = explode('|', $row);
+    return ['id' => (int) $id, 'token' => $tok, 'slug' => $slug, 'url' => trim((string) @file_get_contents('/tmp/s5test/run/last_url'))];
+}
+
+function admin_client(): Client
+{
+    $a = new Client();
+    $a->page('/admin/login');
+    $a->form('/admin/login', ['email' => 'dueno@servicom.test', 'password' => 'Contrasena-Segura-123']);
+    $a->page('/admin');
+    return $a;
+}
+
+function as_www(string $cmd): string
+{
+    return (string) shell_exec('runuser -u www-data -- env S5_CONFIG_FILE=/tmp/s5test/config.php S5_MAIL_SINK=/tmp/s5test/mail ' . $cmd . ' 2>&1');
+}
+
+function sim_dbs(): array { return array_filter(explode("\n", trim((string) shell_exec("mysql -N -e \"SHOW DATABASES LIKE 'sim\\_%'\"")))); }
+function sim_users(): array { return array_filter(explode("\n", trim((string) shell_exec("mysql -N -e \"SELECT user FROM mysql.user WHERE user LIKE 'sim\\_%'\"")))); }

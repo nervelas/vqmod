@@ -8,7 +8,7 @@ Requisitos del hosting: PHP 8.0+ (zip, dom, xml, mbstring, fileinfo, curl, gd o 
 2. En cPanel cree una base de datos y un usuario (todos los privilegios). Abra `https://crear.servicom.gt/install.php`: verifica requisitos, pide BD, dominio base (`servicom.gt`), subdominio del portal (`crear`), carpeta de webs (por defecto `/home/USUARIO/webs-clientes`, **fuera** de `public_html`) y crea su usuario. El instalador se elimina solo y guarda la configuración en `../servicom-secrets/config.php` (fuera del docroot) si puede.
 3. **Token de cPanel**: cPanel → Seguridad → *Administrar tokens de API* → crear token (conserve el valor). En el panel (`/admin`) → **Hostings → Agregar**: tipo *cPanel*, servidor `localhost`, su usuario, el token, la carpeta personal (`/home/USUARIO`) y la ruta de webs.
 4. **Paquete base** (una sola vez; repetir para actualizar): por SSH o por *Cron Jobs* ejecute
-   `php /home/USUARIO/.../tools/build_base.php` — descarga WordPress, Elementor, WooCommerce y Fluent Forms **solo de wordpress.org** (la última versión compatible con PHP 8.0; si alguna exige más, lo avisa) y copia el tema/mu-plugin de Servicom a `webs-clientes/_base`.
+   `php /home/USUARIO/.../tools/build_base.php` — descarga WordPress, Elementor y WooCommerce **solo de wordpress.org** (la última versión compatible con PHP 8.0; si alguna exige más, lo avisa) y copia el tema/mu-plugin de Servicom a `webs-clientes/_base`.
 5. **Cron diario** (borra vistas previas vencidas a los 15 días con todos sus archivos, avisa renovaciones, reanuda construcciones):
    `0 3 * * * /usr/local/bin/php /home/USUARIO/RUTA_DEL_PORTAL/tools/cron.php >/dev/null 2>&1`
    (si no lo configura, un «cron perezoso» se dispara con el tráfico del portal como respaldo).

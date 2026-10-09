@@ -34,6 +34,17 @@ final class LocalDriver implements HostDriver
         }
     }
 
+    /** Gancho de pruebas: valor de una clave del archivo de fallos simulados (solo existe en entornos de prueba). */
+    private function failValue(string $op)
+    {
+        $f = $this->cfg['fail_file'] ?? '';
+        if ($f && is_file($f)) {
+            $m = json_decode((string) file_get_contents($f), true) ?: [];
+            return $m[$op] ?? null;
+        }
+        return null;
+    }
+
     private function checkSlug(string $slug): void
     {
         if (!preg_match('/^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/', $slug) || $slug === '_base') {
@@ -102,6 +113,12 @@ final class LocalDriver implements HostDriver
         }
         $this->api->addSubdomain($slug, $this->root, $docroot);
         return ['fqdn' => $slug . '.' . $this->root];
+    }
+
+    public function subdomainExists(string $slug): bool
+    {
+        $this->checkSlug($slug);
+        return $this->api->subdomainExists($slug, $this->root);
     }
 
     public function subdomainDelete(string $slug): void
@@ -202,6 +219,10 @@ final class LocalDriver implements HostDriver
                 }
             }
             $n++;
+            $ca = $this->failValue('copy_after');
+            if ($ca !== null && $i + 1 >= (int) $ca) {
+                throw new ProvisionException('No hay espacio suficiente en el disco del hosting (simulado).', false);
+            }
             if ($n % 50 === 0 && (microtime(true) - $t0) > $budgetSec) {
                 $i++;
                 break;

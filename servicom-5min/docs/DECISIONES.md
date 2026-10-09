@@ -23,3 +23,16 @@
 - F: confirmar-presentacion recibe `{usar:{nombre,rubro,frase,quienes,servicios:[idx],productos:[idx],categorias,contacto:{campo:bool},redes:{red:bool}},fotos:[id],editado:{...}}`; el cliente reaplica las ediciones localmente si el servidor las ignora.
 - F: imágenes de la presentación se muestran con `imagenes[].url` si existe, si no `GET /api/borrador/<token>/archivo/<id>` (GET sin CSRF, solo sesión); mismo para miniaturas de fotos subidas.
 - F: `crear` envía `{t0, web_sitio}`; t0 = creado_en del borrador o primera visita local. Wizard guarda `whatsapp` como dígitos con código de país.
+- [W2b] sc-provision.php HTTP: la firma del contrato (step|job|ts) basta; si se envía además `asig` (hmac sobre step|job|ts|argumentos ordenados) se verifica y ata los argumentos. Sin firma válida: 403 con {"ok":false,"error":"forbidden"}.
+- [W2b] CLI: sc-provision.php fija HTTP_HOST/SERVER_PORT/HTTPS desde manifest.site.url antes de wp-load; install/pages fuerzan siteurl/home = site.url (finish no, para no deshacer replace_domain).
+- [W2b] Página Tienda de WooCommerce: solo intro + [sc_product_search]; el listado lo imprime el archivo de Woo (poner [products] duplicaría). Carrito/Finalizar/Mi cuenta con shortcodes clásicos (claves _sc_key "wcpage:*").
+- [W2b] Formulario: [sc_contact_form] propio por defecto; Contact Form 7 solo si su shortcode renderiza <form>; Fluent Forms no se crea programáticamente.
+- [W2b] Los archivos de includes/builder/*.php los carga servicom-core.php por glob (runtime.php, contact-form.php son necesarios en el sitio publicado; no borrar la carpeta builder).
+- [Arquitecto] Plugins del paquete base: solo Elementor y WooCommerce (de wordpress.org). El formulario de contacto es el propio `[sc_contact_form]` del mu-plugin (nonce, honeypot, tiempo mínimo, límite por IP): evita depender de Fluent Forms/CF7 creados programáticamente; se admite CF7 si el dueño lo instala.
+- [Arquitecto] Los precios de la API de IA son estimaciones editables en Ajustes (los del skill claude-api al construir); el tope de gasto usa esas cifras.
+- [Arquitecto] Un subdominio ya existente que no creó este sistema jamás se adopta: se genera otro slug con sufijo.
+- [Arquitecto] Fotos de stock: sin acceso a Unsplash/Pexels en el entorno de construcción; la biblioteca queda vacía (library/FALTANTES.md) y las webs usan cajas de icono/fondo del estilo.
+- [Arquitecto] Fotos de la presentación: las aprobadas van al banner (si el cliente no puso) y a la galería; a un servicio/producto solo si el cliente la asignó en la revisión.
+- [Arquitecto] La vista previa es privada: requiere la clave `?scpk=` (la entrega solo el portal); quien tenga ese enlace puede aprobar/editar ese pedido.
+- [Arquitecto] Al publicar se borran presentación original, imágenes extraídas y fotos subidas del portal (ya están en la biblioteca de WordPress); se conserva el comprobante.
+- [Arquitecto] El QA de producción no mide desbordes horizontales (requiere navegador): lo garantiza el CSS del tema y se verificó con Playwright en pruebas (tests/e2e/shots_sites.mjs).

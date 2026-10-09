@@ -234,6 +234,7 @@ class SC_El
 		$s = array('selected_icon' => self::icon($cls), 'view' => $view);
 		if ($size) {
 			$s['size'] = self::size($size);
+			$s['_flex_size'] = 'none'; // en filas: no se encoge (Elementor: flex-grow 0, flex-shrink 0)
 		}
 		return self::widget('icon', $s, $classes);
 	}

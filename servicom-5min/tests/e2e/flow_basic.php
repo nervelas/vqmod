@@ -80,7 +80,7 @@ t_ok($r2['status'] === 200, 'con clave: 200', (string) $r2['status']);
 t_ok(!preg_match('/(Warning|Notice|Fatal error|Deprecated):/', $r2['body']), 'sin mensajes PHP');
 t_ok(str_contains($r2['body'], 'Aprobar') || str_contains($r2['body'], 'sc-preview'), 'barra de vista previa presente');
 t_ok(str_contains($r2['headers'], 'noindex') || str_contains($r2['body'], 'noindex'), 'noindex presente');
-file_put_contents("$tmp/last_url.txt", $url);
+file_put_contents("$tmp/last_url.txt", $url); file_put_contents("/tmp/s5test/run/last_url", $url . "\n");
 if (isset($opts['skip-publish'])) { echo "OK (sin publicar)\n"; exit(($GLOBALS['__t_fail'] ?? 0) ? 1 : 0); }
 
 // pago

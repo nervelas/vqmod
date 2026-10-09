@@ -13,6 +13,8 @@ interface HostDriver
 
     public function subdomainDelete(string $slug): void;
 
+    public function subdomainExists(string $slug): bool;
+
     /** @return array{db:string,user:string,host:string} */
     public function dbCreate(string $shortDb, string $shortUser, string $pass): array;
 

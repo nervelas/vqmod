@@ -411,6 +411,9 @@ class SC_Elementor_Sim
 					if (!empty($s['align']) && in_array($el['widgetType'], array('heading', 'text-editor', 'button', 'image'), true)) {
 						$css .= $sel . '{text-align:' . $s['align'] . '}';
 					}
+					if (($s['_flex_size'] ?? '') === 'none') {
+						$css .= $sel . '{--flex-grow:0;--flex-shrink:0}';
+					}
 					if (($el['widgetType'] ?? '') === 'icon' && ($isz = self::sz($s['size'] ?? null))) {
 						$css .= $sel . ' .elementor-icon{font-size:' . $isz . '}';
 					}

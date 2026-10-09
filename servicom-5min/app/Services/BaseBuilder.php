@@ -13,7 +13,7 @@ final class BaseBuilder
 {
     public const MAX_PHP = '8.0';
     /** Plugins permitidos (slug de wordpress.org). Contact Form 7 solo si Fluent Forms no se puede usar. */
-    public const PLUGINS = ['elementor', 'woocommerce', 'fluentform'];
+    public const PLUGINS = ['elementor', 'woocommerce'];
 
     /** @var callable fn(string $url): string */
     private $fetch;

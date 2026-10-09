@@ -683,6 +683,55 @@ function sc_lx_head_css()
 	if ($p) {
 		echo '<meta name="theme-color" content="' . esc_attr($p) . '">' . "\n";
 	}
+	if (get_option('sc_mode', 'published') === 'published') {
+		$name = servicom_name();
+		$img = '';
+		$hero = sc_lx_get($s, 'pages.home.sections.0.data.img.id', 0);
+		if ((int) $hero > 0) {
+			$img = (string) wp_get_attachment_image_url((int) $hero, 'large');
+		}
+		if ($img === '' && get_theme_mod('custom_logo')) {
+			$img = (string) wp_get_attachment_image_url((int) get_theme_mod('custom_logo'), 'full');
+		}
+		echo '<meta property="og:type" content="website"><meta property="og:site_name" content="' . esc_attr($name) . '"><meta property="og:title" content="' . esc_attr(wp_get_document_title()) . '">';
+		if ($desc !== '') {
+			echo '<meta property="og:description" content="' . esc_attr($desc) . '">';
+		}
+		if ($img !== '') {
+			echo '<meta property="og:image" content="' . esc_url($img) . '">';
+		}
+		echo "\n";
+		$ld = array('@context' => 'https://schema.org', '@type' => 'LocalBusiness', 'name' => $name, 'url' => home_url('/'));
+		if ($desc !== '') {
+			$ld['description'] = $desc;
+		}
+		if ($img !== '') {
+			$ld['image'] = $img;
+		}
+		if (servicom_biz('telefono') !== '') {
+			$ld['telephone'] = servicom_biz('telefono');
+		}
+		if (servicom_biz('correo') !== '') {
+			$ld['email'] = servicom_biz('correo');
+		}
+		if (servicom_biz('direccion') !== '') {
+			$ld['address'] = array('@type' => 'PostalAddress', 'streetAddress' => servicom_biz('direccion'));
+		}
+		if (servicom_biz('horario') !== '') {
+			$ld['openingHours'] = servicom_biz('horario');
+		}
+		$same = array();
+		foreach (array('facebook', 'instagram', 'tiktok', 'youtube', 'x', 'linkedin') as $k) {
+			$u = servicom_biz($k);
+			if ($u !== '' && preg_match('~^https?://~i', $u)) {
+				$same[] = $u;
+			}
+		}
+		if ($same) {
+			$ld['sameAs'] = $same;
+		}
+		echo '<script type="application/ld+json">' . wp_json_encode($ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) . '</script>' . "\n";
+	}
 }
 
 add_action('wp_enqueue_scripts', function () {

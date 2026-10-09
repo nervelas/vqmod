@@ -115,6 +115,10 @@ class SC_Build_Luxe
 		SC_Builder::apply_business();
 		SC_Builder::apply_logo();
 		// Los elementos flotantes propios (llamar / WhatsApp / correo) sustituyen a los del tema
+		$logoId = (int) get_theme_mod('custom_logo', 0);
+		if ($logoId > 0) {
+			update_option('site_icon', $logoId);
+		}
 		set_theme_mod('sc_float_wa', '0');
 		set_theme_mod('sc_mobile_bar', '0');
 		$form = SC_Build_Forms::ensure($this->m, $this->lang);

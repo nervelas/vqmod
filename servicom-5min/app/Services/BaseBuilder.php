@@ -245,4 +245,32 @@ final class BaseBuilder
         if (is_dir($this->tmp)) { Fs::rmTreeSafe($this->tmp, [dirname($this->tmp)]); }
         return $report;
     }
+
+    /** Actualiza SOLO el tema, el mu-plugin y el script de aprovisionamiento de un paquete base existente (sin descargas). */
+    public function refreshPack(string $base, ?string $pack = null): array
+    {
+        $base = rtrim($base, '/');
+        $pack = rtrim($pack ?? (S5_ROOT . '/wp-pack'), '/');
+        foreach (['wp-load.php', 'wp-content'] as $need) {
+            if (!file_exists($base . '/' . $need)) { throw new \RuntimeException('No existe un paquete base en ' . $base . ': ejecute primero tools/build_base.php'); }
+        }
+        $done = [];
+        $theme = $base . '/wp-content/themes/servicom';
+        if (is_dir($theme)) { Fs::rmTreeSafe($theme, [$base]); }
+        $this->copyTree($pack . '/theme/servicom', $theme);
+        $done[] = 'tema servicom';
+        $mu = $base . '/wp-content/mu-plugins';
+        @mkdir($mu, 0755, true);
+        copy($pack . '/mu-plugins/servicom-core.php', $mu . '/servicom-core.php');
+        if (is_dir($mu . '/servicom-core')) { Fs::rmTreeSafe($mu . '/servicom-core', [$base]); }
+        $this->copyTree($pack . '/mu-plugins/servicom-core', $mu . '/servicom-core');
+        $done[] = 'mu-plugin servicom-core';
+        @mkdir($base . '/.provision', 0755, true);
+        copy($pack . '/provision/sc-provision.php', $base . '/.provision/sc-provision.php');
+        $done[] = 'script de aprovisionamiento';
+        foreach (['wp-content/themes/servicom/style.css', 'wp-content/mu-plugins/servicom-core.php', 'wp-content/mu-plugins/servicom-core/includes/design.php', 'wp-content/themes/servicom/inc/luxe-render.php'] as $need) {
+            if (!is_file($base . '/' . $need)) { throw new \RuntimeException('Actualización incompleta: falta ' . $need); }
+        }
+        return $done;
+    }
 }

@@ -2,7 +2,8 @@
 declare(strict_types=1);
 /**
  * Construye el paquete base de WordPress en <webs>/_base (una sola vez; repetir para actualizar).
- *   php tools/build_base.php [--webs=/ruta] [--locale=es_ES] [--wp-dir=/ruta/wordpress] [--plugins-dir=/ruta] [--skip-download]
+ *   php tools/build_base.php [--webs=/ruta] [--locale=es_ES] [--wp-dir=/ruta/wordpress] [--plugins-dir=/ruta] [--skip-download] [--only-pack]
+ * --only-pack: solo actualiza tema y mu-plugin Servicom del paquete base existente (sin descargar nada).
  * Descarga SOLO de wordpress.org: WordPress y WooCommerce (versiones gratuitas oficiales).
  */
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
@@ -14,6 +15,13 @@ foreach (array_slice($argv, 1) as $a) {
 }
 $webs = $opt['webs'] ?? (class_exists('S5\\Services\\Hosts') && \S5\Core\Config::installed() ? \S5\Services\Hosts::defaultWebsPath() : dirname(S5_ROOT) . '/webs-clientes');
 echo "Paquete base en: $webs/_base\n";
+if (isset($opt['only-pack'])) {
+    try {
+        foreach ((new \S5\Services\BaseBuilder())->refreshPack(rtrim($webs, '/') . '/_base') as $d) { echo "- actualizado: $d\n"; }
+    } catch (Throwable $e) { fwrite(STDERR, 'ERROR: ' . $e->getMessage() . "\n"); exit(1); }
+    echo "Listo.\n";
+    exit(0);
+}
 $b = new \S5\Services\BaseBuilder();
 try {
     $r = $b->build([

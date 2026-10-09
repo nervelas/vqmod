@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Ejecuta TODA la batería de pruebas desde cero y resume. Requiere el entorno descrito en tests/README.md.
+set -u
+cd "$(dirname "$0")/.."
+LOG=/tmp/s5test/run/suite.log; : > $LOG
+res() { printf "%-34s %s\n" "$1" "$2" | tee -a $LOG; }
+run() { local n="$1"; shift; if out=$("$@" 2>&1); then res "$n" "OK  $(echo "$out" | grep -E 'OK$|Resultado|Seguridad|Presentaciones|Ciclo|Fallos simulados|Agente:|SSL:|PHP 8.0|Compatibilidad' | tail -1)"; else res "$n" "FALLO"; echo "$out" | grep -E "FAIL|Error|FALLO" | head -8 | tee -a $LOG; FAILS=$((FAILS+1)); fi; }
+FAILS=0
+echo "== Sintaxis y compatibilidad"
+run "php -l (8.3)" bash -c 'find app agent tools install.php index.php wp-pack -name "*.php" -not -path "*/tests-only/*" | xargs -n1 php -l 2>&1 | grep -v "^No syntax" | head -5; test -z "$(find app agent tools install.php index.php wp-pack -name "*.php" | xargs -n1 php -l 2>&1 | grep -v "^No syntax")"'
+run "Compatibilidad PHP 8.0 (escáner)" php tests/compat80.php app agent install.php index.php tools wp-pack
+run "Sintaxis PHP 8.0.30 (WASM)" bash -c 'cd /tmp/p80 && node lint.mjs /home/user/vqmod/servicom-5min/app /home/user/vqmod/servicom-5min/agent /home/user/vqmod/servicom-5min/install.php /home/user/vqmod/servicom-5min/index.php /home/user/vqmod/servicom-5min/tools /home/user/vqmod/servicom-5min/wp-pack'
+run "IA y presentaciones (unitarias)" php tests/ai/run.php
+./build/make_zip.sh --with-sim >/dev/null 2>&1
+./tests/e2e/setup.sh >/dev/null 2>&1 && ./tests/e2e/setup_agent.sh >/dev/null 2>&1 && /tmp/mockctl.sh start
+run "Flujo completo (formulario→pago→publicar)" php tests/e2e/flow_basic.php
+run "Presentaciones por HTTP" php tests/e2e/flow_pres.php
+run "Ciclo de vida" php tests/e2e/lifecycle.php
+run "Fallos simulados y rollback" php tests/e2e/faults.php
+run "Agente (segundo hosting)" php tests/e2e/flow_agent.php
+run "SSL real (CA local)" php tests/e2e/ssl.php
+run "Seguridad del portal" php tests/e2e/security.php
+echo "== Navegador (Chromium)"
+( cd tests/portal/e2e && for w in 360 390 768 1024 1440; do run "Wizard real $w px" bash -c "node flowReal.js $w | tee /dev/stderr | grep -q 'errores consola: \[\] overflows: 0'"; done )
+run "Tienda 60 productos (390 px)" bash -c 'cd tests/portal/e2e && node flowRealB.js 390 60 | tee /dev/stderr | grep -q "errores consola: \[\]"'
+echo "FALLOS: $FAILS"
+exit $FAILS

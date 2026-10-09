@@ -11,7 +11,7 @@ pgrep -x dnsmasq >/dev/null || dnsmasq --conf-file=/etc/dnsmasq.d/s5test.conf --
 apache2ctl -k stop >/dev/null 2>&1 || true; sleep 1
 echo "== reinicio de datos"
 rm -rf $T/portal $T/webs $T/vroot $T/mail $T/sim $T/config.php $T/run/*.log /tmp/servicom-secrets
-mkdir -p $T/portal $T/webs $T/vroot $T/mail $T/sim $T/run
+echo ok > $T/run/ai-mode 2>/dev/null; mkdir -p $T/portal $T/webs $T/vroot $T/mail $T/sim $T/run
 mysql -e "DROP DATABASE IF EXISTS s5test; CREATE DATABASE s5test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
  CREATE USER IF NOT EXISTS 's5t'@'localhost' IDENTIFIED BY 's5tpass'; GRANT ALL ON s5test.* TO 's5t'@'localhost';
  CREATE USER IF NOT EXISTS 's5admin'@'localhost' IDENTIFIED BY 's5adminpass'; GRANT ALL PRIVILEGES ON *.* TO 's5admin'@'localhost' WITH GRANT OPTION;"

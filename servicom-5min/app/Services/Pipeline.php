@@ -140,7 +140,7 @@ final class Pipeline
         } elseif ($o['status'] === Orders::ST_BORRADOR && $msg !== '') {
             $estado = 'error';
         }
-        if (!empty($st['waiting'])) {
+        if (!empty($st['waiting']) && $o['status'] === Orders::ST_CONSTRUYENDO) {
             $msg = $st['waiting'];
         }
         return ['estado' => $estado, 'progreso' => $pct, 'pasos' => $pasos, 'mensaje' => $msg];
@@ -492,11 +492,11 @@ final class Pipeline
             return 'done';   // entorno de pruebas / sin HTTPS: se documenta en el diagnóstico
         }
         $st = self::state($o);
-        $r = Http::request('GET', 'https://' . $o['fqdn'] . '/', ['timeout' => 15, 'verify' => true, 'resolve' => self::resolve($o)]);
+        $r = Http::request('GET', 'https://' . $o['fqdn'] . Orders::portSuffix() . '/', ['timeout' => 15, 'verify' => true, 'resolve' => self::resolve($o)]);
         if ($r['errno'] === 0 && $r['status'] > 0 && $r['ssl_result'] === 0) {
             return 'done';
         }
-        $max = max(2, Settings::int('ssl_wait_min', 15)) * 60;
+        $max = Settings::has('ssl_wait_sec') ? max(5, Settings::int('ssl_wait_sec')) : max(2, Settings::int('ssl_wait_min', 15)) * 60;
         if (empty($st['ssl_started'])) {
             $st['ssl_started'] = time();
         }

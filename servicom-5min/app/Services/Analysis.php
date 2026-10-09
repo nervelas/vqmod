@@ -40,8 +40,8 @@ final class Analysis
         }
         $cmd = [$php, $script, 'analyze', (string) $orderId];
         $env = ['PATH' => '/usr/local/bin:/usr/bin:/bin'];
-        foreach (['S5_CONFIG_FILE', 'S5_MAIL_SINK', 'S5_AI_MOCK'] as $k) {
-            if (getenv($k) !== false) { $env[$k] = (string) getenv($k); }
+        foreach (array_keys(getenv()) as $k) {
+            if (str_starts_with((string) $k, 'S5_')) { $env[$k] = (string) getenv($k); }
         }
         $p = @proc_open($cmd, [0 => ['file', '/dev/null', 'r'], 1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']], $pipes, S5_ROOT, $env);
         if (!is_resource($p)) {

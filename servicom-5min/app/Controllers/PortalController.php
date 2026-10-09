@@ -55,7 +55,7 @@ final class PortalController
             return;
         }
         $draft = $o ? ApiController::view($o) : null;
-        self::page('portal/wizard', ['title' => 'Crea tu web · Servicom', 'page' => 'wizard', 'token' => $token, 'plan' => $o['plan'] ?? '', 'draft' => $draft]);
+        self::page('portal/wizard', ['title' => 'Crea tu web · Servicom', 'page' => 'wizard', 'token' => $token, 'plan' => $o['plan'] ?? (in_array($_GET['plan'] ?? '', ['info', 'tienda'], true) ? $_GET['plan'] : ''), 'draft' => $draft]);
     }
 
     public static function status(array $p): void

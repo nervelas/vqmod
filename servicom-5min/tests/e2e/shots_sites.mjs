@@ -22,7 +22,7 @@ for (const start of urls) {
       page.on('console', onc); page.on('pageerror', onp);
       const resp = await page.goto(url, { waitUntil: 'networkidle' }).catch(e => null);
       const status = resp ? resp.status() : 0;
-      await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 300) { scrollTo(0, y); await new Promise(r => setTimeout(r, 130)); } scrollTo(0, 0); await new Promise(r => setTimeout(r, 400)); });
+      await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 250) { scrollTo(0, y); await new Promise(r => setTimeout(r, 150)); } scrollTo(0, document.body.scrollHeight); await new Promise(r => setTimeout(r, 600)); scrollTo(0, 0); await new Promise(r => setTimeout(r, 500)); });
       const res = await page.evaluate(() => {
         const sw = document.documentElement.scrollWidth, iw = innerWidth;
         const broken = [...document.images].filter(i => i.complete && i.naturalWidth === 0 && i.src && !i.src.startsWith('data:')).map(i => i.src);

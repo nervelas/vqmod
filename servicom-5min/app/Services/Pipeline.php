@@ -280,6 +280,9 @@ final class Pipeline
                 $try(fn() => $d->removeSite($docroot), 'carpeta');
                 $db = (string) ($o['db_name'] ?: ($st['db_plan']['db'] ?? ''));
                 $us = (string) ($o['db_user'] ?: ($st['db_plan']['user'] ?? ''));
+                if (!empty($st['db_plan']['retry']) || (empty($o['db_name']) && empty($st['db_plan']['attempted']))) {
+                    $db = $us = '';
+                }
                 if ($db !== '' || $us !== '') {
                     $try(fn() => $d->dbDelete($db, $us), 'base de datos');
                 }
@@ -398,21 +401,39 @@ final class Pipeline
         if ($o['db_name']) {
             return 'done';
         }
-        $st = self::state($o);
-        if (empty($st['db_plan'])) {
-            $tag = substr(preg_replace('/[^a-z0-9]/', '', (string) $o['slug']), 0, 6) . substr(bin2hex(random_bytes(3)), 0, 4);
-            $st['db_plan'] = ['short' => 'w' . $tag, 'user_short' => 'u' . $tag, 'pass' => rtrim(strtr(base64_encode(random_bytes(24)), '+/', 'Aa'), '='), 'db' => '', 'user' => ''];
-            self::saveState($id, $st);
-        }
-        $p = $st['db_plan'];
         $d = self::driver($o);
-        $r = $d->dbCreate($p['short'], $p['user_short'], $p['pass']);
-        $st['db_plan']['db'] = $r['db'];
-        $st['db_plan']['user'] = $r['user'];
-        $st['db_plan']['host'] = $r['host'];
-        self::saveState($id, $st);
-        Orders::set($id, ['db_name' => $r['db'], 'db_user' => $r['user'], 'db_pass' => Crypto::encrypt($p['pass'])]);
-        return 'done';
+        $last = null;
+        for ($try = 0; $try < 5; $try++) {
+            $st = self::state(Orders::byId($id));
+            if (empty($st['db_plan']) || !empty($st['db_plan']['retry'])) {
+                $tag = bin2hex(random_bytes(3));
+                $plan = $d->dbPlan('w' . $tag, 'u' . $tag);
+                $st['db_plan'] = ['short' => 'w' . $tag, 'user_short' => 'u' . $tag, 'pass' => rtrim(strtr(base64_encode(random_bytes(24)), '+/', 'Aa'), '='), 'db' => $plan['db'], 'user' => $plan['user'], 'host' => $plan['host']];
+                self::saveState($id, $st);   // los nombres se guardan ANTES de crear: si el proceso muere, el rollback sabe qué borrar
+            }
+            $st['db_plan']['attempted'] = true;
+            self::saveState($id, $st);
+            $p = $st['db_plan'];
+            try {
+                $r = $d->dbCreate($p['short'], $p['user_short'], $p['pass']);
+            } catch (ProvisionException $e) {
+                if ($e->retry && preg_match('/ya existe/u', $e->getMessage())) {
+                    // colisión con algo que NO es nuestro: se descarta el plan (jamás se adopta ni se borra lo ajeno)
+                    $st['db_plan'] = ['retry' => true];
+                    self::saveState($id, $st);
+                    $last = $e;
+                    continue;
+                }
+                throw $e;
+            }
+            $st['db_plan']['db'] = $r['db'];
+            $st['db_plan']['user'] = $r['user'];
+            $st['db_plan']['host'] = $r['host'];
+            self::saveState($id, $st);
+            Orders::set($id, ['db_name' => $r['db'], 'db_user' => $r['user'], 'db_pass' => Crypto::encrypt($p['pass'])]);
+            return 'done';
+        }
+        throw new ProvisionException('No se pudo reservar un nombre libre para la base de datos.', false);
     }
 
     private static function step_copiar(array $o, int $left): string
@@ -470,6 +491,7 @@ final class Pipeline
         $d = self::driver($o);
         $t0 = microtime(true);
         do {
+            $args['budget'] = (string) max(6, min(22, (int) ($left - (microtime(true) - $t0)) - 2));
             $r = $d->provision((string) $o['site_path'], (string) $st['job_id'], $step, $args);
             if (empty($r['ok'])) {
                 throw new ProvisionException('Constructor (' . $step . '): ' . (string) ($r['error'] ?? 'error'), !empty($r['retry']));

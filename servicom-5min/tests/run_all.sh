@@ -18,6 +18,7 @@ run "Presentaciones por HTTP" php tests/e2e/flow_pres.php
 run "Ciclo de vida" php tests/e2e/lifecycle.php
 run "Fallos simulados y rollback" php tests/e2e/faults.php
 run "Agente (segundo hosting)" php tests/e2e/flow_agent.php
+run "Constructor por HTTP firmado" php tests/e2e/flow_httprunner.php
 run "SSL real (CA local)" php tests/e2e/ssl.php
 run "Seguridad del portal" php tests/e2e/security.php
 echo "== Navegador (Chromium)"

@@ -99,6 +99,11 @@ final class AgentDriver implements HostDriver
         $this->call('subdomainDelete', ['slug' => $slug]);
     }
 
+    public function dbPlan(string $shortDb, string $shortUser): array
+    {
+        return (array) $this->call('dbPlan', ['shortDb' => $shortDb, 'shortUser' => $shortUser]);
+    }
+
     public function dbCreate(string $shortDb, string $shortUser, string $pass): array
     {
         return (array) $this->call('dbCreate', ['shortDb' => $shortDb, 'shortUser' => $shortUser, 'pass' => $pass]);

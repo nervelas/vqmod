@@ -110,11 +110,19 @@ final class SimCpanelApi implements CpanelApi
         return $this->prefix . $short;
     }
 
+    public function maxLengths(): array
+    {
+        return ['db' => 64, 'user' => (int) ($this->dbCfg['max_user'] ?? 16)];
+    }
+
     public function createDatabase(string $short): string
     {
         $this->inject('createDatabase');
         $n = $this->dbRealName($short);
-        $this->pdo()->exec('CREATE DATABASE IF NOT EXISTS `' . $n . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
+        if ($this->databaseExists($n)) {
+            throw new ProvisionException('La base de datos ' . $n . ' ya existe.', true);
+        }
+        $this->pdo()->exec('CREATE DATABASE `' . $n . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
         return $n;
     }
 
@@ -123,8 +131,12 @@ final class SimCpanelApi implements CpanelApi
         $this->inject('createDbUser');
         $n = $this->dbRealName($short);
         $p = $this->pdo();
-        $p->exec("CREATE USER IF NOT EXISTS '$n'@'localhost' IDENTIFIED BY " . $p->quote($pass));
-        $p->exec("ALTER USER '$n'@'localhost' IDENTIFIED BY " . $p->quote($pass));
+        $st = $p->prepare("SELECT COUNT(*) FROM mysql.user WHERE user=? AND host='localhost'");
+        $st->execute([$n]);
+        if ((int) $st->fetchColumn() > 0) {
+            throw new ProvisionException('El usuario ' . $n . ' ya existe.', true);
+        }
+        $p->exec("CREATE USER '$n'@'localhost' IDENTIFIED BY " . $p->quote($pass));
         return $n;
     }
 

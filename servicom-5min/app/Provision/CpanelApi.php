@@ -18,6 +18,9 @@ interface CpanelApi
     /** Nombre real que cPanel dará (con prefijo de cuenta) a una BD/usuario cortos. */
     public function dbRealName(string $short): string;
 
+    /** @return array{db:int,user:int} longitudes máximas (incluyendo el prefijo de la cuenta) */
+    public function maxLengths(): array;
+
     public function createDatabase(string $short): string;
 
     public function createDbUser(string $short, string $pass): string;

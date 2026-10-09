@@ -170,11 +170,17 @@ final class CpanelHttpApi implements CpanelApi
         return $pre . $short;
     }
 
+    public function maxLengths(): array
+    {
+        $r = $this->restrictions();
+        return ['db' => (int) ($r['max_database_name_length'] ?? 64), 'user' => (int) ($r['max_username_length'] ?? 16)];
+    }
+
     public function createDatabase(string $short): string
     {
         $real = $this->dbRealName($short);
         if ($this->databaseExists($real)) {
-            return $real;
+            throw new ProvisionException('La base de datos ' . $real . ' ya existe.', true);
         }
         $this->uapi('Mysql', 'create_database', ['name' => $real]);
         return $real;
@@ -183,14 +189,7 @@ final class CpanelHttpApi implements CpanelApi
     public function createDbUser(string $short, string $pass): string
     {
         $real = $this->dbRealName($short);
-        try {
-            $this->uapi('Mysql', 'create_user', ['name' => $real, 'password' => $pass]);
-        } catch (ProvisionException $e) {
-            if (stripos($e->getMessage(), 'exist') === false) {
-                throw $e;
-            }
-            $this->uapi('Mysql', 'set_password', ['user' => $real, 'password' => $pass]);
-        }
+        $this->uapi('Mysql', 'create_user', ['name' => $real, 'password' => $pass]);
         return $real;
     }
 

@@ -265,17 +265,29 @@ final class ApiController
         if ($spawned) {
             Http::json(['ok' => true, 'estado' => 'procesando']);
         }
-        // sin procesos de fondo: respondemos ya y continuamos tras cerrar la conexión si el servidor lo permite
-        if (function_exists('fastcgi_finish_request')) {
-            ignore_user_abort(true);
-            echo json_encode(['ok' => true, 'estado' => 'procesando']);
+        // Sin procesos de fondo: se responde ya y el análisis continúa tras cerrar la conexión
+        $out = json_encode(['ok' => true, 'estado' => 'procesando']);
+        ignore_user_abort(true);
+        @set_time_limit(170);
+        if (function_exists('fastcgi_finish_request') || function_exists('litespeed_finish_request')) {
             header('Content-Type: application/json; charset=utf-8');
-            header('Content-Length: ' . ob_get_length());
-            fastcgi_finish_request();
+            header('Cache-Control: no-store');
+            echo $out;
+            function_exists('fastcgi_finish_request') ? fastcgi_finish_request() : litespeed_finish_request();
             Analysis::run($oid);
             exit;
         }
-        Http::json(['ok' => true, 'estado' => 'procesando']);   // el sondeo ejecutará el análisis
+        while (ob_get_level() > 0) {
+            @ob_end_clean();
+        }
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        header('Connection: close');
+        header('Content-Length: ' . strlen($out));
+        echo $out;
+        @flush();
+        Analysis::run($oid);
+        exit;
     }
 
     public static function analysisStatus(array $p): void

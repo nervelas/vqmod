@@ -15,6 +15,9 @@ interface HostDriver
 
     public function subdomainExists(string $slug): bool;
 
+    /** Nombres reales (determinísticos, ajustados a los límites de cPanel) que tendrán la BD y el usuario. @return array{db:string,user:string,host:string} */
+    public function dbPlan(string $shortDb, string $shortUser): array;
+
     /** @return array{db:string,user:string,host:string} */
     public function dbCreate(string $shortDb, string $shortUser, string $pass): array;
 

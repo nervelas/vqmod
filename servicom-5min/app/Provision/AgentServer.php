@@ -86,6 +86,7 @@ final class AgentServer
                 case 'subdomainCreate': $r = $d->subdomainCreate((string) $a['slug'], (string) $a['docroot']); break;
                 case 'subdomainExists': $r = $d->subdomainExists((string) $a['slug']); break;
                 case 'subdomainDelete': $d->subdomainDelete((string) $a['slug']); $r = true; break;
+                case 'dbPlan': $r = $d->dbPlan((string) $a['shortDb'], (string) $a['shortUser']); break;
                 case 'dbCreate': $r = $d->dbCreate((string) $a['shortDb'], (string) $a['shortUser'], (string) $a['pass']); break;
                 case 'dbDelete': $d->dbDelete((string) $a['db'], (string) $a['user']); $r = true; break;
                 case 'copyBase': $r = $d->copyBase((string) $a['docroot'], (int) $a['cursor'], min(40, (int) ($a['budget'] ?? 12))); break;

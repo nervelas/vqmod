@@ -127,11 +127,34 @@ final class LocalDriver implements HostDriver
         $this->api->delSubdomain($slug, $this->root);
     }
 
+    /** Recorta los nombres cortos para que, con el prefijo de la cuenta, respeten los límites de cPanel. */
+    private function fit(string $short, int $max, bool $isUser): string
+    {
+        $prefix = strlen($this->api->dbRealName(''));
+        $room = max(3, $max - $prefix);
+        return substr($short, 0, $room);
+    }
+
+    public function dbPlan(string $shortDb, string $shortUser): array
+    {
+        $lim = $this->api->maxLengths();
+        $d = $this->fit($shortDb, $lim['db'], false);
+        $u = $this->fit($shortUser, $lim['user'], true);
+        return ['db' => $this->api->dbRealName($d), 'user' => $this->api->dbRealName($u), 'host' => $this->api->dbHost()];
+    }
+
     public function dbCreate(string $shortDb, string $shortUser, string $pass): array
     {
         $this->inject('db');
-        $db = $this->api->createDatabase($shortDb);
-        $user = $this->api->createDbUser($shortUser, $pass);
+        $plan = $this->dbPlan($shortDb, $shortUser);
+        $lim = $this->api->maxLengths();
+        $db = $this->api->createDatabase($this->fit($shortDb, $lim['db'], false));
+        try {
+            $user = $this->api->createDbUser($this->fit($shortUser, $lim['user'], true), $pass);
+        } catch (ProvisionException $e) {
+            $this->api->deleteDatabase($db);   // la BD recién creada es nuestra: se retira antes de reintentar con otro nombre
+            throw $e;
+        }
         $this->api->grantAll($user, $db);
         return ['db' => $db, 'user' => $user, 'host' => $this->api->dbHost()];
     }

@@ -46,6 +46,6 @@ t_ok((bool) preg_match('/Strict-Transport-Security/i', (string) $out), 'cabecera
 t_ok((bool) preg_match('/Set-Cookie: sc_pk=[^;]+;.*secure/i', (string) $out), 'cookie de vista previa con Secure');
 t_ok(str_starts_with((string) mysql_val("SELECT option_value FROM `" . mysql_val("SELECT db_name FROM s5test.s5_orders WHERE id=$id") . "`.`" . mysql_val("SELECT wp_prefix FROM s5test.s5_orders WHERE id=$id") . "options` WHERE option_name='siteurl'"), 'https://'), 'siteurl de WordPress es https');
 // restaurar
-mysql_val("DELETE FROM s5test.s5_settings WHERE k IN ('force_scheme','ssl_wait_sec')");
+mysql_val("UPDATE s5test.s5_settings SET v='http' WHERE k='force_scheme'"); mysql_val("DELETE FROM s5test.s5_settings WHERE k='ssl_wait_sec'");
 echo "\nSSL: " . ($GLOBALS['__t_n'] - $GLOBALS['__t_fail']) . "/" . $GLOBALS['__t_n'] . " OK\n";
 exit(($GLOBALS['__t_fail'] ?? 0) ? 1 : 0);

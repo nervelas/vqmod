@@ -19,7 +19,7 @@ foreach (($body['messages'][0]['content'] ?? []) as $c) {
     if (($c['type'] ?? '') === 'document') { $hasDoc = true; }
 }
 if (is_string($body['messages'][0]['content'] ?? null)) { $user = $body['messages'][0]['content']; }
-$out = '';
+$out = ''; @file_put_contents('/tmp/s5test/run/ai-last.txt', $user);
 if (str_contains($user, '<datos_cliente>')) {
     preg_match('#<datos_cliente>\s*(.*?)\s*</datos_cliente>#s', $user, $m);
     $d = json_decode($m[1] ?? '{}', true) ?: [];
@@ -39,18 +39,22 @@ if (str_contains($user, '<datos_cliente>')) {
     // extracción de presentación: heurística sobre el texto recibido
     $lines = array_values(array_filter(array_map('trim', preg_split('/\R/u', $user) ?: [])));
     $name = ''; $servs = []; $tel = ''; $mail = '';
+    $inServ = false;
     foreach ($lines as $l) {
-        if ($name === '' && !str_starts_with($l, '[') && mb_strlen($l) > 3 && mb_strlen($l) < 70 && !str_contains(mb_strtolower($l), 'extrae') && !str_contains($l, '<') ) { $name = $l; }
-        if (preg_match('/^[-•*]\s*(.{3,60})$/u', $l, $mm)) { $servs[] = ['nombre' => $mm[1], 'descripcion' => '', 'textual' => true]; }
-        if (preg_match('/(\+?502[\s-]?\d{4}[\s-]?\d{4}|\b\d{4}[\s-]\d{4}\b)/', $l, $mm) && $tel === '') { $tel = $mm[1]; }
+        $l = preg_replace('/^(Título|Titulo|Title):\s*/iu', '', $l);
+        if (str_starts_with($l, '<') || str_starts_with($l, '[') || str_starts_with($l, 'Notas:') || stripos($l, 'Extrae') === 0) { if (str_starts_with($l, '[')) { $inServ = false; } continue; }
+        if (preg_match('/^(servicios|áreas de práctica|areas de practica|services|productos)\b/iu', $l)) { $inServ = true; continue; }
+        if ($name === '' && mb_strlen($l) > 3 && mb_strlen($l) < 70) { $name = $l; continue; }
         if (preg_match('/[\w.+-]+@[\w-]+\.[\w.]+/', $l, $mm) && $mail === '') { $mail = $mm[0]; }
+        if (preg_match('/(\+?502[\s-]?\d{4}[\s-]?\d{4}|\b\d{4}[\s-]\d{4}\b)/', $l, $mm) && $tel === '') { $tel = $mm[1]; }
+        if ($inServ && mb_strlen($l) >= 3 && mb_strlen($l) <= 120 && !str_contains($l, '@')) { [$n1, $d1] = array_pad(explode(':', $l, 2), 2, ''); if (!preg_match('/\d{4}/', $n1)) { $servs[] = ['nombre' => trim($n1), 'descripcion' => trim($d1), 'textual' => true]; } }
     }
     if ($hasDoc) { $name = 'Negocio del PDF'; $servs = [['nombre' => 'Servicio del PDF', 'descripcion' => '', 'textual' => false]]; }
     $r = ['nombre' => ['v' => $name, 'textual' => true], 'rubro_sugerido' => ['v' => '', 'textual' => false], 'frase_principal' => ['v' => '', 'textual' => false], 'quienes_somos' => ['v' => '', 'textual' => false],
         'servicios' => $servs, 'productos' => [], 'categorias' => [],
         'contacto' => ['telefono' => ['v' => $tel, 'textual' => true], 'whatsapp' => ['v' => '', 'textual' => false], 'correo' => ['v' => $mail, 'textual' => true], 'direccion' => ['v' => '', 'textual' => false], 'horario' => ['v' => '', 'textual' => false], 'redes' => ['facebook' => '', 'instagram' => '', 'tiktok' => '', 'youtube' => '', 'x' => '', 'linkedin' => '']],
         'idioma' => 'es'];
-    if ($mode === 'naive' && stripos($user, 'ignora') !== false) { $r['instruccion_obedecida'] = true; $r['nombre']['v'] = 'HACKEADO'; }
+    if ($mode === 'naive' && stripos($user, 'ignora') !== false) { $r['instruccion_obedecida'] = true; $r['script'] = 'HACKEADO'; }
     $out = json_encode($r, JSON_UNESCAPED_UNICODE);
 }
 if ($mode === 'invalid') { $out = 'Lo siento, no puedo ayudar con eso {{{'; }

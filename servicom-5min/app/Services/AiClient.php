@@ -371,7 +371,7 @@ TXT;
         for ($intento = 0; $intento < 2; $intento++) {
             try {
                 $fn = self::$transport ?? [self::class, 'transporteCurl'];
-                $res = $fn(self::URL, $headers, $json);
+                $res = $fn((getenv('S5_AI_URL') ?: self::URL), $headers, $json);
                 if (!is_array($res)) {
                     $res = ['status' => 0, 'body' => ''];
                 }
@@ -444,7 +444,7 @@ TXT;
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_FOLLOWLOCATION => false,
-            CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
+            CURLOPT_PROTOCOLS => getenv('S5_AI_URL') ? (CURLPROTO_HTTPS | CURLPROTO_HTTP) : CURLPROTO_HTTPS,
         ]);
         $body = curl_exec($ch);
         $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);

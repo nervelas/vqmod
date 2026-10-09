@@ -494,7 +494,7 @@ class SC_Build_Pages
 		if ($this->tienda) {
 			$ch = array(
 				$this->head($this->tx('tienda_titulo', SC_Builder::t('t_destacados')), $this->tx('tienda_intro')),
-				SC_El::shortcode('[products limit="8" columns="4" orderby="date" order="DESC"]', 'sc-products'),
+				SC_El::shortcode('[products limit="8" columns="4" orderby="id" order="ASC"]', 'sc-products'),
 				SC_El::container(array($this->btn(SC_Builder::t('ver_tienda'), $this->url('tienda'), 'primary')), 'sc-more', array('dir' => 'row', 'justify' => 'center')),
 			);
 			$els[] = $this->sec($ch, $this->alt_mod());

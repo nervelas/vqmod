@@ -78,7 +78,7 @@ if (!function_exists('wc_get_page_id')) {
 function sc_wcsim_products($atts = array())
 {
 	$a = shortcode_atts(array('limit' => 12, 'columns' => 4, 'orderby' => 'date', 'order' => 'DESC'), (array) $atts);
-	$q = new WP_Query(array('post_type' => 'product', 'posts_per_page' => (int) $a['limit'], 'orderby' => $a['orderby'], 'order' => $a['order'], 'no_found_rows' => true));
+	$q = new WP_Query(array('post_type' => 'product', 'posts_per_page' => (int) $a['limit'], 'orderby' => ($a['orderby'] === 'id' ? 'ID' : $a['orderby']), 'order' => $a['order'], 'no_found_rows' => true));
 	$o = '<div class="woocommerce columns-' . (int) $a['columns'] . '"><ul class="products columns-' . (int) $a['columns'] . '">';
 	while ($q->have_posts()) {
 		$q->the_post();

@@ -1,0 +1,45 @@
+/* Estilo 4 - Esmeralda Elegante: verde profundo, filetes dorados, serif clásica. */
+:root {
+	--sc-bg: #f7faf8; --sc-bg-alt: #e9f2ed; --sc-surface: #ffffff;
+	--sc-text: #10241b; --sc-muted: #4a6256;
+	--sc-primary: #0c6b4b; --sc-primary-ink: #ffffff; --sc-accent: #084d36;
+	--sc-border: #d5e3db;
+	--sc-radius: 8px;
+	--sc-shadow: 0 1px 2px rgba(16, 36, 27, .05), 0 14px 30px -20px rgba(16, 36, 27, .32);
+	--sc-shadow-hover: 0 24px 44px -22px rgba(12, 107, 75, .5);
+	--sc-font-head: 'Playfair Display', Georgia, 'Times New Roman', serif;
+	--sc-font-body: 'Lato', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	--sc-space-sec: 64px; --sc-space-sec-m: 40px;
+
+	--sc-tint: rgba(12, 107, 75, .09); --sc-tint-2: rgba(12, 107, 75, .22);
+	--sc-dark-bg: #07261b; --sc-dark-ink: #f1f7f3; --sc-dark-muted: #b8cfc3; --sc-dark-surface: #0d3526; --sc-dark-border: rgba(255, 255, 255, .15);
+	--sc-dark-primary: #d6b975; --sc-dark-primary-ink: #07261b; --sc-dark-tint: rgba(214, 185, 117, .14);
+
+	--sc-header-bg: rgba(247, 250, 248, .92); --sc-header-ink: #10241b; --sc-header-line: rgba(12, 107, 75, .2);
+	--sc-footer-bg: #062a1f; --sc-footer-ink: #e8f2ec; --sc-footer-muted: #a7c1b3; --sc-footer-accent: #d6b975; --sc-footer-line: rgba(255, 255, 255, .13);
+	--sc-hero-bg: radial-gradient(900px 440px at 88% -10%, rgba(214, 185, 117, .22), transparent 62%), linear-gradient(135deg, #06291e 0%, #0a4330 60%, #0d4f38 100%);
+	--sc-hero-deco: linear-gradient(90deg, transparent, rgba(214, 185, 117, .5), transparent) bottom / 100% 1px no-repeat;
+	--sc-cta-bg: radial-gradient(800px 340px at 50% 0%, rgba(214, 185, 117, .2), transparent 65%), linear-gradient(135deg, #06291e, #0b4a35);
+
+	--sc-btn-shadow: 0 10px 22px -12px rgba(12, 107, 75, .7); --sc-btn-shadow-hover: 0 16px 28px -12px rgba(12, 107, 75, .75);
+	--sc-ghost-border: rgba(12, 107, 75, .55);
+	--sc-radius-btn: 6px; --sc-btn-track: .03em; --sc-btn-fs: .93rem;
+	--sc-head-weight: 600; --sc-head-track: -.005em; --sc-head-size: 1;
+	--sc-title-deco: linear-gradient(90deg, transparent, #b8975a 25%, #b8975a 75%, transparent); --sc-title-deco-w: 110px; --sc-title-deco-h: 2px;
+	--sc-card-border-hover: rgba(12, 107, 75, .5);
+	--sc-shine: rgba(214, 185, 117, .2);
+	--sc-input-bg: #fff; --sc-input-border: #bcd1c6;
+	--sc-map-filter: saturate(.7) hue-rotate(-8deg);
+}
+.sc-style-4 .sc-sec--dark, .sc-style-4 .sc-cta, .sc-style-4 .sc-hero, .sc-style-4 .sc-page-hero {
+	--sc-title-deco: linear-gradient(90deg, transparent, #d6b975 25%, #d6b975 75%, transparent);
+	--sc-btn-bg: linear-gradient(135deg, #e6cf97, #c9a85c); --sc-btn-shadow: 0 12px 26px -14px rgba(0, 0, 0, .6);
+	--sc-ghost-border: rgba(214, 185, 117, .7);
+}
+.sc-style-4 .sc-card { border-top: 3px solid #b8975a; }
+.sc-style-4 .sc-card:hover { border-top-color: #0c6b4b; }
+.sc-style-4 .sc-header::before { border-bottom: 1px solid rgba(184, 151, 90, .35); }
+.sc-style-4 .sc-brand__name { font-weight: 700; }
+.sc-style-4 .sc-footer { border-top: 3px solid #b8975a; }
+.sc-style-4 .sc-float-wa, .sc-style-4 .sc-bar__btn--wa { background: #128a4a; }
+.sc-style-4 .sc-sec--dark .sc-card, .sc-style-4 .sc-cta .sc-card { border-top-color: #d6b975; }

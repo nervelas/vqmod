@@ -1,0 +1,42 @@
+{
+ "version": 1,
+ "nota": "Agregue fotos con tools/stock_add.php. Solo licencias libres (Unsplash/Pexels). Cada entrada: file, alt, credit, source_url, license.",
+ "rubros": {
+  "abogado": {
+   "hero": [],
+   "servicio": []
+  },
+  "clinica": {
+   "hero": [],
+   "servicio": []
+  },
+  "taller": {
+   "hero": [],
+   "servicio": []
+  },
+  "ropa": {
+   "hero": [],
+   "servicio": []
+  },
+  "restaurante": {
+   "hero": [],
+   "servicio": []
+  },
+  "transporte": {
+   "hero": [],
+   "servicio": []
+  },
+  "contabilidad": {
+   "hero": [],
+   "servicio": []
+  },
+  "importaciones": {
+   "hero": [],
+   "servicio": []
+  },
+  "otro": {
+   "hero": [],
+   "servicio": []
+  }
+ }
+}

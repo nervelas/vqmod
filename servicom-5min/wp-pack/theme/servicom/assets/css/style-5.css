@@ -1,0 +1,50 @@
+/* Estilo 5 - Terracota Boutique: cálido, redondeado, serif display con calidez artesanal. */
+:root {
+	--sc-bg: #fcf6ef; --sc-bg-alt: #f4e8db; --sc-surface: #fffaf4;
+	--sc-text: #2e1f17; --sc-muted: #6b5547;
+	--sc-primary: #b2452a; --sc-primary-ink: #ffffff; --sc-accent: #8f321c;
+	--sc-border: #ead9c6;
+	--sc-radius: 24px;
+	--sc-shadow: 0 2px 4px rgba(120, 60, 30, .05), 0 20px 38px -22px rgba(150, 70, 35, .36);
+	--sc-shadow-hover: 0 28px 50px -24px rgba(150, 70, 35, .55);
+	--sc-font-head: 'DM Serif Display', Georgia, 'Times New Roman', serif;
+	--sc-font-body: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	--sc-space-sec: 64px; --sc-space-sec-m: 40px;
+
+	--sc-tint: rgba(178, 69, 42, .09); --sc-tint-2: rgba(178, 69, 42, .22);
+	--sc-dark-bg: #3a1f15; --sc-dark-ink: #fdf1e4; --sc-dark-muted: #e0c9b5; --sc-dark-surface: #4b2b1e; --sc-dark-border: rgba(255, 255, 255, .17);
+	--sc-dark-primary: #f4b992; --sc-dark-primary-ink: #3a1f15; --sc-dark-tint: rgba(244, 185, 146, .16);
+
+	--sc-header-bg: rgba(252, 246, 239, .92); --sc-header-ink: #2e1f17; --sc-header-line: rgba(178, 69, 42, .2);
+	--sc-footer-bg: #2f1a12; --sc-footer-ink: #fbeee0; --sc-footer-muted: #caae99; --sc-footer-accent: #f4b992; --sc-footer-line: rgba(255, 255, 255, .14);
+	--sc-hero-bg: radial-gradient(800px 420px at 90% -10%, rgba(244, 185, 146, .38), transparent 62%), radial-gradient(500px 300px at 0% 110%, rgba(244, 185, 146, .16), transparent 62%), linear-gradient(135deg, #4a2418 0%, #7d2a17 100%);
+	--sc-hero-deco: radial-gradient(circle at 12% 20%, rgba(244, 185, 146, .12) 0 60px, transparent 61px), radial-gradient(circle at 96% 85%, rgba(244, 185, 146, .1) 0 90px, transparent 91px);
+	--sc-cta-bg: radial-gradient(700px 320px at 15% 0%, rgba(244, 185, 146, .3), transparent 65%), linear-gradient(135deg, #4a2418, #7d2a17);
+
+	--sc-btn-shadow: 0 12px 24px -12px rgba(178, 69, 42, .65); --sc-btn-shadow-hover: 0 18px 30px -12px rgba(178, 69, 42, .7);
+	--sc-ghost-border: rgba(178, 69, 42, .55);
+	--sc-radius-btn: 999px; --sc-btn-track: .01em; --sc-btn-fs: .95rem;
+	--sc-radius-input: 16px;
+	--sc-head-weight: 400; --sc-head-track: 0; --sc-head-size: 1.05;
+	--sc-title-deco: radial-gradient(circle, #b2452a 0 50%, transparent 52%) 0 50% / 14px 8px repeat-x; --sc-title-deco-w: 56px; --sc-title-deco-h: 8px;
+	--sc-card-border-hover: rgba(178, 69, 42, .45);
+	--sc-shine: rgba(255, 255, 255, .5);
+	--sc-input-bg: #fffaf4; --sc-input-border: #dcc6ae;
+	--sc-map-filter: sepia(.25) saturate(.9);
+	--sc-media-radius: 999px 999px 28px 28px;
+}
+.sc-style-5 .sc-sec--dark, .sc-style-5 .sc-cta, .sc-style-5 .sc-hero, .sc-style-5 .sc-page-hero {
+	--sc-title-deco: radial-gradient(circle, #f4b992 0 50%, transparent 52%) 0 50% / 14px 8px repeat-x;
+	--sc-ghost-border: rgba(253, 241, 228, .6);
+}
+@media (min-width: 900px) { body.sc-style-5 .elementor .sc-about__media img { aspect-ratio: 4 / 5; max-height: 560px; } }
+.sc-style-5 .sc-card__media { border-radius: 0; }
+.sc-style-5 .sc-card { border-width: 1px; }
+.sc-style-5 .sc-card:hover { background: #fff; }
+.sc-style-5 .sc-page-hero { border-radius: 0 0 36px 36px; }
+.sc-style-5 .sc-brand__name { font-size: clamp(1.2rem, 1rem + .8vw, 1.6rem); letter-spacing: .005em; }
+.sc-style-5 .sc-menu .sub-menu { border-radius: 20px; }
+.sc-style-5 .sc-footer { border-radius: 36px 36px 0 0; }
+body.sc-style-5 .elementor .elementor-icon-box-wrapper .elementor-icon { border-radius: 50%; }
+.sc-style-5 .sc-float-wa, .sc-style-5 .sc-bar__btn--wa { background: #128a4a; }
+.sc-style-5 .sc-gallery .gallery-item:nth-child(3n+2) { border-radius: 999px 999px var(--sc-radius) var(--sc-radius); }

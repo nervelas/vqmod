@@ -1,0 +1,17 @@
+{
+    "abogado.pptx": "PPTX abogado ES: 4 diapositivas, tabla, notas, grupo, 6 fotos buenas + pequeña + icono + 2 duplicados",
+    "clinica.docx": "DOCX clínica ES: título, headings, viñetas, tabla, encabezado\/pie, 3 fotos + icono",
+    "contabilidad_es.docx": "DOCX contabilidad con estilos Título 1 (Ttulo1)",
+    "taller.pptx": "PPTX taller ES: 3 diapositivas, 4 fotos",
+    "restaurante_en.pptx": "PPTX restaurante EN con tabla de precios",
+    "telefonos_contradicen.pptx": "PPTX con teléfono 2222-3333 (el formulario dirá 7777-8888)",
+    "inyeccion.pptx": "PPTX con órdenes a la IA, <script> y <?php",
+    "inyeccion.docx": "DOCX con órdenes a la IA",
+    "texto.pdf": "PDF de texto 2 páginas",
+    "escaneado.pdf": "PDF escaneado (imagen) 2 páginas",
+    "(invalidos)": "vacio, corrupto*, protegido*, macros*, grande.pdf, antiguo.*, keynote.key, diseno.canva, falso.pdf, renombrado.pptx",
+    "(bombas)": "bomba_ceros.docx (300MB), bomba_ratio.pptx (100MB), bomba_entradas.pptx (100000), xml_enorme.docx, traversal, simbolico, zip_anidado, pixelbomb.pptx",
+    "xxe.docx \/ xxe.pptx": "XML con DOCTYPE y entidad externa file:\/\/\/etc\/passwd",
+    "orden_invertido.pptx": "sldIdLst invierte el orden de los archivos slideN.xml",
+    "perf40.pptx": "40 diapositivas y 40 fotos de 1400x1000"
+}

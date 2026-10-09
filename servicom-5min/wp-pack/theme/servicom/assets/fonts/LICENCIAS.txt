@@ -1,0 +1,22 @@
+FUENTES INCLUIDAS EN EL TEMA SERVICOM
+=====================================
+Todas las fuentes se distribuyen bajo la licencia SIL Open Font License 1.1 (OFL),
+que permite su uso, copia, incrustación y redistribución, incluso comercial,
+siempre que no se vendan por separado. Texto completo: https://openfontlicense.org
+
+Fuente                  Autoría (Copyright)                              Uso en el tema
+----------------------  -----------------------------------------------  ----------------
+Cormorant Garamond      Copyright 2015 The Cormorant Project Authors     Estilo 1 (títulos)
+Manrope                 Copyright 2018 The Manrope Project Authors       Estilo 1 (texto)
+Fraunces                Copyright 2020 The Fraunces Project Authors      Estilo 2 (títulos)
+Inter                   Copyright 2020 The Inter Project Authors         Estilo 2 (texto)
+Sora                    Copyright 2019 The Sora Project Authors          Estilo 3 (títulos)
+Nunito Sans             Copyright 2016 The Nunito Sans Project Authors   Estilo 3 (texto)
+Playfair Display        Copyright 2017 The Playfair Project Authors      Estilo 4 (títulos)
+Lato                    Copyright 2010-2014 Lukasz Dziedzic (tyPoland)   Estilo 4 (texto)
+DM Serif Display        Copyright 2014 Colophon Foundry / Google LLC     Estilo 5 (títulos)
+DM Sans                 Copyright 2019 The DM Sans Project Authors       Estilo 5 (texto)
+
+Origen: Google Fonts (fonts.google.com). Archivos WOFF2, solo subconjuntos latin y latin-ext,
+fuentes variables cuando existen (pesos 400-700). Autoalojadas: el sitio no contacta con Google.
+Referencia de carga: fonts.css (font-display: swap).

@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /admin
+Disallow: /api/
+Disallow: /continuar/
+Disallow: /pago/
+Disallow: /vista-previa/
+Disallow: /vp/

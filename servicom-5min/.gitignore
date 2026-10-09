@@ -1,0 +1,5 @@
+dist/
+storage/*/
+!storage/*/.gitkeep
+app/config.php
+node_modules/

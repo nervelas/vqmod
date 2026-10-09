@@ -1,0 +1,12 @@
+Fuentes autoalojadas del portal "Tu web en 5 minutos" (Servicom)
+
+- Cormorant Garamond  (c) The Cormorant Project Authors
+- Manrope             (c) The Manrope Project Authors (Mikhail Sharanda)
+
+Ambas se distribuyen bajo la SIL Open Font License, Version 1.1
+(https://openfontlicense.org). Se permite su uso, estudio, copia, fusion,
+incrustacion y redistribucion, solo o junto con software, siempre que se
+conserve este aviso y no se vendan por separado. Los nombres reservados
+de las fuentes no pueden usarse para versiones modificadas.
+
+Obtenidas de Google Fonts (subsets latin y latin-ext).

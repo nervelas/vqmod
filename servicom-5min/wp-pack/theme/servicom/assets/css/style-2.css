@@ -1,0 +1,58 @@
+/* Estilo 2 - Marfil Editorial: marfil, tinta, serif editorial, líneas finas. */
+:root {
+	--sc-bg: #faf6ee; --sc-bg-alt: #f1eadb; --sc-surface: #fffdf8;
+	--sc-text: #1d1a15; --sc-muted: #5a5346;
+	--sc-primary: #1d1a15; --sc-primary-ink: #faf6ee; --sc-accent: #8a2f2a;
+	--sc-border: #ddd3bf;
+	--sc-radius: 2px;
+	--sc-shadow: 0 1px 0 rgba(29, 26, 21, .04);
+	--sc-shadow-hover: 0 22px 36px -24px rgba(29, 26, 21, .4);
+	--sc-font-head: 'Fraunces', Georgia, 'Times New Roman', serif;
+	--sc-font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	--sc-space-sec: 64px; --sc-space-sec-m: 40px;
+
+	--sc-tint: rgba(29, 26, 21, .06); --sc-tint-2: rgba(29, 26, 21, .16);
+	--sc-dark-bg: #1d1a15; --sc-dark-ink: #faf6ee; --sc-dark-muted: #d0c7b4; --sc-dark-surface: #27231c; --sc-dark-border: #3d382d;
+	--sc-dark-primary: #faf6ee; --sc-dark-primary-ink: #1d1a15; --sc-dark-tint: rgba(250, 246, 238, .09);
+
+	--sc-header-bg: rgba(250, 246, 238, .92); --sc-header-ink: #1d1a15; --sc-header-line: rgba(29, 26, 21, .16);
+	--sc-footer-bg: #1d1a15; --sc-footer-ink: #faf6ee; --sc-footer-muted: #b8af9b; --sc-footer-accent: #ebd9ac; --sc-footer-line: rgba(250, 246, 238, .16);
+	--sc-hero-bg: linear-gradient(180deg, #f1eadb 0%, #faf6ee 100%);
+	--sc-hero-deco: none;
+	--sc-cta-bg: none;
+
+	--sc-btn-shadow: none; --sc-btn-shadow-hover: 0 14px 26px -16px rgba(29, 26, 21, .6);
+	--sc-radius-btn: 0; --sc-btn-case: uppercase; --sc-btn-track: .12em; --sc-btn-fs: .78rem;
+	--sc-head-weight: 500; --sc-head-track: -.012em; --sc-head-size: 1;
+	--sc-head-ml: 0; --sc-head-align: left; --sc-head-items: flex-start; --sc-lead-mx: 0; --sc-page-hero-align: left;
+	--sc-title-deco-mx: 0; --sc-title-deco-w: 48px; --sc-title-deco-h: 2px; --sc-title-deco: #8a2f2a;
+	--sc-card-border-hover: #1d1a15;
+	--sc-shine: rgba(255, 255, 255, 0);
+	--sc-input-bg: #fffdf8; --sc-input-border: #c9bda5;
+	--sc-map-filter: grayscale(.7) sepia(.15);
+	--sc-card-ratio: 3 / 2;
+	--sc-brand-track: -.01em;
+}
+/* Cabecera de páginas y hero liso: claros, con tinta */
+.sc-style-2 .sc-hero--plain, .sc-style-2 .sc-page-hero {
+	--sc-text: #1d1a15; --sc-muted: #5a5346; --sc-surface: #fffdf8; --sc-border: #ddd3bf;
+	--sc-primary: #1d1a15; --sc-primary-ink: #faf6ee; --sc-tint: rgba(29, 26, 21, .06); --sc-focus: #8a2f2a;
+	--sc-ghost-border: #1d1a15;
+}
+.sc-style-2 .sc-page-hero { border-bottom: 1px solid var(--sc-border); background-color: #f1eadb; }
+body.sc-style-2 .elementor .e-con.sc-hero--plain { background-color: #f1eadb; border-bottom: 1px solid var(--sc-border); }
+.sc-style-2 .sc-hero__inner { max-width: 820px; }
+.sc-style-2 .sc-hero:not(.sc-hero--plain) { --sc-ghost-border: rgba(255, 255, 255, .7); }
+.sc-style-2 .sc-header::before { border-bottom-color: var(--sc-header-line); }
+.sc-style-2 .sc-card { border-radius: 0; box-shadow: none; border-top: 2px solid #1d1a15; }
+.sc-style-2 .sc-card:hover { box-shadow: var(--sc-shadow-hover); border-color: var(--sc-border); border-top-color: #8a2f2a; }
+.sc-style-2 .sc-card__media img { filter: saturate(.85) contrast(1.02); }
+.sc-style-2 .sc-card:hover .sc-card__media img { filter: none; }
+body.sc-style-2 .elementor .sc-card .elementor-icon, body.sc-style-2 .elementor .elementor-icon-box-wrapper .elementor-icon { border-radius: 50%; }
+.sc-style-2 .sc-btn--ghost:hover, body.sc-style-2 .elementor .sc-btn--ghost .elementor-button:hover { background: #1d1a15; color: #faf6ee; }
+.sc-style-2 .sc-brand__name { font-weight: 600; font-size: clamp(1.15rem, 1rem + .7vw, 1.5rem); font-variation-settings: 'opsz' 48; }
+.sc-style-2 a:hover { color: #8a2f2a; }
+.sc-style-2 .sc-cta .elementor-heading-title::after { margin-inline: auto; }
+.sc-style-2 .sc-float-wa, .sc-style-2 .sc-bar__btn--wa { background: #128a4a; }
+.sc-style-2 .sc-sec--dark, .sc-style-2 .sc-cta { --sc-title-deco: #ebd9ac; }
+body.sc-style-2 .elementor .sc-title .elementor-heading-title { font-weight: 500; }

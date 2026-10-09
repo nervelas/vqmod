@@ -1,0 +1,6 @@
+.sc-redes{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.5rem}
+.sc-redes li{margin:0;padding:0}
+.sc-redes__link{display:inline-flex;align-items:center;justify-content:center;width:2.5rem;height:2.5rem;border-radius:50%;color:inherit;border:1px solid currentColor;text-decoration:none;opacity:.9;transition:opacity .15s,transform .15s}
+.sc-redes__link:hover,.sc-redes__link:focus-visible{opacity:1;transform:translateY(-2px)}
+.sc-redes__link:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.sc-redes__link svg{width:1.25rem;height:1.25rem;display:block}

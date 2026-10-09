@@ -84,7 +84,7 @@ final class Lifecycle
             'domain_requested' => $b['dominio']['tiene'] ? $b['dominio']['dominio'] : $b['dominio']['deseado'],
         ]);
         // La presentación original y todo lo ya importado a WordPress se eliminan; se conserva solo el comprobante.
-        foreach (['presentacion', 'presentacion_img', 'foto', 'logo'] as $k) {
+        foreach (['presentacion', 'presentacion_img', 'foto', 'logo', 'stock'] as $k) {
             Files::purgeKind($id, $k);
         }
         $work = Files::root() . '/work/' . $id;

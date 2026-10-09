@@ -69,7 +69,6 @@ final class Diagnostics
                 $r = Hosts::driver((int) $host['id'])->ping();
                 $h[] = self::item('Conexión con cPanel y token', !empty($r['cpanel']['ok']), (string) ($r['cpanel']['message'] ?? ''));
                 $h[] = self::item('«' . $host['name'] . '»: paquete base (WordPress ' . ($r['wp_version'] ?? '?') . ')', !empty($r['base_ok']), !empty($r['base_ok']) ? '' : 'Falta webs-clientes/_base: ejecute tools/build_base.php');
-                $h[] = self::item('«' . $host['name'] . '»: Elementor', !empty($r['plugins']['elementor']));
                 $h[] = self::item('«' . $host['name'] . '»: WooCommerce', !empty($r['plugins']['woocommerce']), 'Solo necesario para tiendas');
                 $h[] = self::item('«' . $host['name'] . '»: tema y mu-plugin Servicom', !empty($r['theme']) && !empty($r['mu_plugin']));
                 $h[] = self::item('«' . $host['name'] . '»: carpeta de webs escribible', !empty($r['webs_writable']), (string) ($r['webs_path'] ?? ''));
@@ -95,6 +94,9 @@ final class Diagnostics
         $a[] = self::item('Datos bancarios completos', Settings::get('banco_cuenta') !== '' && Settings::get('banco_titular') !== '');
         $a[] = self::item('Correo del dueño', Settings::get('owner_email') !== '');
         $a[] = self::item('WhatsApp de Servicom', Settings::get('wa_servicom') !== '');
+        $a[] = Settings::has('pexels_key')
+            ? self::item('Fotos de stock', true, 'Pexels + Openverse' . (Settings::bool('stock_online', true) ? '' : ' (descarga automática desactivada en Ajustes)'))
+            : self::item('Fotos de stock', null, 'Solo Openverse y arte generado; con clave de Pexels las fotos son mejores');
         $a[] = self::item('Fotos de stock disponibles', array_sum(array_map('array_sum', Stock::available())) > 0, 'Si no hay, las tarjetas de servicio usan iconos (ver library/FALTANTES.md)');
         $out['Configuración'] = $a;
         return $out;

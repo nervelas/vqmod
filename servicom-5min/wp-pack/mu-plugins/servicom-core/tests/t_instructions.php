@@ -80,7 +80,7 @@ $jc = login_jar('cliente@bufete.test', 'Cliente-Test-123!', 'cli');
 $r = http($U . '/wp-admin/admin.php?page=sc-instrucciones', ['jar' => $jc]);
 eq($r['code'], 200, 'INSTRUCCIONES 200');
 $b = $r['body'];
-foreach (['Hola, Bufete Pérez &amp; Asociados', '¿Qué quieres cambiar?', 'id="sc-ins-q"', '2 días hábiles', 'wa.me/50212345678', 'Cambiar mi contraseña', 'instructions.css', 'instructions.js'] as $needle) { ok(str_contains($b, $needle), "contiene: $needle"); }
+foreach (['Hola, Bufete Pérez &amp; Asociados', '¿Qué desea cambiar?', 'id="sc-ins-q"', '2 días hábiles', 'wa.me/50212345678', 'Cambiar mi contraseña', 'instructions.css', 'instructions.js'] as $needle) { ok(str_contains($b, $needle), "contiene: $needle"); }
 ok(substr_count($b, 'class="sc-ins__card"') >= 19, 'tarjetas renderizadas: ' . substr_count($b, 'class="sc-ins__card"'));
 ok(!str_contains($b, '<script>alert'), 'sin scripts inesperados');
 preg_match('/href=[\x27"]([^\x27"]*instructions\.css[^\x27"]*)[\x27"]/', $b, $m); $css = http(html_entity_decode($m[1] ?? ''));
@@ -88,5 +88,5 @@ eq($css['code'], 200, 'instructions.css se sirve (200)');
 preg_match('/src="([^"]*instructions\.js[^"]*)"/', $b, $m); $js = http(html_entity_decode($m[1] ?? ''));
 eq($js['code'], 200, 'instructions.js se sirve (200)');
 $r = http($U . '/wp-admin/admin.php?page=sc-instrucciones&sc_aviso=1', ['jar' => $jc]);
-ok(str_contains($r['body'], 'no está disponible en tu cuenta'), 'aviso al ser redirigido');
+ok(str_contains($r['body'], 'no está disponible en su cuenta'), 'aviso al ser redirigido');
 done();

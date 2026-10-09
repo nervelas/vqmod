@@ -17,6 +17,12 @@ require_once SERVICOM_DIR . '/inc/icons.php';
 require_once SERVICOM_DIR . '/inc/enqueue.php';
 require_once SERVICOM_DIR . '/inc/nav-walker.php';
 require_once SERVICOM_DIR . '/inc/wc-support.php';
+foreach (array('luxe-icons', 'luxe-art', 'luxe-render') as $sc_lx_f) {
+	if (is_file(SERVICOM_DIR . '/inc/' . $sc_lx_f . '.php')) {
+		require_once SERVICOM_DIR . '/inc/' . $sc_lx_f . '.php';
+	}
+}
+unset($sc_lx_f);
 
 if (!isset($content_width)) {
 	$content_width = 1200;

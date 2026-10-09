@@ -77,7 +77,7 @@ $rubros = [
     'ropa' => ['Ropa', 'shirt'], 'restaurante' => ['Restaurante', 'fork'], 'transporte' => ['Transporte', 'truck'],
     'contabilidad' => ['Contabilidad', 'calc'], 'importaciones' => ['Importaciones', 'ship'], 'otro' => ['Otro', 'dots'],
 ];
-$estilos = [1 => 'Oro y Obsidiana', 2 => 'Marfil Editorial', 3 => 'Azul Zafiro', 4 => 'Esmeralda Elegante', 5 => 'Terracota Boutique'];
+$estilos = [1 => 'Oscuro elegante', 2 => 'Claro editorial', 3 => 'Oscuro moderno', 4 => 'Claro clásico', 5 => 'Claro audaz'];
 $paises = ['502' => 'Guatemala', '503' => 'El Salvador', '504' => 'Honduras', '505' => 'Nicaragua', '506' => 'Costa Rica', '507' => 'Panamá', '52' => 'México', '1' => 'EE. UU. / Canadá', '34' => 'España', '57' => 'Colombia'];
 $redes = ['facebook' => 'Facebook', 'instagram' => 'Instagram', 'tiktok' => 'TikTok', 'youtube' => 'YouTube', 'x' => 'X (Twitter)', 'linkedin' => 'LinkedIn'];
 ?>
@@ -170,7 +170,8 @@ $redes = ['facebook' => 'Facebook', 'instagram' => 'Instagram', 'tiktok' => 'Tik
         <div id="logo-cands" hidden><p class="help">¿Alguna de estas imágenes de tu presentación es tu logo? Tócala para usarla.</p><div class="cands" id="logo-grid"></div></div>
         <p class="err" id="logo-e" role="alert"></p>
       </div>
-      <fieldset class="field"><legend>Estilo visual</legend>
+      <fieldset class="field"><legend>Ambiente de tu web</legend>
+        <p class="help">Los colores de tu web se toman automáticamente de tu logo. Aquí eliges el ambiente (oscuro o claro) y el tipo de letra.</p>
         <div class="estilos">
 <?php foreach ($estilos as $n => $nm): ?>
           <label class="estilo"><input type="radio" name="negocio.estilo" data-k="negocio.estilo" data-t="int" value="<?= $n ?>">

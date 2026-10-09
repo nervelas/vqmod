@@ -3,7 +3,7 @@ declare(strict_types=1);
 /** Flujo completo de punta a punta: formulario → vista previa → pago → aprobación → publicación. */
 require __DIR__ . '/lib.php';
 
-$opts = getopt('', ['plan::', 'rubro::', 'estilo::', 'servicios::', 'productos::', 'logo::', 'fotos::', 'idioma::', 'largo::', 'nombre::', 'keep::', 'skip-publish::']);
+$opts = getopt('', ['plan::', 'rubro::', 'estilo::', 'servicios::', 'productos::', 'logo::', 'fotos::', 'idioma::', 'largo::', 'nombre::', 'keep::', 'skip-publish::', 'logofile::']);
 $plan = $opts['plan'] ?? 'info';
 $rubro = $opts['rubro'] ?? 'abogado';
 $estilo = (int) ($opts['estilo'] ?? 1);
@@ -26,7 +26,7 @@ $mk = function (int $n, string $pre) use ($largo): string {
     return match ($largo) { 'corto' => 'X', 'largo' => $pre . ' ' . str_repeat('muy largo texto sin espacios ', 12) . str_repeat('A', 80), 'emoji' => $pre . ' 😀🚀 ñ á é í ó ú ü <b>x</b> & " \'', default => $pre . ' ' . $n };
 };
 $ids = ['logo' => null, 'banner' => [], 'galeria' => []];
-if ($logo) { $u = $c->upload($tok, 'logo', mk_img("$tmp/logo.jpg", 400, 400, 3)); t_ok(!empty($u['json']['id']), 'logo subido', json_encode($u['json'])); $ids['logo'] = $u['json']['id'] ?? null; }
+if ($logo) { $lf = !empty($opts['logofile']) ? $opts['logofile'] : mk_img("$tmp/logo.jpg", 400, 400, 3); $u = $c->upload($tok, 'logo', $lf, !empty($opts['logofile']) ? 'image/png' : 'image/jpeg'); t_ok(!empty($u['json']['id']), 'logo subido', json_encode($u['json'])); $ids['logo'] = $u['json']['id'] ?? null; }
 $srv = [];
 for ($i = 1; $i <= $nServ; $i++) {
     $foto = null;

@@ -81,7 +81,7 @@ class AiBudget
             return self::costo($m, 60000, 6000);
         }
         $m = (string)(Settings::get('ai_model_main', 'claude-sonnet-5-5') ?: 'claude-sonnet-5-5');
-        return self::costo($m, 4000, 4000);
+        return self::costo($m, 5000, 9000);   // LUXE: esquema ampliado = respuestas más largas
     }
 
     /**

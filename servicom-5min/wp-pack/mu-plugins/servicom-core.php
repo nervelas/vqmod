@@ -33,7 +33,7 @@ function sc_core_require( string $file ): void {
 	}
 }
 
-foreach ( array( 'hardening', 'roles', 'business', 'instructions', 'preview', 'domain', 'qa-support' ) as $sc_inc ) {
+foreach ( array( 'hardening', 'design', 'roles', 'editor', 'business', 'instructions', 'preview', 'domain', 'qa-support' ) as $sc_inc ) {
 	sc_core_require( SC_CORE_DIR . '/includes/' . $sc_inc . '.php' );
 }
 unset( $sc_inc );

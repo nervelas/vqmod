@@ -356,4 +356,61 @@ final class Brief
         $b['origen'] = $origen;
         return ['data' => $b, 'conflictos' => $conf];
     }
+    /**
+     * Completa los servicios cuando el cliente (formulario o presentación) dejó
+     * menos de BaseTexts::MIN_SERVICIOS: agrega servicios típicos del rubro
+     * (BaseTexts::catalogo) hasta BaseTexts::OBJETIVO_SERVICIOS sin repetir nombres
+     * parecidos. Los agregados llevan `origen:"sugerido"`, `icono`, `resumen` y
+     * `descripcion` redactados; los del cliente conservan su `origen` ("form" por
+     * omisión). En plan tienda no se agrega nada (no se inventan productos ni
+     * servicios). Función pura y determinista: no modifica el pedido guardado.
+     */
+    public static function completarServicios(array $b): array
+    {
+        $lista = (isset($b['contenido']['servicios']) && is_array($b['contenido']['servicios'])) ? array_values($b['contenido']['servicios']) : [];
+        $norm = [];
+        foreach ($lista as $s) {
+            if (!is_array($s)) {
+                continue;
+            }
+            $s['origen'] = ($s['origen'] ?? '') === 'pres' ? 'pres' : 'form';
+            $norm[] = $s;
+        }
+        $b['contenido']['servicios'] = $norm;
+        if (($b['plan'] ?? 'info') === 'tienda' || count($norm) >= BaseTexts::MIN_SERVICIOS) {
+            return $b;
+        }
+        $rubro = (string) ($b['negocio']['rubro'] ?? 'otro');
+        $en = (($b['negocio']['idioma'] ?? 'es') === 'en');
+        foreach (BaseTexts::catalogo($rubro, $en ? 'en' : 'es') as $c) {
+            if (count($norm) >= BaseTexts::OBJETIVO_SERVICIOS) {
+                break;
+            }
+            $dup = false;
+            foreach ($norm as $s) {
+                if (BaseTexts::parecidos((string) ($s['nombre'] ?? ''), $c['nombre'])) {
+                    $dup = true;
+                    break;
+                }
+            }
+            if ($dup) {
+                continue;
+            }
+            $norm[] = ['nombre' => $c['nombre'], 'descripcion' => $c['descripcion'], 'resumen' => $c['resumen'], 'icono' => $c['icono'], 'foto' => null, 'origen' => 'sugerido'];
+        }
+        $b['contenido']['servicios'] = $norm;
+        return $b;
+    }
+
+    /** Nombres de los servicios sugeridos por el sistema para este pedido (vista del panel). */
+    public static function serviciosSugeridos(array $b): array
+    {
+        $out = [];
+        foreach (self::completarServicios($b)['contenido']['servicios'] as $s) {
+            if (($s['origen'] ?? '') === 'sugerido') {
+                $out[] = (string) $s['nombre'];
+            }
+        }
+        return $out;
+    }
 }

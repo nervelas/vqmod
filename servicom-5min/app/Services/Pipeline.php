@@ -502,7 +502,68 @@ final class Pipeline
     }
 
     private static function step_instalar(array $o, int $left): string { return self::prov($o, 'install', $left); }
-    private static function step_medios(array $o, int $left): string { return self::prov($o, 'media', $left); }
+    private static function step_medios(array $o, int $left): string
+    {
+        // Fotos del cliente/presentación primero (ya van en el manifiesto); el stock solo rellena lo que falte.
+        if (self::stockFill($o, $left) === 'more') {
+            return 'more';
+        }
+        return self::prov(Orders::byId((int) $o['id']) ?: $o, 'media', $left);
+    }
+
+    /**
+     * Completa con fotos de stock (StockImages) y, si hubo cambios, vuelve a preparar el manifiesto del trabajo.
+     * Nunca lanza: un fallo aquí solo significa que el tema usará arte generado. @return string done|more
+     */
+    private static function stockFill(array $o, int $left): string
+    {
+        $id = (int) $o['id'];
+        try {
+            if (!Settings::bool('stock_online', true)) {
+                return 'done';
+            }
+            $b = Orders::data($o);
+            $stock = StockImages::prune($b['_stock'] ?? [], fn(int $fid): bool => $fid > 0 && Files::get($fid, $id) !== null);
+            $b['_stock'] = $stock;
+            $keep = array_map(fn($a) => (int) $a['file'], $stock['assets']);
+            foreach (Files::forOrder($id, 'stock') as $f) {   // huérfanos de una ejecución anterior
+                if (!in_array((int) $f['id'], $keep, true)) {
+                    Files::delete($f);
+                }
+            }
+            $res = StockImages::fetch($b, $id, max(3.0, min(16.0, $left - 6.0)));
+            $b['_stock'] = $res['stock'];
+            Orders::saveData($id, $b);
+            if (!$res['done']) {
+                return 'more';
+            }
+            $st = self::state(Orders::byId($id) ?: $o);
+            $sig = md5((string) json_encode($res['stock']['slots']));
+            if (($st['stock_sig'] ?? '') !== $sig) {
+                if ($res['stock']['assets']) {
+                    self::restageManifest(Orders::byId($id) ?: $o);
+                }
+                $st['stock_sig'] = $sig;
+                self::saveState($id, $st);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Fotos de stock (pedido ' . $id . '): ' . $e->getMessage());
+        }
+        return 'done';
+    }
+
+    /** Reescribe manifest.json y los assets del trabajo (idempotente) para incluir las fotos de stock. */
+    private static function restageManifest(array $o): void
+    {
+        $st = self::state($o);
+        if (empty($st['job_id'])) {
+            return;
+        }
+        $mode = !empty($st['demo']) || !empty($o['is_demo']) ? 'demo' : 'preview';
+        $texts = json_decode((string) $o['texts'], true) ?: [];
+        $built = Manifest::build($o, $texts, (string) $st['job_id'], ['mode' => $mode]);
+        self::driver($o)->stageJob((string) $o['site_path'], (string) $st['job_id'], json_encode($built['manifest'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION), $built['assets'], bin2hex(random_bytes(24)));
+    }
     private static function step_paginas(array $o, int $left): string { return self::prov($o, 'pages', $left); }
     private static function step_tienda(array $o, int $left): string { return self::prov($o, 'store', $left); }
     private static function step_finalizar(array $o, int $left): string

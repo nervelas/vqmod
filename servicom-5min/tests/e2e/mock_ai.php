@@ -34,7 +34,34 @@ if (str_contains($user, '<datos_cliente>')) {
         'cta_titulo' => '¿Hablamos?', 'cta_texto' => 'Estamos listos para atenderle.', 'cta_boton' => 'Contáctenos',
         'contacto_titulo' => 'Contacto', 'contacto_intro' => 'Escríbanos o llámenos.', 'galeria_titulo' => 'Galería',
         'tienda_titulo' => 'Nuestra tienda', 'tienda_intro' => 'Explore nuestros productos.',
-        'servicios' => array_map(fn($s) => ['resumen' => 'Servicio: ' . ($s['nombre'] ?? ''), 'descripcion' => ($s['descripcion'] ?? '') ?: ('Ofrecemos ' . ($s['nombre'] ?? 'este servicio') . '.')], $d['servicios'] ?? []),
+        'servicios' => array_map(fn($s) => ['resumen' => 'Servicio: ' . ($s['nombre'] ?? ''), 'descripcion' => ($s['descripcion'] ?? '') ?: ('Ofrecemos ' . ($s['nombre'] ?? 'este servicio') . '.'), 'icono' => 'star'], $d['servicios'] ?? []),
+        // Esquema ampliado (CONTRATO-LUXE §2)
+        'hero_eyebrow' => 'Atención profesional',
+        'nosotros_lead' => 'En ' . $n . ' le escuchamos primero y trabajamos con orden y cercanía.',
+        'cita' => ($d['frase'] ?? '') ?: 'Lo bien hecho se nota en los detalles.',
+        'valores_titulo' => 'Por qué elegirnos',
+        'valores' => [
+            ['titulo' => 'Atención personalizada', 'texto' => 'Escuchamos lo que usted necesita antes de proponer.', 'icono' => 'users'],
+            ['titulo' => 'Comunicación clara', 'texto' => 'Le explicamos cada paso con palabras sencillas.', 'icono' => 'chat'],
+            ['titulo' => 'Trabajo cuidadoso', 'texto' => 'Ponemos atención en los detalles de cada servicio.', 'icono' => 'sparkles'],
+            ['titulo' => 'Trato cercano', 'texto' => 'Le atendemos con amabilidad y respeto.', 'icono' => 'handshake'],
+            ['titulo' => 'Compromiso', 'texto' => 'Nos importa que usted quede conforme.', 'icono' => 'check'],
+        ],
+        'proceso_titulo' => 'Cómo trabajamos',
+        'proceso' => [
+            ['titulo' => 'Conversamos', 'texto' => 'Nos cuenta lo que necesita.'],
+            ['titulo' => 'Propuesta', 'texto' => 'Le planteamos cómo ayudarle.'],
+            ['titulo' => 'Manos a la obra', 'texto' => 'Realizamos el trabajo con orden.'],
+            ['titulo' => 'Seguimiento', 'texto' => 'Nos aseguramos de que quede conforme.'],
+        ],
+        'faq_titulo' => 'Preguntas frecuentes',
+        'faq' => [
+            ['p' => '¿Cómo puedo contactarlos?', 'r' => 'Escríbanos por WhatsApp o use el formulario de contacto de esta página.'],
+            ['p' => '¿Cuál es el horario de atención?', 'r' => 'Lo encontrará en la sección de contacto de esta página.'],
+            ['p' => '¿Cómo empiezo?', 'r' => 'Envíenos un mensaje contándonos lo que necesita y le indicaremos los pasos.'],
+            ['p' => '¿Puedo pedir una cotización?', 'r' => 'Con gusto. Cuéntenos lo que necesita por WhatsApp o mediante el formulario.'],
+        ],
+        'seo_descripcion' => $n . ': conozca nuestros servicios y contáctenos por WhatsApp o teléfono.',
     ];
     if ($mode === 'naive') { $r['script'] = '<script>alert(1)</script>'; $r['hero_titulo'] = '<b>' . $r['hero_titulo'] . '</b> Garantizamos 25 años de experiencia'; }
     $out = json_encode($r, JSON_UNESCAPED_UNICODE);

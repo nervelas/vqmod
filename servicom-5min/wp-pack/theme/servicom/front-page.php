@@ -7,7 +7,9 @@ if (is_page()) {
 	get_header();
 	while (have_posts()) :
 		the_post();
-		if (servicom_is_builder()) : ?>
+		if (function_exists('sc_lx_page_key') && sc_lx_page_key() !== '') :
+			sc_render_page(sc_lx_page_key());
+		elseif (servicom_is_builder()) : ?>
 <main id="content" class="sc-main sc-main--builder">
 	<?php the_content(); ?>
 </main>

@@ -153,3 +153,12 @@ Todas JSON; cabecera `X-CSRF: <token de <meta name="csrf">>`; el `token` del bor
 - Agente P (IA/presentación): `app/Services/{TextClean,PresentationParser,PresentationAnalyzer,AiClient,AiBudget,AiUnavailable,BaseTexts,TextSchema}.php`, `tests/ai/**`, `tests/fixtures/presentaciones/**`.
 - Agente F (frontend portal): `assets/**`, `app/views/portal/**`, `app/views/layout.php`.
 - Arquitecto: resto.
+
+## 7b. Ampliaciones LUXE del manifiesto (ver CONTRATO-LUXE)
+Todas son **aditivas**: un manifiesto sin ellas sigue siendo válido (el builder usa arte/textos base).
+- `texts` incluye, además de §6: `hero_eyebrow`, `nosotros_lead`, `cita`, `valores_titulo`, `valores[{titulo,texto,icono}]` (4–6), `proceso_titulo`, `proceso[{titulo,texto}]` (3–4), `faq_titulo`, `faq[{p,r}]` (4–6), `seo_descripcion`; y `servicios[]` pasa a `{resumen,descripcion,icono}` (**uno por cada** `content.servicios`, incluidos los sugeridos). Límites en CONTRATO-LUXE §2. `icono` ∈ lista cerrada de CONTRATO-LUXE §1 (`TextSchema::ICONOS`); cualquier otro valor se reemplaza por una clave válida. El portal garantiza el esquema completo (si la IA omite o corrompe un bloque, o los textos son anteriores a LUXE, se rellena con `BaseTexts`).
+- `content.servicios[]`: `{nombre,descripcion,foto,icono,origen}`; `icono` es ahora una clave de CONTRATO-LUXE §1 (ya no clases FontAwesome); `origen` ∈ `form|pres|sugerido`. Si el cliente dejó menos de 4 servicios (plan `info`), el portal añade servicios típicos del rubro hasta 6 con `origen:"sugerido"` (`Brief::completarServicios`; en plan `tienda` nunca). La descripción vacía de un servicio del cliente se completa con el texto redactado.
+- `assets[]` añade `role` ∈ `logo|banner|servicio|galeria|about|stock` y `credit` (solo si lo hay; las fotos de stock traen la atribución).
+- `content.stock` (solo si el portal descargó fotos, `orders.data._stock` escrito por StockImages): `{"hero":["a10"],"about":["a12"],"servicios":["a13"],"galeria":["a20"]}` con ids de `assets[]`; claves vacías se omiten. Prioridad por slot: foto del cliente > `content.stock.*` > arte. Si no hay stock, la clave `stock` no existe.
+- `design.hint` = `{"rubro":"abogado|…","estilo":1..5}` (pista para la paleta de lujo por rubro cuando no hay logo; la paleta final la decide el builder).
+

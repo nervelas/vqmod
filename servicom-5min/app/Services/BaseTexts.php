@@ -23,6 +23,22 @@ class BaseTexts
         'galeria_titulo' => 60,
         'tienda_titulo' => 60, 'tienda_intro' => 220,
     ];
+    /** Límites de los textos ampliados (CONTRATO-LUXE §2). */
+    public const LIMITES_LUXE = [
+        'hero_eyebrow' => 40, 'nosotros_lead' => 200, 'cita' => 140,
+        'valores_titulo' => 60, 'proceso_titulo' => 60, 'faq_titulo' => 60,
+        'seo_descripcion' => 158,
+    ];
+    public const LIM_VALOR_TITULO = 36;
+    public const LIM_VALOR_TEXTO = 150;
+    public const LIM_PASO_TITULO = 36;
+    public const LIM_PASO_TEXTO = 150;
+    public const LIM_FAQ_P = 110;
+    public const LIM_FAQ_R = 330;
+    /** Servicios típicos que se agregan cuando el cliente dejó menos de MIN_SERVICIOS, hasta OBJETIVO_SERVICIOS. */
+    public const MIN_SERVICIOS = 4;
+    public const OBJETIVO_SERVICIOS = 6;
+
     public const LIM_RESUMEN = 140;
     public const LIM_DESCRIPCION = 600;
     public const MAX_SERVICIOS = 500;
@@ -166,6 +182,233 @@ class BaseTexts
         }
         $t['servicios'] = $sv;
         return $t;
+    }
+
+    // ------------------------------------------------------------------
+    // Ampliación LUXE (CONTRATO-LUXE §2): textos ricos por rubro, sin IA
+    // ------------------------------------------------------------------
+
+    private static function rubroDe(array $brief): string
+    {
+        $rubro = (string)($brief['negocio']['rubro'] ?? 'otro');
+        return in_array($rubro, self::RUBROS, true) ? $rubro : 'otro';
+    }
+
+    /**
+     * Catálogo de servicios típicos del rubro (8), para sugerir cuando el
+     * cliente dio pocos.
+     *
+     * @return array<int,array{nombre:string,resumen:string,descripcion:string,icono:string}>
+     */
+    public static function catalogo(string $rubro, string $idioma = 'es'): array
+    {
+        $rubro = in_array($rubro, self::RUBROS, true) ? $rubro : 'otro';
+        $out = [];
+        if ($idioma === 'en') {
+            $cola = ' Tell us what you need by WhatsApp, phone or the contact form and we will explain how we can help.';
+            foreach (BaseTextsData::en()[$rubro]['cat'] as $i => $c) {
+                $ic = BaseTextsData::es()[$rubro]['cat'][$i][3];
+                $out[] = [
+                    'nombre' => $c[0],
+                    'resumen' => TextClean::limpiar($c[1], self::LIM_RESUMEN),
+                    'descripcion' => TextClean::limpiar($c[1] . $cola, self::LIM_DESCRIPCION),
+                    'icono' => $ic,
+                ];
+            }
+            return $out;
+        }
+        foreach (BaseTextsData::es()[$rubro]['cat'] as $c) {
+            $out[] = [
+                'nombre' => $c[0],
+                'resumen' => TextClean::limpiar($c[1], self::LIM_RESUMEN),
+                'descripcion' => TextClean::limpiar($c[2], self::LIM_DESCRIPCION, true),
+                'icono' => $c[3],
+            ];
+        }
+        return $out;
+    }
+
+    /** Normaliza un nombre para compararlo (minúsculas, sin acentos ni signos). */
+    public static function normalizar(string $s): string
+    {
+        $s = mb_strtolower($s, 'UTF-8');
+        $s = strtr($s, ['á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n', 'à' => 'a', 'è' => 'e']);
+        $s = preg_replace('/[^a-z0-9]+/', ' ', $s) ?? '';
+        return trim($s);
+    }
+
+    /** ¿Dos nombres de servicio son el mismo o muy parecidos? (evita sugerir duplicados) */
+    public static function parecidos(string $a, string $b): bool
+    {
+        $na = self::normalizar($a);
+        $nb = self::normalizar($b);
+        if ($na === '' || $nb === '') {
+            return false;
+        }
+        if ($na === $nb || strpos(' ' . $na . ' ', ' ' . $nb . ' ') !== false || strpos(' ' . $nb . ' ', ' ' . $na . ' ') !== false) {
+            return true;
+        }
+        $comunes = ['servicio', 'servicios', 'service', 'services', 'derecho', 'asesoria', 'atencion', 'general', 'para', 'empresa', 'empresas', 'tramites', 'consulta', 'consultas', 'cuidado', 'productos', 'product', 'products', 'advisory', 'advice', 'care', 'law'];
+        $ta = [];
+        foreach (explode(' ', $na) as $w) {
+            if (strlen($w) >= 5 && !in_array($w, $comunes, true)) {
+                $ta[substr($w, 0, 5)] = true;
+            }
+        }
+        foreach (explode(' ', $nb) as $w) {
+            if (strlen($w) >= 5 && !in_array($w, $comunes, true) && isset($ta[substr($w, 0, 5)])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Icono (clave §1) para un servicio: el del catálogo si el nombre se parece; si no, uno del rubro. */
+    public static function iconoServicio(string $nombre, string $rubro, int $i): string
+    {
+        $rubro = in_array($rubro, self::RUBROS, true) ? $rubro : 'otro';
+        foreach (BaseTextsData::es()[$rubro]['cat'] as $c) {
+            if (self::parecidos($nombre, $c[0])) {
+                return $c[3];
+            }
+        }
+        $ic = TextSchema::ICONOS_RUBRO[$rubro];
+        return $ic[$i % count($ic)];
+    }
+
+    /**
+     * Textos ampliados (CONTRATO-LUXE §2) solo con datos del cliente y
+     * contenido genérico del rubro. Sin cifras, años, premios, etc.
+     *
+     * @return array<string,mixed> hero_eyebrow, nosotros_lead, cita, valores_titulo, valores,
+     *                             proceso_titulo, proceso, faq_titulo, faq, seo_descripcion
+     */
+    public static function luxe(array $brief): array
+    {
+        $en = (($brief['negocio']['idioma'] ?? 'es') === 'en');
+        $rubro = self::rubroDe($brief);
+        $nombre = TextClean::limpiar($brief['negocio']['nombre'] ?? '', 80);
+        $otro = TextClean::limpiar($brief['negocio']['rubro_otro'] ?? '', 60);
+        $nom = $nombre !== '' ? $nombre : ($en ? 'Our business' : 'Nuestro negocio');
+        $D = $en ? BaseTextsData::en()[$rubro] : BaseTextsData::es()[$rubro];
+        $E = BaseTextsData::es()[$rubro];
+        $c = is_array($brief['contenido'] ?? null) ? $brief['contenido'] : [];
+        $frase = TextClean::limpiar($c['frase'] ?? '', 400);
+        $apoyo = TextClean::limpiar($c['apoyo'] ?? '', 600);
+        $quienes = TextClean::limpiar($c['quienes'] ?? '', 4000, true);
+        foreach (['frase', 'apoyo', 'quienes'] as $kk) {
+            if (${$kk} !== '' && TextSchema::pareceInstruccion(${$kk})) {
+                ${$kk} = '';   // no se reutiliza como contenido destacado un texto que parece una orden a la IA
+            }
+        }
+
+        // sobretítulo
+        $eyebrow = $D['label'];
+        if ($rubro === 'otro' && $otro !== '' && mb_strlen($otro, 'UTF-8') <= self::LIMITES_LUXE['hero_eyebrow']) {
+            $eyebrow = mb_strtoupper(mb_substr($otro, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($otro, 1, null, 'UTF-8');
+        }
+        // frase destacada de «Nosotros»
+        if ($quienes !== '') {
+            $lead = self::primeraFrase($quienes, self::LIMITES_LUXE['nosotros_lead']);
+        } else {
+            $lead = sprintf($D['lead'], $nom);
+        }
+        // cita de impacto: la frase del cliente si cabe; si no, el apoyo; si no, la del rubro
+        $cita = $D['cita'];
+        if ($frase !== '' && mb_strlen($frase, 'UTF-8') <= self::LIMITES_LUXE['cita'] && mb_strlen($frase, 'UTF-8') >= 12) {
+            $cita = $frase;
+        } elseif ($apoyo !== '' && mb_strlen($apoyo, 'UTF-8') <= self::LIMITES_LUXE['cita'] && mb_strlen($apoyo, 'UTF-8') >= 12) {
+            $cita = $apoyo;
+        }
+
+        $icR = TextSchema::ICONOS_RUBRO[$rubro];
+        if ($en) {
+            $valores = [
+                ['Personal attention', 'We listen first and adapt to what you need.'],
+                ['Clear communication', 'We explain things in plain words, step by step.'],
+                ['Careful work', 'We pay attention to the details in everything we do.'],
+                ['Respect for your time', 'We keep you informed and follow up with you.'],
+                ['Honest service', 'Friendly, straightforward treatment from the first contact.'],
+            ];
+            $valores = array_map(fn($v, $i) => ['titulo' => $v[0], 'texto' => $v[1], 'icono' => $icR[$i % count($icR)]], $valores, array_keys($valores));
+            $proceso = [
+                ['titulo' => 'We talk', 'texto' => 'Tell us what you need and we will answer your questions.'],
+                ['titulo' => 'Proposal', 'texto' => 'We explain how we can help you.'],
+                ['titulo' => 'We get to work', 'texto' => 'We carry out the work with care and order.'],
+                ['titulo' => 'Follow-up', 'texto' => 'We make sure you are happy with the result.'],
+            ];
+            $faq = [
+                ['p' => 'How can I contact you?', 'r' => 'Write to us on WhatsApp, call us or use the contact form on this page. Our contact details and opening hours are in the contact section.'],
+                ['p' => 'How do I get started?', 'r' => 'Send us a message telling us what you need. We will reply within our opening hours and explain the next steps.'],
+                ['p' => 'Can I ask for a quote?', 'r' => 'Yes. Tell us what you need through the contact form or WhatsApp and we will get back to you with the details.'],
+                ['p' => 'What are your opening hours?', 'r' => 'You will find our opening hours in the contact section of this page. Outside those hours, leave us a message and we will answer as soon as possible.'],
+                ['p' => 'What if I do not see the service I need?', 'r' => 'Ask us anyway. Tell us what you are looking for and we will let you know how we can help.'],
+            ];
+            $titulos = ['Why choose us', 'How we work', 'Frequently asked questions'];
+            $seo = $nom . ': ' . lcfirst($D['label']) . '. Learn about our services and contact us by WhatsApp or phone.';
+        } else {
+            $valores = [];
+            foreach ($E['valores'] as $v) {
+                $valores[] = ['titulo' => $v[0], 'texto' => $v[1], 'icono' => $v[2]];
+            }
+            $proceso = [];
+            foreach ($E['proceso'] as $p) {
+                $proceso[] = ['titulo' => $p[0], 'texto' => $p[1]];
+            }
+            $faq = [
+                ['p' => $E['faq1'][0], 'r' => $E['faq1'][1]],
+                ['p' => '¿Cuál es el horario de atención?', 'r' => 'Encontrará nuestro horario en la sección de contacto de esta página. Fuera de ese horario puede dejarnos un mensaje y le responderemos lo antes posible.'],
+                ['p' => '¿Cómo empiezo?', 'r' => 'Envíenos un mensaje contándonos lo que necesita. Le responderemos dentro de nuestro horario y le explicaremos los siguientes pasos.'],
+                ['p' => '¿Puedo pedir una cotización?', 'r' => 'Con gusto. Cuéntenos lo que necesita por WhatsApp o mediante el formulario de contacto y le daremos los detalles.'],
+                ['p' => '¿Y si no veo el servicio que busco?', 'r' => 'Consúltenos de todos modos. Cuéntenos lo que necesita y le indicaremos cómo podemos ayudarle.'],
+            ];
+            $titulos = ['Por qué elegirnos', 'Cómo trabajamos', 'Preguntas frecuentes'];
+            $corto = $rubro === 'otro' && $otro !== '' ? $otro : $D['label'];
+            $seo = $nom . ': ' . mb_strtolower(mb_substr($corto, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($corto, 1, null, 'UTF-8') . '. Conozca nuestros servicios y contáctenos por WhatsApp o teléfono.';
+            if ($apoyo !== '') {
+                $seo = $nom . ': ' . $apoyo;
+            }
+        }
+        $o = [
+            'hero_eyebrow' => $eyebrow, 'nosotros_lead' => $lead, 'cita' => $cita,
+            'valores_titulo' => $titulos[0], 'proceso_titulo' => $titulos[1], 'faq_titulo' => $titulos[2],
+            'seo_descripcion' => $seo,
+        ];
+        foreach (self::LIMITES_LUXE as $k => $max) {
+            $o[$k] = TextClean::limpiar($o[$k], $max);
+        }
+        $o['valores'] = array_map(fn($v) => [
+            'titulo' => TextClean::limpiar($v['titulo'], self::LIM_VALOR_TITULO),
+            'texto' => TextClean::limpiar($v['texto'], self::LIM_VALOR_TEXTO),
+            'icono' => $v['icono'],
+        ], $valores);
+        $o['proceso'] = array_map(fn($v) => [
+            'titulo' => TextClean::limpiar($v['titulo'], self::LIM_PASO_TITULO),
+            'texto' => TextClean::limpiar($v['texto'], self::LIM_PASO_TEXTO),
+        ], $proceso);
+        $o['faq'] = array_map(fn($v) => [
+            'p' => TextClean::limpiar($v['p'], self::LIM_FAQ_P),
+            'r' => TextClean::limpiar($v['r'], self::LIM_FAQ_R),
+        ], $faq);
+        return $o;
+    }
+
+    /**
+     * Textos base COMPLETOS: contrato §6 + ampliación LUXE. Cada servicio
+     * incluye además `icono` (clave §1).
+     *
+     * @return array<string,mixed>
+     */
+    public static function textosCompletos(array $brief): array
+    {
+        $t = self::textos($brief);
+        $rubro = self::rubroDe($brief);
+        $lista = is_array($brief['contenido']['servicios'] ?? null) ? array_values($brief['contenido']['servicios']) : [];
+        foreach ($t['servicios'] as $i => $s) {
+            $n = TextClean::limpiar(is_array($lista[$i] ?? null) ? ($lista[$i]['nombre'] ?? '') : ($lista[$i] ?? ''), 80);
+            $t['servicios'][$i]['icono'] = self::iconoServicio($n, $rubro, $i);
+        }
+        return $t + self::luxe($brief);
     }
 
     /**

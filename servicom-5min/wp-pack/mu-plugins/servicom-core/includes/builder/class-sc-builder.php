@@ -82,6 +82,14 @@ class SC_Builder
 		return $m;
 	}
 
+	/** Motor de render: 'luxe' (por defecto, sin Elementor) o 'elementor' (heredado). */
+	public static function engine()
+	{
+		$m = self::manifest();
+		$e = (string) ($m['site']['engine'] ?? 'luxe');
+		return $e === 'elementor' ? 'elementor' : 'luxe';
+	}
+
 	public static function lang()
 	{
 		$m = self::manifest();
@@ -179,6 +187,10 @@ class SC_Builder
 					require_once __DIR__ . '/media.php';
 					return SC_Build_Media::run($args);
 				case 'pages':
+					if (self::engine() === 'luxe') {
+						require_once __DIR__ . '/luxe.php';
+						return SC_Build_Luxe::run($args);
+					}
 					require_once __DIR__ . '/pages.php';
 					return SC_Build_Pages::run($args);
 				case 'store':
@@ -634,7 +646,7 @@ class SC_Builder
 	private static function activate_allowed_plugins($plan)
 	{
 		$dir = defined('WP_PLUGIN_DIR') ? WP_PLUGIN_DIR : WP_CONTENT_DIR . '/plugins';
-		$want = array('elementor/elementor.php');
+		$want = self::engine() === 'elementor' ? array('elementor/elementor.php') : array();
 		if (file_exists($dir . '/fluentform/fluentform.php')) {
 			$want[] = 'fluentform/fluentform.php';
 		} elseif (file_exists($dir . '/contact-form-7/wp-contact-form-7.php')) {

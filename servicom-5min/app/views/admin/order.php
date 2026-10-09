@@ -51,6 +51,7 @@ $st = $o['status'];
 <dt>Frase / apoyo</dt><dd><?= e($b['contenido']['frase']) ?> — <?= e($b['contenido']['apoyo']) ?></dd>
 <dt>Quiénes somos</dt><dd><?= nl2br(e($b['contenido']['quienes'])) ?></dd>
 <dt>Servicios (<?= count($b['contenido']['servicios']) ?>)</dt><dd><?= e(implode(' · ', array_map(fn($s) => $s['nombre'], array_slice($b['contenido']['servicios'], 0, 40)))) ?></dd>
+<?php $sugeridos = \S5\Services\Brief::serviciosSugeridos($b); if ($sugeridos): ?><dt>Servicios sugeridos por el sistema</dt><dd>Servicios sugeridos por el sistema: <?= e(implode(' · ', $sugeridos)) ?> <span class="mut">(no los escribió el cliente; puede quitarlos en el editor de su web)</span></dd><?php endif; ?>
 <?php if ($o['plan'] === 'tienda'): ?><dt>Productos / categorías</dt><dd><?= count($b['tienda']['productos']) ?> / <?= count($b['tienda']['categorias']) ?></dd>
 <dt>Pedidos / alertas</dt><dd><?= e($b['tienda']['correo_pedidos']) ?> / <?= e($b['tienda']['correo_alertas']) ?></dd>
 <dt>Cobros</dt><dd>Contra entrega: <?= $b['tienda']['contra_entrega'] ? 'sí' : 'no' ?> · Tarjeta: <?= $o['card_extra'] ? 'SÍ (activar manualmente)' : 'no' ?></dd><?php endif; ?>

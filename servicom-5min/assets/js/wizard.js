@@ -643,7 +643,7 @@
 
   /* ---------- resumen y construcción ---------- */
   var RUB = { abogado: 'Abogado/a', clinica: 'Clínica / médico', taller: 'Taller', ropa: 'Ropa', restaurante: 'Restaurante', transporte: 'Transporte', contabilidad: 'Contabilidad', importaciones: 'Importaciones' };
-  var EST = { 1: 'Oro y Obsidiana', 2: 'Marfil Editorial', 3: 'Azul Zafiro', 4: 'Esmeralda Elegante', 5: 'Terracota Boutique' };
+  var EST = { 1: 'Oscuro elegante', 2: 'Claro editorial', 3: 'Oscuro moderno', 4: 'Claro clásico', 5: 'Claro audaz' };
   function q(n) { return 'Q' + Number(n).toLocaleString('en-US'); }
   function total() { return (tienda() ? CFG.precio_tienda : CFG.precio_info) + (data.tarjeta_extra ? CFG.precio_tarjeta : 0); }
   function drawSummary() {

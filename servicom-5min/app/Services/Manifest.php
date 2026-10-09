@@ -15,12 +15,63 @@ final class Manifest
     }
 
     /**
+     * Garantiza que los textos del manifiesto traigan el esquema ampliado
+     * (CONTRATO-LUXE §2) y un texto por cada servicio (incluidos los sugeridos),
+     * aunque se hayan guardado antes de LUXE o vengan solo de BaseTexts::textos().
+     */
+    private static function completarTextos(array $texts, array $b): array
+    {
+        $texts = TextSchema::completarLuxe($texts, $b);
+        $base = null;
+        $ts = (isset($texts['servicios']) && is_array($texts['servicios'])) ? array_values($texts['servicios']) : [];
+        $rubro = (string) ($b['negocio']['rubro'] ?: 'otro');
+        foreach ($b['contenido']['servicios'] as $i => $s) {
+            $it = (isset($ts[$i]) && is_array($ts[$i])) ? $ts[$i] : [];
+            $ok = !empty($it['resumen']) && !empty($it['descripcion']);
+            if (!$ok) {
+                if ($base === null) {
+                    $base = BaseTexts::textosCompletos($b)['servicios'];
+                }
+                $bs = $base[$i] ?? ['resumen' => '', 'descripcion' => ''];
+                $it['resumen'] = $it['resumen'] ?? ($s['resumen'] ?? $bs['resumen']);
+                $it['descripcion'] = !empty($it['descripcion']) ? $it['descripcion'] : (!empty($s['descripcion']) ? $s['descripcion'] : $bs['descripcion']);
+                if (empty($it['resumen'])) {
+                    $it['resumen'] = $bs['resumen'];
+                }
+            }
+            $ic = TextSchema::icono($it['icono'] ?? '');
+            if ($ic === '') {
+                $ic = TextSchema::icono($s['icono'] ?? '');
+            }
+            $it['icono'] = $ic !== '' ? $ic : BaseTexts::iconoServicio((string) $s['nombre'], $rubro, $i);
+            $ts[$i] = ['resumen' => (string) $it['resumen'], 'descripcion' => (string) $it['descripcion'], 'icono' => $it['icono']];
+        }
+        $texts['servicios'] = array_slice($ts, 0, count($b['contenido']['servicios']));
+        return $texts;
+    }
+
+    /**
      * @return array{manifest:array,assets:array} assets = archivos para stageJob (con 'local', 'sha256', 'file_key', 'order_token')
      */
     public static function build(array $o, array $texts, string $jobId, array $opts = []): array
     {
-        $b = Orders::data($o);
+        $b = Brief::completarServicios(Orders::data($o));   // LUXE: servicios típicos del rubro si el cliente dio menos de 4 (no aplica a tienda)
         $rubro = $b['negocio']['rubro'] ?: 'otro';
+        $stockIn = (isset($b['_stock']) && is_array($b['_stock'])) ? $b['_stock'] : [];   // lo escribe StockImages (CONTRATO-LUXE §7)
+        $stockSlots = (isset($stockIn['slots']) && is_array($stockIn['slots'])) ? $stockIn['slots'] : [];
+        $hasStock = false;
+        foreach (['hero', 'about', 'servicios', 'galeria'] as $sl) {
+            if (!empty($stockSlots[$sl]) && is_array($stockSlots[$sl])) {
+                $hasStock = true;
+            }
+        }
+        $stockCredit = [];
+        foreach ((isset($stockIn['assets']) && is_array($stockIn['assets'])) ? $stockIn['assets'] : [] as $sa) {
+            if (is_array($sa) && isset($sa['file'])) {
+                $stockCredit[(int) $sa['file']] = mb_substr(trim(strip_tags((string) ($sa['credit'] ?? ''))), 0, 200, 'UTF-8');
+            }
+        }
+        $texts = self::completarTextos($texts, $b);
         $en = ($b['negocio']['idioma'] ?? 'es') === 'en';
         $dir = self::jobDir((int) $o['id']) . '/assets';
         Fs::mkdir($dir, 0750);
@@ -29,7 +80,7 @@ final class Manifest
         $n = 0;
         $byFile = [];
 
-        $addFile = function (?int $fileId, string $alt) use (&$manifestAssets, &$stage, &$n, &$byFile, $o, $dir): ?string {
+        $addFile = function (?int $fileId, string $alt, string $role = '', string $credit = '') use (&$manifestAssets, &$stage, &$n, &$byFile, $o, $dir): ?string {
             if (!$fileId) {
                 return null;
             }
@@ -51,7 +102,11 @@ final class Manifest
                 return null;
             }
             $id = 'a' . $n;
-            $manifestAssets[] = ['id' => $id, 'path' => 'assets/' . $key, 'mime' => $f['mime'], 'w' => (int) $f['w'], 'h' => (int) $f['h'], 'alt' => $alt];
+            $as = ['id' => $id, 'path' => 'assets/' . $key, 'mime' => $f['mime'], 'w' => (int) $f['w'], 'h' => (int) $f['h'], 'alt' => $alt, 'role' => $role !== '' ? $role : 'galeria'];
+            if ($credit !== '') {
+                $as['credit'] = $credit;
+            }
+            $manifestAssets[] = $as;
             $stage[] = ['path' => 'assets/' . $key, 'local' => $dir . '/' . $key, 'sha256' => hash_file('sha256', $dir . '/' . $key), 'size' => (int) filesize($dir . '/' . $key), 'file_key' => $key, 'order_token' => $o['token']];
             return $byFile[$fileId] = $id;
         };
@@ -68,13 +123,13 @@ final class Manifest
             }
             $sz = @getimagesize($dir . '/' . $key) ?: [0, 0];
             $id = 'a' . $n;
-            $manifestAssets[] = ['id' => $id, 'path' => 'assets/' . $key, 'mime' => mime_content_type($dir . '/' . $key) ?: 'image/jpeg', 'w' => (int) $sz[0], 'h' => (int) $sz[1], 'alt' => $s['alt'] !== '' ? $s['alt'] : $alt];
+            $manifestAssets[] = ['id' => $id, 'path' => 'assets/' . $key, 'mime' => mime_content_type($dir . '/' . $key) ?: 'image/jpeg', 'w' => (int) $sz[0], 'h' => (int) $sz[1], 'alt' => $s['alt'] !== '' ? $s['alt'] : $alt, 'role' => 'stock'];
             $stage[] = ['path' => 'assets/' . $key, 'local' => $dir . '/' . $key, 'sha256' => hash_file('sha256', $dir . '/' . $key), 'size' => (int) filesize($dir . '/' . $key), 'file_key' => $key, 'order_token' => $o['token']];
             return $id;
         };
 
         $name = $b['negocio']['nombre'];
-        $logo = $addFile($b['negocio']['logo'] ?? null, $name);
+        $logo = $addFile($b['negocio']['logo'] ?? null, $name, 'logo');
 
         // Fotos aprobadas de la presentación: banner (si el cliente no puso) y galería
         $presFotos = array_map('intval', $b['presentacion']['fotos_usar'] ?? []);
@@ -96,28 +151,51 @@ final class Manifest
 
         $banner = [];
         foreach ($bannerIds as $i => $fid) {
-            if ($a = $addFile($fid, $name . ' - ' . ($en ? 'banner' : 'banner') . ' ' . ($i + 1))) { $banner[] = $a; }
+            if ($a = $addFile($fid, $name . ' - banner ' . ($i + 1), 'banner')) { $banner[] = $a; }
         }
-        if (!$banner && ($st = $addStock('hero', 0, $name))) {
+        if (!$banner && !$hasStock && ($st = $addStock('hero', 0, $name))) {
             $banner[] = $st;
         }
         $gal = [];
         foreach ($galIds as $i => $fid) {
-            if ($a = $addFile($fid, $name . ' - ' . ($en ? 'photo' : 'foto') . ' ' . ($i + 1))) { $gal[] = $a; }
+            if ($a = $addFile($fid, $name . ' - ' . ($en ? 'photo' : 'foto') . ' ' . ($i + 1), 'galeria')) { $gal[] = $a; }
         }
 
-        $icons = ['fas fa-star'];
-        if (class_exists('S5\\Services\\BaseTexts')) {
-            $ind = BaseTexts::industrias();
-            $icons = $ind[$rubro]['iconos'] ?? $icons;
-        }
+        $icons = TextSchema::ICONOS_RUBRO[$rubro] ?? TextSchema::ICONOS_RUBRO['otro'];
         $servicios = [];
         foreach ($b['contenido']['servicios'] as $i => $s) {
-            $foto = $addFile($s['foto'] ?? null, $s['nombre']);
-            if (!$foto) {
+            $foto = $addFile($s['foto'] ?? null, $s['nombre'], 'servicio');
+            if (!$foto && !$hasStock) {
                 $foto = $addStock('servicio', $i, $s['nombre']);
             }
-            $servicios[] = ['nombre' => $s['nombre'], 'descripcion' => $s['descripcion'], 'foto' => $foto, 'icono' => $icons[$i % count($icons)]];
+            $ts = (isset($texts['servicios'][$i]) && is_array($texts['servicios'][$i])) ? $texts['servicios'][$i] : [];
+            $icono = TextSchema::icono($s['icono'] ?? '');
+            if ($icono === '') {
+                $icono = TextSchema::icono($ts['icono'] ?? '');
+            }
+            if ($icono === '') {
+                $icono = BaseTexts::iconoServicio((string) $s['nombre'], $rubro, $i);
+            }
+            $desc = trim((string) ($s['descripcion'] ?? ''));
+            if ($desc === '') {
+                $desc = (string) ($ts['descripcion'] ?? '');
+            }
+            $servicios[] = ['nombre' => $s['nombre'], 'descripcion' => $desc, 'foto' => $foto, 'icono' => $icono, 'origen' => (string) ($s['origen'] ?? 'form')];
+        }
+
+        // Fotos de stock descargadas por el portal (orders.data._stock): fileId -> id de asset
+        $stock = [];
+        foreach (['hero', 'about', 'servicios', 'galeria'] as $sl) {
+            $ids = [];
+            foreach (array_slice(array_values((array) ($stockSlots[$sl] ?? [])), 0, 12) as $k => $fid) {
+                $fid = (int) $fid;
+                if ($fid > 0 && ($a = $addFile($fid, $name . ' - ' . $sl . ' ' . ($k + 1), 'stock', $stockCredit[$fid] ?? ''))) {
+                    $ids[] = $a;
+                }
+            }
+            if ($ids) {
+                $stock[$sl] = $ids;
+            }
         }
 
         $store = null;
@@ -158,7 +236,8 @@ final class Manifest
                 'footer_credit' => (string) Settings::get('footer_credit', 'Sitio creado por Servicom'),
             ],
             'texts' => $texts,
-            'content' => ['banner' => $banner, 'quienes' => $texts['nosotros_texto'] ?? $b['contenido']['quienes'], 'servicios' => $servicios, 'galeria' => $gal],
+            'design' => ['hint' => ['rubro' => $rubro, 'estilo' => (int) $b['negocio']['estilo']]],
+            'content' => ['banner' => $banner, 'quienes' => $texts['nosotros_texto'] ?? $b['contenido']['quienes'], 'servicios' => $servicios, 'galeria' => $gal] + ($stock ? ['stock' => $stock] : []),
             'store' => $store,
             'assets' => $manifestAssets,
             'preview' => [

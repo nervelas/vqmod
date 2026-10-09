@@ -18,6 +18,44 @@ class TextSchema
     /** Resumen de la última validación (para registro/pruebas). */
     public static array $ultimo = ['reconocidos' => 0, 'reemplazados' => []];
 
+    /**
+     * Claves de iconos permitidas (CONTRATO-LUXE §1; el tema las implementa como SVG).
+     * Única definición para validar `icono` en textos, servicios y catálogo.
+     */
+    public const ICONOS = [
+        'star', 'shield', 'check', 'heart', 'clock', 'phone', 'mail', 'pin', 'calendar', 'users', 'user', 'handshake',
+        'award', 'crown', 'gem', 'sparkles', 'lightbulb', 'target', 'rocket', 'chat', 'globe', 'link', 'lock', 'key',
+        'home', 'building', 'briefcase', 'document', 'pen', 'book', 'graduation', 'chart', 'trend', 'coins', 'wallet', 'card',
+        'receipt', 'calculator', 'percent', 'tag', 'gift', 'bag', 'cart', 'truck', 'box', 'plane', 'ship', 'route',
+        'map', 'compass', 'camera', 'image', 'video', 'music', 'play', 'headset', 'wrench', 'gear', 'hammer', 'bolt',
+        'car', 'tools', 'oil', 'tire', 'battery', 'shirt', 'scissors', 'ruler', 'hanger', 'utensils', 'coffee', 'wine',
+        'cake', 'chef', 'leaf', 'flame', 'droplet', 'sun', 'moon', 'stethoscope', 'pulse', 'tooth', 'pill', 'syringe',
+        'microscope', 'eye', 'brain', 'bone', 'baby', 'paw', 'scales', 'gavel', 'columns', 'contract', 'stamp', 'fingerprint',
+        'container', 'warehouse', 'barcode', 'flag', 'medal', 'diamond', 'thumbs', 'trophy', 'percent-badge', 'support', 'wifi', 'cloud',
+        'code', 'printer', 'facebook', 'instagram', 'tiktok', 'youtube', 'x', 'linkedin', 'whatsapp', 'telegram',
+    ];
+
+    /** Iconos típicos por rubro (CONTRATO-LUXE §1), los primeros son los más frecuentes. */
+    public const ICONOS_RUBRO = [
+        'abogado' => ['scales', 'gavel', 'columns', 'contract', 'shield', 'handshake', 'book'],
+        'clinica' => ['stethoscope', 'pulse', 'tooth', 'pill', 'heart', 'microscope', 'calendar'],
+        'taller' => ['wrench', 'gear', 'car', 'oil', 'tire', 'battery', 'bolt'],
+        'ropa' => ['shirt', 'scissors', 'bag', 'ruler', 'gem', 'tag', 'sparkles'],
+        'restaurante' => ['utensils', 'wine', 'cake', 'coffee', 'flame', 'leaf', 'chef'],
+        'transporte' => ['truck', 'route', 'box', 'compass', 'clock', 'shield', 'plane'],
+        'contabilidad' => ['calculator', 'chart', 'coins', 'receipt', 'percent', 'document', 'wallet'],
+        'importaciones' => ['globe', 'ship', 'container', 'box', 'plane', 'barcode', 'warehouse'],
+        'otro' => ['star', 'sparkles', 'award', 'briefcase', 'check', 'handshake', 'gem'],
+    ];
+
+    /** Cantidades de los bloques de lista (CONTRATO-LUXE §2). */
+    public const VALORES_MIN = 4;
+    public const VALORES_MAX = 6;
+    public const PROCESO_MIN = 3;
+    public const PROCESO_MAX = 4;
+    public const FAQ_MIN = 4;
+    public const FAQ_MAX = 6;
+
     private const REDES = [
         'facebook' => ['facebook.com', 'fb.com', 'fb.me'],
         'instagram' => ['instagram.com'],
@@ -129,7 +167,7 @@ class TextSchema
      */
     public static function validar(array $json, array $brief): array
     {
-        $base = BaseTexts::textos($brief);
+        $base = BaseTexts::textosCompletos($brief);
         $corpus = self::corpus($brief);
         $nums = self::numeros($corpus);
         $rep = [];
@@ -161,11 +199,167 @@ class TextSchema
                 $d = $bs['descripcion'];
                 $rep[] = "servicios.$i.descripcion";
             }
-            $srv[] = ['resumen' => $r, 'descripcion' => $d];
+            $ic = self::icono($it['icono'] ?? '');
+            if ($ic === '') {
+                $ic = (string)($bs['icono'] ?? 'star');
+            }
+            $srv[] = ['resumen' => $r, 'descripcion' => $d, 'icono' => $ic];
         }
         $out['servicios'] = $srv;
+        self::validarLuxe($json, $base, $corpus, $nums, $out, $rep);
         self::$ultimo = ['reconocidos' => self::reconocidos($json), 'reemplazados' => $rep];
         return $out;
+    }
+
+    // ------------------------------------------------------------------
+    // Bloques ampliados (CONTRATO-LUXE §2)
+    // ------------------------------------------------------------------
+
+    /** Devuelve la clave de icono si pertenece al set cerrado (§1); si no, "". */
+    public static function icono($v): string
+    {
+        if (!is_string($v)) {
+            return '';
+        }
+        $k = strtolower(trim($v));
+        return ($k !== '' && in_array($k, self::ICONOS, true)) ? $k : '';
+    }
+
+    /**
+     * Completa/valida SOLO los bloques ampliados de unos textos ya existentes
+     * (p. ej. textos guardados antes de LUXE o producidos por BaseTexts::textos).
+     * Cualquier bloque ausente o corrupto se rellena con textos base. No toca
+     * `servicios` ni las claves del contrato §6.
+     *
+     * @return array<string,mixed> $texts con los bloques ampliados garantizados
+     */
+    public static function completarLuxe(array $texts, array $brief): array
+    {
+        $base = BaseTexts::textosCompletos($brief);
+        $corpus = self::corpus($brief);
+        $nums = self::numeros($corpus);
+        $rep = [];
+        $out = $texts;
+        self::validarLuxe($texts, $base, $corpus, $nums, $out, $rep);
+        return $out;
+    }
+
+    /**
+     * @param array $json   entrada (IA o textos guardados)
+     * @param array $base   BaseTexts::textosCompletos()
+     * @param array $out    se le añaden los bloques ampliados
+     * @param array $rep    claves reemplazadas por texto base
+     */
+    private static function validarLuxe(array $json, array $base, string $corpus, array $nums, array &$out, array &$rep): void
+    {
+        foreach (BaseTexts::LIMITES_LUXE as $k => $max) {
+            $v = $json[$k] ?? null;
+            $t = (is_string($v) || is_int($v) || is_float($v)) ? TextClean::limpiar((string)$v, $max) : '';
+            if ($t === '' || !self::textoSeguro($t, $corpus, $nums)) {
+                $t = (string)$base[$k];
+                $rep[] = $k;
+            }
+            $out[$k] = $t;
+        }
+        // listas
+        $out['valores'] = self::lista3($json['valores'] ?? null, $base['valores'], BaseTexts::LIM_VALOR_TITULO, BaseTexts::LIM_VALOR_TEXTO, true, self::VALORES_MIN, self::VALORES_MAX, $corpus, $nums, 'valores', $rep);
+        $out['proceso'] = self::lista3($json['proceso'] ?? null, $base['proceso'], BaseTexts::LIM_PASO_TITULO, BaseTexts::LIM_PASO_TEXTO, false, self::PROCESO_MIN, self::PROCESO_MAX, $corpus, $nums, 'proceso', $rep);
+        $out['faq'] = self::listaFaq($json['faq'] ?? null, $base['faq'], $corpus, $nums, $rep);
+    }
+
+    /**
+     * Lista de {titulo,texto[,icono]} saneada. Descarta ítems corruptos o
+     * inseguros; si quedan menos del mínimo se completa con los base (sin
+     * repetir títulos); recorta al máximo.
+     */
+    private static function lista3($x, array $base, int $maxT, int $maxX, bool $conIcono, int $min, int $max, string $corpus, array $nums, string $nombre, array &$rep): array
+    {
+        $o = [];
+        $vistos = [];
+        $items = is_array($x) ? array_slice(array_values($x), 0, 20) : [];
+        foreach ($items as $it) {
+            if (!is_array($it)) {
+                continue;
+            }
+            $t = TextClean::limpiar($it['titulo'] ?? '', $maxT);
+            $tx = TextClean::limpiar($it['texto'] ?? '', $maxX);
+            $kk = mb_strtolower($t, 'UTF-8');
+            if ($t === '' || $tx === '' || isset($vistos[$kk]) || !self::textoSeguro($t, $corpus, $nums) || !self::textoSeguro($tx, $corpus, $nums)) {
+                continue;
+            }
+            $vistos[$kk] = true;
+            $e = ['titulo' => $t, 'texto' => $tx];
+            if ($conIcono) {
+                $ic = self::icono($it['icono'] ?? '');
+                if ($ic === '') {
+                    $ic = (string)($base[count($o) % max(1, count($base))]['icono'] ?? 'star');
+                }
+                $e['icono'] = $ic;
+            }
+            $o[] = $e;
+            if (count($o) >= $max) {
+                break;
+            }
+        }
+        if (!$o) {
+            $rep[] = $nombre;
+            $o = array_slice($base, 0, $max);   // bloque ausente o corrupto por completo: se usa el texto base completo
+        } elseif (count($o) < $min) {
+            $rep[] = $nombre;
+            foreach ($base as $b) {
+                if (count($o) >= $min) {
+                    break;
+                }
+                if (!isset($vistos[mb_strtolower($b['titulo'], 'UTF-8')])) {
+                    $o[] = $b;
+                }
+            }
+        }
+        return array_values($o);
+    }
+
+    private static function listaFaq($x, array $base, string $corpus, array $nums, array &$rep): array
+    {
+        $o = [];
+        $vistos = [];
+        $items = is_array($x) ? array_slice(array_values($x), 0, 20) : [];
+        foreach ($items as $it) {
+            if (!is_array($it)) {
+                continue;
+            }
+            $p = TextClean::limpiar($it['p'] ?? '', BaseTexts::LIM_FAQ_P);
+            $r = TextClean::limpiar($it['r'] ?? '', BaseTexts::LIM_FAQ_R);
+            $kk = mb_strtolower($p, 'UTF-8');
+            if ($p === '' || $r === '' || isset($vistos[$kk]) || !self::textoSeguro($p, $corpus, $nums) || !self::textoSeguro($r, $corpus, $nums)) {
+                continue;
+            }
+            $vistos[$kk] = true;
+            $o[] = ['p' => $p, 'r' => $r];
+            if (count($o) >= self::FAQ_MAX) {
+                break;
+            }
+        }
+        if (!$o) {
+            $rep[] = 'faq';
+            $o = array_slice($base, 0, self::FAQ_MAX);
+        } elseif (count($o) < self::FAQ_MIN) {
+            $rep[] = 'faq';
+            foreach ($base as $b) {
+                if (count($o) >= self::FAQ_MIN) {
+                    break;
+                }
+                if (!isset($vistos[mb_strtolower($b['p'], 'UTF-8')])) {
+                    $o[] = $b;
+                }
+            }
+        }
+        return array_values($o);
+    }
+
+    /** ¿El texto parece una instrucción dirigida a la IA? (para no reutilizarlo como contenido) */
+    public static function pareceInstruccion(string $t): bool
+    {
+        return preg_match(self::PATRON_INSTRUCCION, $t) === 1;
     }
 
     /** ¿El texto evita inventos e instrucciones ajenas? */

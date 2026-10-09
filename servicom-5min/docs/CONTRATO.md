@@ -24,7 +24,7 @@ wp-pack/        (deny web)  theme/servicom  mu-plugins/  provision/  plugins.jso
 tools/          (deny web)  CLI: build_base.php, cron.php, ...
 vendor/phpmailer/
 ```
-Secretos/config: `config.php` en carpeta hermana superior al docroot (`../servicom-secrets/config.php`) si es escribible; si no, `app/config.php` (deny). Valores sensibles (token cPanel, clave IA, SMTP, HMAC) van **cifrados** (libsodium secretbox) en la tabla `settings`; la llave está solo en config.php.
+Secretos/config: `config.php` en carpeta hermana superior al docroot (`../servicom-secrets/config.php`) si es escribible; si no, `app/config.php` (deny). Valores sensibles (token cPanel, clave IA, SMTP, HMAC) van **cifrados** (AES-256-GCM con OpenSSL; sin sodium) en la tabla `settings`; la llave está solo en config.php.
 
 ## 2. Núcleo del portal (lo implementa el arquitecto; los demás lo USAN)
 Namespace raíz `S5\`, autoload por carpeta: `S5\Core\X` → `app/Core/X.php`, `S5\Services\X` → `app/Services/X.php`, etc.

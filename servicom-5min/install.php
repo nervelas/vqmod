@@ -39,9 +39,10 @@ function s5_requirements(): array
 {
     $r = [];
     $r[] = ['PHP 8.0 o superior', PHP_VERSION_ID >= 80000, PHP_VERSION];
-    foreach (['zip', 'dom', 'xml', 'mbstring', 'fileinfo', 'curl', 'pdo_mysql', 'sodium', 'openssl', 'json'] as $e) {
+    foreach (['zip', 'dom', 'xml', 'mbstring', 'fileinfo', 'curl', 'pdo_mysql', 'openssl', 'json'] as $e) {
         $r[] = ['Extensión ' . $e, extension_loaded($e), ''];
     }
+    $r[] = ['Cifrado AES-256-GCM (openssl)', in_array('aes-256-gcm', function_exists('openssl_get_cipher_methods') ? openssl_get_cipher_methods() : [], true), ''];
     $r[] = ['Extensión gd o imagick', extension_loaded('gd') || extension_loaded('imagick'), ''];
     foreach (['storage', 'storage/logs', 'storage/sessions', 'storage/uploads', 'storage/jobs', 'storage/work'] as $d) {
         $p = S5_ROOT . '/' . $d;

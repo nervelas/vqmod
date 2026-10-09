@@ -70,7 +70,7 @@ final class LocalDriver implements HostDriver
 
     public function ping(): array
     {
-        $exts = ['zip', 'dom', 'xml', 'mbstring', 'fileinfo', 'curl', 'gd', 'imagick', 'mysqli', 'json', 'openssl', 'sodium'];
+        $exts = ['zip', 'dom', 'xml', 'mbstring', 'fileinfo', 'curl', 'gd', 'imagick', 'mysqli', 'json', 'openssl'];
         $have = [];
         foreach ($exts as $x) {
             $have[$x] = extension_loaded($x);

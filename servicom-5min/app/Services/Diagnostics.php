@@ -21,9 +21,10 @@ final class Diagnostics
         $out = [];
         $g = [];
         $g[] = self::item('Versión de PHP', PHP_VERSION_ID >= 80000, PHP_VERSION . ' (mínimo 8.0)');
-        foreach (['zip', 'dom', 'xml', 'mbstring', 'fileinfo', 'curl', 'sodium', 'pdo_mysql'] as $e) {
+        foreach (['zip', 'dom', 'xml', 'mbstring', 'fileinfo', 'curl', 'openssl', 'pdo_mysql'] as $e) {
             $g[] = self::item('Extensión ' . $e, extension_loaded($e));
         }
+        $g[] = self::item('Cifrado de secretos AES-256-GCM', \S5\Core\Crypto::available(), 'OpenSSL; no requiere sodium');
         $g[] = self::item('Extensión gd o imagick', extension_loaded('gd') || extension_loaded('imagick'));
         if (extension_loaded('gd')) {
             $g[] = self::item('GD con WebP', function_exists('imagewebp'), function_exists('imagewebp') ? '' : 'Sin WebP: se usarán JPG/PNG');

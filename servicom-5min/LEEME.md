@@ -1,7 +1,7 @@
 # Tu web en 5 minutos — Servicom
 
 Portal que crea webs WordPress reales (informativa o tienda) en `slug.servicom.gt`, con vista previa, pago por transferencia y publicación.
-Requisitos del hosting: PHP 8.0+ (zip, dom, xml, mbstring, fileinfo, curl, gd o imagick, pdo_mysql, sodium), MySQL/MariaDB, Apache con mod_rewrite, cPanel con AutoSSL.
+Requisitos del hosting: PHP 8.0+ (zip, dom, xml, mbstring, fileinfo, curl, gd o imagick, pdo_mysql, openssl; **no** requiere sodium: los secretos se cifran con AES-256-GCM de OpenSSL), MySQL/MariaDB, Apache con mod_rewrite, cPanel con AutoSSL.
 
 ## 1. Subir e instalar (5 pasos)
 1. **Subir el ZIP** `servicom-5min-portal.zip` a la carpeta del subdominio del portal (p. ej. el docroot de `crear.servicom.gt`) y descomprimir. **Nunca** en el docroot de `servicom.gt`.

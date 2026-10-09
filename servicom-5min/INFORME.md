@@ -10,6 +10,7 @@ Todo se ejecuta con `tests/run_all.sh`. **Resultado final: 0 fallos.**
 | Prueba | Resultado |
 |---|---|
 | Sintaxis PHP 8.3, **PHP 8.0.30 (WASM)** y escáner de sintaxis/funciones 8.1+ (155 archivos) | 0 errores, 0 hallazgos |
+| Cifrado de secretos AES-256-GCM sin sodium (alteración, llave ajena, basura, compatibilidad con valores antiguos) en PHP 8.3 y PHP 8.0.30 WASM | 17/17 |
 | IA y presentaciones: PDF texto/escaneado, PPTX, DOCX por rubros, vacío, corrupto, con contraseña, macros, >10 MB, formato no permitido, inglés, datos que contradicen el formulario, órdenes a la IA, zip bombs (memoria < 64 MB), XXE, tope de gasto, fallback a textos base | 259/259 |
 | Flujo completo: formulario → vista previa → pago → aprobación → publicación (sitio sin barra ni noindex, correos, purga de archivos) | 20/20 |
 | Presentaciones por HTTP (análisis asíncrono, revisión, prioridad del formulario, inyección de prompt, IA caída/sin crédito/JSON inválido, límite de 3) | 60/60 |
@@ -39,7 +40,7 @@ Se quitó el agente del segundo hosting (código, instalador, ZIP, pruebas) y la
 - Las webs viven en `webs-clientes/<slug>` (fuera de `public_html`); `servicom.gt` nunca se toca: subdominios reservados, un subdominio ya existente jamás se adopta, nombres de BD/usuario nunca se adoptan ni se borran si no son nuestros, borrado confinado a `webs-clientes` con doble verificación y bitácora.
 - La vista previa es **privada** (clave `?scpk=` entregada solo por el portal; la barra enlaza con esa clave, nunca con el token del borrador) y `noindex`.
 - Al publicar se borran la presentación original y las fotos subidas al portal (ya están en WordPress); se conserva el comprobante.
-- Secretos (token cPanel, clave IA, SMTP) cifrados con libsodium en BD; la llave vive en `../servicom-secrets/config.php` fuera del docroot.
+- Secretos (token cPanel, clave IA, SMTP) cifrados en BD con AES-256-GCM (OpenSSL; no requiere sodium); la llave vive en `../servicom-secrets/config.php` fuera del docroot.
 - Plugins del paquete base: solo Elementor y WooCommerce (oficiales de wordpress.org). `DISALLOW_FILE_MODS`: sin instalar/actualizar plugins desde el panel del cliente (actualice el paquete base con `build_base.php`).
 
 ## Los 5 pasos para ponerlo a funcionar

@@ -10,6 +10,8 @@ echo "== Sintaxis y compatibilidad"
 run "php -l (8.3)" bash -c 'find app tools install.php index.php wp-pack -name "*.php" -not -path "*/tests-only/*" | xargs -n1 php -l 2>&1 | grep -v "^No syntax" | head -5; test -z "$(find app tools install.php index.php wp-pack -name "*.php" | xargs -n1 php -l 2>&1 | grep -v "^No syntax")"'
 run "Compatibilidad PHP 8.0 (escáner)" php tests/compat80.php app install.php index.php tools wp-pack
 run "Sintaxis PHP 8.0.30 (WASM)" bash -c 'cd /tmp/p80 && node lint.mjs /home/user/vqmod/servicom-5min/app /home/user/vqmod/servicom-5min/install.php /home/user/vqmod/servicom-5min/index.php /home/user/vqmod/servicom-5min/tools /home/user/vqmod/servicom-5min/wp-pack'
+run "Cifrado de secretos (sin sodium)" php tests/crypto.php
+run "Cifrado en PHP 8.0.30 (WASM, sin sodium)" bash -c 'cd /tmp/p80 && node run1.mjs | tee /dev/stderr | grep -q "Crypto: 17/17"'
 run "IA y presentaciones (unitarias)" php tests/ai/run.php
 ./build/make_zip.sh --with-sim >/dev/null 2>&1
 ./tests/e2e/setup.sh >/dev/null 2>&1 && /tmp/mockctl.sh start

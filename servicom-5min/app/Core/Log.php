@@ -34,6 +34,10 @@ final class Log
         if (!is_dir($dir)) {
             @mkdir($dir, 0750, true);
         }
+        $file = $dir . '/app.log';
+        if (is_file($file) && filesize($file) > 5242880) {
+            @rename($file, $dir . '/app.log.1');
+        }
         $line = '[' . gmdate('Y-m-d H:i:s') . '] ' . $msg;
         if ($ctx) {
             $line .= ' ' . json_encode($ctx, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);

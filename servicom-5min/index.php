@@ -34,6 +34,11 @@ require S5_ROOT . '/app/routes.php';
 
 // Cron perezoso (respaldo del cron diario): como máximo una vez por hora, tras responder.
 register_shutdown_function(static function (): void {
+    if (function_exists('fastcgi_finish_request')) {
+        @fastcgi_finish_request();
+    } elseif (function_exists('litespeed_finish_request')) {
+        @litespeed_finish_request();
+    }
     try {
         \S5\Services\Cron::lazy();
     } catch (\Throwable $e) {

@@ -1,0 +1,2 @@
+bfd87cce9c956f02a93298dfe4da0c55dbb847d25eb2fdd2c1de34f54c25254c  entrega/servicom-5min-agente.zip
+8a5f56e27f7b334f27f10a100b1913a015e4e9e5945f7408033c7dd72c1f1fa8  entrega/servicom-5min-portal.zip

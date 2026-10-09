@@ -6,8 +6,8 @@ declare(strict_types=1);
  * Uso: php tests/e2e/parche.php <zip_anterior> <parche.zip>
  */
 require __DIR__ . '/lib.php';
-$old = $argv[1] ?? '/tmp/oldzip/old.zip';
-$patch = $argv[2] ?? dirname(__DIR__, 2) . '/dist/parche-acceso.zip';
+$old = realpath($argv[1] ?? '/tmp/oldzip/old.zip') ?: ($argv[1] ?? "");
+$patch = realpath($argv[2] ?? dirname(__DIR__, 2) . '/dist/parche-acceso.zip') ?: ($argv[2] ?? "");
 $W = '/tmp/s5patch';
 $port = 8204;
 shell_exec("fuser -k $port/tcp 2>/dev/null"); sleep(1);

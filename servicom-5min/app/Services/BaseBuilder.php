@@ -268,6 +268,8 @@ final class BaseBuilder
         @mkdir($base . '/.provision', 0755, true);
         copy($pack . '/provision/sc-provision.php', $base . '/.provision/sc-provision.php');
         $done[] = 'script de aprovisionamiento';
+        @unlink($base . '/.filelist.json');   // la lista de archivos a copiar se reconstruye con lo nuevo
+        $done[] = 'lista de archivos';
         foreach (['wp-content/themes/servicom/style.css', 'wp-content/mu-plugins/servicom-core.php', 'wp-content/mu-plugins/servicom-core/includes/design.php', 'wp-content/themes/servicom/inc/luxe-render.php'] as $need) {
             if (!is_file($base . '/' . $need)) { throw new \RuntimeException('Actualización incompleta: falta ' . $need); }
         }

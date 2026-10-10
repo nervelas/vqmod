@@ -172,7 +172,11 @@ final class LocalDriver implements HostDriver
     private function fileList(): array
     {
         $cache = $this->base . '/.filelist.json';
-        $stamp = (string) @filemtime($this->base . '/wp-includes/version.php') . '|' . (string) @filemtime($this->base . '/wp-content');
+        // La marca incluye el mu-plugin y el tema: al refrescar el paquete base (--only-pack) cambian y la lista se reconstruye,
+        // así los archivos nuevos (p. ej. includes/builder/luxe.php) sí se copian a las webs nuevas.
+        $stamp = (string) @filemtime($this->base . '/wp-includes/version.php') . '|' . (string) @filemtime($this->base . '/wp-content')
+            . '|' . (string) @filemtime($this->base . '/wp-content/mu-plugins/servicom-core.php')
+            . '|' . (string) @filemtime($this->base . '/wp-content/themes/servicom/style.css');
         if (is_file($cache)) {
             $j = json_decode((string) file_get_contents($cache), true);
             if (is_array($j) && ($j['stamp'] ?? '') === $stamp) {

@@ -15,7 +15,13 @@
         es.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); } });
       }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
       rv.forEach(function (e) { io.observe(e); });
-      setTimeout(function () { rv.forEach(function (e) { if (!e.classList.contains('is-in') && e.getBoundingClientRect().top < w.innerHeight) { e.classList.add('is-in'); } }); }, 1200);
+      // Red de seguridad: nada se queda invisible aunque el observador falle (salto por ancla, scroll muy rápido, navegador raro)
+      var sweep = function () { rv.forEach(function (e) { if (!e.classList.contains('is-in') && e.getBoundingClientRect().top < w.innerHeight * 1.05) { e.classList.add('is-in'); } }); };
+      setTimeout(sweep, 1200);
+      var sw = false;
+      w.addEventListener('scroll', function () { if (!sw) { sw = true; w.requestAnimationFrame(function () { sw = false; sweep(); }); } }, { passive: true });
+      w.addEventListener('hashchange', function () { setTimeout(sweep, 300); });
+      w.addEventListener('load', function () { setTimeout(sweep, 600); });
     }
   }
 

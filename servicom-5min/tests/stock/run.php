@@ -67,7 +67,8 @@ function setup(array $env = [], string $key = 'TESTKEY'): array
     putenv('S5_STOCK_CACHE=' . $cache);
     putenv('S5_STOCK_PEXELS_URL=' . ($env['pexels'] ?? $B . '/pexels/v1/search'));
     putenv('S5_STOCK_OPENVERSE_URL=' . ($env['openverse'] ?? $B . '/openverse/v1/images/'));
-    Settings::$data = ['pexels_key' => $key, 'stock_online' => '1'];
+    putenv('S5_STOCK_PIXABAY_URL=' . ($env['pixabay'] ?? $B . '/pixabay/api/'));
+    Settings::$data = ['pexels_key' => $key, 'pixabay_key' => $env['pixkey'] ?? '', 'stock_online' => '1'];
     Log::$errores = [];
     return [$cache, $out];
 }
@@ -94,6 +95,22 @@ $ro = StockImages::plan(['negocio' => ['rubro' => 'xyz'], 'contenido' => ['servi
 t('plan: rubro desconocido usa "otro"; servicio traducido por diccionario', str_contains($ro[0]['query'], 'office') || str_contains($ro[0]['query'], 'business') , $ro[0]['query']);
 $sv = array_values(array_filter(StockImages::plan(brief(), 5), fn($i) => $i['key'] === 'svc:0'))[0];
 t('plan: "Derecho laboral" -> términos en inglés', str_contains($sv['query'], 'labor'), $sv['query']);
+
+seccion('Pixabay (clave gratis e inmediata)');
+[$cache, $out] = setup(['pixkey' => 'PIXKEY'], '');
+$r = run(brief(), $out);
+t('solo con clave de Pixabay: descarga las 9 fotos', count($r['stock']['assets']) === 9, json_encode(stats()));
+t('no consulta Pexels (sin clave) ni Openverse', stats()['search_pexels'] === 0 && stats()['search_openverse'] === 0, json_encode(stats()));
+t('el crédito menciona Pixabay', str_contains((string) ($r['stock']['assets'][0]['credit'] ?? ''), 'Pixabay'));
+[$cache, $out] = setup(['pixkey' => 'MALA'], '');
+$r = run(brief(), $out);
+t('clave de Pixabay inválida: cae a Openverse sin error', count($r['stock']['assets']) === 9 && stats()['search_pixabay'] === 1, json_encode(stats()));
+ctl('pixabay=down'); [$cache, $out] = setup(['pixkey' => 'PIXKEY'], '');
+ctl('pixabay=down');
+$r = run(brief(), $out);
+t('Pixabay caído: usa Openverse y lo consulta una sola vez', count($r['stock']['assets']) === 9 && stats()['search_pixabay'] === 1, json_encode(stats()));
+ctl('pixabay=ok');
+[$cache, $out] = setup();
 
 seccion('éxito con Pexels');
 $r = run(brief(), $out);
@@ -174,7 +191,7 @@ t('rechaza redirección a otro host', !$r['stock']['assets'] && !$files && str_c
 rmrf($cache); rmrf($out);
 
 seccion('lista de hosts y esquemas (sin red)');
-putenv('S5_STOCK_PEXELS_URL'); putenv('S5_STOCK_OPENVERSE_URL');
+putenv('S5_STOCK_PEXELS_URL'); putenv('S5_STOCK_OPENVERSE_URL'); putenv('S5_STOCK_PIXABAY_URL');
 $m = new ReflectionMethod(StockImages::class, 'urlAllowed');
 $m->setAccessible(true);
 t('https images.pexels.com permitido', $m->invoke(null, 'https://images.pexels.com/photos/1/x.jpeg') === null);

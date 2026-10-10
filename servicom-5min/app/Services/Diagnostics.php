@@ -94,9 +94,9 @@ final class Diagnostics
         $a[] = self::item('Datos bancarios completos', Settings::get('banco_cuenta') !== '' && Settings::get('banco_titular') !== '');
         $a[] = self::item('Correo del dueño', Settings::get('owner_email') !== '');
         $a[] = self::item('WhatsApp de Servicom', Settings::get('wa_servicom') !== '');
-        $a[] = Settings::has('pexels_key')
-            ? self::item('Fotos de stock', true, 'Pexels + Openverse' . (Settings::bool('stock_online', true) ? '' : ' (descarga automática desactivada en Ajustes)'))
-            : self::item('Fotos de stock', null, 'Solo Openverse y arte generado; con clave de Pexels las fotos son mejores');
+        $a[] = (Settings::has('pexels_key') || Settings::has('pixabay_key'))
+            ? self::item('Fotos de stock', true, (Settings::has('pixabay_key') ? 'Pixabay + ' : '') . (Settings::has('pexels_key') ? 'Pexels + ' : '') . 'Openverse' . (Settings::bool('stock_online', true) ? '' : ' (descarga automática desactivada en Ajustes)'))
+            : self::item('Fotos de stock', null, 'Solo Openverse y arte generado; con una clave de Pixabay las fotos son mejores');
         $a[] = self::item('Fotos de stock disponibles', array_sum(array_map('array_sum', Stock::available())) > 0, 'Si no hay, las tarjetas de servicio usan iconos (ver library/FALTANTES.md)');
         $out['Configuración'] = $a;
         return $out;

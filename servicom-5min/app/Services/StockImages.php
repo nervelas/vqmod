@@ -33,6 +33,7 @@ final class StockImages
 
     private const PEXELS = 'https://api.pexels.com/v1/search';
     private const OPENVERSE = 'https://api.openverse.org/v1/images/';
+    private const PIXABAY = 'https://pixabay.com/api/';
     private const HOSTS = ['images.pexels.com', 'upload.wikimedia.org', 'live.staticflickr.com'];
 
     /** Motivos de rechazo/errores de la última ejecución (pruebas y diagnóstico). */
@@ -89,6 +90,11 @@ final class StockImages
         return self::env('S5_STOCK_PEXELS_URL') ?: self::PEXELS;
     }
 
+    private static function pixabayUrl(): string
+    {
+        return self::env('S5_STOCK_PIXABAY_URL') ?: self::PIXABAY;
+    }
+
     private static function openverseUrl(): string
     {
         return self::env('S5_STOCK_OPENVERSE_URL') ?: self::OPENVERSE;
@@ -98,7 +104,7 @@ final class StockImages
     private static function testHosts(): array
     {
         $out = [];
-        foreach (['S5_STOCK_PEXELS_URL', 'S5_STOCK_OPENVERSE_URL'] as $k) {
+        foreach (['S5_STOCK_PEXELS_URL', 'S5_STOCK_OPENVERSE_URL', 'S5_STOCK_PIXABAY_URL'] as $k) {
             $h = strtolower((string) parse_url(self::env($k), PHP_URL_HOST));
             if (in_array($h, ['127.0.0.1', 'localhost', '[::1]'], true)) {
                 $out[] = $h;
@@ -120,6 +126,11 @@ final class StockImages
     public static function enabled(): bool
     {
         return Settings::bool('stock_online', true);
+    }
+
+    public static function hasPixabayKey(): bool
+    {
+        return trim((string) Settings::get('pixabay_key', '')) !== '';
     }
 
     public static function hasPexelsKey(): bool
@@ -210,7 +221,8 @@ final class StockImages
         if ($test) {
             return null;
         }
-        $ok = in_array($host, self::HOSTS, true) || in_array($host, ['api.pexels.com', 'api.openverse.org'], true)
+        $ok = in_array($host, self::HOSTS, true) || in_array($host, ['api.pexels.com', 'api.openverse.org', 'pixabay.com'], true)
+            || str_ends_with($host, '.pixabay.com')
             || str_ends_with($host, '.staticflickr.com') || str_ends_with($host, '.wikimedia.org');
         if (!$ok) {
             return 'host no permitido (' . $host . ')';
@@ -308,6 +320,12 @@ final class StockImages
         if ($provider === 'pexels') {
             $url = self::pexelsUrl() . (str_contains(self::pexelsUrl(), '?') ? '&' : '?') . http_build_query(['query' => $query, 'per_page' => 15, 'orientation' => 'landscape']);
             $r = self::http($url, ['Authorization: ' . trim((string) Settings::get('pexels_key', '')), 'Accept: application/json']);
+        } elseif ($provider === 'pixabay') {
+            $url = self::pixabayUrl() . (str_contains(self::pixabayUrl(), '?') ? '&' : '?') . http_build_query([
+                'key' => trim((string) Settings::get('pixabay_key', '')), 'q' => $query, 'image_type' => 'photo', 'orientation' => 'horizontal',
+                'min_width' => self::MIN_W, 'min_height' => self::MIN_H, 'safesearch' => 'true', 'per_page' => 20, 'lang' => 'en',
+            ]);
+            $r = self::http($url, ['Accept: application/json']);
         } else {
             $url = self::openverseUrl() . (str_contains(self::openverseUrl(), '?') ? '&' : '?') . http_build_query([
                 'q' => $query, 'license' => 'cc0,pdm', 'category' => 'photograph', 'extension' => 'jpg', 'size' => 'large',
@@ -336,6 +354,18 @@ final class StockImages
                         break;
                     }
                 }
+            }
+        } elseif ($provider === 'pixabay') {
+            foreach ((array) ($j['hits'] ?? []) as $p) {
+                if (!is_array($p)) {
+                    continue;
+                }
+                $u = (string) ($p['largeImageURL'] ?? $p['webformatURL'] ?? '');
+                if ($u === '') {
+                    continue;
+                }
+                $c[] = ['id' => 'x:' . ($p['id'] ?? sha1($u)), 'url' => $u,
+                    'credit' => mb_substr('Imagen de ' . trim((string) ($p['user'] ?? '')) . ' en Pixabay ' . (string) ($p['pageURL'] ?? ''), 0, 250)];
             }
         } else {
             foreach ((array) ($j['results'] ?? []) as $p) {
@@ -535,6 +565,9 @@ final class StockImages
         if (self::hasPexelsKey() && !in_array('pexels', $stock['down'], true)) {
             $providers[] = 'pexels';
         }
+        if (self::hasPixabayKey() && !in_array('pixabay', $stock['down'], true)) {
+            $providers[] = 'pixabay';
+        }
         if (!in_array('openverse', $stock['down'], true)) {
             $providers[] = 'openverse';
         }
@@ -614,8 +647,12 @@ final class StockImages
         self::$log = [];
         $parts = [];
         $any = false;
-        foreach (self::hasPexelsKey() ? ['pexels', 'openverse'] : ['openverse'] as $prov) {
-            $name = $prov === 'pexels' ? 'Pexels' : 'Openverse';
+        $provs = [];
+        if (self::hasPexelsKey()) { $provs[] = 'pexels'; }
+        if (self::hasPixabayKey()) { $provs[] = 'pixabay'; }
+        $provs[] = 'openverse';
+        foreach ($provs as $prov) {
+            $name = ['pexels' => 'Pexels', 'pixabay' => 'Pixabay', 'openverse' => 'Openverse'][$prov];
             $r = self::search($prov, 'lawyer office');
             if (!$r['ok']) {
                 $parts[] = $name . ': falló (' . $r['error'] . ')';

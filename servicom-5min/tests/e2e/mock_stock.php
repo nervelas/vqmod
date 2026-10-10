@@ -16,7 +16,7 @@ $stateFile = sys_get_temp_dir() . '/s5-mock-stock-' . (getenv('S5_MOCK_STOCK_ID'
 function st_load(string $f): array
 {
     $j = is_file($f) ? json_decode((string) file_get_contents($f), true) : null;
-    return is_array($j) ? $j : ['pexels' => 'ok', 'openverse' => 'ok', 'images' => 'normal', 'c' => ['search_pexels' => 0, 'search_openverse' => 0, 'img' => 0]];
+    return is_array($j) ? $j : ['pexels' => 'ok', 'openverse' => 'ok', 'images' => 'normal', 'pixabay' => 'ok', 'c' => ['search_pexels' => 0, 'search_openverse' => 0, 'search_pixabay' => 0, 'img' => 0]];
 }
 function st_save(string $f, array $s): void { file_put_contents($f, json_encode($s), LOCK_EX); }
 function out_json($data, int $code = 200): void
@@ -58,7 +58,7 @@ if ($path === '/ctl') {
     if (isset($q['reset'])) {
         $S = st_load('/nonexistent');
     }
-    foreach (['pexels', 'openverse', 'images'] as $k) {
+    foreach (['pexels', 'openverse', 'pixabay', 'images'] as $k) {
         if (isset($q[$k])) { $S[$k] = (string) $q[$k]; }
     }
     st_save($stateFile, $S);
@@ -95,6 +95,20 @@ if ($path === '/pexels/v1/search') {
             'src' => ['original' => $u, 'large2x' => $u, 'large' => $u . '&s=l', 'medium' => $u]];
     }
     out_json(['page' => 1, 'per_page' => $n, 'photos' => $photos, 'total_results' => $n]);
+    return;
+}
+if ($path === '/pixabay/api/') {
+    $S['c']['search_pixabay'] = ($S['c']['search_pixabay'] ?? 0) + 1;
+    st_save($stateFile, $S);
+    if (($S['pixabay'] ?? 'ok') === 'down') { out_json(['error' => 'down'], 503); return; }
+    if (($q['key'] ?? '') !== 'PIXKEY') { out_json('[ERROR 400] Invalid or missing API key', 400); return; }
+    $query = (string) ($q['q'] ?? '');
+    $hits = [];
+    for ($i = 0; $i < 12; $i++) {
+        $u = $imgUrl('px ' . $query, $i);
+        $hits[] = ['id' => crc32($query) % 100000 * 100 + $i, 'pageURL' => 'https://pixabay.com/photos/x-' . $i . '/', 'user' => 'Autor' . $i, 'largeImageURL' => $u, 'webformatURL' => $u . '&s=w', 'imageWidth' => 1600, 'imageHeight' => 1000];
+    }
+    out_json(['total' => 12, 'totalHits' => 12, 'hits' => $hits]);
     return;
 }
 if ($path === '/openverse/v1/images/') {

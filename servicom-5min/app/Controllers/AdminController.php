@@ -465,7 +465,7 @@ final class AdminController
         'wa_servicom' => ['phone', 0], 'owner_email' => ['email', 0], 'footer_credit' => ['text', 0],
         'dominio_base' => ['domain', 0], 'portal_sub' => ['sub', 0], 'reservados' => ['csv', 0], 'webs_path' => ['path', 0], 'force_scheme' => ['scheme', 0],
         'ai_key' => ['secret', 1], 'ai_model_main' => ['model', 0], 'ai_model_fallback' => ['model', 0], 'ai_model_extract' => ['model', 0],
-        'pexels_key' => ['secret', 1], 'stock_online' => ['bool', 0],
+        'pexels_key' => ['secret', 1], 'pixabay_key' => ['secret', 1], 'stock_online' => ['bool', 0],
         'ai_cap_day' => ['num', 0], 'ai_cap_total' => ['num', 0], 'pres_max_mb' => ['int', 0],
         'ai_price_in_claude-sonnet-5-5' => ['num', 0], 'ai_price_out_claude-sonnet-5-5' => ['num', 0], 'ai_price_in_claude-haiku-5-5' => ['num', 0], 'ai_price_out_claude-haiku-5-5' => ['num', 0],
         'smtp_host' => ['text', 0], 'smtp_port' => ['int', 0], 'smtp_user' => ['text', 0], 'smtp_pass' => ['secret', 1], 'smtp_secure' => ['smtp', 0], 'smtp_from' => ['email', 0], 'smtp_from_name' => ['text', 0],

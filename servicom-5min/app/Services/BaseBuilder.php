@@ -247,6 +247,42 @@ final class BaseBuilder
     }
 
     /** Actualiza SOLO el tema, el mu-plugin y el script de aprovisionamiento de un paquete base existente (sin descargas). */
+    /** Huella del contenido de wp-pack (sin pruebas): cambia cuando el portal recibe una actualización del tema o del mu-plugin. */
+    public function packHash(?string $pack = null): string
+    {
+        $pack = rtrim($pack ?? (S5_ROOT . '/wp-pack'), '/');
+        if (!is_dir($pack)) { return ''; }
+        $acc = [];
+        $it = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($pack, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST);
+        $len = strlen($pack) + 1;
+        foreach ($it as $f) {
+            $rel = substr($f->getPathname(), $len);
+            if ($f->isDir() || str_contains($rel, '/tests/') || str_starts_with($rel, 'tests/') || str_contains($rel, '/tests-only') || str_starts_with($rel, 'tests-only')) { continue; }
+            $acc[$rel] = md5_file($f->getPathname());
+        }
+        ksort($acc);
+        return md5(json_encode($acc));
+    }
+
+    /** Si wp-pack cambió desde la última vez, refresca tema y mu-plugin del paquete base (ya no hace falta ejecutar --only-pack a mano). */
+    public function refreshPackIfStale(string $base, ?string $pack = null): bool
+    {
+        $base = rtrim($base, '/');
+        if (!is_file($base . '/wp-load.php')) { return false; }
+        $h = $this->packHash($pack);
+        if ($h === '' || trim((string) @file_get_contents($base . '/.pack-hash')) === $h) { return false; }
+        $lock = @fopen($base . '/.pack.lock', 'c');
+        if ($lock && !flock($lock, LOCK_EX | LOCK_NB)) { return false; }   // otro proceso ya lo está haciendo
+        try {
+            if (trim((string) @file_get_contents($base . '/.pack-hash')) === $h) { return false; }
+            $this->refreshPack($base, $pack);
+            @file_put_contents($base . '/.pack-hash', $h, LOCK_EX);
+            return true;
+        } finally {
+            if ($lock) { flock($lock, LOCK_UN); fclose($lock); }
+        }
+    }
+
     public function refreshPack(string $base, ?string $pack = null): array
     {
         $base = rtrim($base, '/');
@@ -269,6 +305,7 @@ final class BaseBuilder
         copy($pack . '/provision/sc-provision.php', $base . '/.provision/sc-provision.php');
         $done[] = 'script de aprovisionamiento';
         @unlink($base . '/.filelist.json');   // la lista de archivos a copiar se reconstruye con lo nuevo
+        @file_put_contents($base . '/.pack-hash', $this->packHash($pack), LOCK_EX);
         $done[] = 'lista de archivos';
         foreach (['wp-content/themes/servicom/style.css', 'wp-content/mu-plugins/servicom-core.php', 'wp-content/mu-plugins/servicom-core/includes/design.php', 'wp-content/themes/servicom/inc/luxe-render.php'] as $need) {
             if (!is_file($base . '/' . $need)) { throw new \RuntimeException('Actualización incompleta: falta ' . $need); }

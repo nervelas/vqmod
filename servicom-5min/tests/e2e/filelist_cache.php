@@ -12,7 +12,7 @@ foreach ([$base . '/wp-includes', $base . '/wp-content/mu-plugins/servicom-core/
 file_put_contents("$base/wp-load.php", '<?php'); file_put_contents("$base/wp-includes/version.php", '<?php $wp_version="7.0";');
 file_put_contents("$base/wp-content/mu-plugins/servicom-core.php", '<?php // v1'); file_put_contents("$base/wp-content/themes/servicom/style.css", '/* v1 */');
 file_put_contents("$base/wp-content/mu-plugins/servicom-core/includes/builder/class-sc-builder.php", '<?php // v1');
-$drv = new LocalDriver(['webs_path' => "$T/webs", 'base_path' => $base, 'domain_root' => 'servicom.test', 'api' => (new ReflectionClass(\S5\Provision\SimCpanelApi::class))->newInstanceWithoutConstructor()]);
+$drv = new LocalDriver(['webs_path' => "$T/webs", 'base_path' => $base, 'domain_root' => 'servicom.test', 'auto_pack' => false, 'api' => (new ReflectionClass(\S5\Provision\SimCpanelApi::class))->newInstanceWithoutConstructor()]);
 function copyAll(LocalDriver $d, string $dst): void { $c = 0; do { $r = $d->copyBase($dst, $c, 10); $c = $r['cursor']; } while (!$r['done']); }
 mkdir("$T/webs/a", 0777, true); copyAll($drv, "$T/webs/a");
 t_ok(!is_file("$T/webs/a/wp-content/mu-plugins/servicom-core/includes/builder/luxe.php"), 'la primera web no tiene luxe.php (aún no existe)');
@@ -32,5 +32,12 @@ $old['stamp'] = (string) @filemtime("$base/wp-includes/version.php") . '|' . (st
 file_put_contents($cache, json_encode($old));
 mkdir("$T/webs/c", 0777, true); copyAll($drv, "$T/webs/c");
 t_ok(is_file("$T/webs/c/wp-content/mu-plugins/servicom-core/includes/builder/luxe.php"), 'una lista en caché con la marca antigua se descarta y se reconstruye');
+// caso 3: el portal recibe una actualización de wp-pack: la próxima web nueva refresca sola el paquete base (sin cron)
+file_put_contents("$pack/mu-plugins/servicom-core/includes/builder/nuevo-v3.php", '<?php // v3');
+$auto = new LocalDriver(['webs_path' => "$T/webs", 'base_path' => $base, 'domain_root' => 'servicom.test', 'wp_pack' => $pack, 'api' => (new ReflectionClass(\S5\Provision\SimCpanelApi::class))->newInstanceWithoutConstructor()]);
+mkdir("$T/webs/d", 0777, true); copyAll($auto, "$T/webs/d");
+t_ok(is_file("$T/webs/d/wp-content/mu-plugins/servicom-core/includes/builder/nuevo-v3.php"), 'una actualización de wp-pack se aplica sola al crear la siguiente web (sin --only-pack)');
+$h1 = (string) @file_get_contents("$base/.pack-hash"); mkdir("$T/webs/e", 0777, true); copyAll($auto, "$T/webs/e");
+t_ok($h1 !== '' && $h1 === (string) @file_get_contents("$base/.pack-hash"), 'sin cambios en wp-pack no se vuelve a refrescar');
 exec('rm -rf ' . escapeshellarg($T));
 exit(($GLOBALS['__t_fail'] ?? 0) ? 1 : 0);

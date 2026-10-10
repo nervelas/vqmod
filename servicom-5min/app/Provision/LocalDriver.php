@@ -209,6 +209,10 @@ final class LocalDriver implements HostDriver
     {
         $this->inject('copy');
         $docroot = $this->safeDocroot($docroot);
+        if ($cursor === 0 && ($this->cfg['auto_pack'] ?? true)) {
+            // Si el portal recibió una actualización del tema/mu-plugin, el paquete base se refresca solo antes de copiar
+            try { (new \S5\Services\BaseBuilder(null, static function (string $m): void {}))->refreshPackIfStale($this->base, isset($this->cfg['wp_pack']) ? (string) $this->cfg['wp_pack'] : null); } catch (\Throwable $e) { \S5\Core\Log::error('Paquete base: ' . $e->getMessage()); }
+        }
         $files = $this->fileList();
         $total = count($files);
         if ($cursor === 0) {

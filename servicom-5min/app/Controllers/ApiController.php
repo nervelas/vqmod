@@ -59,7 +59,7 @@ final class ApiController
     {
         self::guard();
         $in = self::input();
-        if (!RateLimit::hit('draft-ip-' . Http::ip(), Settings::int('max_drafts_ip_day', 5) + 15, 86400)) {
+        if (!RateLimit::hit('draft-ip-' . Http::ip(), max(20, Settings::int('max_drafts_ip_day', 15)) + 15, 86400)) {
             self::fail('Se alcanzó el límite de borradores por hoy. Inténtelo mañana o escríbanos por WhatsApp.', 429);
         }
         if (!empty($in['web_sitio'])) {   // honeypot
@@ -252,7 +252,7 @@ final class ApiController
         if (in_array($o['analysis_state'], ['pendiente', 'procesando'], true)) {
             Http::json(['ok' => true, 'estado' => 'procesando']);
         }
-        if (!RateLimit::hit('analyze-ip-' . Http::ip(), Settings::int('max_analysis_ip_day', 6), 86400)) {
+        if (!RateLimit::hit('analyze-ip-' . Http::ip(), max(10, Settings::int('max_analysis_ip_day', 6)), 86400)) {
             Orders::set((int) $o['id'], ['analysis_state' => 'error', 'analysis_msg' => 'No pudimos leer su presentación ahora; puede llenar los datos manualmente.']);
             Http::json(['ok' => true, 'estado' => 'error', 'mensaje' => 'No pudimos leer su presentación ahora; puede llenar los datos manualmente.']);
         }
@@ -453,7 +453,7 @@ final class ApiController
             }
             Pipeline::regenerate((int) $o['id']);
         } else {
-            if (!RateLimit::hit('build-ip-' . Http::ip(), Settings::int('max_drafts_ip_day', 5), 86400)) {
+            if (!RateLimit::hit('build-ip-' . Http::ip(), max(20, Settings::int('max_drafts_ip_day', 15)), 86400)) {
                 self::fail('Se alcanzó el límite de vistas previas por hoy. Inténtelo mañana o escríbanos por WhatsApp.', 429);
             }
             Pipeline::start((int) $o['id']);

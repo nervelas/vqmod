@@ -112,7 +112,7 @@ $redes = ['facebook' => 'Facebook', 'instagram' => 'Instagram', 'tiktok' => 'Tik
         <label class="plan-o"><input type="radio" name="plan" data-k="plan" value="tienda"><span class="plan-o__c"><b class="plan-o__n"><?= ico('bag') ?>Tienda virtual</b><span class="plan-o__d">Vende con carrito, inventario y pedidos a tu correo.</span><span class="plan-o__p"><?= e(money_q($pTienda)) ?><small>/año</small></span></span></label>
       </fieldset>
       <p class="err" id="f-plan-e"></p>
-      <label class="chk"><input type="checkbox" data-k="tarjeta_extra"><span><b>Pago con tarjeta (+<?= e(money_q($pTarjeta)) ?>/año)</b> <span class="opt">(opcional)</span><small>Se activa con Visanet/Epay y requiere afiliación.</small></span></label>
+      <label class="chk" id="tarj-wrap" hidden><input type="checkbox" data-k="tarjeta_extra"><span><b>Pago con tarjeta (+<?= e(money_q($pTarjeta)) ?>/año)</b> <span class="opt">(opcional)</span><small>Se activa con Visanet/Epay y requiere afiliación.</small></span></label>
     </section>
 
     <!-- PRESENTACIÓN -->
@@ -136,7 +136,6 @@ $redes = ['facebook' => 'Facebook', 'instagram' => 'Instagram', 'tiktok' => 'Tik
           <button type="button" class="btn btn--ghost btn--sm" id="pres-rm">Quitar</button>
         </div>
       </div>
-      <button type="button" class="btn btn--ghost btn--block" id="pres-skip">No tengo un archivo: prefiero llenar los datos</button>
     </section>
 
     <!-- REVISIÓN -->
@@ -273,12 +272,12 @@ $redes = ['facebook' => 'Facebook', 'instagram' => 'Instagram', 'tiktok' => 'Tik
 
     <!-- RESUMEN -->
     <section class="step" data-step="resumen" aria-labelledby="t-resumen" hidden>
-      <h2 id="t-resumen" tabindex="-1">Revisa y crea tu vista previa</h2>
+      <h2 id="t-resumen" tabindex="-1">Creando tu web</h2>
       <div id="res-pend" class="notice notice--i" hidden></div>
-      <div id="res-cards" class="sum"></div>
+      <div id="res-cards" class="sum" hidden></div>
       <div class="hp" aria-hidden="true"><label>No llenes este campo<input type="text" name="web_sitio" id="web_sitio" tabindex="-1" autocomplete="off"></label></div>
       <p class="err" id="res-e" role="alert"></p>
-      <div id="build-idle"><button type="button" class="btn btn--gold btn--block btn--lg" id="build-go"><?= ico('spark') ?><span>Crear mi vista previa</span></button><p class="help ctr">Toma unos minutos. Podrás editar todo antes de pagar.</p></div>
+      <div id="build-idle"><button type="button" class="btn btn--gold btn--block btn--lg" id="build-go"><?= ico('spark') ?><span>Crear mi vista previa</span></button><p class="help ctr">Toma unos minutos.</p></div>
       <div id="build" class="card buildbox" hidden aria-live="polite">
         <h3 id="b-title">Armando tu web</h3>
         <div class="bar" role="progressbar" aria-label="Progreso de construcción" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="b-prog"><i id="b-bar"></i></div>
@@ -287,7 +286,7 @@ $redes = ['facebook' => 'Facebook', 'instagram' => 'Instagram', 'tiktok' => 'Tik
         <div id="b-done" hidden>
           <p class="b-ok"><?= ico('check') ?>¡Tu vista previa está lista!</p>
           <a class="btn btn--gold btn--block" id="b-view" href="#" target="_blank" rel="noopener">Ver mi vista previa<span class="sr"> (se abre en una pestaña nueva)</span></a>
-          <div class="row2"><button type="button" class="btn btn--gold btn--block" id="b-pay">Aprobar y pagar</button><button type="button" class="btn btn--ghost btn--block" id="b-edit">Editar datos</button></div>
+          <div class="row2"><button type="button" class="btn btn--gold btn--block" id="b-pay">Aprobar y pagar</button><button type="button" class="btn btn--ghost btn--block" id="b-edit" hidden>Editar datos</button></div>
         </div>
         <div id="b-fail" hidden><p class="help">Está tardando más de lo normal. Tus datos están a salvo.</p><button type="button" class="btn btn--gold btn--block" id="b-retry">Volver a intentar</button></div>
       </div>

@@ -18,6 +18,7 @@ run "IA y presentaciones (unitarias)" php tests/ai/run.php
 run "Flujo completo (formulario→pago→publicar)" php tests/e2e/flow_basic.php
 run "Presentaciones por HTTP" php tests/e2e/flow_pres.php
 run "Solo un PDF: extrae logo/fotos/colores y construye" php tests/e2e/flow_solo.php
+run "Modo solo archivo: tope de servicios y WhatsApp con código de país" env S5_CONFIG_FILE=/tmp/s5test/config.php php tests/ai/auto.php
 run "Paquete base refrescado: archivos nuevos se copian a webs nuevas" php tests/e2e/filelist_cache.php
 run "Ciclo de vida" php tests/e2e/lifecycle.php
 run "Fallos simulados y rollback" php tests/e2e/faults.php
@@ -38,7 +39,8 @@ run "Actualización LUXE sobre instalación existente" php tests/e2e/actualizaci
 run "Verificación del ZIP de producción" bash tests/verify_zip.sh
 echo "== Navegador (Chromium)"
 for w in 360 390 768 1024 1440; do run "Wizard real $w px" bash -c "mysql s5test -e 'DELETE FROM s5_rate_limits'; cd tests/portal/e2e && node flowReal.js $w | tee /dev/stderr | grep -q 'errores consola: \[\] overflows: 0'"; done
-run "Solo archivo en el navegador (PDF → web lista, sin formularios)" bash -c "mysql s5test -e 'DELETE FROM s5_rate_limits'; cd tests/portal/e2e && node flowSolo.js 390 | tee /dev/stderr | grep -q 'SOLO ARCHIVO: OK'"
-run "Tienda 60 productos (390 px)" bash -c 'mysql s5test -e "DELETE FROM s5_rate_limits"; cd tests/portal/e2e && node flowRealB.js 390 60 | tee /dev/stderr | grep -q "errores consola: \[\]"'
+run "Solo archivo: plan + PDF -> web lista, sin revisión (390 px)" bash -c "mysql s5test -e 'DELETE FROM s5_rate_limits'; cd tests/portal/e2e && node flowSolo.js 390 info | tee /dev/stderr | grep -q 'SOLO ARCHIVO: OK'"
+run "Solo archivo: tienda + PDF (390 px)" bash -c "mysql s5test -e 'DELETE FROM s5_rate_limits'; cd tests/portal/e2e && node flowSolo.js 390 tienda | tee /dev/stderr | grep -q 'SOLO ARCHIVO: OK'"
+run "Solo archivo: escritorio (1440 px)" bash -c "mysql s5test -e 'DELETE FROM s5_rate_limits'; cd tests/portal/e2e && node flowSolo.js 1440 info | tee /dev/stderr | grep -q 'SOLO ARCHIVO: OK'"
 echo "FALLOS: $FAILS"
 exit $FAILS

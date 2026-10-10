@@ -11,6 +11,7 @@ final class Brief
     public const RUBROS = ['abogado', 'clinica', 'taller', 'ropa', 'restaurante', 'transporte', 'contabilidad', 'importaciones', 'otro'];
     public const REDES = ['facebook', 'instagram', 'tiktok', 'youtube', 'x', 'linkedin'];
     public const MAX_SERVICIOS = 300;
+    public const AUTO_MAX_SERVICIOS = 12;
     public const MAX_PRODUCTOS = 1000;
     public const MAX_CATEGORIAS = 200;
     public const MAX_GALERIA = 60;
@@ -249,6 +250,22 @@ final class Brief
         return $e;
     }
 
+    /** WhatsApp sin código de país (lo normal en una presentación): se completa según el país de la dirección; en duda, Guatemala. */
+    public static function normWhatsapp(string $digits, string $address): string
+    {
+        $d = preg_replace('/\D+/', '', $digits) ?? '';
+        if ($d === '' || strlen($d) > 10 && strlen($d) !== 8) { return $d; }
+        $a = mb_strtolower($address);
+        $paises = ['57' => '/colombia|bogot[aá]|medell[ií]n|cali\b|barranquilla/u', '502' => '/guatemala/u', '52' => '/m[eé]xico/u', '503' => '/el salvador/u', '504' => '/honduras/u', '506' => '/costa rica/u', '507' => '/panam[aá]/u', '51' => '/per[uú]\b|lima\b/u', '34' => '/espa[nñ]a|madrid|barcelona/u', '1' => '/estados unidos|usa\b|miami|texas|florida/u'];
+        foreach ($paises as $cc => $re) {
+            if (preg_match($re, $a)) {
+                $len = ['57' => 10, '502' => 8, '52' => 10, '503' => 8, '504' => 8, '506' => 8, '507' => 8, '51' => 9, '34' => 9, '1' => 10][$cc];
+                return strlen($d) === $len ? $cc . $d : $d;
+            }
+        }
+        return strlen($d) === 8 ? '502' . $d : $d;
+    }
+
     /** Modo «solo presentación»: valores por defecto razonables para lo que la presentación no trajo. */
     public static function fillDefaults(array $b): array
     {
@@ -271,8 +288,9 @@ final class Brief
      */
     public static function autoConfirm(array $b, array $an, int $orderId): array
     {
+        // Máximo de servicios que se publican (un catálogo de decenas de líneas se ve mal y vuelve lenta la construcción)
         $usar = ['nombre' => 1, 'rubro' => 1, 'frase' => 1, 'quienes' => 1, 'contacto' => 1, 'horario' => 1, 'redes' => 1,
-            'servicios' => array_keys($an['servicios'] ?? []),
+            'servicios' => array_slice(array_keys($an['servicios'] ?? []), 0, self::AUTO_MAX_SERVICIOS),
             'productos' => (($b['plan'] ?? '') === 'tienda') ? array_keys($an['productos'] ?? []) : [], 'categorias' => 1];
         $logo = null;
         $fotos = [];
@@ -296,6 +314,7 @@ final class Brief
         $d['presentacion']['colores'] = array_values(array_filter(array_map('strval', (array) ($an['colores'] ?? [])), fn($c) => preg_match('/^#[0-9A-F]{6}$/', $c)));
         $d['presentacion']['auto'] = true;
         $d = self::fillDefaults($d);
+        $d['contacto']['whatsapp'] = self::normWhatsapp((string) ($d['contacto']['whatsapp'] ?? ''), (string) ($d['contacto']['direccion'] ?? ''));
         return ['data' => $d, 'conflictos' => $m['conflictos'], 'logo' => $logo, 'fotos' => $fotos];
     }
 

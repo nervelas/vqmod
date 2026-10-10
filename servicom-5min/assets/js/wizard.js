@@ -57,8 +57,7 @@
   function tienda() { return data.plan === 'tienda'; }
   function revAvail() { return analysis.estado === 'lista' && analysis.resultado && !data.presentacion.confirmada && data.presentacion.estado !== 'omitida' && !!data.presentacion.file; }
   function steps() {
-    if (!token) return ['pres'];
-    return ORDER.filter(function (k) { return k === 'plan' ? false : k === 'revision' ? revAvail() : (k === 'productos' || k === 'cobros') ? tienda() : true; });
+    return ['plan', 'pres', 'resumen'].concat(built ? ['pago'] : []);
   }
 
   /* ---------- guardado automático ---------- */
@@ -156,6 +155,7 @@
     var d = data.dominio.tiene ? data.dominio.dominio : (data.dominio.deseado ? data.dominio.deseado + '.com' : '');
     $('#mail-sfx').textContent = '@' + (d || 'tudominio.com');
     var t = tienda(); $('#srv-req').hidden = t; $('#srv-opt').hidden = !t;
+    var tw = $('#tarj-wrap'); if (tw) { tw.hidden = !t; if (!t && data.tarjeta_extra) { data.tarjeta_extra = false; var tc = $('input[data-k=tarjeta_extra]'); if (tc) tc.checked = false; } }
     $('#pres-h').hidden = !!data.presentacion.acepto;
     var dr = $('#pres-drop'), pf = $('#pres-file'), on = !data.presentacion.file;
     dr.setAttribute('aria-disabled', on ? 'false' : 'true'); pf.disabled = !on;
@@ -183,12 +183,12 @@
     if (n < 2) n = 9;
     $('#prog-n').textContent = 'Paso ' + (i + 1) + ' de ' + n; $('#prog-name').textContent = TITLES[cur] || '';
     var p = Math.round(((i + 1) / n) * 100); $('#prog-bar').style.width = p + '%'; $('#prog').setAttribute('aria-valuenow', p);
-    var hideNav = cur === 'revision' || cur === 'pres' || cur === 'pago' && paid; var pg = document.querySelector('.wz-prog'); if (pg) pg.hidden = cur === 'pres';
+    var hideNav = cur === 'revision' || cur === 'pres' || cur === 'resumen' || cur === 'pago' && paid; var pg = document.querySelector('.wz-prog'); if (pg) pg.hidden = cur !== 'plan';
     navBox.hidden = hideNav;
     btnBack.hidden = i === 0;
     var nx = cur !== 'resumen' && cur !== 'pago' && !(cur === 'pres' && !data.presentacion.file);
     btnNext.hidden = !nx; nextT.textContent = cur === 'pres' ? 'Continuar mientras la leemos' : 'Continuar';
-    $('#pres-skip').hidden = !!data.presentacion.file;
+    presSkip.hidden = !!data.presentacion.file;
     drawSide(); drawPill(); derived();
     $('#copy-link').hidden = !token;
     $('#tip').hidden = !token || cur === 'plan' || cur === 'pres' || LS.g('s5_tip') === '1';
@@ -503,6 +503,7 @@
     });
   }
 
+  var presSkip = $('#pres-skip') || { hidden: true, addEventListener: function () {} };
   /* ---------- presentación y análisis ---------- */
   var PRES_BAD = /\.(ppt|doc|key|pages|numbers|odp|odt|rtf|pps|pot|canva)$/i, PRES_OK = /\.(pdf|pptx|docx)$/i, pollT = null, pollN = 0, pollStart = 0;
   function presErr(m) { var e = $('#pres-e'); e.textContent = m || ''; e.classList.toggle('on', !!m); }
@@ -528,10 +529,10 @@
   function startUpload(f) {
     data.presentacion.acepto = true; var ck = $('#pres-ok'); if (ck) ck.checked = true; pendingBuild = true;
     presName = f.name; LS.s('s5_pname_' + token, f.name);
-    var up = $('#pres-up'); up.hidden = false; $('#pres-card').hidden = false; $('#pres-drop').hidden = true; $('#pres-name').textContent = f.name; $('#pres-meta').textContent = 'Subiendo…'; $('#pres-skip').hidden = true;
+    var up = $('#pres-up'); up.hidden = false; $('#pres-card').hidden = false; $('#pres-drop').hidden = true; $('#pres-name').textContent = f.name; $('#pres-meta').textContent = 'Subiendo…'; presSkip.hidden = true;
     S5.api('POST', '/api/borrador/' + token + '/guardar', { data: { presentacion: { acepto: true } } }).then(function () { return S5.upload(token, 'presentacion', f, function (p) { up.firstChild.style.width = Math.round(p * 100) + '%'; }); }).then(function (r) {
       up.hidden = true;
-      if (!r.ok) { presErr(r.mensaje || r.error || 'No pudimos subir tu archivo.'); $('#pres-card').hidden = true; $('#pres-drop').hidden = false; $('#pres-skip').hidden = false; return; }
+      if (!r.ok) { presErr(r.mensaje || r.error || 'No pudimos subir tu archivo.'); $('#pres-card').hidden = true; $('#pres-drop').hidden = false; presSkip.hidden = false; return; }
       data.presentacion.file = r.id; data.presentacion.estado = 'pendiente'; data.presentacion.confirmada = false; analysis = { estado: 'procesando', resultado: null, msg: '', dismissed: false }; dirty(); flush();
       S5.api('POST', '/api/borrador/' + token + '/analizar', {}).then(function (a) {
         if (!a.ok) { analysis.estado = 'error'; analysis.msg = a.error || ''; data.presentacion.estado = 'error'; dirty(); presDraw(); return; }
@@ -543,7 +544,7 @@
   $('#pres-rm').addEventListener('click', function () {
     delFile(data.presentacion.file); clearTimeout(pollT); data.presentacion.file = null; data.presentacion.estado = 'ninguna'; data.presentacion.confirmada = false; analysis = { estado: 'none', resultado: null, msg: '', dismissed: false }; presDraw(); dirty();
   });
-  $('#pres-skip').addEventListener('click', function () { pendingBuild = false; var fin = function () { data.presentacion.estado = 'omitida'; dirty(); var l = steps(), i = l.indexOf('pres'); go(l[i + 1]); }; if (!token) { createDraft().then(function (ok) { if (ok) fin(); }); } else fin(); });
+  presSkip.addEventListener('click', function () { pendingBuild = false; var fin = function () { data.presentacion.estado = 'omitida'; dirty(); var l = steps(), i = l.indexOf('pres'); go(l[i + 1]); }; if (!token) { createDraft().then(function (ok) { if (ok) fin(); }); } else fin(); });
   /* Modo «solo presentación»: se aplica todo lo encontrado sin pedir revisión; lo que falte se completa al final */
   var pendingBuild = false;
   function autoApply() {
@@ -770,17 +771,18 @@
       var pe = data.presentacion.estado;
       if (/pend|analiz/.test(pe)) analysis.estado = 'procesando'; else if (pe === 'lista') analysis.estado = 'procesando'; else if (pe === 'error') analysis.estado = 'error';
     }
-    if (!data.plan) { var pq = new URLSearchParams(location.search).get('plan'); data.plan = pq === 'tienda' ? 'tienda' : 'info'; }
+    if (!data.plan) { var pq = new URLSearchParams(location.search).get('plan'); if (pq === 'tienda' || pq === 'info') data.plan = pq; }
     paint(); waPaint(); drawMails();
     if (analysis.estado === 'procesando' && token) { pollStart = Date.now(); schedPoll(600); }
     var qs = new URLSearchParams(location.search), want = qs.get('paso') || (token && LS.g('s5_paso_' + token)) || draft.paso || 'plan';
     if (typeof want !== 'string' || ORDER.indexOf(want) < 0) want = 'plan';
-    if (data.plan && token && want === 'plan' && !qs.get('paso') && !draft.paso) want = 'pres';
-    var l = steps(); if (l.indexOf(want) < 0) want = want === 'revision' ? 'negocio' : l[0];
+    if (data.plan && want === 'plan' && !qs.get('paso') && !draft.paso && !LS.g('s5_paso_' + token)) want = 'pres';
+    var l = steps(); if (l.indexOf(want) < 0) want = token ? (data.presentacion.file ? 'resumen' : 'pres') : l[0];
     if (want === 'pago' && !built) want = 'resumen';
     cur = want; try { history.replaceState({ s: want }, '', location.pathname + location.search); } catch (_) {}
     go(want, { noPush: true, quiet: true });
     if (building && token) { $('#build').hidden = false; pollBuild(); }
+    else if (token && cur === 'resumen' && !built && data.presentacion.file && data.presentacion.confirmada) { setTimeout(function () { $('#build-go').click(); }, 600); }
     if (token) setSave('ok', 'Guardado ✓');
     document.documentElement.classList.add('wz-ready');
   }

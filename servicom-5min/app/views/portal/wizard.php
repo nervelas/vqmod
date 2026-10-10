@@ -120,7 +120,8 @@ $redes = ['facebook' => 'Facebook', 'instagram' => 'Instagram', 'tiktok' => 'Tik
       <div class="pres-hero">
         <span class="pres-ico"><?= ico('file') ?></span>
         <h2 id="t-pres" tabindex="-1">¿Tienes una presentación de tu negocio?</h2>
-        <p class="lead">Súbela y nosotros llenamos los datos por ti. <span class="opt">(opcional)</span></p>
+        <p class="lead">Súbela y nosotros creamos toda tu web por ti: logo, colores, textos y fotos. <span class="opt">(opcional)</span></p>
+        <p class="help"><a href="/guia-presentacion" target="_blank" rel="noopener">¿Qué debe llevar mi archivo? Ver guía y plantilla</a></p>
       </div>
       <label class="chk chk--k"><input type="checkbox" id="pres-ok" data-k="presentacion.acepto"><span>Mi archivo se usará solo para crear mi web, se procesa con inteligencia artificial y se elimina al finalizar.</span></label>
       <div id="pres-box">

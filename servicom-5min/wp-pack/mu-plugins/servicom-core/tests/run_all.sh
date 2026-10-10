@@ -3,7 +3,7 @@
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ "${1:-}" = "--fresh" ] || [ ! -f /tmp/t2a/env.php ]; then "$HERE/setup.sh" || exit 1; else "$HERE/sync.sh"; fi
 rm -f /tmp/t2a/debug.log; rc=0
-for t in business hardening roles instructions instructions_luxe preview domain selfcheck; do
+for t in business hardening roles instructions instructions_luxe pending preview domain selfcheck; do
   php "$HERE/t_$t.php" > /tmp/t2a/out_$t.txt 2>&1 || rc=1
   tail -1 /tmp/t2a/out_$t.txt; grep "FAIL" /tmp/t2a/out_$t.txt
 done

@@ -10,6 +10,8 @@ use S5\Controllers\PortalController;
 // --- Portal público
 $router->get('/', fn() => PortalController::home());
 $router->get('/crear', fn() => PortalController::wizard());
+$router->get('/guia-presentacion', fn() => PortalController::guide());
+$router->get('/guia-presentacion/plantilla', fn() => PortalController::guideTemplate());
 $router->get('/continuar/{token}', fn($p) => PortalController::wizard($p));
 $router->get('/vista-previa/{token}', fn($p) => PortalController::status($p));
 $router->get('/pago/{token}', fn($p) => PortalController::pay($p));

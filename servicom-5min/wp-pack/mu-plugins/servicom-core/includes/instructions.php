@@ -1102,6 +1102,10 @@ function sc_ins_render(): void {
 	}
 	echo '</div></header>';
 
+	if ( function_exists( 'sc_pending_render_box' ) && sc_pending_count() > 0 ) {
+		sc_pending_render_box( false );
+	}
+
 	echo '<section class="sc-ins__find" aria-labelledby="sc-ins-h">';
 	echo '<h2 id="sc-ins-h" class="sc-ins__h">¿Qué desea cambiar?</h2>';
 	echo '<div class="sc-ins__search"><label class="screen-reader-text" for="sc-ins-q">Buscar</label>';

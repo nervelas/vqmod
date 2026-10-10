@@ -2,7 +2,7 @@
 declare(strict_types=1);
 /**
  * Pruebas del agente P (IA y presentaciones).  Uso:  php tests/ai/run.php [--seccion=texto,parser,...]
- * Secciones: texto, parser, bombas, budget, base, schema, ai, analyzer, memoria, luxe
+ * Secciones: texto, parser, pdfimg, bombas, budget, base, schema, ai, analyzer, memoria, luxe
  * Si faltan las extensiones zip/gd (p. ej. PHP 8.0 WASM) las secciones que las requieren se omiten (SKIP).
  */
 require __DIR__ . '/bootstrap.php';
@@ -202,7 +202,7 @@ if (quiero('parser')) {
         $xe = PresentationParser::extract("$OUT/contabilidad_es.docx", 'docx', "$tmp/co");
         t('DOCX: estilos en español (Título 1)', str_contains($xe['texto'], '## Servicios contables') && str_contains($xe['texto'], '# Contadores Unidos'), $xe['texto']);
         $xp = PresentationParser::extract("$OUT/texto.pdf", 'pdf', "$tmp/pdf");
-        t('PDF: sin texto local, páginas estimadas', $xp['texto'] === '' && $xp['imagenes'] === [] && $xp['paginas'] === 2, json_encode($xp));
+        t('PDF: sin texto local, páginas estimadas, sin imágenes (los fixtures no traen) y sin romper', $xp['texto'] === '' && $xp['imagenes'] === [] && $xp['paginas'] === 2, json_encode($xp));
         $xs = PresentationParser::extract("$OUT/escaneado.pdf", 'pdf', "$tmp/pdf2");
         t('PDF escaneado: páginas estimadas', $xs['paginas'] === 2);
         $xi = PresentationParser::extract("$OUT/inyeccion.pptx", 'pptx', "$tmp/iny");
@@ -223,6 +223,364 @@ if (quiero('parser')) {
             t("extract($f) directo lanza ParserError", $e instanceof ParserError, $e ? get_class($e) : 'no lanzó');
         }
         t('extract tipo inválido', lanza(fn() => PresentationParser::extract("$OUT/texto.pdf", 'exe', $tmp)) instanceof ParserError);
+    }
+}
+
+// ===================================================================== IMÁGENES DE PDF
+if (quiero('pdfimg')) {
+    seccion('PDF: extracción local de imágenes (PdfImageExtractor + PresentationParser)');
+    if (!extension_loaded('gd') || !function_exists('inflate_init') || !function_exists('imagebmp')) {
+        skip('requiere gd (imagebmp) y zlib');
+    } else {
+        require_once __DIR__ . '/lib/PdfGen.php';
+        $cargarSal = function (string $f) {
+            return str_ends_with($f, '.webp') ? @imagecreatefromwebp($f) : @imagecreatefromjpeg($f);
+        };
+        // Diferencia media (0-255) entre dos imágenes reducidas a 8x8.
+        $difer = function ($a, $b): float {
+            $r = [];
+            foreach ([$a, $b] as $im) {
+                $t = imagecreatetruecolor(8, 8);
+                imagecopyresampled($t, $im, 0, 0, 0, 0, 8, 8, imagesx($im), imagesy($im));
+                $r[] = $t;
+            }
+            $s = 0;
+            for ($y = 0; $y < 8; $y++) {
+                for ($x = 0; $x < 8; $x++) {
+                    $c1 = imagecolorat($r[0], $x, $y);
+                    $c2 = imagecolorat($r[1], $x, $y);
+                    $s += abs((($c1 >> 16) & 255) - (($c2 >> 16) & 255)) + abs((($c1 >> 8) & 255) - (($c2 >> 8) & 255)) + abs(($c1 & 255) - ($c2 & 255));
+                }
+            }
+            return $s / (64 * 3);
+        };
+        $gdDesde = function (callable $f, int $w, int $h) {
+            $g = imagecreatetruecolor($w, $h);
+            for ($y = 0; $y < $h; $y++) {
+                for ($x = 0; $x < $w; $x++) {
+                    [$r, $gg, $b] = $f($x, $y);
+                    imagesetpixel($g, $x, $y, ($r << 16) | ($gg << 8) | $b);
+                }
+            }
+            return $g;
+        };
+        $rgbDe = function ($g, int $w, int $h): string {
+            $o = '';
+            for ($y = 0; $y < $h; $y++) {
+                for ($x = 0; $x < $w; $x++) {
+                    $c = imagecolorat($g, $x, $y);
+                    $o .= chr(($c >> 16) & 255) . chr(($c >> 8) & 255) . chr($c & 255);
+                }
+            }
+            return $o;
+        };
+        $hexPal = function (callable $f, int $n): string {
+            $h = '';
+            for ($i = 0; $i < $n; $i++) {
+                [$r, $g, $b] = $f($i);
+                $h .= sprintf('%02x%02x%02x', $r, $g, $b);
+            }
+            return $h;
+        };
+        $arco = fn(int $i): array => [(int)(127 + 127 * sin($i / 40)), (int)(127 + 127 * sin($i / 25 + 2)), (int)(127 + 127 * sin($i / 33 + 4))];
+
+        // ---- Logo con SMask (círculo azul sobre transparente)
+        $logoGd = imagecreatetruecolor(160, 160);
+        imagefill($logoGd, 0, 0, imagecolorallocate($logoGd, 255, 255, 255));
+        imagefilledellipse($logoGd, 80, 80, 150, 150, imagecolorallocate($logoGd, 0, 60, 160));
+        imagefilledrectangle($logoGd, 50, 70, 110, 90, imagecolorallocate($logoGd, 250, 200, 20));
+        $logoRgb = $rgbDe($logoGd, 160, 160);
+        $maskGd = imagecreatetruecolor(160, 160);
+        imagefill($maskGd, 0, 0, imagecolorallocate($maskGd, 0, 0, 0));
+        imagefilledellipse($maskGd, 80, 80, 150, 150, imagecolorallocate($maskGd, 255, 255, 255));
+        $maskRaw = '';
+        for ($y = 0; $y < 160; $y++) { for ($x = 0; $x < 160; $x++) { $maskRaw .= chr(imagecolorat($maskGd, $x, $y) & 255); } }
+
+        // ---- PDF principal (xref clásico)
+        $g = new PdfGen();
+        $sm = $g->imagen(['w' => 160, 'h' => 160, 'cs' => '/DeviceGray', 'bpc' => 8, 'filter' => '/FlateDecode', 'data' => gzcompress($maskRaw)]);
+        $logo = $g->imagen(['w' => 160, 'h' => 160, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '/FlateDecode', 'data' => gzcompress($logoRgb), 'smask' => $sm]);
+        $p1 = $g->imagen(['w' => 800, 'h' => 600, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '/DCTDecode', 'data' => PdfGen::jpeg(800, 600, 11)]);
+        $icono = $g->imagen(['w' => 64, 'h' => 64, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '/FlateDecode', 'data' => gzcompress(str_repeat("\x10\x80\xf0", 64 * 64))]);
+        $raw2 = PdfGen::rgbCrudo(700, 500, 12);
+        $p2 = $g->imagen(['w' => 700, 'h' => 500, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '/FlateDecode', 'data' => gzcompress($raw2)]);
+        $raw3 = PdfGen::rgbCrudo(640, 480, 13);
+        $perfil = $g->flujo('/N 3', random_bytes(300));
+        $csIcc = $g->obj('[/ICCBased ' . $perfil . ' 0 R]');
+        $p3 = $g->imagen(['w' => 640, 'h' => 480, 'cs' => $csIcc . ' 0 R', 'bpc' => 8, 'filter' => '/FlateDecode', 'parms' => '<< /Predictor 15 /Colors 3 /BitsPerComponent 8 /Columns 640 >>', 'data' => gzcompress(PdfGen::predictorPng($raw3, 640 * 3, 3))]);
+        $uni = $g->imagen(['w' => 1000, 'h' => 1400, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '/FlateDecode', 'data' => gzcompress(str_repeat("\xf4\xf0\xe8", 1000 * 1400))]);
+        $raw4 = PdfGen::rgbCrudo(500, 500, 14);
+        $gris4 = preg_replace('/(.)../s', '$1', $raw4);
+        $p4 = $g->imagen(['w' => 500, 'h' => 500, 'cs' => '/DeviceGray', 'bpc' => 8, 'filter' => '/FlateDecode', 'data' => gzcompress($gris4)]);
+        $idx5 = fn(int $x, int $y): int => (int)(($x / 600) * 140 + ($y / 450) * 115 + (($x * 7 + $y * 3) % 5));
+        $d5 = '';
+        for ($y = 0; $y < 450; $y++) { for ($x = 0; $x < 600; $x++) { $d5 .= chr($idx5($x, $y)); } }
+        $p5 = $g->imagen(['w' => 600, 'h' => 450, 'cs' => '[/Indexed /DeviceRGB 255 <' . $hexPal($arco, 256) . '>]', 'bpc' => 8, 'filter' => '/FlateDecode', 'data' => gzcompress($d5)]);
+        $linea = $g->imagen(['w' => 1000, 'h' => 20, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '/FlateDecode', 'data' => gzcompress(random_bytes(1000 * 20 * 3))]);
+        $corrupta = $g->imagen(['w' => 600, 'h' => 600, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '/FlateDecode', 'data' => random_bytes(4000)]);
+        $palStm = $g->flujo('/Filter /FlateDecode', gzcompress(implode('', array_map(fn($i) => implode('', array_map('chr', $arco($i * 16))), range(0, 15)))));
+        $d6 = '';
+        for ($y = 0; $y < 480; $y++) { for ($x = 0; $x < 480; $x += 2) { $d6 .= chr(((int)(($x + $y) / 30) % 16) << 4 | ((int)(($x + 1 + $y) / 30) % 16)); } }
+        $p6 = $g->imagen(['w' => 480, 'h' => 480, 'cs' => '[/Indexed /DeviceRGB 15 ' . $palStm . ' 0 R]', 'bpc' => 4, 'filter' => '/FlateDecode', 'data' => gzcompress($d6)]);
+        $raw7 = PdfGen::rgbCrudo(520, 420, 15);
+        $p7 = $g->imagen(['w' => 520, 'h' => 420, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '[/ASCII85Decode /FlateDecode]', 'data' => PdfGen::a85(gzcompress($raw7))]);
+        $jb = $g->imagen(['w' => 600, 'h' => 600, 'cs' => '/DeviceGray', 'bpc' => 1, 'filter' => '/JBIG2Decode', 'data' => random_bytes(2000)]);
+        $trunc = $g->imagen(['w' => 600, 'h' => 500, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '/FlateDecode', 'data' => substr(gzcompress(PdfGen::rgbCrudo(600, 500, 16)), 0, 30000)]);
+        $g->pagina([$logo, $p1, $icono]);
+        $g->pagina([$p2, $p3, $uni]);
+        $g->pagina([$p4, $p5, $linea, $corrupta]);
+        $g->pagina([$p6, $p7, $jb, $trunc]);
+        $pdf1 = "$tmp/imgs1.pdf";
+        file_put_contents($pdf1, $g->construir());
+
+        $t0 = microtime(true);
+        $ex = new S5\Services\PdfImageExtractor($pdf1);
+        $lista = $ex->imagenes();
+        t('listado: 13 imágenes (sin SMask ni JBIG2), con página y orden', count($lista) === 13 && $lista[0]['w'] === 160 && $lista[0]['pagina'] === 1 && $lista[5]['pagina'] === 2 && $lista[12]['pagina'] === 4, count($lista) . ' ' . json_encode(array_column($lista, 'pagina')));
+        $x = PresentationParser::extract($pdf1, 'pdf', "$tmp/pdfimg1");
+        $seg1 = round(microtime(true) - $t0, 2);
+        $im = $x['imagenes'];
+        t("PDF: 8 imágenes útiles (logo + 7 fotos; sin icono, línea, fondo uniforme, corrupta, truncada ni JBIG2) en {$seg1} s", count($im) === 8, count($im) . ' ' . json_encode(array_map(fn($i) => [$i['w'], $i['h'], $i['pagina']], $im)));
+        t('PDF: claves archivo/w/h/hash/orden/pagina/logo_cand', $im && !array_diff(['archivo', 'w', 'h', 'hash', 'orden', 'pagina', 'logo_cand'], array_keys($im[0])));
+        $dims = array_map(fn($i) => $i['w'] . 'x' . $i['h'], $im);
+        t('PDF: tamaños correctos (160x160, 800x600, 700x500, 640x480, 500x500, 600x450, 480x480, 520x420)', $dims === ['160x160', '800x600', '700x500', '640x480', '500x500', '600x450', '480x480', '520x420'], implode(',', $dims));
+        t('PDF: páginas [1,1,2,2,3,3,4,4] y orden creciente', array_column($im, 'pagina') === [1, 1, 2, 2, 3, 3, 4, 4] && array_column($im, 'orden') === array_values(array_column($im, 'orden')) && array_column($im, 'orden') === (function () use ($im) { $o = array_column($im, 'orden'); sort($o); return $o; })(), json_encode(array_column($im, 'orden')));
+        t('PDF: solo el logo es logo_cand', array_column($im, 'logo_cand') === [true, false, false, false, false, false, false, false], json_encode(array_column($im, 'logo_cand')));
+        $okArch = true; $hs = [];
+        foreach ($im as $i) { $inf = @getimagesize($i['archivo']); $okArch = $okArch && $inf && $inf[0] === $i['w'] && $inf[1] === $i['h'] && strpos($i['archivo'], "$tmp/pdfimg1") === 0; $hs[$i['hash']] = 1; }
+        t('PDF: archivos en workdir con las medidas declaradas y hashes únicos', $okArch && count($hs) === 8);
+        $lg = $cargarSal($im[0]['archivo']);
+        t('PDF: logo con SMask → fondo transparente y círculo opaco', $lg && ((imagecolorat($lg, 2, 2) >> 24) & 0x7F) > 100 && ((imagecolorat($lg, 80, 40) >> 24) & 0x7F) < 20, $lg ? dechex(imagecolorat($lg, 2, 2)) : 'sin imagen');
+        $ref = [1 => PdfGen::dibujar(800, 600, 11), 2 => PdfGen::dibujar(700, 500, 12), 3 => PdfGen::dibujar(640, 480, 13)];
+        foreach ([1 => 'JPEG (DCT)', 2 => 'RGB Flate sin predictor', 3 => 'RGB Flate predictor PNG mixto + ICCBased indirecto'] as $k => $nom) {
+            $o = $cargarSal($im[$k]['archivo']);
+            $df = $o ? $difer($o, $ref[$k]) : 999;
+            t("PDF píxeles fieles: $nom (dif " . round($df, 1) . ')', $df < 14, (string)$df);
+        }
+        $gref = $gdDesde(fn($xx, $yy) => [ord($gris4[$yy * 500 + $xx]), ord($gris4[$yy * 500 + $xx]), ord($gris4[$yy * 500 + $xx])], 500, 500);
+        $df = $difer($cargarSal($im[4]['archivo']), $gref);
+        t('PDF píxeles fieles: Gray 8 bits (dif ' . round($df, 1) . ')', $df < 14);
+        $pal = fn(int $i) => $arco($i);
+        $r5 = $gdDesde(fn($xx, $yy) => $pal($idx5($xx, $yy)), 600, 450);
+        $df = $difer($cargarSal($im[5]['archivo']), $r5);
+        t('PDF píxeles fieles: Indexed 8 bits con paleta inline (dif ' . round($df, 1) . ')', $df < 14);
+        $r6 = $gdDesde(function ($xx, $yy) use ($arco) { return $arco((((int)(($xx + $yy) / 30)) % 16) * 16); }, 480, 480);
+        $df = $difer($cargarSal($im[6]['archivo']), $r6);
+        t('PDF píxeles fieles: Indexed 4 bits, paleta en flujo indirecto (dif ' . round($df, 1) . ')', $df < 14);
+        $df = $difer($cargarSal($im[7]['archivo']), PdfGen::dibujar(520, 420, 15));
+        t('PDF píxeles fieles: [ASCII85 Flate] (dif ' . round($df, 1) . ')', $df < 14);
+        t('PDF: tiempo razonable (<3 s)', $seg1 < 3.0, (string)$seg1);
+
+        // ---- Decodificadores exactos vía la API del extractor (sin heurísticas de filtrado)
+        $mk = function (callable $armar) use ($tmp) {
+            $gg = new PdfGen();
+            $n = $armar($gg);
+            $gg->pagina([$n]);
+            $f = $tmp . '/dec_' . mt_rand() . '.pdf';
+            file_put_contents($f, $gg->construir());
+            $e = new S5\Services\PdfImageExtractor($f);
+            $m = $e->imagenes();
+            return $m ? $e->cargar($m[0]) : null;
+        };
+        $px = fn($c) => [($c >> 16) & 255, ($c >> 8) & 255, $c & 255];
+        $r = $mk(fn($gg) => $gg->imagen(['w' => 8, 'h' => 2, 'cs' => '/DeviceGray', 'bpc' => 1, 'filter' => '/FlateDecode', 'data' => gzcompress("\xF0\x0F")]));
+        t('Gray 1 bit: 1=blanco, 0=negro', $r && $px(imagecolorat($r['img'], 0, 0)) === [255, 255, 255] && $px(imagecolorat($r['img'], 7, 0)) === [0, 0, 0] && $px(imagecolorat($r['img'], 0, 1)) === [0, 0, 0]);
+        $r = $mk(fn($gg) => $gg->imagen(['w' => 8, 'h' => 2, 'cs' => '/DeviceGray', 'bpc' => 1, 'filter' => '/FlateDecode', 'extra' => '/Decode [1 0]', 'data' => gzcompress("\xF0\x0F")]));
+        t('Gray 1 bit con /Decode [1 0] invertido', $r && $px(imagecolorat($r['img'], 0, 0)) === [0, 0, 0] && $px(imagecolorat($r['img'], 7, 0)) === [255, 255, 255]);
+        $r = $mk(fn($gg) => $gg->imagen(['w' => 2, 'h' => 1, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '/ASCIIHexDecode', 'data' => "ff0000 00ff00>"]));
+        t('ASCIIHexDecode RGB', $r && $px(imagecolorat($r['img'], 0, 0)) === [255, 0, 0] && $px(imagecolorat($r['img'], 1, 0)) === [0, 255, 0]);
+        $filas = '';
+        $orig = [];
+        for ($y = 0; $y < 6; $y++) { $fl = ''; for ($xx = 0; $xx < 5; $xx++) { $fl .= chr(($xx * 40 + $y * 9) & 255) . chr(($xx * 13 + $y * 31) & 255) . chr(($xx * 7 + $y * 50) & 255); } $orig[] = $fl; }
+        $rawp = implode('', $orig);
+        foreach ([1 => 'Sub', 2 => 'Up', 3 => 'Average', 4 => 'Paeth'] as $tipo => $nom) {
+            $r = $mk(fn($gg) => $gg->imagen(['w' => 5, 'h' => 6, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '/FlateDecode', 'parms' => '<< /Predictor 12 /Colors 3 /Columns 5 >>', 'data' => gzcompress(PdfGen::predictorPng($rawp, 15, 3, $tipo))]));
+            $ok = $r !== null;
+            for ($y = 0; $ok && $y < 6; $y++) { for ($xx = 0; $xx < 5; $xx++) { $ok = $ok && $px(imagecolorat($r['img'], $xx, $y)) === [ord($orig[$y][$xx * 3]), ord($orig[$y][$xx * 3 + 1]), ord($orig[$y][$xx * 3 + 2])]; } }
+            t("Predictor PNG $nom: píxeles exactos", $ok);
+        }
+        $tif = '';
+        foreach ($orig as $fl) { $a = array_values(unpack('C*', $fl)); $o = ''; for ($i = 0; $i < 15; $i++) { $o .= chr(($a[$i] - ($i >= 3 ? $a[$i - 3] : 0)) & 255); } $tif .= $o; }
+        $r = $mk(fn($gg) => $gg->imagen(['w' => 5, 'h' => 6, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '/FlateDecode', 'parms' => '<< /Predictor 2 /Colors 3 /Columns 5 >>', 'data' => gzcompress($tif)]));
+        t('Predictor TIFF 2 (8 bits): píxeles exactos', $r && $px(imagecolorat($r['img'], 4, 5)) === [ord($orig[5][12]), ord($orig[5][13]), ord($orig[5][14])]);
+        $r = $mk(fn($gg) => $gg->imagen(['w' => 2, 'h' => 1, 'cs' => '[/CalRGB << /WhitePoint [0.95 1 1.09] >>]', 'bpc' => 8, 'data' => bin2hex("\x01\x02\x03\x04\x05\x06") . '>', 'filter' => '/ASCIIHexDecode']));
+        t('CalRGB (hex) → RGB', $r && $px(imagecolorat($r['img'], 1, 0)) === [4, 5, 6]);
+        $r = $mk(fn($gg) => $gg->imagen(['w' => 4, 'h' => 1, 'cs' => '/DeviceGray', 'bpc' => 8, 'filter' => '[/RunLengthDecode]', 'data' => "\xFD\x7F\x80"]));
+        t('RunLengthDecode (repetición)', $r && $px(imagecolorat($r['img'], 3, 0)) === [127, 127, 127]);
+        $r = $mk(fn($gg) => $gg->imagen(['w' => 4, 'h' => 4, 'cs' => '/DeviceCMYK', 'bpc' => 8, 'filter' => '/FlateDecode', 'data' => gzcompress(str_repeat('abcd', 16))]));
+        t('CMYK sin comprimir: omitida sin error', $r === null);
+        $r = $mk(fn($gg) => $gg->imagen(['w' => 600, 'h' => 600, 'cs' => '/DeviceGray', 'bpc' => 1, 'extra' => '/ImageMask true', 'filter' => '/FlateDecode', 'data' => gzcompress(str_repeat("\xAA", 75 * 600))]));
+        t('ImageMask: omitida', $r === null);
+        foreach (['/JPXDecode', '/CCITTFaxDecode', '/LZWDecode'] as $fl) {
+            $r = $mk(fn($gg) => $gg->imagen(['w' => 600, 'h' => 600, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => $fl, 'data' => random_bytes(500)]));
+            t("$fl: omitida", $r === null);
+        }
+        // SMask de otro tamaño (mitad) y 1 bit
+        $r = $mk(function ($gg) {
+            $s = $gg->imagen(['w' => 4, 'h' => 4, 'cs' => '/DeviceGray', 'bpc' => 8, 'filter' => '/FlateDecode', 'data' => gzcompress(str_repeat("\xFF\xFF\x00\x00", 2) . str_repeat("\x00\x00\xFF\xFF", 2))]);
+            return $gg->imagen(['w' => 8, 'h' => 8, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '/FlateDecode', 'smask' => $s, 'data' => gzcompress(str_repeat("\xC8\x28\x28", 64))]);
+        });
+        t('SMask de distinto tamaño → alfa en el PNG resultante', $r && $r['alpha'] && ((imagecolorat($r['img'], 1, 1) >> 24) & 0x7F) < 5 && ((imagecolorat($r['img'], 6, 1) >> 24) & 0x7F) > 120);
+
+        // ---- Variantes de estructura: ObjStm + xref stream, longitudes malas, CRLF, comentarios
+        $variante = function (string $eol, string $len, bool $xs) use ($tmp, $logoRgb, $maskRaw) {
+            $gg = new PdfGen();
+            $gg->eol = $eol;
+            $gg->lenMode = $len;
+            $s = $gg->imagen(['w' => 160, 'h' => 160, 'cs' => '/DeviceGray', 'bpc' => 8, 'filter' => '/FlateDecode', 'data' => gzcompress($maskRaw)]);
+            $lg = $gg->imagen(['w' => 160, 'h' => 160, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '/FlateDecode', 'data' => gzcompress($logoRgb), 'smask' => $s]);
+            $perfil = $gg->flujo('/N 3', random_bytes(200));
+            $csObj = $gg->obj('[/ICCBased ' . $perfil . ' 0 R]', true);
+            $csIdx = $gg->obj('[/Indexed /DeviceRGB 3 <ff0000 00ff00 0000ff ffff00>]', true);
+            $a = $gg->imagen(['w' => 640, 'h' => 480, 'cs' => $csObj . ' 0 R', 'bpc' => 8, 'filter' => '/FlateDecode', 'data' => gzcompress(PdfGen::rgbCrudo(640, 480, 21))]);
+            $b = $gg->imagen(['w' => 800, 'h' => 600, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '/DCTDecode', 'data' => PdfGen::jpeg(800, 600, 22)]);
+            $c = $gg->imagen(['w' => 600, 'h' => 600, 'cs' => $csIdx . ' 0 R', 'bpc' => 2, 'filter' => '/FlateDecode', 'data' => gzcompress(str_repeat("\x1B\xE4\x1B\xE4", 150 * 600 / 4))]);
+            $gg->pagina([$lg], true);
+            $gg->pagina([$a, $b], true);
+            $gg->pagina([$c], true);
+            $f = $tmp . '/var_' . mt_rand() . '.pdf';
+            file_put_contents($f, $gg->construir($xs));
+            return $f;
+        };
+        foreach ([["\n", 'ok', true, 'ObjStm + xref stream + recursos indirectos'], ["\r\n", 'ok', false, 'saltos CRLF'], ["\n", 'bad', false, '/Length incorrecto (busca endstream)'], ["\r\n", 'indirect', true, '/Length indirecto + CRLF + ObjStm']] as [$eol, $len, $xs, $nom]) {
+            $f = $variante($eol, $len, $xs);
+            $e = new S5\Services\PdfImageExtractor($f);
+            $m = $e->imagenes();
+            $pg = array_column($m, 'pagina');
+            $xv = PresentationParser::extract($f, 'pdf', "$tmp/pv_" . mt_rand());
+            $imv = $xv['imagenes'];
+            t("Variante $nom: 4 imágenes listadas, páginas [1,2,2,3]", count($m) === 4 && $pg === [1, 2, 2, 3], json_encode($pg) . ' n=' . count($m));
+            t("Variante $nom: extract → logo + 2 fotos (+ indexado 2 bits de 4 colores omitido por pocos colores)", count($imv) >= 3 && $imv[0]['logo_cand'] === true && $imv[1]['logo_cand'] === false && $imv[2]['w'] === 800 && $imv[1]['w'] === 640, json_encode(array_map(fn($i) => [$i['w'], $i['h'], $i['pagina'], $i['logo_cand']], $imv)));
+        }
+        $e = new S5\Services\PdfImageExtractor($variante("\n", 'ok', true));
+        $cx = $e->imagenes();
+        $rc2 = $e->cargar($cx[3]);
+        t('Indexed 2 bits: paleta [rojo, verde, azul, amarillo] leída del ObjStm (patrón 0,1,2,3 = 00 01 10 11 → 1B)', $rc2 && $px(imagecolorat($rc2['img'], 0, 0)) === [255, 0, 0] && $px(imagecolorat($rc2['img'], 1, 0)) === [0, 255, 0] && $px(imagecolorat($rc2['img'], 2, 0)) === [0, 0, 255] && $px(imagecolorat($rc2['img'], 3, 0)) === [255, 255, 0]);
+
+        // ---- Seguridad y robustez
+        file_put_contents("$tmp/basura.pdf", "%PDF-1.4\n1 0 obj\n<< /Subtype /Image /Width 600 /Height 600 /Filter /FlateDecode /Length 99999 >>\nstream\n" . random_bytes(500) . "\n%%EOF");
+        $e = lanza(fn() => PresentationParser::extract("$tmp/basura.pdf", 'pdf', "$tmp/pdfbas"));
+        t('PDF basura: extract no lanza', $e === null, $e ? $e->getMessage() : '');
+        file_put_contents("$tmp/vacio2.pdf", '');
+        t('PDF vacío: no lanza, sin imágenes', lanza(fn() => PresentationParser::extract("$tmp/vacio2.pdf", 'pdf', "$tmp/pdfv")) === null);
+        file_put_contents("$tmp/ciclo.pdf", "%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [2 0 R 3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /Resources << /XObject << /I 4 0 R >> >> >>\nendobj\n4 0 obj\n<< /Subtype /Image /Width 500 /Height 500 /ColorSpace 4 0 R /BitsPerComponent 8 /Length 10 >>\nstream\n0123456789\nendstream\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF");
+        t('PDF con ciclos en árbol de páginas y /ColorSpace autorreferente: no cuelga ni lanza', lanza(fn() => PresentationParser::extract("$tmp/ciclo.pdf", 'pdf', "$tmp/pdfc")) === null);
+        t('Encrypt: PDF cifrado no se lee', (function () use ($tmp) { file_put_contents("$tmp/enc.pdf", "%PDF-1.4\n1 0 obj\n<< /Filter /Standard >>\nendobj\ntrailer\n<< /Encrypt 1 0 R /Root 2 0 R >>\n%%EOF"); return (new S5\Services\PdfImageExtractor("$tmp/enc.pdf"))->imagenes() === []; })());
+
+        // ---- Bomba de descompresión / de píxeles (proceso aparte, memory_limit=64M)
+        if (hayExec()) {
+            $gb = new PdfGen();
+            $ok1 = $gb->imagen(['w' => 500, 'h' => 500, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '/DCTDecode', 'data' => PdfGen::jpeg(500, 500, 31)]);
+            $b1 = $gb->imagen(['w' => 1000, 'h' => 1000, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '/FlateDecode', 'data' => PdfGen::bombaCeros(300 * 1048576)]);
+            $b2 = $gb->imagen(['w' => 6000, 'h' => 6000, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '/FlateDecode', 'data' => PdfGen::bombaCeros(2 * 1048576)]);
+            $b3 = $gb->imagen(['w' => 100000, 'h' => 100000, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '/FlateDecode', 'data' => gzcompress("x")]);
+            $b4 = $gb->imagen(['w' => 2000, 'h' => 2000, 'cs' => '/DeviceGray', 'bpc' => 8, 'filter' => '[/FlateDecode /FlateDecode]', 'data' => gzcompress(PdfGen::bombaCeros(120 * 1048576))]);
+            $gb->pagina([$ok1, $b1, $b2, $b3, $b4]);
+            file_put_contents("$tmp/bomba.pdf", $gb->construir());
+            $cmd = escapeshellarg(PHP_BINARY) . ' -d memory_limit=64M ' . escapeshellarg(__DIR__ . '/memprobe.php') . ' ' . escapeshellarg("$tmp/bomba.pdf") . ' bomba.pdf 10485760 ' . escapeshellarg("$tmp/pb_bomba");
+            $rb = json_decode((string)shell_exec($cmd . ' 2>&1'), true) ?: [];
+            $pico = max($rb['peak_mb'] ?? 999, $rb['rss_mb'] ?? 999);
+            t("PDF con bombas (300 MB inflados, 36 Mpx, 10^10 px, doble Flate): solo la foto buena, pico {$pico} MB < 64 ({$rb['seg']} s)", ($rb['extract']['imagenes'] ?? -1) === 1 && $pico < 64 && ($rb['seg'] ?? 99) < 8, json_encode($rb, JSON_UNESCAPED_UNICODE));
+        } else {
+            skip('bomba PDF: sin proc_open');
+        }
+
+        // ---- Rendimiento: PDF ~10 MB con 60 imágenes
+        $gp = new PdfGen();
+        $ids = [];
+        for ($i = 0; $i < 40; $i++) { $ids[] = $gp->imagen(['w' => 640, 'h' => 480, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '/DCTDecode', 'data' => PdfGen::jpeg(640, 480, 100 + $i, 82)]); }
+        for ($i = 0; $i < 12; $i++) { $ids[] = $gp->imagen(['w' => 640, 'h' => 480, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '/FlateDecode', 'data' => gzcompress(PdfGen::rgbCrudo(640, 480, 200 + $i), 1)]); }
+        for ($i = 0; $i < 8; $i++) { $rw = PdfGen::rgbCrudo(400, 400, 300 + $i); $ids[] = $gp->imagen(['w' => 400, 'h' => 400, 'cs' => '/DeviceRGB', 'bpc' => 8, 'filter' => '/FlateDecode', 'parms' => '<< /Predictor 15 /Colors 3 /Columns 400 >>', 'data' => gzcompress(PdfGen::predictorPng($rw, 1200, 3), 1)]); }
+        foreach (array_chunk($ids, 6) as $ch) { $gp->pagina($ch); }
+        file_put_contents("$tmp/perf60.pdf", $gp->construir());
+        $sz = filesize("$tmp/perf60.pdf");
+        $t0 = microtime(true);
+        $xr = PresentationParser::extract("$tmp/perf60.pdf", 'pdf', "$tmp/pperf");
+        $seg = round(microtime(true) - $t0, 2);
+        $mb = round($sz / 1048576, 1);
+        t("PDF de {$mb} MB con 60 imágenes: máximo 40 conservadas (sin duplicados) en {$seg} s (<10 s)", count($xr['imagenes']) === 40 && $seg < 10.0 && $sz <= 10485760, count($xr['imagenes']) . " n, {$seg}s, {$mb}MB");
+        t('PDF 60 imágenes: orden por página/aparición', array_column($xr['imagenes'], 'orden') === array_values(array_column($xr['imagenes'], 'orden')) && $xr['imagenes'][0]['pagina'] === 1 && $xr['imagenes'][39]['pagina'] >= 7);
+
+        // ---- Comparación con herramientas del sistema (solo pruebas)
+        $pi = trim((string)@shell_exec('command -v pdfimages 2>/dev/null'));
+        if ($pi !== '') {
+            $salida = (string)shell_exec(escapeshellarg($pi) . ' -list ' . escapeshellarg($pdf1) . ' 2>/dev/null');
+            $pd = [];
+            foreach (explode("\n", $salida) as $ln) {
+                if (preg_match('/^\s*\d+\s+\d+\s+image\s+(\d+)\s+(\d+)/', $ln, $mm)) { $pd[$mm[1] . 'x' . $mm[2]] = true; }
+            }
+            $ours = array_map(fn($m) => $m['w'] . 'x' . $m['h'], $lista);
+            t('pdfimages -list coincide: todas nuestras imágenes existen con esas dimensiones', $pd && !array_diff($ours, array_keys($pd)), implode(',', array_diff($ours, array_keys($pd))));
+        } else {
+            skip('pdfimages no disponible (comparación opcional)');
+        }
+        $py = trim((string)@shell_exec('command -v python3 2>/dev/null'));
+        if ($py !== '' && hayExec()) {
+            $script = "$tmp/rl.py";
+            file_put_contents($script, <<<'PY'
+import sys, random
+try:
+    from reportlab.pdfgen import canvas
+    from PIL import Image, ImageDraw
+except Exception:
+    sys.exit(3)
+out = sys.argv[1]; d = sys.argv[2]
+random.seed(5)
+def foto(n, w, h):
+    im = Image.new('RGB', (w, h)); dr = ImageDraw.Draw(im)
+    for i in range(400):
+        x0 = random.randint(0, w - 2); y0 = random.randint(0, h - 2); dr.ellipse([x0, y0, random.randint(x0 + 1, w), random.randint(y0 + 1, h)], fill=tuple(random.randint(0, 255) for _ in range(3)))
+    p = d + '/f%d.jpg' % n; im.save(p, quality=85); return p
+def fotopng(n, w, h):
+    im = Image.new('RGB', (w, h)); dr = ImageDraw.Draw(im)
+    for i in range(300):
+        x0 = random.randint(0, w - 2); y0 = random.randint(0, h - 2); dr.rectangle([x0, y0, random.randint(x0 + 1, w), random.randint(y0 + 1, h)], fill=tuple(random.randint(0, 255) for _ in range(3)))
+    p = d + '/f%d.png' % n; im.save(p); return p
+logo = Image.new('RGBA', (200, 120), (0, 0, 0, 0)); ImageDraw.Draw(logo).ellipse([10, 10, 190, 110], fill=(200, 30, 30, 255)); logo.save(d + '/logo.png')
+c = canvas.Canvas(out, pagesize=(595, 842))
+c.drawImage(d + '/logo.png', 40, 760, width=100, height=60, mask='auto')
+c.drawImage(foto(1, 900, 600), 40, 400, width=300, height=200)
+c.showPage()
+c.drawImage(fotopng(2, 700, 500), 40, 400, width=280, height=200)
+c.drawImage(foto(3, 800, 800), 40, 100, width=200, height=200)
+c.showPage(); c.save()
+PY);
+            $dd = "$tmp/rl"; @mkdir($dd);
+            $rc = 0;
+            exec(escapeshellarg($py) . ' ' . escapeshellarg($script) . ' ' . escapeshellarg("$tmp/rl.pdf") . ' ' . escapeshellarg($dd) . ' 2>&1', $o, $rc);
+            // JPEG CMYK (Adobe, invertido) escrito por PIL: con /Decode [1 0 ...] se convierte; sin /Decode se omite (sin Imagick).
+            file_put_contents("$tmp/cm.py", "from PIL import Image, ImageDraw\nim = Image.new('CMYK',(600,500),(0,0,0,0)); d = ImageDraw.Draw(im)\nd.rectangle([0,0,300,500],fill=(255,0,0,0)); d.rectangle([300,0,600,250],fill=(0,255,0,0)); d.rectangle([300,250,600,500],fill=(0,0,0,255))\nim.save(__import__('sys').argv[1], quality=90)\n");
+            exec(escapeshellarg($py) . ' ' . escapeshellarg("$tmp/cm.py") . ' ' . escapeshellarg("$tmp/cmyk.jpg") . ' 2>&1', $o2, $rc2);
+            if ($rc2 === 0 && is_file("$tmp/cmyk.jpg")) {
+                foreach ([true, false] as $conDecode) {
+                    $gc = new PdfGen();
+                    $n = $gc->imagen(['w' => 600, 'h' => 500, 'cs' => '/DeviceCMYK', 'bpc' => 8, 'filter' => '/DCTDecode', 'extra' => $conDecode ? '/Decode [1 0 1 0 1 0 1 0]' : '', 'data' => file_get_contents("$tmp/cmyk.jpg")]);
+                    $gc->pagina([$n]);
+                    file_put_contents("$tmp/cmyk.pdf", $gc->construir());
+                    $ec = new S5\Services\PdfImageExtractor("$tmp/cmyk.pdf");
+                    $mc = $ec->imagenes();
+                    $rc3 = $mc ? $ec->cargar($mc[0]) : null;
+                    if ($conDecode || class_exists('Imagick')) {
+                        $c1 = $rc3 ? imagecolorat($rc3['img'], 100, 100) & 0xFFFFFF : -1;
+                        $c2 = $rc3 ? imagecolorat($rc3['img'], 450, 400) & 0xFFFFFF : -1;
+                        t('JPEG CMYK (Adobe) → RGB correcto: cian y negro', $c1 === 0x00FFFF && $c2 === 0x000000, dechex($c1) . ' ' . dechex($c2));
+                    } else {
+                        t('JPEG CMYK sin /Decode ni Imagick: se omite sin error', $rc3 === null);
+                    }
+                }
+            } else {
+                skip('PIL no puede crear el JPEG CMYK');
+            }
+            if ($rc === 0 && is_file("$tmp/rl.pdf")) {
+                $xr = PresentationParser::extract("$tmp/rl.pdf", 'pdf', "$tmp/prl");
+                $d = array_map(fn($i) => $i['w'] . 'x' . $i['h'] . ($i['logo_cand'] ? 'L' : ''), $xr['imagenes']);
+                t('reportlab (JPEG, PNG→[A85 Flate], logo RGBA con SMask): logo + 3 fotos, páginas 1,1,2,2', $d === ['200x120L', '900x600', '700x500', '800x800'] && array_column($xr['imagenes'], 'pagina') === [1, 1, 2, 2], implode(',', $d));
+            } else {
+                skip('reportlab/PIL no disponibles (comparación opcional)');
+            }
+        } else {
+            skip('python3 no disponible');
+        }
     }
 }
 

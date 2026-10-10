@@ -486,6 +486,18 @@ function contrast(a, b) { const x = lum(a), y = lum(b); return (Math.max(x, y) +
     ok(!!(await p.$('.sc-ed-icons')), 'un ícono abre su selector');
     await p.keyboard.press('Escape');
 
+    section('Pendientes: ?sc_biz= abre «Datos del negocio» en el campo exacto');
+    await p.goto(BASE + '?sc_edit=1&sc_biz=whatsapp', { waitUntil: 'load' });
+    await p.waitForSelector('#sc-ed-b-whatsapp', { timeout: 8000 }).catch(() => {});
+    await p.waitForTimeout(800);
+    ok(await p.evaluate(() => document.activeElement && document.activeElement.id === 'sc-ed-b-whatsapp'), 'abre el cajón con el campo de WhatsApp enfocado');
+    ok(!/sc_biz/.test(p.url()), 'limpia sc_biz de la dirección');
+    await p.keyboard.press('Escape');
+    await p.goto(BASE + '?sc_edit=1&sc_biz=logo', { waitUntil: 'load' });
+    await p.waitForSelector('.sc-ed-panel .sc-ed-logo', { timeout: 8000 }).catch(() => {});
+    ok(!!(await p.$('.sc-ed-panel .sc-ed-logo')), 'sc_biz=logo abre el cajón en la sección del logo');
+    await p.keyboard.press('Escape');
+
     section('Ver sin edición / Secciones');
     await p.goto(BASE + '?sc_edit=1', { waitUntil: 'load' });
     await p.click('#sc-ed-bar .sc-ed-btn:has-text("Secciones")');

@@ -1059,6 +1059,28 @@
     return true;
   }
 
+  /* ------------------------------------------------------------ ?sc_biz=<campo>: abre «Datos del negocio» enfocado */
+  function bizFromUrl() {
+    var u = new URL(w.location.href);
+    var key = u.searchParams.get('sc_biz');
+    if (!key) { return false; }
+    u.searchParams.delete('sc_biz');
+    try { w.history.replaceState(null, '', u.toString()); } catch (e) { /* nada */ }
+    openBiz();
+    var tries = 0;
+    var iv = setInterval(function () {
+      tries++;
+      var el = key === 'logo' ? q('.sc-ed-panel .sc-ed-logo') : q('#sc-ed-b-' + key.replace(/[^a-z_]/g, ''));
+      if (el) {
+        clearInterval(iv);
+        if (el.scrollIntoView) { el.scrollIntoView({ block: 'center' }); }
+        if (key !== 'logo' && el.focus) { el.focus(); }
+        pulse(el);
+      } else if (tries > 40) { clearInterval(iv); }
+    }, 150);
+    return true;
+  }
+
   /* ------------------------------------------------------------ arranque */
   function init() {
     if (!editing) { buildPill(); return; }
@@ -1093,7 +1115,7 @@
       ssDel('sc_ed_ret');
     }
     var focused = false;
-    var doFocus = function () { if (!focused) { focused = true; var f = focusFromUrl(); if (!f) { setTimeout(function () { startTour(false); }, 700); } } };
+    var doFocus = function () { if (!focused) { focused = true; var f = bizFromUrl() || focusFromUrl(); if (!f) { setTimeout(function () { startTour(false); }, 700); } } };
     if (d.readyState === 'complete') { setTimeout(doFocus, 300); } else { w.addEventListener('load', function () { setTimeout(doFocus, 300); }); }
   }
   if (d.readyState === 'loading') { d.addEventListener('DOMContentLoaded', init); } else { init(); }

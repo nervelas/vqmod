@@ -1346,7 +1346,7 @@ class PresentationParser
                 unset($sha[$c['sha']]);
                 return 'uniforme';
             }
-            $pocos = $e['colores'] <= 48 || $e['transp'] >= 0.1;
+            $pocos = $e['dominantes'] >= 0.85 || $e['transp'] >= 0.1;
             $logo = $pocos && self::formaLogo($w, $h, $mayor);
             if (min($w, $h) < self::MIN_LADO && !$logo) {
                 imagedestroy($c['img']);
@@ -1366,11 +1366,12 @@ class PresentationParser
     }
 
     /**
-     * Estadística sobre ~4000 píxeles: colores distintos (cuantizados), fracción
-     * transparente y desviación de luminosidad.
+     * Estadística sobre ~4000 píxeles: fracción cubierta por los 8 colores más
+     * frecuentes (cuantizados a 5 bits; alta = pocos colores, típico de un logo),
+     * fracción transparente y desviación de luminosidad.
      *
      * @param mixed $img
-     * @return array{colores:int,transp:float,std:float}
+     * @return array{dominantes:float,transp:float,std:float}
      */
     private static function muestraPdf($img, int $w, int $h): array
     {
@@ -1392,7 +1393,8 @@ class PresentationParser
                 $r = ($c >> 16) & 255;
                 $g = ($c >> 8) & 255;
                 $b = $c & 255;
-                $col[(($r >> 4) << 8) | (($g >> 4) << 4) | ($b >> 4)] = true;
+                $k = (($r >> 3) << 10) | (($g >> 3) << 5) | ($b >> 3);
+                $col[$k] = ($col[$k] ?? 0) + 1;
                 $l = 0.299 * $r + 0.587 * $g + 0.114 * $b;
                 $s += $l;
                 $s2 += $l * $l;
@@ -1404,6 +1406,8 @@ class PresentationParser
             $med = $s / $op;
             $std = sqrt(max(0.0, $s2 / $op - $med * $med));
         }
-        return ['colores' => count($col), 'transp' => $n > 0 ? $tr / $n : 0.0, 'std' => $std];
+        rsort($col);
+        $top = array_sum(array_slice($col, 0, 8));
+        return ['dominantes' => $op > 0 ? $top / $op : 0.0, 'transp' => $n > 0 ? $tr / $n : 0.0, 'std' => $std];
     }
 }

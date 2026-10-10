@@ -11,6 +11,7 @@ $waNum = (string)($cfg['wa_servicom'] ?? '');
     <div>
       <ul>
         <li><a href="/crear">Crear mi web</a></li>
+        <li><a href="/guia-presentacion">Qué poner en mi PDF</a></li>
         <li><a href="/#planes">Planes</a></li>
         <li><a href="/#faq">Preguntas</a></li>
 <?php if ($waNum !== ''): ?>

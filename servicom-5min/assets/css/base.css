@@ -165,3 +165,4 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
 .paydone h2{font-size:30px}.paydone p{color:var(--dim)}
 .ico-ok{font:600 38px/1 var(--serif);color:var(--gold1)}
 .panel--l{max-width:560px}.pg-box{margin-top:18px}
+.panel--guia{max-width:760px;text-align:left}.panel--guia h1,.panel--guia>p{text-align:center}.guia__blk{margin-top:22px;padding-top:16px;border-top:1px solid rgba(220,185,108,.18)}.guia__blk h2{font-size:22px;margin:0}.guia__n{margin:2px 0 8px;font-size:14px}.guia__blk ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}.guia__blk li{display:flex;flex-direction:column;gap:2px;padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.04)}.guia__blk li b{color:var(--gold,#dcb96c)}.guia__blk li span{color:var(--dim)}

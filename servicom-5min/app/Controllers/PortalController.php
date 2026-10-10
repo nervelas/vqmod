@@ -46,6 +46,45 @@ final class PortalController
         self::page('portal/home', ['title' => 'Tu web en 5 minutos · Servicom', 'page' => 'home']);
     }
 
+    /** Qué debe contener la presentación del cliente (para la guía y la plantilla descargable). */
+    public static function guideSections(): array
+    {
+        return [
+            ['t' => 'Lo esencial', 'n' => 'Con esto ya podemos crear tu web.', 'i' => [
+                ['Nombre de tu negocio', 'Tal como quieres que aparezca. Ej.: Grupo Aurora Ingeniería.'],
+                ['Tu logo', 'Una imagen clara, de preferencia en la primera página. De él sacamos los colores de tu web.'],
+                ['Qué ofreces', 'Tus servicios o productos, uno por línea, con una frase que lo explique.'],
+            ]],
+            ['t' => 'Muy recomendable', 'n' => 'Lo que falte lo podrás completar después desde tu panel.', 'i' => [
+                ['Quiénes somos', 'De 2 a 4 líneas: qué hacen, desde cuándo, a quién atienden.'],
+                ['Teléfono, WhatsApp y correo', 'El WhatsApp con código de país. Ej.: +502 5555 1234.'],
+                ['Dirección y horario', 'Dónde están y cuándo atienden.'],
+                ['Fotos propias', 'Trabajos realizados, local, equipo o productos. Entre más buenas fotos, mejor se ve tu web.'],
+            ]],
+            ['t' => 'Opcional', 'n' => 'Suman confianza si los tienes.', 'i' => [
+                ['Redes sociales', 'Enlaces de Facebook, Instagram, TikTok, YouTube…'],
+                ['Frase del negocio', 'Ej.: «Energía que mueve su empresa».'],
+                ['Años de experiencia, clientes, certificaciones', 'Solo datos reales; nosotros no inventamos cifras.'],
+            ]],
+        ];
+    }
+
+    public static function guide(): void
+    {
+        self::page('portal/guia', ['title' => 'Qué poner en tu presentación · Servicom', 'page' => 'guia', 'secciones' => self::guideSections()]);
+    }
+
+    /** Plantilla de texto descargable: se pega en Word/Google Docs, se completa y se exporta a PDF. */
+    public static function guideTemplate(): void
+    {
+        $t = "PRESENTACIÓN DE MI NEGOCIO\r\n(Complete lo que tenga. Pegue su logo y sus fotos en este documento, guárdelo como PDF y súbalo en Servicom.)\r\n\r\n";
+        $t .= "NOMBRE DEL NEGOCIO:\r\n\r\n[Pegue aquí su LOGO]\r\n\r\nFRASE DEL NEGOCIO (opcional):\r\n\r\nQUIÉNES SOMOS:\r\n(2 a 4 líneas)\r\n\r\nSERVICIOS (uno por línea: nombre: qué incluye)\r\n- \r\n- \r\n- \r\n- \r\n\r\n[Pegue aquí 3 a 6 FOTOS de su trabajo, local o equipo]\r\n\r\nCONTACTO\r\nTeléfono:\r\nWhatsApp (con código de país, ej. +502 5555 1234):\r\nCorreo:\r\nDirección:\r\nHorario:\r\nFacebook / Instagram / TikTok / YouTube:\r\n";
+        header('Content-Type: text/plain; charset=utf-8');
+        header('Content-Disposition: attachment; filename="plantilla-presentacion.txt"');
+        header('X-Content-Type-Options: nosniff');
+        echo "\xEF\xBB\xBF" . $t;
+    }
+
     public static function wizard(array $p = []): void
     {
         $token = (string) ($p['token'] ?? '');

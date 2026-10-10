@@ -44,6 +44,9 @@ t_ok($h['status'] === 200 && str_contains($h['body'], 'Grupo Aurora'), 'portada 
 t_ok(preg_match('/--lx-primary:\s*#([0-9a-f]{6})/i', $h['body'], $m) === 1, 'color primario definido');
 if ($m) { $rgb = array_map('hexdec', str_split($m[1], 2)); $hue = (function ($r, $g, $b) { $r /= 255; $g /= 255; $b /= 255; $mx = max($r, $g, $b); $mn = min($r, $g, $b); if ($mx == $mn) return -1; $d = $mx - $mn; $h = $mx == $r ? fmod(($g - $b) / $d, 6) : ($mx == $g ? ($b - $r) / $d + 2 : ($r - $g) / $d + 4); return fmod($h * 60 + 360, 360); })(...$rgb);
     t_ok(($hue >= 195 && $hue <= 260) || ($hue >= 25 && $hue <= 50), 'paleta derivada del logo (azul/naranja), matiz=' . round($hue), '#' . $m[1]); }
+// El logo del PDF es azul (#0b3d91) con triángulo naranja; la IA «sugiere» otros colores: deben mandar los del LOGO.
+t_ok(preg_match('/--lx-accent:\s*#([0-9a-f]{6})/i', $h['body'], $ma) === 1, 'color de acento definido');
+if (!empty($ma)) { [$ar, $ag, $ab] = array_map('hexdec', str_split($ma[1], 2)); t_ok($ar > $ab, 'acento cálido tomado del triángulo naranja del logo', '#' . $ma[1]); }
 t_ok(substr_count($h['body'], '<img') >= 4, 'fotos del PDF en la web: ' . substr_count($h['body'], '<img') . ' imágenes');
 t_ok(str_contains($h['body'], 'lx-fab'), 'botones flotantes presentes');
 t_ok(!preg_match('/(Warning|Notice|Fatal error|Deprecated):/', $h['body']), 'sin mensajes PHP');

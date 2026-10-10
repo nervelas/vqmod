@@ -725,6 +725,20 @@ function sc_lx_menu_html()
 		}
 		$items[] = array($label, $url, $cur === $pid, $kids);
 	}
+	if (count($items) < 4) {
+		// Respaldo: si el registro de páginas falta o está desactualizado (caché de objetos del hosting), se arma con las páginas publicadas
+		$have = array();
+		foreach ($items as $it) {
+			$have[] = untrailingslashit((string) $it[1]);
+		}
+		$skip = array_filter(array((int) get_option('page_on_front'), (int) get_option('woocommerce_cart_page_id'), (int) get_option('woocommerce_checkout_page_id'), (int) get_option('woocommerce_myaccount_page_id')));
+		foreach ((array) get_posts(array('post_type' => 'page', 'post_status' => 'publish', 'numberposts' => 8, 'orderby' => 'menu_order title', 'order' => 'ASC', 'suppress_filters' => true)) as $pg) {
+			if (in_array((int) $pg->ID, $skip, true) || in_array(untrailingslashit((string) get_permalink($pg->ID)), $have, true) || count($items) >= 7) {
+				continue;
+			}
+			$items[] = array(get_the_title($pg->ID), (string) get_permalink($pg->ID), $cur === (int) $pg->ID, array());
+		}
+	}
 	if (count($items) < 2) {
 		return '';
 	}

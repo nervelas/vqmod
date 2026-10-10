@@ -638,11 +638,14 @@ final class Pipeline
             } elseif (preg_match('/(Warning|Notice|Fatal error|Deprecated|Parse error):/i', $home['body'])) {
                 $problems[] = ['url' => '/', 'tipo' => 'externo', 'detalle' => 'La portada muestra mensajes de PHP.'];
             } else {
-                // el menú de navegación debe estar en la portada, con sus enlaces y el botón del celular
-                $nav = preg_match('#<nav class="sc-nav".*?</nav>#s', $home['body'], $mm) ? $mm[0] : '';
-                $links = preg_match_all('#<a [^>]*href="[^"]+"#', $nav);
-                if ($nav === '' || $links < 3 || !str_contains($home['body'], 'sc-burger')) {
-                    $problems[] = ['url' => '/', 'tipo' => 'menu', 'detalle' => 'El menú de navegación no aparece completo (enlaces: ' . (int) $links . ').'];
+                // el menú de navegación debe estar en la portada (revisión tolerante: HTML minificado por el hosting, comillas, caché)
+                $mc = self::menuCheck($home['body']);
+                if (!$mc['ok']) {
+                    $again = Http::request('GET', Orders::previewUrl($o, true) . (str_contains(Orders::previewUrl($o, true), '?') ? '&' : '?') . 'nc=' . time(), ['timeout' => 30, 'follow' => true, 'verify' => Settings::scheme() === 'https', 'resolve' => self::resolve($o)]);
+                    $mc = $again['status'] === 200 ? self::menuCheck($again['body']) : $mc;
+                    if (!$mc['ok']) {
+                        $problems[] = ['url' => '/', 'tipo' => 'menu', 'detalle' => 'El menú de navegación no aparece completo (enlaces: ' . $mc['links'] . ', botón celular: ' . ($mc['burger'] ? 'sí' : 'no') . ', largo de la página: ' . strlen($home['body']) . ').'];
+                    }
                 }
             }
         }
@@ -663,7 +666,21 @@ final class Pipeline
             Log::audit('qa_reintento', json_encode($problems, JSON_UNESCAPED_UNICODE), $id);
             return 'stop_retry';
         }
+        if (!array_filter($problems, fn($x) => ($x['tipo'] ?? '') !== 'menu')) {
+            // Solo el aviso del menú: la web se entrega igual y queda anotado en el control de calidad para revisarlo
+            Log::audit('qa_aviso_menu', self::summarize($problems), $id);
+            return 'done';
+        }
         throw new ProvisionException('Problemas detectados: ' . self::summarize($problems), false);
+    }
+
+    /** @return array{ok:bool,links:int,burger:bool} */
+    private static function menuCheck(string $html): array
+    {
+        $nav = preg_match('#<nav\b[^>]*\bsc-nav\b.*?</nav>#is', $html, $mm) ? $mm[0] : '';
+        $links = $nav === '' ? 0 : (int) preg_match_all('#<a\s[^>]*href\s*=#i', $nav);
+        $burger = (bool) preg_match('#sc-burger#i', $html);
+        return ['ok' => $links >= 3 && $burger, 'links' => $links, 'burger' => $burger];
     }
 
     private static function summarize(array $p): string

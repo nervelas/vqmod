@@ -37,16 +37,13 @@ let bad = 0;
   log('pill', await p.textContent('#pill'));
   await p.waitForTimeout(2500);
   let st = await step(); log('step tras análisis', st);
-  if (st !== 'revision') { await next(); await p.waitForTimeout(500); log('step', await step()); }
-  if ((await step()) === 'negocio') { await next(); log('validación negocio (debe seguir en negocio):', await step(), await p.textContent('#f-negocio-nombre-e')); await shot('05-negocio-errores'); await p.click('#pill button'); await p.waitForTimeout(500); }
+  // modo «solo archivo»: el asistente aplica la presentación solo y salta al resumen, sin pedir nada más
+  if (st !== 'resumen') { log('FALLO: debía saltar al resumen'); bad++; }
+  await shot('07-resumen-automatico');
+  log('botón construir visible', await p.evaluate(() => { const b = document.getElementById('build-go'); return !!b && b.offsetParent !== null; }));
+  // volver atrás a revisar/editar a mano el resto del asistente
+  for (let i = 0; i < 8 && (await step()) !== 'negocio'; i++) { await p.click('#nav-back'); await p.waitForTimeout(400); }
   log('step', await step());
-  await shot('07-revision');
-  const cards = await p.evaluate(() => [...document.querySelectorAll('#rev-cards > *')].length);
-  log('tarjetas de revisión', cards);
-  await p.fill('#f-negocio-nombre', 'x').catch(() => {});
-  await p.click('#rev-use'); await p.waitForTimeout(900);
-  log('step tras usar', await step());
-  if ((await step()) !== 'negocio') { await p.evaluate(() => document.querySelector('[data-step=negocio]')); }
   await p.fill('#f-negocio-nombre', 'Bufete 🌟 Pérez');
   log('badge visible', await p.evaluate(() => [...document.querySelectorAll('[data-o]')].filter(n => !n.hidden).map(n => n.dataset.o).join(',')));
   await shot('08-negocio-prellenado');

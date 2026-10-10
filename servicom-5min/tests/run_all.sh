@@ -36,7 +36,7 @@ run "Parche de acceso sobre instalación existente" php tests/e2e/parche.php /tm
 run "Actualización LUXE sobre instalación existente" php tests/e2e/actualizacion.php /tmp/oldzip/old.zip entrega/parche-3.zip dist/actualizacion-lujo.zip
 run "Verificación del ZIP de producción" bash tests/verify_zip.sh
 echo "== Navegador (Chromium)"
-( cd tests/portal/e2e && for w in 360 390 768 1024 1440; do run "Wizard real $w px" bash -c "node flowReal.js $w | tee /dev/stderr | grep -q 'errores consola: \[\] overflows: 0'"; done )
+for w in 360 390 768 1024 1440; do run "Wizard real $w px" bash -c "cd tests/portal/e2e && node flowReal.js $w | tee /dev/stderr | grep -q 'errores consola: \[\] overflows: 0'"; done
 run "Tienda 60 productos (390 px)" bash -c 'cd tests/portal/e2e && node flowRealB.js 390 60 | tee /dev/stderr | grep -q "errores consola: \[\]"'
 echo "FALLOS: $FAILS"
 exit $FAILS

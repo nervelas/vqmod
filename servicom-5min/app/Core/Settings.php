@@ -31,7 +31,7 @@ final class Settings
             'banco_tipo' => '',
             'preview_days' => '15',
             'max_regen' => '3',
-            'max_drafts_ip_day' => '5',
+            'max_drafts_ip_day' => '15',
             'max_analysis_ip_day' => '6',
             'min_fill_seconds' => '25',
             'renewal_notice_days' => '30',

@@ -527,6 +527,15 @@ class TextSchema
         $contacto['redes'] = $ro;
         $out['contacto'] = $contacto;
 
+        $cols = [];
+        foreach (self::lista($j['colores_marca'] ?? null, 6) as $cc) {
+            $cc = is_string($cc) ? strtoupper(trim($cc)) : '';
+            if (preg_match('/^#?([0-9A-F]{6})$/', $cc, $mm) && !in_array('#' . $mm[1], $cols, true)) {
+                $cols[] = '#' . $mm[1];
+            }
+            if (count($cols) >= 3) { break; }
+        }
+        $out['colores'] = $cols;
         $out['imagenes'] = [];
         $out['conflictos'] = [];
         $id = strtolower(TextClean::limpiar(is_array($j['idioma'] ?? null) ? '' : ($j['idioma'] ?? ''), 10));

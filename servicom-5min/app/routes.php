@@ -27,6 +27,7 @@ $router->post('/api/borrador/{token}/analizar', fn($p) => ApiController::analyze
 $router->get('/api/borrador/{token}/analisis', fn($p) => ApiController::analysisStatus($p));
 $router->post('/api/borrador/{token}/omitir-presentacion', fn($p) => ApiController::skipPresentation($p));
 $router->post('/api/borrador/{token}/confirmar-presentacion', fn($p) => ApiController::confirmPresentation($p));
+$router->post('/api/borrador/{token}/auto-confirmar', fn($p) => ApiController::autoConfirm($p));
 $router->post('/api/borrador/{token}/crear', fn($p) => ApiController::create($p));
 $router->get('/api/borrador/{token}/construccion', fn($p) => ApiController::progress($p));
 $router->post('/api/borrador/{token}/regenerar', fn($p) => ApiController::regenerate($p));

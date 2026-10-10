@@ -35,6 +35,13 @@ class PresentationAnalyzer
         try {
             if ($tipo === 'pdf') {
                 $datos = AiClient::extraerPresentacion('pdf', $path, $orderId)['datos'];
+                // Imágenes y logo del PDF: extracción local (nunca rompe el análisis)
+                try {
+                    $imagenes = PresentationParser::extract($path, 'pdf', $workdir)['imagenes'] ?? [];
+                } catch (\Throwable $e) {
+                    self::log('Imágenes del PDF: ' . $e->getMessage());
+                    $imagenes = [];
+                }
             } else {
                 try {
                     $ext = PresentationParser::extract($path, $tipo, $workdir);
@@ -65,7 +72,8 @@ class PresentationAnalyzer
         $guardar = [];
         foreach ($imagenes as $i => $im) {
             $rel = ltrim(str_starts_with($im['archivo'], $base) ? substr($im['archivo'], strlen($base)) : basename($im['archivo']), '/');
-            $img[] = ['id' => 'img' . ($i + 1), 'w' => (int)$im['w'], 'h' => (int)$im['h'], 'archivo' => $rel, 'hash' => $im['hash']];
+            $img[] = ['id' => 'img' . ($i + 1), 'w' => (int)$im['w'], 'h' => (int)$im['h'], 'archivo' => $rel, 'hash' => $im['hash'],
+                'logo' => !empty($im['logo_cand']), 'pagina' => isset($im['pagina']) ? (int)$im['pagina'] : null];
             $guardar[] = $im['archivo'];
         }
         $datos['imagenes'] = $img;

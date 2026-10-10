@@ -17,6 +17,7 @@ run "IA y presentaciones (unitarias)" php tests/ai/run.php
 ./tests/e2e/setup.sh >/dev/null 2>&1 && /tmp/mockctl.sh start
 run "Flujo completo (formulario→pago→publicar)" php tests/e2e/flow_basic.php
 run "Presentaciones por HTTP" php tests/e2e/flow_pres.php
+run "Solo un PDF: extrae logo/fotos/colores y construye" php tests/e2e/flow_solo.php
 run "Ciclo de vida" php tests/e2e/lifecycle.php
 run "Fallos simulados y rollback" php tests/e2e/faults.php
 run "Constructor por HTTP firmado" php tests/e2e/flow_httprunner.php

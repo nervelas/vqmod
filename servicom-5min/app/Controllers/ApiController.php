@@ -346,6 +346,31 @@ final class ApiController
         Http::json(['ok' => true, 'data' => $m['data'], 'conflictos' => $m['conflictos']]);
     }
 
+    /** Modo «solo presentación»: aplica todo lo encontrado sin pedir revisión. Devuelve el borrador actualizado. */
+    private static function autoApply(array $o): array
+    {
+        $an = json_decode((string) $o['analysis'], true) ?: [];
+        $m = Brief::autoConfirm(Orders::data($o), $an, (int) $o['id']);
+        Orders::saveData((int) $o['id'], $m['data']);
+        Log::audit('presentacion_auto', '', (int) $o['id']);
+        return $m;
+    }
+
+    public static function autoConfirm(array $p): void
+    {
+        self::guard();
+        $o = self::order($p, true);
+        if ($o['analysis_state'] !== 'lista' || !$o['analysis']) {
+            self::fail('Todavía no hay resultados de la presentación.', 409);
+        }
+        $cur = Orders::data($o);
+        if (!empty($cur['presentacion']['confirmada'])) {
+            Http::json(['ok' => true, 'data' => $cur, 'conflictos' => [], 'ya' => true]);
+        }
+        $m = self::autoApply($o);
+        Http::json(['ok' => true, 'data' => $m['data'], 'conflictos' => $m['conflictos'], 'logo' => $m['logo'] !== null, 'fotos' => count($m['fotos'])]);
+    }
+
     /** Aplica ediciones del cliente a campos simples del análisis (siempre saneadas). */
     private static function applyEdits(array $an, array $ed): array
     {
@@ -409,12 +434,17 @@ final class ApiController
             Http::json(['ok' => true, 'estado' => 'construyendo']);
         }
         $d = Orders::data($o);
+        // Con presentación lista y sin confirmar, el sistema la aplica solo (no se pide nada más al cliente)
+        if (!empty($d['presentacion']['file']) && empty($d['presentacion']['confirmada']) && !in_array($d['presentacion']['estado'], ['error', 'omitida', 'ninguna'], true) && $o['analysis_state'] === 'lista' && $o['analysis']) {
+            $d = self::autoApply($o)['data'];
+        }
+        $d = Brief::fillDefaults($d);
+        if (!empty($d['presentacion']['file'])) {
+            Orders::saveData((int) $o['id'], $d);
+        }
         $errs = Brief::validateForBuild($d);
         if ($errs) {
             self::fail(implode(' ', array_values($errs)), 422, ['campos' => $errs]);
-        }
-        if (!empty($d['presentacion']['file']) && !$d['presentacion']['confirmada'] && !in_array($d['presentacion']['estado'], ['error', 'omitida', 'ninguna'], true) && $o['analysis_state'] === 'lista') {
-            self::fail('Revise y confirme lo que encontramos en su presentación antes de continuar.', 409);
         }
         $hasSite = !empty($o['fqdn']) && !empty($o['site_path']);
         if ($hasSite && in_array($o['status'], [Orders::ST_LISTA, Orders::ST_PREPARANDO, Orders::ST_PAGO], true)) {

@@ -278,13 +278,15 @@
   };
   function validateStep(k) { return CHK[k] ? CHK[k]() : true; }
   function missing() {
-    var m = [];
+    var m = [], pres = !!data.presentacion.file && data.presentacion.estado !== 'omitida';
     if (!data.plan) m.push(['plan', 'Elige tu plan']);
-    if (!String(data.negocio.nombre).trim()) m.push(['negocio', 'Nombre del negocio']);
-    if (!data.negocio.rubro || (data.negocio.rubro === 'otro' && !String(data.negocio.rubro_otro).trim())) m.push(['negocio', 'Rubro']);
-    var wa = String(data.contacto.whatsapp || '').replace(/\D/g, ''); if (wa.length < 8) m.push(['contacto', 'WhatsApp']);
-    if (tienda()) { if (!data.tienda.productos.some(function (p) { return String(p.nombre).trim(); })) m.push(['productos', 'Al menos 1 producto']); if (!String(data.tienda.correo_pedidos).trim()) m.push(['cobros', 'Correo para recibir pedidos']); }
-    else if (!data.contenido.servicios.some(function (s) { return String(s.nombre).trim(); })) m.push(['contenido', 'Al menos 1 servicio']);
+    if (!pres) {
+      if (!String(data.negocio.nombre).trim()) m.push(['negocio', 'Nombre del negocio']);
+      if (!data.negocio.rubro || (data.negocio.rubro === 'otro' && !String(data.negocio.rubro_otro).trim())) m.push(['negocio', 'Rubro']);
+    }
+    // WhatsApp, correo y teléfono ya no bloquean: se pueden completar al final desde el panel de la web
+    if (tienda()) { if (!pres && !data.tienda.productos.some(function (p) { return String(p.nombre).trim(); })) m.push(['productos', 'Al menos 1 producto']); if (!pres && !String(data.tienda.correo_pedidos).trim()) m.push(['cobros', 'Correo para recibir pedidos']); }
+    else if (!pres && !data.contenido.servicios.some(function (s) { return String(s.nombre).trim(); })) m.push(['contenido', 'Al menos 1 servicio']);
     return m;
   }
 
@@ -536,11 +538,24 @@
     delFile(data.presentacion.file); clearTimeout(pollT); data.presentacion.file = null; data.presentacion.estado = 'ninguna'; data.presentacion.confirmada = false; analysis = { estado: 'none', resultado: null, msg: '', dismissed: false }; presDraw(); dirty();
   });
   $('#pres-skip').addEventListener('click', function () { data.presentacion.estado = 'omitida'; dirty(); var l = steps(), i = l.indexOf('pres'); go(l[i + 1]); });
+  /* Modo «solo presentación»: se aplica todo lo encontrado sin pedir revisión; lo que falte se completa al final */
+  var pendingBuild = false;
+  function autoApply() {
+    return flush().then(function () { return S5.api('POST', '/api/borrador/' + token + '/auto-confirmar', {}); }).then(function (r) {
+      if (!r.ok || !isObj(r.data)) { if (cur === 'pres') go('revision'); return false; }
+      data = merge(defaults(), r.data); if (!isObj(data.origen)) data.origen = {};
+      data.presentacion.confirmada = true; data.presentacion.estado = 'confirmada';
+      rebuildUI(); dirty(); presDraw(); drawPill();
+      if (cur === 'pres' || cur === 'revision' || cur === 'plan') go('resumen'); else if (cur === 'resumen') drawSummary();
+      if (pendingBuild) { pendingBuild = false; setTimeout(function () { $('#build-go').click(); }, 300); }
+      return true;
+    });
+  }
   function schedPoll(ms) { clearTimeout(pollT); pollT = setTimeout(pollAnalysis, ms); }
   function pollAnalysis() {
     S5.api('GET', '/api/borrador/' + token + '/analisis').then(function (r) {
       var e = String(r.estado || '');
-      if (r.ok && e === 'lista') { analysis = { estado: 'lista', resultado: r.resultado || {}, msg: '', dismissed: false }; data.presentacion.estado = 'lista'; dirty(); presDraw(); if (cur === 'pres') go('revision'); return; }
+      if (r.ok && e === 'lista') { analysis = { estado: 'lista', resultado: r.resultado || {}, msg: '', dismissed: false }; data.presentacion.estado = 'lista'; dirty(); presDraw(); autoApply(); return; }
       if ((r.ok && (e === 'error')) || (!r.ok && !r._net && r._status >= 400 && r._status !== 429)) { analysis.estado = 'error'; analysis.msg = r.mensaje || r.error || ''; data.presentacion.estado = 'error'; dirty(); presDraw(); return; }
       if (e === 'omitida') { analysis.estado = 'none'; return; }
       pollN++;
@@ -653,16 +668,19 @@
       box.appendChild(c);
     }
     sc('Plan', 'plan', [[(tienda() ? 'Tienda virtual' : 'Página informativa') + ' · ' + q(total()) + ' al año', 0], [d.tarjeta_extra ? 'Incluye pago con tarjeta (+' + q(CFG.precio_tarjeta) + ')' : 'Sin pago con tarjeta', 1]], !d.plan);
-    sc('Negocio', 'negocio', [[d.negocio.nombre || 'Falta el nombre', 0], [(d.negocio.rubro === 'otro' ? d.negocio.rubro_otro : RUB[d.negocio.rubro]) || 'Falta el rubro', 1], [(d.negocio.idioma === 'en' ? 'English' : 'Español') + ' · Estilo ' + (EST[d.negocio.estilo] || ''), 1]], !d.negocio.nombre || !d.negocio.rubro);
+    sc('Negocio', 'negocio', [[d.negocio.nombre || (d.presentacion.file ? 'Se tomará de tu presentación' : 'Falta el nombre'), 0], [(d.negocio.rubro === 'otro' ? d.negocio.rubro_otro : RUB[d.negocio.rubro]) || (d.presentacion.file ? 'Se detecta de tu presentación' : 'Falta el rubro'), 1], [(d.negocio.idioma === 'en' ? 'English' : 'Español') + ' · Estilo ' + (EST[d.negocio.estilo] || ''), 1]], !d.presentacion.file && (!d.negocio.nombre || !d.negocio.rubro));
     var dom = d.dominio.tiene ? d.dominio.dominio : (d.dominio.deseado ? d.dominio.deseado + '.com (nuevo)' : 'Dominio nuevo a definir');
     sc('Dominio y correos', 'dominio', [[dom, 0], [(d.correos.length ? d.correos.map(function (c) { return c + '@'; }).join(', ') : 'info@ (por defecto)'), 1]]);
-    sc('Contenido', 'contenido', [[d.contenido.servicios.length + ' servicio(s) · ' + (d.contenido.banner.length) + ' foto(s) de banner · ' + d.contenido.galeria.length + ' en galería', 0], [d.contenido.frase || 'Sin frase principal', 1]], !tienda() && !d.contenido.servicios.some(function (s) { return String(s.nombre).trim(); }));
+    sc('Contenido', 'contenido', [[d.contenido.servicios.length + ' servicio(s) · ' + (d.contenido.banner.length) + ' foto(s) de banner · ' + d.contenido.galeria.length + ' en galería', 0], [d.contenido.frase || 'Sin frase principal', 1]], !tienda() && !d.presentacion.file && !d.contenido.servicios.some(function (s) { return String(s.nombre).trim(); }));
     if (tienda()) {
       sc('Productos', 'productos', [[d.tienda.productos.length + ' producto(s) · ' + d.tienda.categorias.length + ' categoría(s)', 0]], !d.tienda.productos.some(function (p) { return String(p.nombre).trim(); }));
       sc('Cobros', 'cobros', [[d.tienda.correo_pedidos || 'Falta el correo de pedidos', 0], [(d.tienda.banco.banco ? d.tienda.banco.banco + ' · ' : '') + (d.tienda.contra_entrega ? 'Contra entrega: sí' : 'Contra entrega: no'), 1]], !d.tienda.correo_pedidos);
     }
-    sc('Contacto', 'contacto', [[d.contacto.whatsapp ? 'WhatsApp +' + d.contacto.whatsapp : 'Falta el WhatsApp', 0], [d.contacto.direccion || d.contacto.telefono || 'Sin dirección ni teléfono', 1]], !d.contacto.whatsapp);
-    var pe = $('#res-pend'); pe.hidden = !(data.presentacion.file && !data.presentacion.confirmada && analysis.estado === 'procesando'); pe.textContent = 'Aún estamos leyendo tu presentación. Puedes esperar a que termine para aprovecharla, o crear tu vista previa ya.';
+    sc('Contacto', 'contacto', [[d.contacto.whatsapp ? 'WhatsApp +' + d.contacto.whatsapp : 'Sin WhatsApp (puedes agregarlo después)', 0], [d.contacto.direccion || d.contacto.telefono || 'Sin dirección ni teléfono', 1]]);
+    var pe = $('#res-pend');
+    if (data.presentacion.file && !data.presentacion.confirmada && analysis.estado === 'procesando') { pe.hidden = false; pe.textContent = 'Estamos leyendo tu presentación. En cuanto termine armamos todo automáticamente; puedes pulsar «Crear mi vista previa» y arrancará sola al terminar.'; }
+    else if (data.presentacion.file && data.presentacion.confirmada) { pe.hidden = false; pe.textContent = 'Armamos todo con tu presentación: textos, servicios, contacto, logo, fotos y colores. Lo que no venía en el archivo lo puedes completar después, ya con tu web creada.'; }
+    else pe.hidden = true;
     $('#build-go').lastChild.textContent = built ? 'Actualizar mi vista previa' : 'Crear mi vista previa';
     $('#build-idle').hidden = building;
     $('#build').hidden = !building && !built;
@@ -670,6 +688,7 @@
   }
   $('#build-go').addEventListener('click', function () {
     var mi = missing(), er = $('#res-e');
+    if (data.presentacion.file && !data.presentacion.confirmada && (analysis.estado === 'procesando' || data.presentacion.estado === 'analizando')) { pendingBuild = true; er.classList.add('on'); er.textContent = 'Estamos leyendo tu presentación; en cuanto termine creamos tu vista previa automáticamente. No cierres esta página.'; return; }
     if (mi.length) { er.textContent = ''; er.classList.add('on'); er.appendChild(document.createTextNode('Antes de crear tu vista previa completa: ')); mi.forEach(function (m, i) { er.appendChild(h('button', { type: 'button', class: 'btn btn--ghost btn--sm', text: m[1], onclick: function () { go(m[0]); } })); er.appendChild(document.createTextNode(' ')); }); return; }
     var b = this; b.disabled = true; show(null, er, '');
     flush().then(function () { return S5.api('POST', '/api/borrador/' + token + (built ? '/regenerar' : '/crear'), { t0: t0, web_sitio: $('#web_sitio').value }); }).then(function (r) {

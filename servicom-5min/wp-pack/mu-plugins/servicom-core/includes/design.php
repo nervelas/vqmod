@@ -348,7 +348,7 @@ function sc_design_build_palette($primary, $accent, $mood)
  * Diseño completo del sitio.
  * @param string $logoPath ruta del logo (opcional)
  */
-function sc_design_default($rubro, $style, $seed, $logoPath = '')
+function sc_design_default($rubro, $style, $seed, $logoPath = '', $brandColors = array())
 {
 	$st = sc_design_style($style);
 	$pal = $logoPath !== '' ? sc_design_palette_from_image($logoPath) : null;
@@ -361,6 +361,11 @@ function sc_design_default($rubro, $style, $seed, $logoPath = '')
 			// acento de lujo derivado del primario, no del rubro (mantiene la marca)
 			$accent = null;
 		}
+	} elseif (is_array($brandColors) && $brandColors && preg_match('/^#[0-9a-fA-F]{6}$/', (string) $brandColors[0]) && sc_design_usable_brand($brandColors[0])) {
+		// Colores de marca leídos de la presentación del cliente
+		$source = 'presentacion';
+		$primary = $brandColors[0];
+		$accent = (isset($brandColors[1]) && preg_match('/^#[0-9a-fA-F]{6}$/', (string) $brandColors[1])) ? $brandColors[1] : null;
 	} else {
 		$source = 'rubro';
 		$rc = sc_design_rubro_colors($rubro);
@@ -383,6 +388,13 @@ function sc_design_default($rubro, $style, $seed, $logoPath = '')
 		'source' => $source,
 		'base' => array('primary' => $primary, 'accent' => $accent === null ? '' : $accent),
 	);
+}
+
+/** ¿El color sirve como color de marca? (con algo de saturación; no gris, blanco ni negro). */
+function sc_design_usable_brand($hex)
+{
+	list($h, $s, $l) = sc_hex2hsl($hex);
+	return $s >= 0.18 && $l > 0.08 && $l < 0.92;
 }
 
 function sc_design_font_stack($key, $kind)

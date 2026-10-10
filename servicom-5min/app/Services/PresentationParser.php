@@ -27,7 +27,8 @@ class ParserError extends \RuntimeException
  *   estructura ZIP, XML con DOCTYPE/entidades).
  * - `extract()` lee texto e imágenes de PPTX/DOCX con límites duros
  *   (entradas, tamaño descomprimido, ratio, bytes por XML, píxeles, memoria).
- *   Los PDF no se leen localmente (los lee la IA de forma nativa).
+ *   Los PDF no se leen localmente (los lee la IA de forma nativa), pero sus
+ *   imágenes se extraen en PHP puro con PdfImageExtractor (logo/fotos).
  *
  * Los XML se parsean SIN entidades ni DTD externos (LIBXML_NONET, sin NOENT) y
  * se rechaza cualquier documento con <!DOCTYPE o <!ENTITY.
@@ -45,6 +46,8 @@ class PresentationParser
     public const MAX_BYTES_IMAGEN = 15728640;   // 15 MB por imagen
     public const MAX_TEXTO = 400000;            // caracteres
     public const MAX_DIAPOS = 400;
+    public const PDF_MIN_LADO = 120;
+    public const PDF_SEGUNDOS = 8.0;
     /** Las entradas pequeñas pueden tener ratios altos sin ser peligrosas. */
     private const RATIO_DESDE_BYTES = 65536;
 
@@ -96,13 +99,21 @@ class PresentationParser
      * Extrae texto e imágenes. Lanza ParserError (código en ->codigo) ante
      * archivos peligrosos o ilegibles.
      *
+     * En PDF cada imagen añade `orden` (int), `pagina` (?int) y `logo_cand` (bool).
+     *
      * @return array{texto:string,imagenes:array<int,array{archivo:string,w:int,h:int,hash:string}>,paginas:int}
      */
     public static function extract(string $path, string $tipo, string $workdir): array
     {
         $tipo = strtolower($tipo);
         if ($tipo === 'pdf') {
-            return ['texto' => '', 'imagenes' => [], 'paginas' => self::contarPaginasPdf($path)];
+            $imagenes = [];
+            try {
+                $imagenes = self::extraerImagenesPdf($path, $workdir);
+            } catch (\Throwable $e) {
+                $imagenes = []; // una imagen o un PDF raro nunca rompe el análisis
+            }
+            return ['texto' => '', 'imagenes' => $imagenes, 'paginas' => self::contarPaginasPdf($path)];
         }
         if ($tipo !== 'pptx' && $tipo !== 'docx') {
             throw self::err('formato_no_permitido');
@@ -593,6 +604,12 @@ class PresentationParser
             throw self::err('corrupto');
         }
         return $dom;
+    }
+
+    /** ¿Cabe `$extra` bytes más sin acercarse al límite de memoria? */
+    public static function memoriaDisponible(int $extra): bool
+    {
+        return memory_get_usage() + $extra <= (int)(self::limiteMemoria() * 0.8);
     }
 
     private static function limiteMemoria(): int
@@ -1139,6 +1156,19 @@ class PresentationParser
         if (!$src) {
             return null;
         }
+        $alpha = ($tipo === IMAGETYPE_PNG || $tipo === IMAGETYPE_WEBP);
+        return self::guardarGd($src, $w, $h, $alpha, $workdir, $num, $hashes, false);
+    }
+
+    /**
+     * Dedupe perceptual (estricto para logos) + reducción + recompresión de una imagen GD (se destruye).
+     *
+     * @param mixed $src GdImage
+     * @param array<int,array{0:string,1:array}> $hashes
+     * @return array{archivo:string,w:int,h:int,hash:string}|null
+     */
+    private static function guardarGd($src, int $w, int $h, bool $alpha, string $workdir, int $num, array &$hashes, bool $estricto): ?array
+    {
         // Firma perceptual: dHash 9x8 + color medio.
         $th = imagecreatetruecolor(9, 8);
         imagecopyresampled($th, $src, 0, 0, 0, 0, 9, 8, $w, $h);
@@ -1164,6 +1194,8 @@ class PresentationParser
             }
         }
         $col = [(int)($rs / 72), (int)($gs / 72), (int)($bs / 72)];
+        $maxD = $estricto ? 0 : 3;
+        $maxC = $estricto ? 6 : 30;
         foreach ($hashes as $hh) {
             $d = 0;
             for ($i = 0; $i < 64; $i++) {
@@ -1172,7 +1204,7 @@ class PresentationParser
                 }
             }
             $dc = abs($hh[1][0] - $col[0]) + abs($hh[1][1] - $col[1]) + abs($hh[1][2] - $col[2]);
-            if ($d <= 3 && $dc <= 30) {
+            if ($d <= $maxD && $dc <= $maxC) {
                 imagedestroy($src);
                 return null; // duplicado (incluye versiones reescaladas)
             }
@@ -1194,7 +1226,6 @@ class PresentationParser
             $nh = max(1, (int)round($h * $f));
         }
         $dst = imagecreatetruecolor($nw, $nh);
-        $alpha = ($tipo === IMAGETYPE_PNG || $tipo === IMAGETYPE_WEBP);
         $usaWebp = function_exists('imagewebp');
         if ($alpha && $usaWebp) {
             imagealphablending($dst, false);
@@ -1213,5 +1244,166 @@ class PresentationParser
             return null;
         }
         return ['archivo' => $file, 'w' => $nw, 'h' => $nh, 'hash' => $hex];
+    }
+
+    // ------------------------------------------------------------------
+    // Imágenes de PDF
+    // ------------------------------------------------------------------
+
+    /**
+     * Imágenes de un PDF (logo y fotos). Acepta también imágenes pequeñas (>=120 px)
+     * que parecen un logo (`logo_cand`). Ordena por página y aparición.
+     *
+     * @return array<int,array{archivo:string,w:int,h:int,hash:string,orden:int,pagina:?int,logo_cand:bool}>
+     */
+    private static function extraerImagenesPdf(string $path, string $workdir): array
+    {
+        if (!extension_loaded('gd') || !function_exists('inflate_init')) {
+            return [];
+        }
+        if (!is_dir($workdir) && !@mkdir($workdir, 0775, true) && !is_dir($workdir)) {
+            return [];
+        }
+        $ex = new PdfImageExtractor($path, microtime(true) + self::PDF_SEGUNDOS);
+        $metas = $ex->imagenes();
+        if (!$metas) {
+            return [];
+        }
+        $mayor = 0;
+        foreach ($metas as $m) {
+            $mayor = max($mayor, $m['w'] * $m['h']);
+        }
+        $cands = [];
+        foreach ($metas as $m) {
+            $w = $m['w'];
+            $h = $m['h'];
+            if ($w < self::PDF_MIN_LADO || $h < self::PDF_MIN_LADO || max($w, $h) / min($w, $h) > 8 || $w * $h > self::MAX_PIXELES) {
+                continue; // iconos, líneas decorativas
+            }
+            if (min($w, $h) < self::MIN_LADO && !self::formaLogo($w, $h, $mayor)) {
+                continue;
+            }
+            $cands[] = $m;
+        }
+        usort($cands, static function (array $a, array $b): int {
+            return [$a['pagina'] ?? PHP_INT_MAX, $a['orden']] <=> [$b['pagina'] ?? PHP_INT_MAX, $b['orden']];
+        });
+        $solo = count($cands) === 1;
+        $out = [];
+        $hashes = [];
+        $sha = [];
+        $lectura = 0;
+        $uniformes = [];
+        foreach ($cands as $m) {
+            if (count($out) >= self::MAX_IMAGENES) {
+                break;
+            }
+            $r = self::procesarImagenPdf($ex, $m, $workdir, count($out) + 1, $hashes, $sha, $mayor, false);
+            if ($r === 'uniforme') {
+                $uniformes[] = $m;
+            } elseif (is_array($r)) {
+                $out[] = $r;
+            }
+        }
+        if (!$out && $solo && $uniformes) {
+            $r = self::procesarImagenPdf($ex, $uniformes[0], $workdir, 1, $hashes, $sha, $mayor, true);
+            if (is_array($r)) {
+                $out[] = $r;
+            }
+        }
+        return $out;
+    }
+
+    private static function formaLogo(int $w, int $h, int $mayor): bool
+    {
+        $asp = $w / $h;
+        return $asp >= 0.25 && $asp <= 5 && ($w * $h <= 360000 || $w * $h <= 0.4 * $mayor);
+    }
+
+    /**
+     * @param array{obj:int,w:int,h:int,orden:int,pagina:?int} $m
+     * @param array<int,array{0:string,1:array}> $hashes
+     * @param array<string,bool> $sha
+     * @return array|string|null array = imagen, 'uniforme' = fondo casi uniforme, null = descartada
+     */
+    private static function procesarImagenPdf(PdfImageExtractor $ex, array $m, string $workdir, int $num, array &$hashes, array &$sha, int $mayor, bool $forzar)
+    {
+        try {
+            $c = $ex->cargar($m);
+            if ($c === null) {
+                return null;
+            }
+            if (isset($sha[$c['sha']])) {
+                imagedestroy($c['img']);
+                return null;
+            }
+            $sha[$c['sha']] = true;
+            $w = (int)$c['w'];
+            $h = (int)$c['h'];
+            $e = self::muestraPdf($c['img'], $w, $h);
+            if (!$forzar && $e['std'] < 4.0 && $e['transp'] < 0.02) {
+                imagedestroy($c['img']);
+                unset($sha[$c['sha']]);
+                return 'uniforme';
+            }
+            $pocos = $e['colores'] <= 48 || $e['transp'] >= 0.1;
+            $logo = $pocos && self::formaLogo($w, $h, $mayor);
+            if (min($w, $h) < self::MIN_LADO && !$logo) {
+                imagedestroy($c['img']);
+                return null;
+            }
+            $r = self::guardarGd($c['img'], $w, $h, (bool)$c['alpha'], $workdir, $num, $hashes, $logo);
+            if ($r === null) {
+                return null;
+            }
+            $r['orden'] = (int)$m['orden'];
+            $r['pagina'] = $m['pagina'];
+            $r['logo_cand'] = $logo;
+            return $r;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Estadística sobre ~4000 píxeles: colores distintos (cuantizados), fracción
+     * transparente y desviación de luminosidad.
+     *
+     * @param mixed $img
+     * @return array{colores:int,transp:float,std:float}
+     */
+    private static function muestraPdf($img, int $w, int $h): array
+    {
+        $paso = max(1, (int)floor(sqrt($w * $h / 4000)));
+        $col = [];
+        $n = 0;
+        $tr = 0;
+        $s = 0.0;
+        $s2 = 0.0;
+        $op = 0;
+        for ($y = (int)($paso / 2); $y < $h; $y += $paso) {
+            for ($x = (int)($paso / 2); $x < $w; $x += $paso) {
+                $c = imagecolorat($img, $x, $y);
+                $n++;
+                if ((($c >> 24) & 0x7F) >= 64) {
+                    $tr++;
+                    continue;
+                }
+                $r = ($c >> 16) & 255;
+                $g = ($c >> 8) & 255;
+                $b = $c & 255;
+                $col[(($r >> 4) << 8) | (($g >> 4) << 4) | ($b >> 4)] = true;
+                $l = 0.299 * $r + 0.587 * $g + 0.114 * $b;
+                $s += $l;
+                $s2 += $l * $l;
+                $op++;
+            }
+        }
+        $std = 0.0;
+        if ($op > 0) {
+            $med = $s / $op;
+            $std = sqrt(max(0.0, $s2 / $op - $med * $med));
+        }
+        return ['colores' => count($col), 'transp' => $n > 0 ? $tr / $n : 0.0, 'std' => $std];
     }
 }

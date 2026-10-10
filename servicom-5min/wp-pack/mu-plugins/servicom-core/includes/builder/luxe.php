@@ -236,7 +236,7 @@ class SC_Build_Luxe
 				$logoPath = $f;
 			}
 		}
-		$design = sc_design_default((string) ($m['rubro'] ?? 'otro'), (int) $m['style'], $this->seed, $logoPath);
+		$design = sc_design_default((string) ($m['rubro'] ?? 'otro'), (int) $m['style'], $this->seed, $logoPath, (array) ($m['design']['colores'] ?? array()));
 		$nombre = $this->nombre();
 
 		$banner = (array) ($m['content']['banner'] ?? array());

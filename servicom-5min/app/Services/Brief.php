@@ -223,28 +223,80 @@ final class Brief
     public static function validateForBuild(array $b): array
     {
         $e = [];
+        $conPres = !empty($b['presentacion']['file']) && ($b['presentacion']['estado'] ?? '') !== 'omitida';
         if (!in_array($b['plan'] ?? '', ['info', 'tienda'], true)) { $e['plan'] = 'Elija un plan.'; }
-        if (trim((string) ($b['negocio']['nombre'] ?? '')) === '') { $e['negocio.nombre'] = 'Escriba el nombre de su negocio.'; }
-        if (!in_array($b['negocio']['rubro'] ?? '', self::RUBROS, true)) { $e['negocio.rubro'] = 'Elija el rubro de su negocio.'; }
+        if (!$conPres) {
+            if (trim((string) ($b['negocio']['nombre'] ?? '')) === '') { $e['negocio.nombre'] = 'Escriba el nombre de su negocio.'; }
+            if (!in_array($b['negocio']['rubro'] ?? '', self::RUBROS, true)) { $e['negocio.rubro'] = 'Elija el rubro de su negocio.'; }
+        }
+        // WhatsApp: ya no bloquea (se puede completar al final); si se escribe, debe ser válido
         $wa = (string) ($b['contacto']['whatsapp'] ?? '');
-        if (strlen($wa) < 8 || strlen($wa) > 15) { $e['contacto.whatsapp'] = 'Escriba un número de WhatsApp válido, con código de país.'; }
+        if ($wa !== '' && (strlen($wa) < 8 || strlen($wa) > 15)) { $e['contacto.whatsapp'] = 'El número de WhatsApp no es válido: escríbalo con código de país o déjelo vacío.'; }
         if (($b['plan'] ?? '') === 'tienda') {
             $ok = false;
             foreach ($b['tienda']['productos'] ?? [] as $p) {
                 if (trim((string) $p['nombre']) !== '') { $ok = true; }
             }
-            if (!$ok) { $e['tienda.productos'] = 'Agregue al menos 1 producto.'; }
+            if (!$ok && !$conPres) { $e['tienda.productos'] = 'Agregue al menos 1 producto.'; }
         } else {
             $ok = false;
             foreach ($b['contenido']['servicios'] ?? [] as $s) {
                 if (trim((string) $s['nombre']) !== '') { $ok = true; }
             }
-            if (!$ok) { $e['contenido.servicios'] = 'Agregue al menos 1 servicio.'; }
-        }
-        if (($b['correo_contacto'] ?? '') === '' && ($b['plan'] ?? '') !== 'tienda') {
-            // recomendado pero no bloqueante: si falta, los mensajes llegan a info@ del dominio (se anota)
+            // con presentación, el sistema completa los servicios típicos del rubro si faltan
+            if (!$ok && !$conPres) { $e['contenido.servicios'] = 'Agregue al menos 1 servicio.'; }
         }
         return $e;
+    }
+
+    /** Modo «solo presentación»: valores por defecto razonables para lo que la presentación no trajo. */
+    public static function fillDefaults(array $b): array
+    {
+        if (empty($b['presentacion']['file'])) {
+            return $b;
+        }
+        if (trim((string) ($b['negocio']['nombre'] ?? '')) === '') { $b['negocio']['nombre'] = 'Mi negocio'; }
+        if (!in_array($b['negocio']['rubro'] ?? '', self::RUBROS, true)) {
+            $b['negocio']['rubro'] = 'otro';
+            if (trim((string) ($b['negocio']['rubro_otro'] ?? '')) === '') { $b['negocio']['rubro_otro'] = 'Servicios'; }
+        }
+        return $b;
+    }
+
+    /**
+     * Modo «solo presentación»: aplica TODO lo que se encontró (nombre, rubro, frase, quiénes somos, servicios, productos,
+     * contacto, redes), elige el logo y las mejores fotos y guarda los colores de la marca. Lo que no se encontró queda
+     * vacío para corregirlo al final. La regla se mantiene: el formulario manda, la presentación solo completa vacíos.
+     * @return array{data:array,conflictos:array,logo:?int,fotos:array}
+     */
+    public static function autoConfirm(array $b, array $an, int $orderId): array
+    {
+        $usar = ['nombre' => 1, 'rubro' => 1, 'frase' => 1, 'quienes' => 1, 'contacto' => 1, 'horario' => 1, 'redes' => 1,
+            'servicios' => array_keys($an['servicios'] ?? []),
+            'productos' => (($b['plan'] ?? '') === 'tienda') ? array_keys($an['productos'] ?? []) : [], 'categorias' => 1];
+        $logo = null;
+        $fotos = [];
+        $cand = [];
+        foreach ((array) ($an['imagenes'] ?? []) as $im) {
+            if (!is_array($im) || empty($im['id'])) { continue; }
+            if (!empty($im['logo']) && $logo === null) { $logo = (int) $im['id']; continue; }
+            $w = (int) ($im['w'] ?? 0); $h = max(1, (int) ($im['h'] ?? 1));
+            if ($w < 400 || $h < 250) { continue; }
+            $cand[] = ['id' => (int) $im['id'], 'a' => $w * $h, 'land' => ($w / $h) >= 1.2];
+        }
+        usort($cand, function ($x, $y) { return [$y['land'], $y['a']] <=> [$x['land'], $x['a']]; });
+        foreach (array_slice($cand, 0, 15) as $c) { $fotos[] = $c['id']; }
+        $m = self::mergePresentation($b, $an, $usar, $fotos, $orderId);
+        $d = $m['data'];
+        $valid = self::fileIds($orderId);
+        if ($logo !== null && empty($d['negocio']['logo']) && isset($valid[$logo])) {
+            $d['negocio']['logo'] = $logo;
+            $d['origen']['negocio.logo'] = 'presentacion';
+        }
+        $d['presentacion']['colores'] = array_values(array_filter(array_map('strval', (array) ($an['colores'] ?? [])), fn($c) => preg_match('/^#[0-9A-F]{6}$/', $c)));
+        $d['presentacion']['auto'] = true;
+        $d = self::fillDefaults($d);
+        return ['data' => $d, 'conflictos' => $m['conflictos'], 'logo' => $logo, 'fotos' => $fotos];
     }
 
     /**

@@ -236,7 +236,7 @@ final class Manifest
                 'footer_credit' => (string) Settings::get('footer_credit', 'Sitio creado por Servicom'),
             ],
             'texts' => $texts,
-            'design' => ['hint' => ['rubro' => $rubro, 'estilo' => (int) $b['negocio']['estilo']]],
+            'design' => ['hint' => ['rubro' => $rubro, 'estilo' => (int) $b['negocio']['estilo']], 'colores' => array_values(array_filter(array_map('strval', (array) ($b['presentacion']['colores'] ?? [])), fn($c) => (bool) preg_match('/^#[0-9A-Fa-f]{6}$/', $c)))],
             'content' => ['banner' => $banner, 'quienes' => $texts['nosotros_texto'] ?? $b['contenido']['quienes'], 'servicios' => $servicios, 'galeria' => $gal] + ($stock ? ['stock' => $stock] : []),
             'store' => $store,
             'assets' => $manifestAssets,

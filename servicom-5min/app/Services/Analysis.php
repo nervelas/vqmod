@@ -90,7 +90,7 @@ final class Analysis
                 $abs = $work . '/' . ltrim($rel, '/');
                 if ($rel === '' || !is_file($abs) || !Fs::inside($abs, $work)) { continue; }
                 $nf = Files::adoptImage($orderId, $abs, 'presentacion_img', 'presentacion', 'presentacion-' . (count($imgs) + 1));
-                if ($nf) { $imgs[] = ['id' => (int) $nf['id'], 'w' => (int) $nf['w'], 'h' => (int) $nf['h']]; }
+                if ($nf) { $imgs[] = ['id' => (int) $nf['id'], 'w' => (int) $nf['w'], 'h' => (int) $nf['h'], 'logo' => !empty($im['logo']), 'pagina' => isset($im['pagina']) ? (int) $im['pagina'] : null]; }
                 if (count($imgs) >= 40) { break; }
             }
             $res['imagenes'] = $imgs;

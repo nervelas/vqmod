@@ -79,8 +79,11 @@ if (str_contains($user, '<datos_cliente>')) {
         if (preg_match('/(\+?502[\s-]?\d{4}[\s-]?\d{4}|\b\d{4}[\s-]\d{4}\b)/', $l, $mm) && $tel === '') { $tel = $mm[1]; }
         if ($inServ && mb_strlen($l) >= 3 && mb_strlen($l) <= 120 && !str_contains($l, '@')) { [$n1, $d1] = array_pad(explode(':', $l, 2), 2, ''); if (!preg_match('/\d{4}/', $n1)) { $servs[] = ['nombre' => trim($n1), 'descripcion' => trim($d1), 'textual' => true]; } }
     }
-    if ($hasDoc) { $name = 'Negocio del PDF'; $servs = [['nombre' => 'Servicio del PDF', 'descripcion' => '', 'textual' => false]]; }
-    $r = ['nombre' => ['v' => $name, 'textual' => true], 'rubro_sugerido' => ['v' => '', 'textual' => false], 'frase_principal' => ['v' => '', 'textual' => false], 'quienes_somos' => ['v' => '', 'textual' => false],
+    if ($hasDoc) {
+        $name = 'Grupo Aurora Ingeniería'; $tel = '+502 2345 6789'; $mail = 'info@grupoaurora.example';
+        $servs = array_map(fn($n) => ['nombre' => $n, 'descripcion' => '', 'textual' => true], ['Instalaciones eléctricas industriales', 'Redes de datos y cableado estructurado', 'Energía solar fotovoltaica', 'Mantenimiento preventivo y correctivo']);
+    }
+    $r = ['colores_marca' => $hasDoc ? ['#0b3d91', '#f5a623'] : ['#1d3a6b', '#c9a45c'], 'nombre' => ['v' => $name, 'textual' => true], 'rubro_sugerido' => ['v' => '', 'textual' => false], 'frase_principal' => ['v' => '', 'textual' => false], 'quienes_somos' => ['v' => '', 'textual' => false],
         'servicios' => $servs, 'productos' => [], 'categorias' => [],
         'contacto' => ['telefono' => ['v' => $tel, 'textual' => true], 'whatsapp' => ['v' => '', 'textual' => false], 'correo' => ['v' => $mail, 'textual' => true], 'direccion' => ['v' => '', 'textual' => false], 'horario' => ['v' => '', 'textual' => false], 'redes' => ['facebook' => '', 'instagram' => '', 'tiktok' => '', 'youtube' => '', 'x' => '', 'linkedin' => '']],
         'idioma' => 'es'];

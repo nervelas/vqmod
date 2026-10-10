@@ -1360,6 +1360,7 @@ class PresentationParser
             $r['orden'] = (int)$m['orden'];
             $r['pagina'] = $m['pagina'];
             $r['logo_cand'] = $logo;
+            $r['logo_score'] = $logo ? ($e['transp'] >= 0.1 ? 3 : ($e['dominantes'] >= 0.85 ? 2 : 1)) : 0;   // transparente > pocos colores > solo borde liso
             return $r;
         } catch (\Throwable $e) {
             return null;

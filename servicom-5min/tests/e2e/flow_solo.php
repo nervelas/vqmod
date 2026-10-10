@@ -30,6 +30,7 @@ t_ok(($d['negocio']['nombre'] ?? '') === 'Grupo Aurora Ingeniería', 'nombre tom
 t_ok(!empty($d['negocio']['logo']), 'logo tomado del PDF');
 t_ok(count($d['contenido']['servicios'] ?? []) === 4, 'servicios del PDF: ' . count($d['contenido']['servicios'] ?? []));
 t_ok(($d['contacto']['telefono'] ?? '') !== '' && ($d['contacto']['correo'] ?? ($d['correo_contacto'] ?? '')) !== '', 'teléfono y correo del PDF');
+t_ok(!empty($d['contenido']['servicios'][0]['foto']) && !empty($d['contenido']['servicios'][1]['foto']) && $d['contenido']['servicios'][0]['foto'] !== $d['contenido']['servicios'][1]['foto'] && empty($d['contenido']['servicios'][2]['foto']), 'cada servicio con foto en su hoja la recibe (y los demás quedan para stock/arte)');
 t_ok(empty($d['contacto']['whatsapp']), 'sin WhatsApp: se deja vacío (no se inventa)');
 t_ok(count($d['presentacion']['colores'] ?? []) >= 1, 'colores de marca guardados');
 sleep(2);

@@ -299,11 +299,12 @@ REGLAS ESTRICTAS
 5. Texto plano, sin HTML ni Markdown. Descripciones breves (máx. 300 caracteres). Hasta 200 servicios y 500 productos. Precios como número (sin símbolo de moneda). Redes sociales solo como URL completa si aparece.
 6. "idioma" es el idioma principal del archivo: "es", "en" u "otro". "rubro_sugerido" es un texto corto que describe el tipo de negocio según el archivo.
 7. "colores_marca": hasta 3 colores de la marca que VES en el archivo (logo, títulos, franjas o fondos de color), como "#RRGGBB", del más importante al menos importante. Solo colores realmente presentes; ignora blanco, negro y grises salvo que sean los únicos. Si no hay color de marca claro, [].
+8. "pagina" en servicios y productos: número de página/diapositiva (empezando en 1) del archivo donde aparece ese servicio o producto; 0 si no lo sabes o el archivo no tiene páginas. Sirve para asignarle su foto.
 
 ESQUEMA
 {"nombre":{"v":"","textual":false},"rubro_sugerido":{"v":"","textual":false},"frase_principal":{"v":"","textual":false},"quienes_somos":{"v":"","textual":false},
-"servicios":[{"nombre":"","descripcion":"","textual":false}],
-"productos":[{"nombre":"","descripcion":"","precio":0,"categoria":"","textual":false}],
+"servicios":[{"nombre":"","descripcion":"","pagina":0,"textual":false}],
+"productos":[{"nombre":"","descripcion":"","precio":0,"categoria":"","pagina":0,"textual":false}],
 "categorias":[""],
 "contacto":{"telefono":{"v":"","textual":false},"whatsapp":{"v":"","textual":false},"correo":{"v":"","textual":false},"direccion":{"v":"","textual":false},"horario":{"v":"","textual":false},
 "redes":{"facebook":"","instagram":"","tiktok":"","youtube":"","x":"","linkedin":""}},

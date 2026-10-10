@@ -295,21 +295,54 @@ final class Brief
         $logo = null;
         $fotos = [];
         $cand = [];
+        $mejor = -1;   // logo: el candidato con mayor puntaje (transparente > pocos colores > borde liso); a igualdad, el primero
+        foreach ((array) ($an['imagenes'] ?? []) as $im) {
+            if (is_array($im) && !empty($im['id']) && !empty($im['logo']) && (int) ($im['logo_score'] ?? 1) > $mejor) { $mejor = (int) ($im['logo_score'] ?? 1); $logo = (int) $im['id']; }
+        }
         foreach ((array) ($an['imagenes'] ?? []) as $im) {
             if (!is_array($im) || empty($im['id'])) { continue; }
-            if (!empty($im['logo']) && $logo === null) { $logo = (int) $im['id']; continue; }
+            if ($logo !== null && (int) $im['id'] === $logo) { continue; }
             $w = (int) ($im['w'] ?? 0); $h = max(1, (int) ($im['h'] ?? 1));
             if ($w < 400 || $h < 250) { continue; }
             $cand[] = ['id' => (int) $im['id'], 'a' => $w * $h, 'land' => ($w / $h) >= 1.2];
         }
+        // Foto de cada servicio/producto: la IA indica la hoja donde aparece y se le asigna la imagen de esa hoja, en orden
+        $porPagina = [];
+        foreach ((array) ($an['imagenes'] ?? []) as $im) {
+            if (!is_array($im) || empty($im['id']) || !empty($im['logo']) || empty($im['pagina'])) { continue; }
+            if ((int) ($im['w'] ?? 0) < 300 || (int) ($im['h'] ?? 0) < 200) { continue; }
+            $porPagina[(int) $im['pagina']][] = (int) $im['id'];
+        }
+        $asignadas = [];
+        $fotoDe = function (array $lista) use ($porPagina, &$asignadas): array {   // nombre en minúsculas => id de imagen
+            $res = []; $usoPag = [];
+            foreach ($lista as $it) {
+                $pg = (int) ($it['pagina'] ?? 0); $k = mb_strtolower((string) ($it['nombre'] ?? ''));
+                if ($pg < 1 || $k === '' || empty($porPagina[$pg])) { continue; }
+                $i = $usoPag[$pg] ?? 0;
+                if ($i < count($porPagina[$pg])) { $res[$k] = $porPagina[$pg][$i]; $asignadas[$porPagina[$pg][$i]] = true; $usoPag[$pg] = $i + 1; }
+            }
+            return $res;
+        };
+        $fotoServ = $fotoDe(array_slice(array_values((array) ($an['servicios'] ?? [])), 0, self::AUTO_MAX_SERVICIOS));
+        $fotoProd = (($b['plan'] ?? '') === 'tienda') ? $fotoDe(array_values((array) ($an['productos'] ?? []))) : [];
         usort($cand, function ($x, $y) { return [$y['land'], $y['a']] <=> [$x['land'], $x['a']]; });
-        foreach (array_slice($cand, 0, 15) as $c) { $fotos[] = $c['id']; }
+        $libres = array_values(array_filter($cand, fn($c) => empty($asignadas[$c['id']])));
+        foreach (array_slice(count($libres) >= 3 ? $libres : $cand, 0, 15) as $c) { $fotos[] = $c['id']; }
         $m = self::mergePresentation($b, $an, $usar, $fotos, $orderId);
         $d = $m['data'];
         $valid = self::fileIds($orderId);
         if ($logo !== null && empty($d['negocio']['logo']) && isset($valid[$logo])) {
             $d['negocio']['logo'] = $logo;
             $d['origen']['negocio.logo'] = 'presentacion';
+        }
+        foreach ($d['contenido']['servicios'] as $i => $sv) {
+            $k = mb_strtolower((string) ($sv['nombre'] ?? ''));
+            if (empty($sv['foto']) && isset($fotoServ[$k]) && isset($valid[$fotoServ[$k]])) { $d['contenido']['servicios'][$i]['foto'] = $fotoServ[$k]; }
+        }
+        foreach ($d['tienda']['productos'] ?? [] as $i => $pr) {
+            $k = mb_strtolower((string) ($pr['nombre'] ?? ''));
+            if (empty($pr['foto']) && isset($fotoProd[$k]) && isset($valid[$fotoProd[$k]])) { $d['tienda']['productos'][$i]['foto'] = $fotoProd[$k]; }
         }
         $d['presentacion']['colores'] = array_values(array_filter(array_map('strval', (array) ($an['colores'] ?? [])), fn($c) => preg_match('/^#[0-9A-F]{6}$/', $c)));
         $d['presentacion']['auto'] = true;

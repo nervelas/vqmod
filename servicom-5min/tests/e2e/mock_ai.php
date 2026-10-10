@@ -81,7 +81,7 @@ if (str_contains($user, '<datos_cliente>')) {
     }
     if ($hasDoc) {
         $name = 'Grupo Aurora Ingeniería'; $tel = '+502 2345 6789'; $mail = 'info@grupoaurora.example';
-        $servs = array_map(fn($n) => ['nombre' => $n, 'descripcion' => '', 'textual' => true], ['Instalaciones eléctricas industriales', 'Redes de datos y cableado estructurado', 'Energía solar fotovoltaica', 'Mantenimiento preventivo y correctivo']);
+        $servs = []; foreach (['Instalaciones eléctricas industriales', 'Redes de datos y cableado estructurado', 'Energía solar fotovoltaica', 'Mantenimiento preventivo y correctivo'] as $i => $n) { $servs[] = ['nombre' => $n, 'descripcion' => '', 'pagina' => $i < 2 ? 2 : 0, 'textual' => true]; }   // las dos fotos de la hoja 2 son de los dos primeros servicios
     }
     $r = ['colores_marca' => $hasDoc ? ['#0b3d91', '#f5a623'] : ['#1d3a6b', '#c9a45c'], 'nombre' => ['v' => $name, 'textual' => true], 'rubro_sugerido' => ['v' => '', 'textual' => false], 'frase_principal' => ['v' => '', 'textual' => false], 'quienes_somos' => ['v' => '', 'textual' => false],
         'servicios' => $servs, 'productos' => [], 'categorias' => [],

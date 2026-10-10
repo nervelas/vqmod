@@ -435,6 +435,12 @@ class TextSchema
      * fuera del esquema; todo campo no encontrado es ""/[]. `imagenes` y
      * `conflictos` quedan vacíos (los completa PresentationAnalyzer).
      */
+    /** Número de hoja/diapositiva donde aparece un servicio o producto (0 = desconocido). */
+    private static function pagina($v): int
+    {
+        return (is_int($v) || (is_string($v) && ctype_digit($v)) || is_float($v)) && (int) $v >= 1 && (int) $v <= 500 ? (int) $v : 0;
+    }
+
     public static function validarExtraccion(array $j): array
     {
         $vt = function ($x, int $max, bool $multi = false): array {
@@ -471,7 +477,9 @@ class TextSchema
                 continue;
             }
             $vistos[$k] = true;
-            $servicios[] = ['nombre' => $n, 'descripcion' => $d, 'textual' => !empty($s['textual']) && $s['textual'] !== 'false'];
+            $e = ['nombre' => $n, 'descripcion' => $d, 'textual' => !empty($s['textual']) && $s['textual'] !== 'false'];
+            if (($pg = self::pagina($s['pagina'] ?? 0)) > 0) { $e['pagina'] = $pg; }
+            $servicios[] = $e;
         }
         $out['servicios'] = $servicios;
 
@@ -490,13 +498,15 @@ class TextSchema
                 continue;
             }
             $vistos[$k] = true;
-            $productos[] = [
+            $e = [
                 'nombre' => $n,
                 'descripcion' => TextClean::limpiar($p['descripcion'] ?? '', 600, true),
                 'precio' => self::precio($p['precio'] ?? ''),
                 'categoria' => TextClean::limpiar($p['categoria'] ?? '', 80),
                 'textual' => !empty($p['textual']) && $p['textual'] !== 'false',
             ];
+            if (($pg = self::pagina($p['pagina'] ?? 0)) > 0) { $e['pagina'] = $pg; }
+            $productos[] = $e;
         }
         $out['productos'] = $productos;
         $out['categorias'] = TextClean::limpiarLista($j['categorias'] ?? [], 100, 80);

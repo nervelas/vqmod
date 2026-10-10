@@ -322,6 +322,7 @@ class SC_Build_Luxe
 		$heroTitle = $this->tx('hero_titulo', sprintf($this->L('Bienvenidos a %s', 'Welcome to %s'), $nombre));
 		$ctaTitle = $this->tx('cta_titulo', $this->L('Hablemos de su proyecto', "Let's talk about your project"));
 
+		$secCita = null; $secVideo = null; $secFaq = null;
 		$home = array();
 		$home[] = array('id' => 'inicio-hero', 'type' => 'hero', 'on' => true, 'data' => array(
 			'eyebrow' => $this->tx('hero_eyebrow', $this->rubroLabel()),
@@ -343,7 +344,7 @@ class SC_Build_Luxe
 		if ($this->svcs) {
 			$home[] = array('id' => 'servicios', 'type' => 'services', 'on' => true, 'data' => array(
 				'eyebrow' => $this->L('Lo que hacemos', 'What we do'), 'title' => $this->tx('servicios_titulo', $this->L('Nuestros servicios', 'Our services')),
-				'lead' => $this->tx('servicios_intro'), 'limit' => 6, 'more' => $this->L('Ver más', 'Learn more'),
+				'lead' => $this->tx('servicios_intro'), 'limit' => 3, 'more' => $this->L('Ver más', 'Learn more'),
 				'btn' => array('text' => $this->L('Ver todos los servicios', 'View all services'), 'url' => 'page:servicios'),
 			));
 		}
@@ -353,30 +354,20 @@ class SC_Build_Luxe
 				'limit' => 8, 'btn' => array('text' => $this->L('Ver toda la tienda', 'Visit the store'), 'url' => 'page:tienda'),
 			));
 		}
-		$home[] = array('id' => 'valores', 'type' => 'values', 'on' => true, 'data' => array(
+		$secValores = array('id' => 'valores', 'type' => 'values', 'on' => true, 'data' => array(
 			'eyebrow' => $this->L('Nuestro compromiso', 'Our promise'), 'title' => $this->tx('valores_titulo', $this->L('Por qué elegirnos', 'Why choose us')), 'lead' => '', 'items' => $values,
 		));
 		if ($cita !== '') {
-			$home[] = array('id' => 'cita', 'type' => 'quote', 'on' => true, 'data' => array('text' => $cita, 'by' => $nombre, 'img' => $this->slot($quoteImg, 3)));
+			$secCita = array('id' => 'cita', 'type' => 'quote', 'on' => true, 'data' => array('text' => $cita, 'by' => $nombre, 'img' => $this->slot($quoteImg, 3)));
 		}
-		$home[] = array('id' => 'proceso', 'type' => 'process', 'on' => true, 'data' => array(
+		$secProceso = array('id' => 'proceso', 'type' => 'process', 'on' => true, 'data' => array(
 			'eyebrow' => $this->L('Así trabajamos', 'How we work'), 'title' => $this->tx('proceso_titulo', $this->L('Un proceso simple y claro', 'A simple, clear process')), 'lead' => '', 'items' => $process,
 		));
-		if (count($galIds) >= 3) {
-			$items = array();
-			foreach (array_slice($galIds, 0, 6) as $n => $id) {
-				$s = $this->slot($id, $n);
-				$items[] = $s;
-			}
-			$home[] = array('id' => 'galeria', 'type' => 'gallery', 'on' => true, 'data' => array(
-				'eyebrow' => $this->L('Galería', 'Gallery'), 'title' => $this->tx('galeria_titulo', $this->L('Galería', 'Gallery')), 'lead' => '', 'items' => $items,
-			));
-		}
 		$yt = trim((string) ($m['business']['youtube'] ?? ''));
 		if ($yt !== '') {
-			$home[] = array('id' => 'video', 'type' => 'video', 'on' => true, 'data' => array('eyebrow' => '', 'title' => $this->L('Conózcanos en video', 'Meet us on video'), 'lead' => '', 'url' => $yt));
+			$secVideo = array('id' => 'video', 'type' => 'video', 'on' => true, 'data' => array('eyebrow' => '', 'title' => $this->L('Conózcanos en video', 'Meet us on video'), 'lead' => '', 'url' => $yt));
 		}
-		$home[] = array('id' => 'preguntas', 'type' => 'faq', 'on' => true, 'data' => array(
+		$secFaq = array('id' => 'preguntas', 'type' => 'faq', 'on' => true, 'data' => array(
 			'eyebrow' => $this->L('Resolvemos sus dudas', 'Your questions'), 'title' => $this->tx('faq_titulo', $this->L('Preguntas frecuentes', 'Frequently asked questions')), 'lead' => '', 'items' => $faq,
 		));
 		$cta = array('id' => 'cta', 'type' => 'cta', 'on' => true, 'data' => array(
@@ -385,48 +376,62 @@ class SC_Build_Luxe
 			'btn2' => $this->tel !== '' ? array('text' => $this->L('Llámenos', 'Call us'), 'url' => 'tel') : array('text' => $this->L('Escriba aquí', 'Write here'), 'url' => 'page:contacto'),
 			'img' => $this->slot($ctaImg, 4),
 		));
-		$home[] = $cta;
 		$contact = array('id' => 'contacto', 'type' => 'contact', 'on' => true, 'data' => array(
 			'eyebrow' => $this->L('Contacto', 'Contact'), 'title' => $this->tx('contacto_titulo', $this->L('Hablemos', "Let's talk")), 'lead' => $this->tx('contacto_intro'),
 			'form_title' => $this->L('Envíenos un mensaje', 'Send us a message'),
 		));
-		$home[] = $contact;
 
-		$pages = array('home' => array('sections' => $home));
 		$ph = function ($title, $lead, $n) use ($headImg) {
 			return array('id' => 'cabecera', 'type' => 'pagehero', 'on' => true, 'data' => array('eyebrow' => $this->nombre(), 'title' => $title, 'lead' => $lead, 'img' => $this->slot($headImg, $n)));
 		};
-		if ($about !== '') {
-			$pages['nosotros'] = array('sections' => array(
+		// Cada botón del menú tiene su PROPIA página con su propia información (la portada solo resume y enlaza).
+		$hayNosotros = $about !== '';
+		$hayServicios = (bool) $this->svcs;
+		$hayGaleria = count($galIds) >= 1;
+		$pages = array();
+		if (!$hayNosotros) {                     // sin página «Nosotros»: lo suyo se queda en la portada
+			$home[] = $secValores;
+			if ($secCita) { $home[] = $secCita; }
+		}
+		if (!$hayNosotros && !$hayServicios) { $home[] = $secProceso; }
+		$home[] = $cta;
+		$pages['home'] = array('sections' => $home);
+		if ($hayNosotros) {
+			$nos = array(
 				$ph($this->tx('nosotros_titulo', $this->L('Quiénes somos', 'Who we are')), $this->tx('nosotros_lead'), 11),
 				array('id' => 'nosotros', 'type' => 'about', 'on' => true, 'data' => array(
 					'side' => 'right', 'eyebrow' => $this->L('Nuestra historia', 'Our story'), 'title' => $this->tx('nosotros_titulo', $this->L('Quiénes somos', 'Who we are')),
 					'lead' => $this->tx('nosotros_lead'), 'text' => $about, 'points' => $points, 'img' => $this->slot($aboutImg, 6), 'seal_icon' => 'award',
 					'btn' => array('text' => $this->L('Contáctenos', 'Contact us'), 'url' => 'page:contacto'),
 				)),
-				array('id' => 'valores', 'type' => 'values', 'on' => true, 'data' => array('eyebrow' => $this->L('Nuestro compromiso', 'Our promise'), 'title' => $this->tx('valores_titulo', $this->L('Por qué elegirnos', 'Why choose us')), 'lead' => '', 'items' => $values)),
-				array('id' => 'proceso', 'type' => 'process', 'on' => true, 'data' => array('eyebrow' => $this->L('Así trabajamos', 'How we work'), 'title' => $this->tx('proceso_titulo', $this->L('Un proceso simple y claro', 'A simple, clear process')), 'lead' => '', 'items' => $process)),
-				$cta,
-			));
+				$secValores,
+			);
+			if ($secCita) { $nos[] = $secCita; }
+			if (!$hayServicios) { $nos[] = $secProceso; }
+			if ($secVideo && !$hayGaleria) { $nos[] = $secVideo; }
+			$nos[] = $cta;
+			$pages['nosotros'] = array('sections' => $nos);
 		}
-		if ($this->svcs) {
+		if ($hayServicios) {
 			$pages['servicios'] = array('sections' => array(
 				$ph($this->tx('servicios_titulo', $this->L('Nuestros servicios', 'Our services')), $this->tx('servicios_intro'), 12),
 				array('id' => 'servicios', 'type' => 'services', 'on' => true, 'data' => array('eyebrow' => '', 'title' => '', 'lead' => '', 'limit' => 0, 'more' => $this->L('Ver más', 'Learn more'))),
-				array('id' => 'proceso', 'type' => 'process', 'on' => true, 'data' => array('eyebrow' => $this->L('Así trabajamos', 'How we work'), 'title' => $this->tx('proceso_titulo', $this->L('Un proceso simple y claro', 'A simple, clear process')), 'lead' => '', 'items' => $process)),
+				$secProceso,
 				$cta,
 			));
 		}
-		if (count($galIds) >= 1) {
+		if ($hayGaleria) {
 			$items = array();
 			foreach ($galIds as $n => $id) {
 				$items[] = $this->slot($id, $n);
 			}
-			$pages['galeria'] = array('sections' => array(
+			$gal = array(
 				$ph($this->tx('galeria_titulo', $this->L('Galería', 'Gallery')), '', 13),
 				array('id' => 'galeria', 'type' => 'gallery', 'on' => true, 'data' => array('eyebrow' => '', 'title' => '', 'lead' => '', 'items' => $items)),
-				$cta,
-			));
+			);
+			if ($secVideo) { $gal[] = $secVideo; }
+			$gal[] = $cta;
+			$pages['galeria'] = array('sections' => $gal);
 		}
 		if ($this->tienda) {
 			$pages['tienda'] = array('sections' => array(
@@ -434,10 +439,12 @@ class SC_Build_Luxe
 				array('id' => 'productos', 'type' => 'products', 'on' => true, 'data' => array('eyebrow' => '', 'title' => '', 'lead' => '', 'limit' => 24, 'btn' => array('text' => '', 'url' => ''))),
 			));
 		}
-		$pages['contacto'] = array('sections' => array(
+		$con = array(
 			$ph($this->tx('contacto_titulo', $this->L('Contáctenos', 'Contact us')), $this->tx('contacto_intro'), 15),
 			array('id' => 'contacto', 'type' => 'contact', 'on' => true, 'data' => array('eyebrow' => '', 'title' => '', 'lead' => '', 'form_title' => $this->L('Envíenos un mensaje', 'Send us a message'))),
-		));
+		);
+		if ($secFaq && !empty($secFaq['data']['items'])) { $con[] = $secFaq; }
+		$pages['contacto'] = array('sections' => $con);
 
 		$seo = $this->tx('seo_descripcion', mb_substr($this->tx('hero_subtitulo', $nombre), 0, 158));
 		$services = array();

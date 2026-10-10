@@ -73,7 +73,7 @@ class PresentationAnalyzer
         foreach ($imagenes as $i => $im) {
             $rel = ltrim(str_starts_with($im['archivo'], $base) ? substr($im['archivo'], strlen($base)) : basename($im['archivo']), '/');
             $img[] = ['id' => 'img' . ($i + 1), 'w' => (int)$im['w'], 'h' => (int)$im['h'], 'archivo' => $rel, 'hash' => $im['hash'],
-                'logo' => !empty($im['logo_cand']), 'pagina' => isset($im['pagina']) ? (int)$im['pagina'] : null];
+                'logo' => !empty($im['logo_cand']), 'logo_score' => (int)($im['logo_score'] ?? 0), 'pagina' => isset($im['pagina']) ? (int)$im['pagina'] : null];
             $guardar[] = $im['archivo'];
         }
         $datos['imagenes'] = $img;

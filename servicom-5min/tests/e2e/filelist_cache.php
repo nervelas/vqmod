@@ -39,5 +39,13 @@ mkdir("$T/webs/d", 0777, true); copyAll($auto, "$T/webs/d");
 t_ok(is_file("$T/webs/d/wp-content/mu-plugins/servicom-core/includes/builder/nuevo-v3.php"), 'una actualización de wp-pack se aplica sola al crear la siguiente web (sin --only-pack)');
 $h1 = (string) @file_get_contents("$base/.pack-hash"); mkdir("$T/webs/e", 0777, true); copyAll($auto, "$T/webs/e");
 t_ok($h1 !== '' && $h1 === (string) @file_get_contents("$base/.pack-hash"), 'sin cambios en wp-pack no se vuelve a refrescar');
+// caso 4: Regenerar actualiza el código del tema/mu-plugin de una web ya creada (aunque el archivo tenga el mismo tamaño)
+file_put_contents("$T/webs/e/wp-content/themes/servicom/style.css", '/* v1 */'); file_put_contents("$T/webs/e/wp-content/uploads.txt", 'x');
+file_put_contents("$base/wp-content/themes/servicom/style.css", '/* v9 */'); touch("$base/wp-content/themes/servicom/style.css");
+$c = 0; do { $r = $auto->copyBase("$T/webs/e", $c, 10, false); $c = $r['cursor']; } while (!$r['done']);
+t_ok(file_get_contents("$T/webs/e/wp-content/themes/servicom/style.css") === '/* v1 */', 'copia normal no pisa archivos existentes');
+$c = 0; do { $r = $auto->copyBase("$T/webs/e", $c, 10, true); $c = $r['cursor']; } while (!$r['done']);
+t_ok(file_get_contents("$T/webs/e/wp-content/themes/servicom/style.css") === '/* v9 */', 'regenerar actualiza el tema aunque el archivo ya exista');
+t_ok(is_file("$T/webs/e/wp-content/uploads.txt"), 'regenerar no borra contenido del cliente');
 exec('rm -rf ' . escapeshellarg($T));
 exit(($GLOBALS['__t_fail'] ?? 0) ? 1 : 0);

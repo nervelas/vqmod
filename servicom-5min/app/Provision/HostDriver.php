@@ -24,7 +24,7 @@ interface HostDriver
     public function dbDelete(string $db, string $user): void;
 
     /** Copia por lotes el paquete base. @return array{done:bool,cursor:int,total:int} */
-    public function copyBase(string $docroot, int $cursor, int $budgetSec = 12): array;
+    public function copyBase(string $docroot, int $cursor, int $budgetSec = 12, bool $syncCode = false): array;
 
     public function writeFile(string $docroot, string $rel, string $content, int $mode = 0640): void;
 

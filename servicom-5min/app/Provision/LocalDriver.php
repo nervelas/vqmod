@@ -205,7 +205,7 @@ final class LocalDriver implements HostDriver
         return $files;
     }
 
-    public function copyBase(string $docroot, int $cursor, int $budgetSec = 12): array
+    public function copyBase(string $docroot, int $cursor, int $budgetSec = 12, bool $syncCode = false): array
     {
         $this->inject('copy');
         $docroot = $this->safeDocroot($docroot);
@@ -236,7 +236,11 @@ final class LocalDriver implements HostDriver
                     throw new ProvisionException('No se pudo crear una carpeta (disco lleno o permisos).', false);
                 }
             } else {
-                if (!is_file($dst) || filesize($dst) !== $size) {
+                // Regenerar: el código del tema y del mu-plugin se actualiza aunque el archivo ya exista (p. ej. menú nuevo)
+                $isCode = $syncCode && (str_starts_with($rel, 'wp-content/themes/servicom/') || str_starts_with($rel, 'wp-content/mu-plugins/'));
+                $stale = !is_file($dst) || filesize($dst) !== $size
+                    || ($isCode && md5_file($dst) !== md5_file($this->base . '/' . $rel));
+                if ($stale) {
                     $dir = dirname($dst);
                     if (!is_dir($dir)) {
                         @mkdir($dir, 0755, true);

@@ -78,7 +78,7 @@ final class Pipeline
         $st['regen'] = true;
         Db::delete('build_steps', 'order_id=?', [$orderId]);
         foreach (self::stepKeys($o) as $k) {
-            $done = in_array($k, ['validar', 'subdominio', 'basedatos', 'copiar', 'instalar', 'ssl'], true);
+            $done = in_array($k, ['validar', 'subdominio', 'basedatos', 'instalar', 'ssl'], true);
             Db::insert('build_steps', ['order_id' => $orderId, 'step_key' => $k, 'status' => $done ? 'done' : 'pending']);
         }
         Orders::set($orderId, ['status' => Orders::ST_CONSTRUYENDO, 'build_msg' => '', 'build_lock' => null, 'build_attempts' => 0, 'build_state' => json_encode($st), 'regen_count' => (int) $o['regen_count'] + 1, 'qa_result' => null]);
@@ -442,7 +442,7 @@ final class Pipeline
         $st = self::state($o);
         $d = self::driver($o);
         $cursor = (int) ($st['copy_cursor'] ?? 0);
-        $r = $d->copyBase((string) $o['site_path'], $cursor, min(14, max(5, $left)));
+        $r = $d->copyBase((string) $o['site_path'], $cursor, min(14, max(5, $left)), !empty($st['regen']));
         $st['copy_cursor'] = (int) $r['cursor'];
         $st['copy_total'] = (int) $r['total'];
         self::saveState($id, $st);

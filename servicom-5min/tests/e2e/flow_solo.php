@@ -54,5 +54,20 @@ t_ok(substr_count($h['body'], '<img') >= 4, 'fotos del PDF en la web: ' . substr
 t_ok(str_contains($h['body'], 'lx-fab'), 'botones flotantes presentes');
 t_ok(!preg_match('/(Warning|Notice|Fatal error|Deprecated):/', $h['body']), 'sin mensajes PHP');
 t_ok(!str_contains($h['body'], 'wa.me/?') && !str_contains($h['body'], 'wa.me/"'), 'sin enlaces de WhatsApp vacíos');
+
+// Web creada con la versión anterior (sin menú): «Regenerar» debe actualizar el tema y devolver el menú
+$sp = (string) mysql_val("SELECT site_path FROM s5test.s5_orders WHERE token='$tok' LIMIT 1");
+t_ok($sp !== '' && is_dir($sp), 'carpeta del sitio localizada');
+if ($sp !== '' && is_dir($sp)) {
+    $hdr = $sp . '/wp-content/themes/servicom/header.php'; $lr = $sp . '/wp-content/themes/servicom/inc/luxe-render.php';
+    file_put_contents($hdr, "<?php // tema antiguo sin menu\nwp_head(); ?><body>"); file_put_contents($lr, "<?php // antiguo");
+    $r = $c->api('POST', "/api/borrador/$tok/crear", ['t0' => (time() - 90) * 1000]);
+    t_ok(!empty($r['json']['ok']), 'regeneración aceptada', json_encode($r['json']));
+    for ($k = 0; $k < 600; $k++) { $p = $c->api('GET', "/api/borrador/$tok/construccion"); if (($p['json']['estado'] ?? '') !== 'construyendo') { break; } usleep(500000); }
+    t_ok(($p['json']['estado'] ?? '') === 'lista', 'regeneración termina', json_encode($p['json']['mensaje'] ?? ''));
+    $uu = parse_url($p['json']['url'] ?? $url); $site2 = new Client('http://127.0.0.1:8200', $uu['host'] . ':8200');
+    $site2->req('GET', '/?scpk=' . substr($uu['query'], 5)); $h2 = $site2->req('GET', '/');
+    t_ok(preg_match_all('#<nav class="sc-nav".*?</nav>#s', $h2['body'], $mm) && substr_count($mm[0][0], '<a ') >= 3 && str_contains($h2['body'], 'sc-burger'), 'tras Regenerar, una web antigua recupera el menú de navegación');
+}
 echo "  vista previa: $url\n";
 exit(($GLOBALS['__t_fail'] ?? 0) ? 1 : 0);

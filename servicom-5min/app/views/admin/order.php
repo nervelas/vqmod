@@ -19,8 +19,11 @@ $st = $o['status'];
 <div class="actions"><?= $act('aprobar', 'Aprobar y publicar', 'btn ok', '¿Aprobar el pago y publicar la web?') ?></div>
 <form method="post" action="/admin/pedido/<?= (int) $o['id'] ?>/accion" style="margin-top:.8rem"><?= $csrf ?><input type="hidden" name="accion" value="rechazar">
 <label for="motivo">Motivo del rechazo (se envía al cliente)</label><input id="motivo" name="motivo" required maxlength="300"><p><button class="btn danger">Rechazar</button></p></form></div>
-<?php elseif (!empty($o['pay_reject_reason']) && $st === Orders::ST_LISTA): ?>
-<p class="warn">Último rechazo de pago: <?= e($o['pay_reject_reason']) ?></p>
+<?php elseif ($st === Orders::ST_LISTA): ?>
+<?php if (!empty($o['pay_reject_reason'])): ?><p class="warn">Último rechazo de pago: <?= e($o['pay_reject_reason']) ?></p><?php endif; ?>
+<div class="card"><h2 style="margin-top:0">¿El cliente ya pagó por WhatsApp, llamada o efectivo?</h2>
+<p class="mut">Si usted confirmó el pago por otro medio, apruebe aquí: la web se publica igual, como si hubiera subido el comprobante.</p>
+<div class="actions"><?= $act('aprobar', 'Pago recibido: aprobar y publicar', 'btn ok', '¿Confirma que recibió el pago de este cliente? La web se publicará y no se puede deshacer.') ?></div></div>
 <?php endif; ?>
 
 <div class="card"><h2 style="margin-top:0">Acciones</h2><div class="actions">

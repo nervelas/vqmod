@@ -68,9 +68,12 @@ final class Lifecycle
     public static function approve(int $id): array
     {
         $o = Orders::byId($id);
-        if (!$o || $o['status'] !== Orders::ST_PAGO) {
-            throw new \RuntimeException('El pedido no está pendiente de revisión de pago.');
+        // Normal: el cliente subió su comprobante (ST_PAGO). También se puede aprobar a mano una vista previa lista cuando
+        // el cliente pagó por otro medio (WhatsApp, llamada, efectivo): el dueño confirma el pago y se publica igual.
+        if (!$o || !in_array($o['status'], [Orders::ST_PAGO, Orders::ST_LISTA], true) || empty($o['fqdn'])) {
+            throw new \RuntimeException('El pedido no está listo para aprobar: debe tener su vista previa lista.');
         }
+        $manual = $o['status'] === Orders::ST_LISTA;
         $b = Orders::data($o);
         $email = $b['correo_contacto'] ?: '';
         $data = self::runMini($o, 'publish', ['email' => $email !== '' ? $email : ('cliente-' . $id . '@' . Settings::baseDomain()), 'name' => (string) $b['negocio']['nombre']]);
@@ -92,7 +95,7 @@ final class Lifecycle
             Fs::rmTreeSafe($work, [Files::root() . '/work']);
         }
         Orders::set($id, ['analysis' => null]);
-        Log::audit('publicada', $site, $id);
+        Log::audit('publicada', $site . ($manual ? ' (pago confirmado por el dueño, sin comprobante)' : ''), $id);
         $o = Orders::byId($id);
         if ($email !== '') {
             Notifier::published($o, $site, $resetUrl, $adminUrl);

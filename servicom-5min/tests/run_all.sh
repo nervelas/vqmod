@@ -20,6 +20,7 @@ run "Presentaciones por HTTP" php tests/e2e/flow_pres.php
 run "Solo un PDF: extrae logo/fotos/colores y construye" php tests/e2e/flow_solo.php
 run "Modo solo archivo: tope de servicios y WhatsApp con código de país" env S5_CONFIG_FILE=/tmp/s5test/config.php php tests/ai/auto.php
 run "Paquete base refrescado: archivos nuevos se copian a webs nuevas" php tests/e2e/filelist_cache.php
+run "Pago por WhatsApp: el dueño aprueba sin comprobante" php tests/e2e/pago_manual.php
 run "Ciclo de vida" php tests/e2e/lifecycle.php
 run "Fallos simulados y rollback" php tests/e2e/faults.php
 run "Constructor por HTTP firmado" php tests/e2e/flow_httprunner.php

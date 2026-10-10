@@ -26,7 +26,13 @@ let bad = 0;
   log('construcción automática', done ? 'LISTA' : 'FALLÓ');
   if (!done) bad++;
   const o3 = await overflow(p); if (o3.sw > o3.iw) { bad++; log('OVERFLOW resumen'); }
-  await p.click('#b-pay'); await p.fill('#pay-nit', 'CF'); await p.setInputFiles('#pay-file', FX + 'small.jpg'); await p.waitForTimeout(700);
+  await p.click('#b-pay'); await p.waitForTimeout(500);
+  // el botón «Enviar comprobante» nunca debe quedarse mudo: si falta algo, lo dice
+  await p.click('[data-pay-submit]'); await p.waitForTimeout(300);
+  const e1 = (await p.textContent('[data-pay-err]')).trim(); log('sin nada =>', e1); if (!/nombre o NIT/.test(e1)) bad++;
+  await p.fill('#pay-nit', 'CF'); await p.click('[data-pay-submit]'); await p.waitForTimeout(300);
+  const e2 = (await p.textContent('[data-pay-err]')).trim(); log('sin comprobante =>', e2); if (!/comprobante/.test(e2)) bad++;
+  await p.fill('#pay-nit', 'CF'); await p.setInputFiles('#pay-file', FX + 'small.jpg'); await p.waitForTimeout(700);
   await p.click('[data-pay-submit]'); await p.waitForSelector('[data-pay-done]:not([hidden])', { timeout: 15000 });
   log('pago enviado');
   log('errores consola:', JSON.stringify(p.errors), 'overflows:', bad);

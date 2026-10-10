@@ -95,7 +95,7 @@
       st = q('[data-pay-status]'), info = q('[data-pay-file]'), done = q('[data-pay-done]'), form = q('[data-pay-form]');
     var picked = null, busy = false;
     function msg(t) { err.textContent = t || ''; err.classList.toggle('on', !!t); }
-    function sync() { btn.disabled = busy || !picked || !nit.value.trim(); }
+    function sync() { btn.disabled = busy; }
     nit.addEventListener('input', function () { sync(); msg(''); });
     var cp = q('[data-copy-acc]');
     if (cp) cp.addEventListener('click', function () { S5.copy(cp.getAttribute('data-copy-acc')).then(function (ok) { cp.textContent = ok ? 'Copiado ✓' : 'Copia manual'; setTimeout(function () { cp.textContent = 'Copiar cuenta'; }, 1800); }); });
@@ -104,15 +104,19 @@
       if (!f) return sync();
       var okT = /^(image\/(jpeg|png)|application\/pdf)$/.test(f.type) || /\.(jpe?g|png|pdf)$/i.test(f.name);
       if (!okT) { msg('Sube tu comprobante como foto (JPG o PNG) o PDF.'); file.value = ''; return sync(); }
-      S5.compress(f, { max: 2000 }).then(function (g) {
+      var ok = function (g) {
         if (g.size > 5 * 1048576) { msg('El archivo pesa ' + S5.bytes(g.size) + ' y el máximo es 5 MB.'); file.value = ''; return sync(); }
-        picked = g; info.textContent = f.name + ' · ' + S5.bytes(g.size); sync();
-      });
+        picked = g; info.textContent = '✓ ' + f.name + ' · ' + S5.bytes(g.size); sync();
+      };
+      info.textContent = 'Cargando…';
+      var pr; try { pr = S5.compress(f, { max: 2000 }); } catch (e) { pr = Promise.resolve(f); }
+      Promise.race([Promise.resolve(pr), new Promise(function (r) { setTimeout(function () { r(f); }, 8000); })]).then(ok, function () { ok(f); });
     });
     btn.addEventListener('click', function () {
-      if (busy || !picked) return;
+      if (busy) return;
       var v = nit.value.trim();
-      if (v.length < 2) { msg('Escribe el nombre o NIT para tu recibo.'); nit.focus(); return; }
+      if (v.length < 2) { msg('Falta escribir tu nombre o NIT para el recibo.'); nit.scrollIntoView({ block: 'center' }); nit.focus(); return; }
+      if (!picked) { msg('Falta subir la foto o el PDF de tu comprobante: toca el recuadro «Toca para subir tu foto o PDF».'); var dz = q('.drop'); if (dz) dz.scrollIntoView({ block: 'center' }); return; }
       busy = true; sync(); msg(''); st.textContent = 'Subiendo comprobante…';
       S5.upload(token, 'comprobante', picked).then(function (r) {
         if (!r.ok) { throw new Error(r.error || 'No pudimos subir el comprobante.'); }

@@ -497,8 +497,9 @@ function sc_design_rgba($hex, $a)
 /** CSS (variables --lx-* y puente a --sc-* del tema). */
 function sc_design_css(array $d)
 {
-	$p = $d['palette'];
 	$dark = ($d['mood'] ?? 'light') === 'dark';
+	$p = (isset($d['palette']) && is_array($d['palette']) && !empty($d['palette']['bg'])) ? $d['palette']
+		: sc_design_build_palette((string) ($d['base']['primary'] ?? '#b08d57'), (string) ($d['base']['accent'] ?? ''), $dark ? 'dark' : 'light');
 	$headF = sc_design_font_stack($d['fonts']['head'] ?? 'cormorant', 'head');
 	$bodyF = sc_design_font_stack($d['fonts']['body'] ?? 'manrope', 'body');
 	$r = (int) ($d['radius'] ?? 6);

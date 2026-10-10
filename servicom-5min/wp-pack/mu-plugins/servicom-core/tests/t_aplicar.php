@@ -64,6 +64,8 @@ ok(site2() === $s3, 'el sitio no cambió');
 $h = http($ENV['url'] . '/'); ok($h['code'] === 200, 'la web sigue respondiendo 200');
 @unlink($f3);
 
+// limpieza: el servicio que creó el kit también crea su página; se elimina para no dejar nada en el sitio de pruebas
+foreach (array_merge((array) ($s2['services'] ?? array()), (array) ($s3['services'] ?? array())) as $sv) { if (($sv['nombre'] ?? '') === 'Servicio agregado por el kit' && !empty($sv['post'])) { wp_delete_post((int) $sv['post'], true); } }
 // restaurar
 if ($orig === null) { delete_option('sc_site'); } else { update_option('sc_site', $orig); }
 delete_option('sc_cambio_t1'); delete_option('sc_cambio_t2_error'); delete_option('sc_cambio_t1_lote'); remove_theme_mod('sc_kit_prueba');

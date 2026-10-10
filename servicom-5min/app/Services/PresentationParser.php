@@ -1317,7 +1317,7 @@ class PresentationParser
     private static function formaLogo(int $w, int $h, int $mayor): bool
     {
         $asp = $w / $h;
-        return $asp >= 0.25 && $asp <= 5 && ($w * $h <= 360000 || $w * $h <= 0.4 * $mayor);
+        return $asp >= 0.25 && $asp <= 5 && ($w * $h <= 360000 || $w * $h <= 0.65 * $mayor);
     }
 
     /**
@@ -1346,7 +1346,8 @@ class PresentationParser
                 unset($sha[$c['sha']]);
                 return 'uniforme';
             }
-            $pocos = $e['dominantes'] >= 0.85 || $e['transp'] >= 0.1;
+            // pocos colores, fondo transparente o borde liso (logo en JPG/PNG con fondo blanco o de color sólido)
+            $pocos = $e['dominantes'] >= 0.85 || $e['transp'] >= 0.1 || $e['borde'] >= 0.92;
             $logo = $pocos && self::formaLogo($w, $h, $mayor);
             if (min($w, $h) < self::MIN_LADO && !$logo) {
                 imagedestroy($c['img']);
@@ -1371,7 +1372,7 @@ class PresentationParser
      * fracción transparente y desviación de luminosidad.
      *
      * @param mixed $img
-     * @return array{dominantes:float,transp:float,std:float}
+     * @return array{dominantes:float,transp:float,std:float,borde:float}
      */
     private static function muestraPdf($img, int $w, int $h): array
     {
@@ -1408,6 +1409,22 @@ class PresentationParser
         }
         rsort($col);
         $top = array_sum(array_slice($col, 0, 8));
-        return ['dominantes' => $op > 0 ? $top / $op : 0.0, 'transp' => $n > 0 ? $tr / $n : 0.0, 'std' => $std];
+        // Borde liso: fracción de puntos del contorno casi iguales a la esquina (el borde de un logo suele ser un fondo plano)
+        $ref = imagecolorat($img, 1, 1);
+        foreach ([[(int)($w / 2), 1], [(int)($w / 4), 1], [1, (int)($h / 2)], [(int)($w / 2), $h - 2]] as [$qx, $qy]) {   // esquina transparente/redondeada: se usa otro punto del borde
+            if ((($ref >> 24) & 0x7F) < 64) { break; }   // ya hay referencia opaca
+            $ref = imagecolorat($img, $qx, $qy);
+        }
+        $rr = ($ref >> 16) & 255; $rg = ($ref >> 8) & 255; $rb = $ref & 255;
+        $ok = 0; $tot = 0;
+        for ($i = 0; $i < 40; $i++) {
+            $t = $i / 39;
+            foreach ([[(int)($t * ($w - 3)) + 1, 1], [(int)($t * ($w - 3)) + 1, $h - 2], [1, (int)($t * ($h - 3)) + 1], [$w - 2, (int)($t * ($h - 3)) + 1]] as [$px, $py]) {
+                $c = imagecolorat($img, $px, $py);
+                $tot++;
+                if ((($c >> 24) & 0x7F) >= 64 || (abs((($c >> 16) & 255) - $rr) < 24 && abs((($c >> 8) & 255) - $rg) < 24 && abs(($c & 255) - $rb) < 24)) { $ok++; }
+            }
+        }
+        return ['dominantes' => $op > 0 ? $top / $op : 0.0, 'transp' => $n > 0 ? $tr / $n : 0.0, 'std' => $std, 'borde' => $tot > 0 ? $ok / $tot : 0.0];
     }
 }

@@ -9,6 +9,8 @@ $c = new Client();
 $g = $c->req('GET', '/guia-presentacion', null, [], false);
 t_ok($g['status'] === 200 && str_contains($g['body'], 'Lo esencial') && str_contains($g['body'], 'plantilla'), 'guía «qué poner en el PDF» visible');
 $pl = $c->req('GET', '/guia-presentacion/plantilla', null, [], false);
+$ej = $c->req('GET', '/assets/ejemplos/ejemplo-presentacion-servicios-legales.pdf', null, [], false);
+t_ok($ej['status'] === 200 && str_starts_with($ej['body'], '%PDF'), 'PDF de ejemplo descargable');
 t_ok($pl['status'] === 200 && str_contains($pl['headers'], 'attachment') && str_contains($pl['body'], 'NOMBRE DEL NEGOCIO'), 'plantilla descargable');
 $w = $c->page('/crear'); t_ok(str_contains($w['body'], '/guia-presentacion'), 'el asistente enlaza a la guía');
 $tok = $c->api('POST', '/api/borrador', ['plan' => 'info'])['json']['token'];

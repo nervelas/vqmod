@@ -31,6 +31,7 @@ require_once __DIR__ . '/_icons.php';
       </div>
       <div class="acts">
         <a class="btn btn--ghost" href="/guia-presentacion/plantilla" download>Descargar plantilla para completar</a>
+        <a class="btn btn--ghost" href="/assets/ejemplos/ejemplo-presentacion-servicios-legales.pdf" target="_blank" rel="noopener">Ver un PDF de ejemplo (servicios legales)</a>
         <a class="btn btn--gold" href="/crear">Subir mi PDF y crear mi web</a>
       </div>
     </section>

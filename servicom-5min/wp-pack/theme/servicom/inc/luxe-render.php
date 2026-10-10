@@ -799,6 +799,15 @@ function sc_lx_head_css()
 	}
 	$s = sc_site();
 	echo '<style id="sc-luxe-vars">' . sc_design_css($s['design']) . '</style>' . "\n"; // phpcs:ignore
+	// Menú de navegación: reglas críticas EN LA PÁGINA. Así se ve aunque el hosting guarde en caché, combine o minifique las hojas de estilo.
+	echo '<style id="sc-nav-critical">'
+		. '.sc-header,.sc-header__bar{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;filter:none!important;transform:none!important}'
+		. '@media(min-width:1024px){.sc-header .sc-nav{position:static!important;transform:none!important;visibility:visible!important;opacity:1!important;display:flex!important;width:auto!important;overflow:visible!important;background:transparent!important;border:0!important;box-shadow:none!important}'
+		. '.sc-header .sc-nav .sc-menu{display:flex!important;flex-wrap:nowrap!important;visibility:visible!important}.sc-header .sc-nav .sc-menu>li{display:flex!important}'
+		. '.sc-header .sc-burger,.sc-header .sc-nav__head,.sc-header .sc-nav__foot,.sc-backdrop{display:none!important}}'
+		. '@media(max-width:1023.98px){.sc-header .sc-burger{display:inline-flex!important}.sc-header .sc-nav{position:fixed!important;top:0!important;right:0!important;bottom:0!important;left:auto!important;height:100vh!important;height:100dvh!important;z-index:100000!important}'
+		. 'html.sc-nav-open .sc-header .sc-nav{transform:none!important;visibility:visible!important}}'
+		. '</style>' . "\n"; // phpcs:ignore
 	$desc = sc_lx_t('seo.description');
 	if ($desc !== '') {
 		echo '<meta name="description" content="' . esc_attr($desc) . '">' . "\n";

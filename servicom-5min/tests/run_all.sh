@@ -31,6 +31,7 @@ run "Seguridad del portal" php tests/e2e/security.php
 run "cPanel por localhost (SSL)" php tests/e2e/cpanel_ssl.php
 run "Fotos de stock (servidores simulados)" php tests/stock/run.php
 run "LUXE: 5 webs con poca información + QA visual + editor en vivo" bash tests/luxe/run.sh
+run "VARIEDAD: 6 webs con diseño propio, todas con menú visible y contraste correcto" bash -c "mysql s5test -e 'DELETE FROM s5_rate_limits'; bash tests/luxe/variedad.sh 6 > /tmp/variedad_out.txt 2>&1; tail -3 /tmp/variedad_out.txt; grep -q 'VARIEDAD FALLAS: 0' /tmp/variedad_out.txt"
 run "mu-plugin Servicom Core (roles, editor, instrucciones, vista previa…)" bash -c "cd wp-pack/mu-plugins/servicom-core/tests && bash run_all.sh --fresh > /tmp/mu_suite.txt 2>&1; php t_editor.php >> /tmp/mu_suite.txt 2>&1; ! grep -E 'FAIL|[1-9][0-9]* fallos' /tmp/mu_suite.txt"
 mkdir -p /tmp/oldzip && git show e4201a1:servicom-5min/entrega/servicom-5min-portal.zip > /tmp/oldzip/old.zip 2>/dev/null
 ./build/make_patch.sh >/dev/null 2>&1
@@ -42,6 +43,7 @@ echo "== Navegador (Chromium)"
 for w in 360 390 768 1024 1440; do run "Wizard real $w px" bash -c "mysql s5test -e 'DELETE FROM s5_rate_limits'; cd tests/portal/e2e && node flowReal.js $w | tee /dev/stderr | grep -q 'errores consola: \[\] overflows: 0'"; done
 run "Solo archivo: plan + PDF -> web lista, sin revisión (390 px)" bash -c "mysql s5test -e 'DELETE FROM s5_rate_limits'; cd tests/portal/e2e && node flowSolo.js 390 info | tee /dev/stderr | grep -q 'SOLO ARCHIVO: OK'"
 run "Solo archivo: tienda + PDF (390 px)" bash -c "mysql s5test -e 'DELETE FROM s5_rate_limits'; cd tests/portal/e2e && node flowSolo.js 390 tienda | tee /dev/stderr | grep -q 'SOLO ARCHIVO: OK'"
+run "Solo archivo: tienda joyería (PDF de ejemplo con 24 productos)" bash -c "mysql s5test -e 'DELETE FROM s5_rate_limits'; cd tests/portal/e2e && node flowSolo.js 390 tienda \$PWD/../../../entrega/ejemplo-presentacion-tienda-joyeria.pdf | tee /dev/stderr | grep -q 'SOLO ARCHIVO: OK'"
 run "Solo archivo: escritorio (1440 px)" bash -c "mysql s5test -e 'DELETE FROM s5_rate_limits'; cd tests/portal/e2e && node flowSolo.js 1440 info | tee /dev/stderr | grep -q 'SOLO ARCHIVO: OK'"
 echo "FALLOS: $FAILS"
 exit $FAILS

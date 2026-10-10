@@ -47,7 +47,7 @@ file_put_contents('/tmp/s5test/run/ai-mode', 'ok');
 t_ok(mysql_val("SELECT texts_source FROM s5test.s5_orders WHERE id=$id") === 'ia', 'IA ok → textos de IA');
 
 echo "== Tope de gasto de IA alcanzado\n";
-mysql_val("INSERT INTO s5test.s5_ai_usage (kind,model,tokens_in,tokens_out,cost_usd,ok,created_at) VALUES ('redaccion','claude-sonnet-5-5',1,1,5.0,1,NOW())");
+mysql_val("INSERT INTO s5test.s5_ai_usage (kind,model,tokens_in,tokens_out,cost_usd,ok,created_at) VALUES ('redaccion','claude-sonnet-5-5',1,1,5.0,1,'" . (new DateTime('now', new DateTimeZone('America/Guatemala')))->format('Y-m-d H:i:s') . "')");   // el «día» del tope se mide en hora de Guatemala
 $before = $count('SELECT COUNT(*) FROM s5test.s5_ai_usage');
 shell_exec('> /tmp/s5test/run/ai-calls.log');
 [$c, $tok, $id] = draft('Taller Tope'); start($c, $tok); $st = drive($id);

@@ -47,6 +47,10 @@ $has_contact = ($tel !== '' || $mail !== '' || $addr !== '');
 		<div class="sc-footer__col sc-footer__nav">
 			<h2 class="sc-footer__title">Navegación</h2>
 			<?php
+			$sc_lx_fm = function_exists('sc_lx_footer_menu_html') ? sc_lx_footer_menu_html() : '';
+			if ($sc_lx_fm !== '') {
+				echo $sc_lx_fm; // phpcs:ignore WordPress.Security.EscapeOutput
+			} else {
 			wp_nav_menu(array(
 				'theme_location' => has_nav_menu('footer') ? 'footer' : 'primary',
 				'container'      => false,
@@ -54,6 +58,7 @@ $has_contact = ($tel !== '' || $mail !== '' || $addr !== '');
 				'depth'          => 1,
 				'fallback_cb'    => false,
 			));
+			}
 			?>
 		</div>
 	</div>

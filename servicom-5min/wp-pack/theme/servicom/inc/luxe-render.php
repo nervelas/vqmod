@@ -287,7 +287,7 @@ function sc_lx_head($d, $eyebrow = 'eyebrow', $title = 'title', $lead = 'lead', 
 function sc_sec_hero($data, $d, $page)
 {
 	$variant = (string) (sc_site()['design']['hero'] ?? 'center');
-	$variant = in_array($variant, array('center', 'split', 'full'), true) ? $variant : 'center';
+	$variant = in_array($variant, array('center', 'split', 'splitr', 'left', 'full'), true) ? $variant : 'center';
 	$hasPhoto = sc_lx_has_photo($d . '.img');
 	$slides = array();
 	foreach ((array) ($data['slides'] ?? array()) as $n => $sl) {
@@ -313,7 +313,7 @@ function sc_sec_hero($data, $d, $page)
 	echo sc_lx_el('p', 'lx-hero__sub lx-rv', $d . '.sub'); // phpcs:ignore
 	echo '<div class="lx-hero__cta lx-rv">' . sc_lx_btn($d . '.btn1', 'primary', 'sparkles') . sc_lx_btn($d . '.btn2', 'ghost') . '</div>'; // phpcs:ignore
 	echo '</div>';
-	if ($variant === 'split') {
+	if ($variant === 'split' || $variant === 'splitr') {
 		echo '<div class="lx-hero__side lx-rv">' . sc_lx_media($d . '.side', 'portrait', '', 'lx-hero__frame', 'large') . '<span class="lx-hero__badge">' . sc_lx_icon($d . '.badge_icon', 'lx-ico lx-ico--lg', 'crown') . '</span></div>'; // phpcs:ignore
 	}
 	echo '</div>';
@@ -746,12 +746,30 @@ function sc_lx_menu_html()
 	return $out . '</ul>';
 }
 
+
+/** Menú plano del pie de página (sin submenús), armado igual que el principal. */
+function sc_lx_footer_menu_html()
+{
+	$h = sc_lx_menu_html();
+	if ($h === '') {
+		return '';
+	}
+	$h = preg_replace('#<button type="button" class="sc-sub-toggle".*?</button>#s', '', $h);
+	$h = preg_replace('#<ul class="sub-menu">.*?</ul>#s', '', $h);
+	return str_replace('<ul id="menu-principal-lx" class="sc-menu">', '<ul class="sc-footer__menu">', (string) $h);
+}
+
 /* ---------------------------------------------------------- estilos y datos */
 
 add_filter('body_class', function ($c) {
 	if (sc_lx_active()) {
 		$c[] = 'sc-luxe';
 		$c[] = 'lx-body-' . (string) (sc_site()['design']['mood'] ?? 'light');
+		if (function_exists('sc_design_dna_classes')) {
+			foreach (sc_design_dna_classes(sc_site()['design']['dna'] ?? array()) as $dc) {
+				$c[] = $dc;
+			}
+		}
 		if (sc_lx_editing()) {
 			$c[] = 'sc-editing';
 		}

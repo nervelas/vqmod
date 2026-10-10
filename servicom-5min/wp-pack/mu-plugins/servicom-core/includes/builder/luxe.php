@@ -323,8 +323,8 @@ class SC_Build_Luxe
 		$ctaTitle = $this->tx('cta_titulo', $this->L('Hablemos de su proyecto', "Let's talk about your project"));
 
 		$secCita = null; $secVideo = null; $secFaq = null;
-		$home = array();
-		$home[] = array('id' => 'inicio-hero', 'type' => 'hero', 'on' => true, 'data' => array(
+		$home = array(); $H = array();
+		$H['hero'] = array('id' => 'inicio-hero', 'type' => 'hero', 'on' => true, 'data' => array(
 			'eyebrow' => $this->tx('hero_eyebrow', $this->rubroLabel()),
 			'title' => $heroTitle, 'sub' => $this->tx('hero_subtitulo'),
 			'btn1' => $this->btnWa($this->tx('hero_boton', $this->L('Escríbanos', 'Contact us'))),
@@ -332,24 +332,24 @@ class SC_Build_Luxe
 			'img' => $this->slot($heroMain, 0), 'slides' => $slides, 'side' => $this->slot($heroSide, 5), 'badge_icon' => ($design['motif'] === 'abstract' ? 'crown' : (function_exists('sc_icon_for') ? sc_icon_for('', (string) ($m['rubro'] ?? '')) : 'crown')),
 		));
 		if (count($strip) >= 3) {
-			$home[] = array('id' => 'franja', 'type' => 'strip', 'on' => true, 'data' => array('items' => $strip));
+			$H['strip'] = array('id' => 'franja', 'type' => 'strip', 'on' => true, 'data' => array('items' => $strip));
 		}
 		if ($about !== '') {
-			$home[] = array('id' => 'nosotros', 'type' => 'about', 'on' => true, 'data' => array(
+			$H['about'] = array('id' => 'nosotros', 'type' => 'about', 'on' => true, 'data' => array(
 				'side' => 'left', 'eyebrow' => $this->L('Nosotros', 'About us'), 'title' => $this->tx('nosotros_titulo', $this->L('Quiénes somos', 'Who we are')),
 				'lead' => $this->tx('nosotros_lead'), 'text' => $about, 'points' => $points, 'img' => $this->slot($aboutImg, 2),
 				'seal_icon' => 'award', 'btn' => array('text' => $this->L('Conózcanos', 'More about us'), 'url' => 'page:nosotros'),
 			));
 		}
 		if ($this->svcs) {
-			$home[] = array('id' => 'servicios', 'type' => 'services', 'on' => true, 'data' => array(
+			$H['services'] = array('id' => 'servicios', 'type' => 'services', 'on' => true, 'data' => array(
 				'eyebrow' => $this->L('Lo que hacemos', 'What we do'), 'title' => $this->tx('servicios_titulo', $this->L('Nuestros servicios', 'Our services')),
 				'lead' => $this->tx('servicios_intro'), 'limit' => 3, 'more' => $this->L('Ver más', 'Learn more'),
 				'btn' => array('text' => $this->L('Ver todos los servicios', 'View all services'), 'url' => 'page:servicios'),
 			));
 		}
 		if ($this->tienda) {
-			$home[] = array('id' => 'productos', 'type' => 'products', 'on' => true, 'data' => array(
+			$H['products'] = array('id' => 'productos', 'type' => 'products', 'on' => true, 'data' => array(
 				'eyebrow' => $this->L('Tienda', 'Store'), 'title' => $this->tx('tienda_titulo', $this->L('Productos destacados', 'Featured products')), 'lead' => $this->tx('tienda_intro'),
 				'limit' => 8, 'btn' => array('text' => $this->L('Ver toda la tienda', 'Visit the store'), 'url' => 'page:tienda'),
 			));
@@ -388,6 +388,19 @@ class SC_Build_Luxe
 		$hayNosotros = $about !== '';
 		$hayServicios = (bool) $this->svcs;
 		$hayGaleria = count($galIds) >= 1;
+		// Distribución de la portada según el ADN de diseño de este negocio (cada web ordena distinto sus bloques)
+		$ords = array(
+			0 => array('hero', 'strip', 'about', 'services', 'products'),
+			1 => array('hero', 'services', 'products', 'strip', 'about'),
+			2 => array('hero', 'about', 'services', 'products', 'strip'),
+			3 => array('hero', 'strip', 'services', 'products', 'about'),
+		);
+		$ordKey = (int) ($design['dna']['order'] ?? 0);
+		foreach ($ords[$ordKey] ?? $ords[0] as $part) {
+			if (isset($H[$part])) {
+				$home[] = $H[$part];
+			}
+		}
 		$pages = array();
 		if (!$hayNosotros) {                     // sin página «Nosotros»: lo suyo se queda en la portada
 			$home[] = $secValores;

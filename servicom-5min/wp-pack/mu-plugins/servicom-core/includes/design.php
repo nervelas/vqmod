@@ -351,6 +351,9 @@ function sc_design_build_palette($primary, $accent, $mood)
 function sc_design_default($rubro, $style, $seed, $logoPath = '', $brandColors = array())
 {
 	$st = sc_design_style($style);
+	$dna = sc_design_dna($seed, $rubro);
+	$st['head'] = $dna['font_head']; $st['body'] = $dna['font_body']; $st['radius'] = $dna['radius'];
+	$st['hero'] = in_array($dna['hero'], array('center', 'split'), true) ? $dna['hero'] : $dna['hero'];
 	$pal = $logoPath !== '' ? sc_design_palette_from_image($logoPath) : null;
 	$source = 'logo';
 	if ($pal) {
@@ -385,9 +388,77 @@ function sc_design_default($rubro, $style, $seed, $logoPath = '', $brandColors =
 		'radius' => $st['radius'],
 		'motif' => $motifs[$rubro] ?? 'abstract',
 		'seed' => (int) $seed,
+		'dna' => $dna,
 		'source' => $source,
 		'base' => array('primary' => $primary, 'accent' => $accent === null ? '' : $accent),
 	);
+}
+
+
+/** Entero estable (0..n-1) para un eje del ADN de diseño. */
+function sc_dna_pick($seed, $axis, $n)
+{
+	return (int) (sprintf('%u', crc32((string) $seed . ':' . $axis)) % max(1, (int) $n));
+}
+
+/**
+ * ADN de diseño: cada negocio recibe una combinación propia de tipografías, encabezado, héroe, recuadros, esquinas, fondos,
+ * distribución y pie, derivada de su semilla (única por cliente) y orientada por el rubro. Los colores salen siempre del logo.
+ */
+function sc_design_dna($seed, $rubro)
+{
+	$heads = array('cormorant', 'playfair', 'fraunces', 'dmserif', 'sora');
+	$bodies = array('manrope', 'inter', 'dmsans', 'lato', 'nunito');
+	$radii = array(0, 2, 6, 10, 16, 24);
+	// preferencias del rubro (índices permitidos): sigue habiendo variedad dentro de cada rubro
+	$pref = array(
+		'abogado'       => array('h' => array(0, 1, 3), 'b' => array(0, 1, 3), 'r' => array(0, 1, 2)),
+		'contabilidad'  => array('h' => array(0, 1, 3, 4), 'b' => array(1, 2, 0), 'r' => array(0, 1, 2, 3)),
+		'clinica'       => array('h' => array(2, 4, 0), 'b' => array(4, 2, 0), 'r' => array(3, 4, 5)),
+		'taller'        => array('h' => array(4, 3), 'b' => array(1, 2), 'r' => array(0, 1, 2)),
+		'transporte'    => array('h' => array(4, 3, 2), 'b' => array(1, 2), 'r' => array(0, 1, 3)),
+		'ropa'          => array('h' => array(1, 0, 2), 'b' => array(3, 4, 0), 'r' => array(0, 1, 4)),
+		'restaurante'   => array('h' => array(1, 2, 3, 0), 'b' => array(3, 4, 0), 'r' => array(2, 3, 4)),
+		'importaciones' => array('h' => array(4, 2, 0), 'b' => array(1, 2), 'r' => array(1, 2, 3)),
+	);
+	$pf = $pref[$rubro] ?? array('h' => array(0, 1, 2, 3, 4), 'b' => array(0, 1, 2, 3, 4), 'r' => array(0, 1, 2, 3, 4, 5));
+	$pickList = function ($axis, $list) use ($seed) { return $list[sc_dna_pick($seed, $axis, count($list))]; };
+	$opt = function ($axis, $vals) use ($seed) { return $vals[sc_dna_pick($seed, $axis, count($vals))]; };
+	return array(
+		'font_head' => $heads[$pickList('fh', $pf['h'])],
+		'font_body' => $bodies[$pickList('fb', $pf['b'])],
+		'radius'    => $radii[$pickList('rd', $pf['r'])],
+		'hero'      => $opt('hero', array('center', 'split', 'splitr', 'left', 'center', 'split')),
+		'header'    => $opt('header', array('classic', 'split', 'float', 'classic')),
+		'card'      => $opt('card', array('elev', 'outline', 'glass', 'tint', 'lux')),
+		'btn'       => $opt('btn', array('rect', 'soft', 'pill')),
+		'bg'        => $opt('bg', array('plain', 'dots', 'grid', 'mesh', 'lines')),
+		'tone'      => $opt('tone', array('white', 'tint', 'bold')),
+		'order'     => sc_dna_pick($seed, 'order', 4),
+		'svc'       => $opt('svc', array('cards', 'list', 'tiles', 'cards')),
+		'val'       => $opt('val', array('grid', 'list', 'cols')),
+		'proc'      => $opt('proc', array('row', 'col')),
+		'about'     => $opt('about', array('left', 'right', 'stack')),
+		'faq'       => $opt('faq', array('line', 'filled', 'boxed')),
+		'head'      => $opt('head', array('center', 'left')),
+		'eyebrow'   => $opt('eyebrow', array('line', 'pill', 'plain')),
+		'foot'      => $opt('foot', array('dark', 'light', 'center')),
+		'frame'     => $opt('frame', array('rect', 'arch', 'offset', 'round')),
+		'orn'       => $opt('orn', array('none', 'diamond', 'line')),
+	);
+}
+
+/** Clases del <body> que activan el ADN en el CSS (dna-<eje>-<valor>). */
+function sc_design_dna_classes($dna)
+{
+	$out = array();
+	foreach ((array) $dna as $k => $v) {
+		if (in_array($k, array('font_head', 'font_body', 'radius', 'order'), true)) {
+			continue;
+		}
+		$out[] = 'dna-' . preg_replace('/[^a-z]/', '', (string) $k) . '-' . preg_replace('/[^a-z0-9]/', '', (string) $v);
+	}
+	return $out;
 }
 
 /** ¿El color sirve como color de marca? (con algo de saturación; no gris, blanco ni negro). */

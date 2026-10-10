@@ -281,7 +281,8 @@
 .lx-lightbox__x svg { width: 22px; height: 22px; }
 
 /* ---------- cabecera y pie del tema (puente luxe) ---------- */
-.sc-luxe .sc-header { background: var(--sc-header-bg); backdrop-filter: blur(16px) saturate(1.4); -webkit-backdrop-filter: blur(16px) saturate(1.4); border-bottom: 1px solid var(--sc-header-line); transition: background .4s, box-shadow .4s; }
+/* OJO: el desenfoque va en ::before. Un backdrop-filter en el propio encabezado encierra al menú móvil (position:fixed) dentro de la barra y lo esconde. */
+.sc-luxe .sc-header { background: var(--sc-header-bg); border-bottom: 1px solid var(--sc-header-line); transition: background .4s, box-shadow .4s; }
 .sc-luxe .sc-header.is-scrolled { box-shadow: 0 18px 50px -30px rgba(0, 0, 0, .6); }
 .sc-luxe .sc-menu > li > a { font-size: .74rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
 .sc-luxe .sc-menu > li > a:hover, .sc-luxe .sc-menu > li.current-menu-item > a { color: var(--lx-accent); }
@@ -506,3 +507,6 @@ body.dna-card-outline ul.products[class] li.product[class] { background: transpa
 body.dna-card-glass ul.products[class] li.product[class] { background: rgba(var(--lx-bg-rgb), .62); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid rgba(var(--lx-primary-rgb), .2); }
 body.dna-card-tint ul.products[class] li.product[class] { background: var(--lx-primary-soft); box-shadow: none; border-color: transparent; }
 body.dna-card-lux ul.products[class] li.product[class] { border: 1px solid var(--lx-accent); outline: 1px solid rgba(var(--lx-accent-rgb), .4); outline-offset: -8px; }
+
+.sc-luxe .sc-header::before { -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); }
+.sc-luxe .sc-header, .sc-luxe .sc-header__bar { -webkit-backdrop-filter: none; backdrop-filter: none; filter: none; transform: none; contain: none; will-change: auto; }

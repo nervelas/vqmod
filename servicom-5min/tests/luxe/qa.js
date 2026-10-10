@@ -45,10 +45,16 @@ const NAVCHK = async (p, tag, expected) => {
   if (info.burgerShown) {
     if (!info.burgerVis) { bad(`${tag} el botón del menú (☰) no se ve`); return; }
     await p.click('.sc-burger'); await p.waitForTimeout(500);
-    const open = await p.evaluate(() => { const v = (e) => { const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return r.width > 4 && r.height > 4 && cs.visibility === 'visible' && r.left < innerWidth && r.right > 0; }; const a = [...document.querySelectorAll('.sc-nav .sc-menu > li > a')]; return { n: a.filter(v).length, tot: a.length }; });
-    if (open.n < expected) bad(`${tag} al abrir el menú se ven ${open.n} de ${open.tot} enlaces`);
-    await p.click('.sc-nav__close').catch(() => {}); await p.waitForTimeout(300);
-  } else if (info.linksVis < expected) bad(`${tag} en escritorio solo se ven ${info.linksVis} enlaces del menú`);
+    // prueba REAL: cada enlace debe ser lo que se toca en pantalla (no tapado ni recortado por el encabezado) y el panel debe ocupar la pantalla
+    const open = await p.evaluate(() => { const a = [...document.querySelectorAll('.sc-nav .sc-menu > li > a')]; const hit = (e) => { const r = e.getBoundingClientRect(); if (r.width < 4 || r.height < 4 || r.bottom > innerHeight || r.top < 0) return false; const t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!t && (t === e || e.contains(t)); }; const n = document.querySelector('.sc-nav').getBoundingClientRect(); return { n: a.filter(hit).length, tot: a.length, panelH: Math.round(n.height), vh: innerHeight }; });
+    if (open.n < expected) bad(`${tag} al abrir el menú se tocan ${open.n} de ${open.tot} enlaces (menú recortado o tapado)`);
+    if (open.panelH < open.vh * 0.6) bad(`${tag} el panel del menú mide ${open.panelH}px de ${open.vh}px (queda encerrado en el encabezado)`);
+    await p.click('.sc-nav__close').catch(() => {}); await p.waitForTimeout(700);
+  } else {
+    if (info.linksVis < expected) bad(`${tag} en escritorio solo se ven ${info.linksVis} enlaces del menú`);
+    const hit = await p.evaluate(() => [...document.querySelectorAll('.sc-nav .sc-menu > li > a')].filter((e) => { const r = e.getBoundingClientRect(); if (r.width < 4 || r.right > innerWidth || r.left < 0) return false; const t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!t && (t === e || e.contains(t)); }).length);
+    if (hit < expected) bad(`${tag} en escritorio solo se pueden tocar ${hit} enlaces del menú (tapados o fuera de la pantalla)`);
+  }
 };
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox', '--host-resolver-rules=MAP *.servicom.test 127.0.0.1'] });
@@ -64,7 +70,7 @@ const NAVCHK = async (p, tag, expected) => {
   const pages = [base + '/'].concat(links.filter(l => l !== base + '/'));
   await ctx.close();
   console.log('páginas:', pages.length);
-  for (const w of [1440, 768, 360]) {
+  for (const w of [1440, 1024, 768, 360]) {
     ctx = await mk(w);
     for (const url of pages) {
       p = await ctx.newPage();

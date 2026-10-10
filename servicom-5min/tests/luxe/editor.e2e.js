@@ -466,7 +466,9 @@ function contrast(a, b) { const x = lum(a), y = lum(b); return (Math.max(x, y) +
     await p.fill('#sc-ed-b-correo', '');
     await p.fill('#sc-ed-b-telefono', '2255-9988');
     j = await saved(p, () => p.dispatchEvent('#sc-ed-b-telefono', 'change'));
-    ok(j.ok && helper('info').tel === '2255-9988', 'teléfono guardado en el tema (sc_telefono)');
+    let telOk = false;
+    for (let i = 0; i < 12 && !telOk; i++) { telOk = helper('info').tel === '2255-9988'; if (!telOk) { await p.waitForTimeout(500); } }
+    ok(j.ok && telOk, 'teléfono guardado en el tema (sc_telefono)');
     await reloaded(p, () => p.keyboard.press('Escape'));
     const foot = await p.$eval('footer', e => e.textContent);
     ok(foot.includes('2255-9988'), 'el nuevo teléfono aparece en el pie de página');

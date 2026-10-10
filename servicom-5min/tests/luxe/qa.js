@@ -8,6 +8,48 @@ const [base, key, ...rest] = process.argv.slice(2);
 const shots = (rest.find(a => a.startsWith('--shots=')) || '').slice(8);
 const probs = [];
 const bad = (m) => { probs.push(m); console.log('  ✗ ' + m); };
+const AUDIT = () => {
+        const out = { over: document.documentElement.scrollWidth - window.innerWidth, h1: document.querySelectorAll('h1').length, imgs: [], low: [], hidden: 0 };
+        document.querySelectorAll('img').forEach(i => { if (i.offsetParent !== null && i.complete && i.naturalWidth === 0) out.imgs.push(i.src.slice(-60)); });
+        const lum = (c) => { const m = c.match(/[\d.]+/g).map(Number); const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(m[0]) + .7152 * f(m[1]) + .0722 * f(m[2]); };
+        const alpha = (c) => { const m = c.match(/[\d.]+/g).map(Number); return m.length > 3 ? m[3] : 1; };
+        const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+        const bgOf = (el) => { for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.backgroundImage !== 'none') { if (document.documentElement.getAttribute('data-lx-theme') === 'light' && e.closest('.lx-hero,.lx-pagehero') && !e.closest('.lx-cta,.lx-quote')) return { c: getComputedStyle(document.body).backgroundColor.replace(/rgba\(([^,]+),([^,]+),([^,]+),[^)]*\)/, 'rgb($1,$2,$3)') }; return { img: true, dark: !!e.closest('.lx-hero,.lx-cta,.lx-pagehero,.lx-quote') }; } const c = cs.backgroundColor; if (alpha(c) > 0.9) return { c }; } return { c: 'rgb(255,255,255)' }; };
+        document.querySelectorAll('main h1,main h2,main h3,main p,main li,main a,main span,main summary,main label').forEach(el => {
+          if (!el.childNodes.length || ![...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())) return;
+          const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || cs.display === 'none' || +cs.opacity === 0) return;
+          const r = el.getBoundingClientRect(); if (r.width < 2 || r.height < 2) return;
+          if (el.closest('.lx-off,[hidden],.lx-strip')) return;
+          const fg = cs.color; let bg = bgOf(el);
+          const btn = el.closest('.lx-btn--primary,.lx-fab--tel');
+          if (btn) { const pv = getComputedStyle(document.documentElement).getPropertyValue('--lx-primary').trim(); const h = pv.replace('#', ''); const rgb = 'rgb(' + parseInt(h.slice(0, 2), 16) + ',' + parseInt(h.slice(2, 4), 16) + ',' + parseInt(h.slice(4, 6), 16) + ')'; const rt0 = ratio(fg, rgb); if (rt0 < 4.4) out.low.push('botón ' + (el.textContent || '').trim().slice(0, 30) + ' ' + rt0.toFixed(1)); return; }
+          if (el.closest('.lx-btn--ghost') && bg.img) { return; }
+          if (bg.img) { if (bg.dark && lum(fg) < 0.45) out.low.push((el.textContent || '').trim().slice(0, 40) + ' (oscuro sobre banda oscura)'); return; }
+          const rt = ratio(fg, bg.c); const big = parseFloat(cs.fontSize) >= 24;
+          if (rt < (big ? 3 : 3.9) && !el.closest('.lx-ico,.lx-value__n,.lx-ph')) out.low.push((el.textContent || '').trim().slice(0, 40) + ' ' + rt.toFixed(1));
+        });
+        out.fabs = document.querySelectorAll('.lx-fab').length;
+        out.form = document.querySelectorAll('.sc-form').length;
+        return out;
+};
+
+// Menú de navegación: visible y utilizable (escritorio: enlaces a la vista; celular/tablet: botón que abre el menú con todos los enlaces)
+const NAVCHK = async (p, tag, expected) => {
+  const info = await p.evaluate(() => {
+    const vis = (e) => { if (!e) return false; const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return r.width > 4 && r.height > 4 && cs.visibility === 'visible' && cs.display !== 'none' && +cs.opacity > 0.05 && r.right > 0 && r.left < innerWidth && r.bottom > 0 && r.top < innerHeight; };
+    const burger = document.querySelector('.sc-burger'), top = [...document.querySelectorAll('.sc-nav .sc-menu > li > a')];
+    return { burgerShown: !!burger && getComputedStyle(burger).display !== 'none', burgerVis: vis(burger), linksVis: top.filter(vis).length, links: top.length, header: vis(document.querySelector('.sc-header')) };
+  });
+  if (!info.header) bad(`${tag} el encabezado no se ve`);
+  if (info.links < expected) bad(`${tag} el menú tiene ${info.links} enlaces (se esperaban ≥${expected})`);
+  if (info.burgerShown) {
+    if (!info.burgerVis) { bad(`${tag} el botón del menú (☰) no se ve`); return; }
+    await p.click('.sc-burger'); await p.waitForTimeout(500);
+    const open = await p.evaluate(() => { const v = (e) => { const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return r.width > 4 && r.height > 4 && cs.visibility === 'visible' && r.left < innerWidth && r.right > 0; }; const a = [...document.querySelectorAll('.sc-nav .sc-menu > li > a')]; return { n: a.filter(v).length, tot: a.length }; });
+    if (open.n < expected) bad(`${tag} al abrir el menú se ven ${open.n} de ${open.tot} enlaces`);
+    await p.click('.sc-nav__close').catch(() => {}); await p.waitForTimeout(300);
+  } else if (info.linksVis < expected) bad(`${tag} en escritorio solo se ven ${info.linksVis} enlaces del menú`);
+};
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox', '--host-resolver-rules=MAP *.servicom.test 127.0.0.1'] });
   const mk = async (w) => {
@@ -35,30 +77,25 @@ const bad = (m) => { probs.push(m); console.log('  ✗ ' + m); };
       if (!resp || resp.status() >= 400) { bad(tag + ' HTTP ' + (resp && resp.status())); await p.close(); continue; }
       await p.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 350) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 90)); } window.scrollTo(0, 0); });
       await p.waitForTimeout(500);
-      const r = await p.evaluate(() => {
-        const out = { over: document.documentElement.scrollWidth - window.innerWidth, h1: document.querySelectorAll('h1').length, imgs: [], low: [], hidden: 0 };
-        document.querySelectorAll('img').forEach(i => { if (i.offsetParent !== null && i.complete && i.naturalWidth === 0) out.imgs.push(i.src.slice(-60)); });
-        const lum = (c) => { const m = c.match(/[\d.]+/g).map(Number); const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(m[0]) + .7152 * f(m[1]) + .0722 * f(m[2]); };
-        const alpha = (c) => { const m = c.match(/[\d.]+/g).map(Number); return m.length > 3 ? m[3] : 1; };
-        const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
-        const bgOf = (el) => { for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.backgroundImage !== 'none') return { img: true, dark: !!e.closest('.lx-hero,.lx-cta,.lx-pagehero,.lx-quote') }; const c = cs.backgroundColor; if (alpha(c) > 0.9) return { c }; } return { c: 'rgb(255,255,255)' }; };
-        document.querySelectorAll('main h1,main h2,main h3,main p,main li,main a,main span,main summary,main label').forEach(el => {
-          if (!el.childNodes.length || ![...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())) return;
-          const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || cs.display === 'none' || +cs.opacity === 0) return;
-          const r = el.getBoundingClientRect(); if (r.width < 2 || r.height < 2) return;
-          if (el.closest('.lx-off,[hidden],.lx-strip')) return;
-          const fg = cs.color; let bg = bgOf(el);
-          const btn = el.closest('.lx-btn--primary,.lx-fab--tel');
-          if (btn) { const pv = getComputedStyle(document.documentElement).getPropertyValue('--lx-primary').trim(); const h = pv.replace('#', ''); const rgb = 'rgb(' + parseInt(h.slice(0, 2), 16) + ',' + parseInt(h.slice(2, 4), 16) + ',' + parseInt(h.slice(4, 6), 16) + ')'; const rt0 = ratio(fg, rgb); if (rt0 < 4.4) out.low.push('botón ' + (el.textContent || '').trim().slice(0, 30) + ' ' + rt0.toFixed(1)); return; }
-          if (el.closest('.lx-btn--ghost') && bg.img) { return; }
-          if (bg.img) { if (bg.dark && lum(fg) < 0.45) out.low.push((el.textContent || '').trim().slice(0, 40) + ' (oscuro sobre banda oscura)'); return; }
-          const rt = ratio(fg, bg.c); const big = parseFloat(cs.fontSize) >= 24;
-          if (rt < (big ? 3 : 3.9) && !el.closest('.lx-ico,.lx-value__n,.lx-ph')) out.low.push((el.textContent || '').trim().slice(0, 40) + ' ' + rt.toFixed(1));
-        });
-        out.fabs = document.querySelectorAll('.lx-fab').length;
-        out.form = document.querySelectorAll('.sc-form').length;
-        return out;
-      });
+      const r = await p.evaluate(AUDIT);
+      if (w >= 360 && (url === base + '/' || url.endsWith('/nosotros/') || url.endsWith('/contacto/'))) { await NAVCHK(p, tag, 3); }
+      if (url === base + '/') {
+        const th = await p.evaluate(() => ({ t: document.documentElement.getAttribute('data-lx-theme'), btn: !!document.querySelector('.lx-tt') }));
+        if (th.t !== 'light') bad(`${tag} el modo principal debe ser CLARO (es «${th.t}»)`);
+        if (!th.btn) bad(`${tag} falta el botón de modo claro/oscuro`);
+        // interruptor: pasar a oscuro, revisar contraste y volver a claro
+        if (th.btn && (w === 1440 || w === 360)) {
+          await p.click('.lx-tt', { force: true }).catch(() => {}); await p.waitForTimeout(500);
+          const t2 = await p.evaluate(() => document.documentElement.getAttribute('data-lx-theme'));
+          if (t2 !== 'dark') bad(`${tag} el botón no cambió a modo oscuro (${t2})`);
+          const rd = await p.evaluate(AUDIT);
+          if (rd.over > 0) bad(`${tag} [oscuro] desborde horizontal ${rd.over}px`);
+          if (rd.low.length) bad(`${tag} [oscuro] contraste bajo: ${rd.low.slice(0, 4).join(' ; ')}`);
+          if (shots && w === 1440) { await p.screenshot({ path: `${shots}-dark-1440.png`, fullPage: false }); }
+          await p.click('.lx-tt', { force: true }).catch(() => {}); await p.waitForTimeout(300);
+          await p.evaluate(() => { try { localStorage.removeItem('sc_lx_theme'); } catch (e) {} });
+        }
+      }
       if (r.over > 0) bad(`${tag} desborde horizontal ${r.over}px`);
       if (errs.length) bad(`${tag} errores de consola: ${errs.slice(0, 2).join(' | ')}`);
       if (failed.length) bad(`${tag} recursos con error: ${failed.slice(0, 2).join(' | ')}`);

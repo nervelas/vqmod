@@ -26,6 +26,10 @@ $sc_telv = servicom_biz('telefono');
 				<button type="button" class="sc-nav__close" aria-label="Cerrar menú"><?php echo servicom_icon('close', 24); // phpcs:ignore ?></button>
 			</div>
 			<?php
+			$sc_lx_menu = function_exists('sc_lx_menu_html') ? sc_lx_menu_html() : '';
+			if ($sc_lx_menu !== '') {
+				echo $sc_lx_menu; // phpcs:ignore WordPress.Security.EscapeOutput
+			} else {
 			wp_nav_menu(array(
 				'theme_location' => 'primary',
 				'container'      => false,
@@ -34,6 +38,7 @@ $sc_telv = servicom_biz('telefono');
 				'walker'         => new Servicom_Walker_Nav(),
 				'fallback_cb'    => 'servicom_fallback_menu',
 			));
+			}
 			?>
 			<?php if ($sc_wa || $sc_tel) : ?>
 			<div class="sc-nav__foot">
@@ -48,6 +53,7 @@ $sc_telv = servicom_biz('telefono');
 		</nav>
 
 		<div class="sc-header__actions">
+			<?php echo function_exists('sc_lx_theme_toggle') ? sc_lx_theme_toggle() : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 			<?php echo servicom_cart_link(); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 			<?php if ($sc_wa) : ?>
 				<a class="sc-btn sc-btn--primary sc-btn--sm sc-header__cta" href="<?php echo esc_url($sc_wa); ?>" target="_blank" rel="noopener"><?php echo servicom_icon('whatsapp', 18); // phpcs:ignore ?><span>WhatsApp</span></a>

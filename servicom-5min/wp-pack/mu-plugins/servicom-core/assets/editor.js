@@ -839,7 +839,7 @@
     var meta = q('meta[name="theme-color"]');
     if (meta && res.bg) { meta.setAttribute('content', res.bg); }
     qa('main.lx').forEach(function (m) { m.classList.remove('lx-dark', 'lx-light'); m.classList.add('lx-' + res.mood); });
-    d.body.classList.remove('lx-body-dark', 'lx-body-light'); d.body.classList.add('lx-body-' + res.mood);
+    d.body.classList.remove('lx-body-dark', 'lx-body-light'); d.body.classList.add('lx-body-' + res.mood); d.documentElement.setAttribute('data-lx-theme', res.mood);
   }
   function openDesign() {
     loadState().then(function (st) {

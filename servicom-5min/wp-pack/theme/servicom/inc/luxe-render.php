@@ -654,12 +654,104 @@ function sc_lx_floats()
 	echo '<div class="lx-lightbox" hidden><button type="button" class="lx-lightbox__x" aria-label="Cerrar">' . servicom_icon('close', 22) . '</button></div>'; // phpcs:ignore
 }
 
+
+/* ---------------------------------------------------------- menú propio e interruptor claro/oscuro */
+
+/** ¿La web ofrece los dos modos (claro y oscuro)? Requiere los colores base de la marca. */
+function sc_lx_has_alt()
+{
+	$b = sc_site()['design']['base']['primary'] ?? '';
+	return is_string($b) && preg_match('/^#[0-9a-fA-F]{6}$/', $b) && !sc_lx_editing();
+}
+
+add_filter('language_attributes', function ($out) {
+	if (sc_lx_active()) {
+		$out .= ' data-lx-theme="' . esc_attr((string) (sc_site()['design']['mood'] ?? 'light')) . '"';
+	}
+	return $out;
+});
+
+// Recuerda la elección del visitante antes de pintar (sin parpadeo)
+add_action('wp_head', function () {
+	if (sc_lx_active() && sc_lx_has_alt()) {
+		echo "<script>(function(){try{var t=localStorage.getItem('sc_lx_theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-lx-theme',t);}}catch(e){}})();</script>\n";
+	}
+}, 1);
+
+/** Botón sol/luna del encabezado. */
+function sc_lx_theme_toggle()
+{
+	if (!sc_lx_active() || !sc_lx_has_alt()) {
+		return '';
+	}
+	$sun = '<svg class="lx-tt__sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+	$moon = '<svg class="lx-tt__moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.8 6.8 0 0 0 9.8 9.8z"/></svg>';
+	return '<button type="button" class="lx-tt" aria-label="Cambiar entre modo claro y modo oscuro" title="Modo claro / oscuro">' . $sun . $moon . '</button>';
+}
+
+/** Menú principal armado directamente desde el contenido de la web (no depende de los menús de WordPress). */
+function sc_lx_menu_html()
+{
+	if (!sc_lx_active()) {
+		return '';
+	}
+	$site = sc_site();
+	$ids = (array) get_option('sc_page_ids', array());
+	$pages = (array) ($site['pages'] ?? array());
+	$cur = (int) get_queried_object_id();
+	$items = array();
+	$items[] = array('Inicio', home_url('/'), is_front_page(), array());
+	$order = array('servicios' => 'Servicios', 'nosotros' => 'Quiénes somos', 'galeria' => 'Galería', 'tienda' => 'Tienda', 'contacto' => 'Contacto');
+	foreach ($order as $k => $fallback) {
+		if (!isset($pages[$k])) {
+			continue;
+		}
+		$pid = (int) ($ids[$k] ?? 0);
+		$url = $pid ? (string) get_permalink($pid) : '';
+		if ($url === '' || get_post_status($pid) !== 'publish') {
+			continue;
+		}
+		$label = (string) get_the_title($pid);
+		$label = $label !== '' ? $label : $fallback;
+		$kids = array();
+		if ($k === 'servicios') {
+			foreach ((array) ($site['services'] ?? array()) as $sv) {
+				$sp = (int) ($sv['post'] ?? 0);
+				if (!$sp || empty($sv['on']) || get_post_status($sp) !== 'publish') {
+					continue;
+				}
+				$kids[] = array((string) ($sv['nombre'] ?? ''), (string) get_permalink($sp), $cur === $sp);
+			}
+		}
+		$items[] = array($label, $url, $cur === $pid, $kids);
+	}
+	if (count($items) < 2) {
+		return '';
+	}
+	$chev = function_exists('servicom_icon') ? servicom_icon('chevron', 16) : '';
+	$out = '<ul id="menu-principal-lx" class="sc-menu">';
+	foreach ($items as $n => $it) {
+		list($label, $url, $is, $kids) = $it;
+		$cls = 'menu-item menu-item-' . ($n + 1) . ($is ? ' current-menu-item' : '') . ($kids ? ' menu-item-has-children' : '');
+		$out .= '<li class="' . esc_attr($cls) . '"><a href="' . esc_url($url) . '"' . ($is ? ' aria-current="page"' : '') . '>' . esc_html($label) . '</a>';
+		if ($kids) {
+			$out .= '<button type="button" class="sc-sub-toggle" aria-expanded="false" aria-label="' . esc_attr(sprintf('Mostrar submenú de %s', $label)) . '">' . $chev . '</button><ul class="sub-menu">';
+			foreach ($kids as $kd) {
+				$out .= '<li class="menu-item' . ($kd[2] ? ' current-menu-item' : '') . '"><a href="' . esc_url($kd[1]) . '">' . esc_html($kd[0]) . '</a></li>';
+			}
+			$out .= '</ul>';
+		}
+		$out .= '</li>';
+	}
+	return $out . '</ul>';
+}
+
 /* ---------------------------------------------------------- estilos y datos */
 
 add_filter('body_class', function ($c) {
 	if (sc_lx_active()) {
 		$c[] = 'sc-luxe';
-		$c[] = 'lx-body-' . (string) (sc_site()['design']['mood'] ?? 'dark');
+		$c[] = 'lx-body-' . (string) (sc_site()['design']['mood'] ?? 'light');
 		if (sc_lx_editing()) {
 			$c[] = 'sc-editing';
 		}

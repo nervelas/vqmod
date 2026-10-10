@@ -280,9 +280,9 @@ function sc_design_rubro_colors($rubro)
 function sc_design_style($style)
 {
 	$s = array(
-		1 => array('mood' => 'dark', 'head' => 'cormorant', 'body' => 'manrope', 'hero' => 'center', 'radius' => 3),
+		1 => array('mood' => 'light', 'head' => 'cormorant', 'body' => 'manrope', 'hero' => 'center', 'radius' => 3),
 		2 => array('mood' => 'light', 'head' => 'fraunces', 'body' => 'inter', 'hero' => 'split', 'radius' => 6),
-		3 => array('mood' => 'dark', 'head' => 'sora', 'body' => 'nunito', 'hero' => 'split', 'radius' => 14),
+		3 => array('mood' => 'light', 'head' => 'sora', 'body' => 'nunito', 'hero' => 'split', 'radius' => 14),
 		4 => array('mood' => 'light', 'head' => 'playfair', 'body' => 'lato', 'hero' => 'center', 'radius' => 2),
 		5 => array('mood' => 'light', 'head' => 'dmserif', 'body' => 'dmsans', 'hero' => 'full', 'radius' => 10),
 	);
@@ -431,6 +431,20 @@ function sc_design_css(array $d)
 	$headF = sc_design_font_stack($d['fonts']['head'] ?? 'cormorant', 'head');
 	$bodyF = sc_design_font_stack($d['fonts']['body'] ?? 'manrope', 'body');
 	$r = (int) ($d['radius'] ?? 6);
+	$css = ':root{' . sc_design_vars($p, $dark, $r, $headF, $bodyF) . '}';
+	// Modo contrario (interruptor claro/oscuro de la web): misma marca, paleta del otro ambiente
+	$base = isset($d['base']) && is_array($d['base']) ? $d['base'] : array();
+	if (!empty($base['primary']) && preg_match('/^#[0-9a-fA-F]{6}$/', (string) $base['primary'])) {
+		$altMood = $dark ? 'light' : 'dark';
+		$alt = sc_design_build_palette($base['primary'], (string) ($base['accent'] ?? ''), $altMood);
+		$css .= 'html[data-lx-theme="' . $altMood . '"]{' . sc_design_vars($alt, !$dark, $r, $headF, $bodyF) . '}';
+	}
+	return $css;
+}
+
+/** Variables CSS (--lx-* y puente --sc-*) de una paleta. */
+function sc_design_vars(array $p, $dark, $r, $headF, $bodyF)
+{
 	$v = array(
 		'bg' => $p['bg'], 'bg2' => $p['bg2'], 'surface' => $p['surface'], 'ink' => $p['ink'], 'muted' => $p['muted'],
 		'primary' => $p['primary'], 'primary-ink' => $p['primary_ink'], 'accent' => $p['accent'], 'accent-ink' => $p['accent_ink'],
@@ -446,7 +460,7 @@ function sc_design_css(array $d)
 		'radius' => $r . 'px', 'radius-lg' => ($r * 2 + 4) . 'px',
 		'font-head' => $headF, 'font-body' => $bodyF,
 	);
-	$css = ':root{';
+	$css = '';
 	foreach ($v as $k => $val) {
 		$css .= '--lx-' . $k . ':' . $val . ';';
 	}
@@ -459,7 +473,7 @@ function sc_design_css(array $d)
 		'dark-bg' => $p['dark'], 'dark-ink' => $p['dark_ink'], 'dark-muted' => sc_mix($p['dark_ink'], $p['dark'], 0.3),
 		'dark-surface' => sc_mix($p['dark'], $p['dark_ink'], 0.07), 'dark-border' => sc_mix($p['dark'], $p['dark_ink'], 0.18),
 		'dark-primary' => $p['primary_dark'], 'dark-primary-ink' => sc_best_ink($p['primary_dark'], '#ffffff', $p['dark']),
-		'header-bg' => sc_design_rgba($p['bg'], $dark ? 0.86 : 0.9), 'header-ink' => $p['ink'], 'header-line' => sc_design_rgba($p['primary'], 0.3),
+		'header-bg' => sc_design_rgba($p['bg'], $dark ? 0.86 : 0.94), 'header-ink' => $p['ink'], 'header-line' => sc_design_rgba($p['primary'], 0.3),
 		'footer-bg' => $p['dark'], 'footer-ink' => $p['dark_ink'], 'footer-muted' => sc_mix($p['dark_ink'], $p['dark'], 0.35),
 		'footer-accent' => $p['accent_dark'], 'footer-line' => sc_mix($p['dark'], $p['dark_ink'], 0.16),
 		'btn-bg' => 'linear-gradient(135deg,' . sc_mix($p['primary'], '#ffffff', $dark ? 0.22 : 0.12) . ' 0%,' . $p['primary'] . ' 55%,' . sc_mix($p['primary'], '#000000', 0.18) . ' 100%)',
@@ -471,6 +485,5 @@ function sc_design_css(array $d)
 	foreach ($bridge as $k => $val) {
 		$css .= '--sc-' . $k . ':' . $val . ';';
 	}
-	$css .= '}';
 	return $css;
 }

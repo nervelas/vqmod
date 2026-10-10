@@ -637,6 +637,13 @@ final class Pipeline
                 $problems[] = ['url' => '/', 'tipo' => 'externo', 'detalle' => 'La portada respondió HTTP ' . $home['status'] . ($home['error'] ? ' (' . $home['error'] . ')' : '')];
             } elseif (preg_match('/(Warning|Notice|Fatal error|Deprecated|Parse error):/i', $home['body'])) {
                 $problems[] = ['url' => '/', 'tipo' => 'externo', 'detalle' => 'La portada muestra mensajes de PHP.'];
+            } else {
+                // el menú de navegación debe estar en la portada, con sus enlaces y el botón del celular
+                $nav = preg_match('#<nav class="sc-nav".*?</nav>#s', $home['body'], $mm) ? $mm[0] : '';
+                $links = preg_match_all('#<a [^>]*href="[^"]+"#', $nav);
+                if ($nav === '' || $links < 3 || !str_contains($home['body'], 'sc-burger')) {
+                    $problems[] = ['url' => '/', 'tipo' => 'menu', 'detalle' => 'El menú de navegación no aparece completo (enlaces: ' . (int) $links . ').'];
+                }
             }
         }
         Orders::set($id, ['qa_result' => json_encode(['ok' => !$problems, 'problemas' => $problems, 'intento' => (int) ($st['qa_attempt'] ?? 0) + 1], JSON_UNESCAPED_UNICODE)]);

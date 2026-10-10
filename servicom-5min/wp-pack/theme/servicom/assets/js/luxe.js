@@ -109,4 +109,23 @@
       v.appendChild(f);
     });
   });
+  /* Interruptor modo claro / oscuro (recuerda la elección del visitante) */
+  var tt = d.querySelector('.lx-tt');
+  if (tt) {
+    var de = d.documentElement;
+    var sync = function () {
+      var t = de.getAttribute('data-lx-theme') === 'dark' ? 'dark' : 'light';
+      tt.setAttribute('aria-pressed', t === 'dark' ? 'true' : 'false');
+      tt.setAttribute('title', t === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro');
+      d.body.classList.remove('lx-body-dark', 'lx-body-light'); d.body.classList.add('lx-body-' + t);
+      d.querySelectorAll('main.lx').forEach(function (m) { m.classList.remove('lx-dark', 'lx-light'); m.classList.add('lx-' + t); });
+    };
+    sync();
+    tt.addEventListener('click', function () {
+      var n = de.getAttribute('data-lx-theme') === 'dark' ? 'light' : 'dark';
+      de.setAttribute('data-lx-theme', n);
+      try { w.localStorage.setItem('sc_lx_theme', n); } catch (e) { /* sin almacenamiento: solo esta visita */ }
+      sync();
+    });
+  }
 })();

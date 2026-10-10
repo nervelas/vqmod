@@ -245,6 +245,7 @@ function contrast(a, b) { const x = lum(a), y = lum(b); return (Math.max(x, y) +
     await p.keyboard.press('Escape');
 
     section('Ícono');
+    await p.goto(BASE + 'nosotros/?sc_edit=1', { waitUntil: 'load' }); await p.waitForTimeout(900);   // los valores (con íconos) viven en «Quiénes somos»
     const iconEl = await p.$('[data-sc-t="icon"][data-sc*="items"]');
     const iconPath = await iconEl.getAttribute('data-sc');
     await jump(p.locator(`[data-sc="${iconPath}"]`).first());
@@ -260,6 +261,7 @@ function contrast(a, b) { const x = lum(a), y = lum(b); return (Math.max(x, y) +
     await p.reload({ waitUntil: 'load' });
     ok(await p.$eval(sel(iconPath), e => !!e.querySelector('.sc-ic--clock')), 'el ícono nuevo persiste');
 
+    await p.goto(BASE + '?sc_edit=1', { waitUntil: 'load' }); await p.waitForTimeout(700);
     section('Imagen: elegir de la mediateca (sube un archivo de prueba)');
     const aboutImg = sel(`pages.home.sections.${secIdx('about')}.data.img`);
     const box = await stable(p, p.locator(aboutImg));
@@ -317,11 +319,13 @@ function contrast(a, b) { const x = lum(a), y = lum(b); return (Math.max(x, y) +
     ok(helper('info').site.pages.home.sections.map(s => s.type).join() === before.join(), 'subir la devuelve a su lugar');
 
     section('Preguntas frecuentes: agregar y quitar');
-    const iFaq = secIdx('faq');
+    await p.goto(BASE + 'contacto/?sc_edit=1', { waitUntil: 'load' }); await p.waitForTimeout(900);   // las preguntas viven en la página «Contacto»
+    const iFaq = helper('info').site.pages.contacto.sections.findIndex(x => x.type === 'faq');
+    const secSelC = (i) => `[data-sc-sec="pages.contacto.sections.${i}"]`;
     const nFaq = () => p.$$eval('.lx-qa', x => x.length);
     const n0 = await nFaq();
-    await jump(p.locator(secSel(iFaq)));
-    await reloaded(p, () => p.click(`${secSel(iFaq)} .sc-ed-secbar .sc-ed-sb--add`));
+    await jump(p.locator(secSelC(iFaq)));
+    await reloaded(p, () => p.click(`${secSelC(iFaq)} .sc-ed-secbar .sc-ed-sb--add`));
     await p.waitForTimeout(1600);
     ok((await nFaq()) === n0 + 1, 'se agregó una pregunta', (await nFaq()) + ' vs ' + n0);
     ok(await p.evaluate(() => document.activeElement && document.activeElement.isContentEditable && /Nueva pregunta/.test(document.activeElement.textContent)), 'la nueva pregunta queda lista para escribir');
@@ -353,6 +357,7 @@ function contrast(a, b) { const x = lum(a), y = lum(b); return (Math.max(x, y) +
     await reloaded(p, () => p.click('.sc-ed-chip--li .sc-ed-cb:nth-child(1)'));
     ok((await p.$eval('.lx-qa:nth-child(1) summary span', e => e.textContent)) === firstQ, '↑ la devuelve al primer lugar');
 
+    await p.goto(BASE + '?sc_edit=1', { waitUntil: 'load' }); await p.waitForTimeout(700);
     section('Servicios: agregar (página + menú), duplicar y eliminar');
     const svc0 = helper('info');
     const iSv = secIdx('services');
@@ -483,7 +488,7 @@ function contrast(a, b) { const x = lum(a), y = lum(b); return (Math.max(x, y) +
     await p.goto(BASE + `?sc_edit=1&sc_focus=pages.home.sections.${iSv}`, { waitUntil: 'load' });
     await p.waitForTimeout(1500);
     ok(await p.$eval(secSel(iSv), e => e.classList.contains('sc-ed-pulse')), 'resalta la sección con pulso');
-    await p.goto(BASE + '?sc_edit=1&sc_focus=' + iconPath, { waitUntil: 'load' });
+    await p.goto(BASE + 'nosotros/?sc_edit=1&sc_focus=' + iconPath, { waitUntil: 'load' });
     await p.waitForSelector('.sc-ed-icons', { timeout: 8000 }).catch(() => {});
     ok(!!(await p.$('.sc-ed-icons')), 'un ícono abre su selector');
     await p.keyboard.press('Escape');

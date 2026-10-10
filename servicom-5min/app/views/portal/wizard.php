@@ -119,15 +119,16 @@ $redes = ['facebook' => 'Facebook', 'instagram' => 'Instagram', 'tiktok' => 'Tik
     <section class="step" data-step="pres" aria-labelledby="t-pres" hidden>
       <div class="pres-hero">
         <span class="pres-ico"><?= ico('file') ?></span>
-        <h2 id="t-pres" tabindex="-1">¿Tienes una presentación de tu negocio?</h2>
-        <p class="lead">Súbela y nosotros creamos toda tu web por ti: logo, colores, textos y fotos. <span class="opt">(opcional)</span></p>
+        <h2 id="t-pres" tabindex="-1">Sube la presentación de tu negocio</h2>
+        <p class="lead">Es lo único que necesitamos. Con ese archivo creamos toda tu web: nombre, logo, colores, textos, fotos, menú, iconos y botones de contacto.</p>
         <p class="help"><a href="/guia-presentacion" target="_blank" rel="noopener">¿Qué debe llevar mi archivo? Ver guía y plantilla</a></p>
       </div>
-      <label class="chk chk--k"><input type="checkbox" id="pres-ok" data-k="presentacion.acepto"><span>Mi archivo se usará solo para crear mi web, se procesa con inteligencia artificial y se elimina al finalizar.</span></label>
+      <label class="chk chk--k" hidden><input type="checkbox" id="pres-ok" data-k="presentacion.acepto"><span>Mi archivo se usará solo para crear mi web.</span></label>
+      <p class="help help--c">Al subir tu archivo aceptas que se use solo para crear tu web: se procesa con inteligencia artificial y se elimina al finalizar.</p>
       <div id="pres-box">
         <label class="drop drop--big" id="pres-drop" for="pres-file" aria-disabled="true"><?= ico('upload') ?><span>Subir mi presentación</span><small>PDF, PowerPoint (.pptx) o Word (.docx) · hasta <?= (int)$presMb ?> MB</small>
           <input class="sr" type="file" id="pres-file" accept=".pdf,.pptx,.docx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.wordprocessingml.document" disabled aria-describedby="pres-e"></label>
-        <p class="help" id="pres-h">Marca la casilla de arriba para habilitar la subida.</p>
+        <p class="help" id="pres-h" hidden></p>
         <p class="err" id="pres-e" role="alert"></p>
         <div class="filecard" id="pres-card" hidden>
           <span class="filecard__i"><?= ico('file') ?></span>
@@ -135,7 +136,7 @@ $redes = ['facebook' => 'Facebook', 'instagram' => 'Instagram', 'tiktok' => 'Tik
           <button type="button" class="btn btn--ghost btn--sm" id="pres-rm">Quitar</button>
         </div>
       </div>
-      <button type="button" class="btn btn--ghost btn--block" id="pres-skip">Continuar sin presentación</button>
+      <button type="button" class="btn btn--ghost btn--block" id="pres-skip">No tengo un archivo: prefiero llenar los datos</button>
     </section>
 
     <!-- REVISIÓN -->

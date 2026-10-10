@@ -57,8 +57,8 @@
   function tienda() { return data.plan === 'tienda'; }
   function revAvail() { return analysis.estado === 'lista' && analysis.resultado && !data.presentacion.confirmada && data.presentacion.estado !== 'omitida' && !!data.presentacion.file; }
   function steps() {
-    if (!data.plan || !token) return ['plan'];
-    return ORDER.filter(function (k) { return k === 'revision' ? revAvail() : (k === 'productos' || k === 'cobros') ? tienda() : true; });
+    if (!token) return ['pres'];
+    return ORDER.filter(function (k) { return k === 'plan' ? false : k === 'revision' ? revAvail() : (k === 'productos' || k === 'cobros') ? tienda() : true; });
   }
 
   /* ---------- guardado automático ---------- */
@@ -157,7 +157,7 @@
     $('#mail-sfx').textContent = '@' + (d || 'tudominio.com');
     var t = tienda(); $('#srv-req').hidden = t; $('#srv-opt').hidden = !t;
     $('#pres-h').hidden = !!data.presentacion.acepto;
-    var dr = $('#pres-drop'), pf = $('#pres-file'), on = !!data.presentacion.acepto && !data.presentacion.file;
+    var dr = $('#pres-drop'), pf = $('#pres-file'), on = !data.presentacion.file;
     dr.setAttribute('aria-disabled', on ? 'false' : 'true'); pf.disabled = !on;
     if (k === 'plan') { drawSide(); }
   }
@@ -183,7 +183,7 @@
     if (n < 2) n = 9;
     $('#prog-n').textContent = 'Paso ' + (i + 1) + ' de ' + n; $('#prog-name').textContent = TITLES[cur] || '';
     var p = Math.round(((i + 1) / n) * 100); $('#prog-bar').style.width = p + '%'; $('#prog').setAttribute('aria-valuenow', p);
-    var hideNav = cur === 'revision' || cur === 'pago' && paid;
+    var hideNav = cur === 'revision' || cur === 'pres' || cur === 'pago' && paid; var pg = document.querySelector('.wz-prog'); if (pg) pg.hidden = cur === 'pres';
     navBox.hidden = hideNav;
     btnBack.hidden = i === 0;
     var nx = cur !== 'resumen' && cur !== 'pago' && !(cur === 'pres' && !data.presentacion.file);
@@ -191,7 +191,7 @@
     $('#pres-skip').hidden = !!data.presentacion.file;
     drawSide(); drawPill(); derived();
     $('#copy-link').hidden = !token;
-    $('#tip').hidden = !token || cur === 'plan' || LS.g('s5_tip') === '1';
+    $('#tip').hidden = !token || cur === 'plan' || cur === 'pres' || LS.g('s5_tip') === '1';
   }
   function drawSide() {
     var side = $('.wz-side'), ol = $('#side'), list = steps();
@@ -213,9 +213,9 @@
   }
   function createDraft() {
     return S5.api('POST', '/api/borrador', { plan: data.plan }).then(function (r) {
-      if (!r.ok || !r.token) { show(null, $('#f-plan-e'), r.error || 'No pudimos iniciar tu borrador. Inténtalo de nuevo.'); return false; }
+      if (!r.ok || !r.token) { presErr(r.error || 'No pudimos iniciar. Inténtalo de nuevo.'); return false; }
       token = r.token; LS.s('s5_t0_' + token, String(t0));
-      try { history.replaceState({ s: 'plan' }, '', '/continuar/' + token); } catch (_) {}
+      try { history.replaceState({ s: 'pres' }, '', '/continuar/' + token); } catch (_) {}
       sv.dirty = true; flush(); return true;
     });
   }
@@ -521,9 +521,15 @@
     if (!PRES_OK.test(f.name)) return presErr('Solo aceptamos PDF, PowerPoint (.pptx) o Word (.docx). Si usas Keynote o Canva, guárdala como PDF y vuelve a subirla.');
     if (f.size > (CFG.pres_max_mb || 10) * 1048576) return presErr('Tu archivo pesa ' + S5.bytes(f.size) + ' y el máximo es ' + (CFG.pres_max_mb || 10) + ' MB. Reduce su tamaño o guárdalo como PDF más liviano.');
     if (!f.size) return presErr('El archivo está vacío.');
+    var go2 = function () { startUpload(f); };
+    if (!token) { $('#pres-meta').textContent = ''; createDraft().then(function (ok) { if (ok) go2(); }); return; }
+    go2();
+  });
+  function startUpload(f) {
+    data.presentacion.acepto = true; var ck = $('#pres-ok'); if (ck) ck.checked = true; pendingBuild = true;
     presName = f.name; LS.s('s5_pname_' + token, f.name);
     var up = $('#pres-up'); up.hidden = false; $('#pres-card').hidden = false; $('#pres-drop').hidden = true; $('#pres-name').textContent = f.name; $('#pres-meta').textContent = 'Subiendo…'; $('#pres-skip').hidden = true;
-    S5.upload(token, 'presentacion', f, function (p) { up.firstChild.style.width = Math.round(p * 100) + '%'; }).then(function (r) {
+    S5.api('POST', '/api/borrador/' + token + '/guardar', { data: { presentacion: { acepto: true } } }).then(function () { return S5.upload(token, 'presentacion', f, function (p) { up.firstChild.style.width = Math.round(p * 100) + '%'; }); }).then(function (r) {
       up.hidden = true;
       if (!r.ok) { presErr(r.mensaje || r.error || 'No pudimos subir tu archivo.'); $('#pres-card').hidden = true; $('#pres-drop').hidden = false; $('#pres-skip').hidden = false; return; }
       data.presentacion.file = r.id; data.presentacion.estado = 'pendiente'; data.presentacion.confirmada = false; analysis = { estado: 'procesando', resultado: null, msg: '', dismissed: false }; dirty(); flush();
@@ -533,11 +539,11 @@
       });
       presDraw();
     });
-  });
+  }
   $('#pres-rm').addEventListener('click', function () {
     delFile(data.presentacion.file); clearTimeout(pollT); data.presentacion.file = null; data.presentacion.estado = 'ninguna'; data.presentacion.confirmada = false; analysis = { estado: 'none', resultado: null, msg: '', dismissed: false }; presDraw(); dirty();
   });
-  $('#pres-skip').addEventListener('click', function () { data.presentacion.estado = 'omitida'; dirty(); var l = steps(), i = l.indexOf('pres'); go(l[i + 1]); });
+  $('#pres-skip').addEventListener('click', function () { pendingBuild = false; var fin = function () { data.presentacion.estado = 'omitida'; dirty(); var l = steps(), i = l.indexOf('pres'); go(l[i + 1]); }; if (!token) { createDraft().then(function (ok) { if (ok) fin(); }); } else fin(); });
   /* Modo «solo presentación»: se aplica todo lo encontrado sin pedir revisión; lo que falte se completa al final */
   var pendingBuild = false;
   function autoApply() {
@@ -764,6 +770,7 @@
       var pe = data.presentacion.estado;
       if (/pend|analiz/.test(pe)) analysis.estado = 'procesando'; else if (pe === 'lista') analysis.estado = 'procesando'; else if (pe === 'error') analysis.estado = 'error';
     }
+    if (!data.plan) { var pq = new URLSearchParams(location.search).get('plan'); data.plan = pq === 'tienda' ? 'tienda' : 'info'; }
     paint(); waPaint(); drawMails();
     if (analysis.estado === 'procesando' && token) { pollStart = Date.now(); schedPoll(600); }
     var qs = new URLSearchParams(location.search), want = qs.get('paso') || (token && LS.g('s5_paso_' + token)) || draft.paso || 'plan';

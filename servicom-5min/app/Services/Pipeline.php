@@ -234,7 +234,7 @@ final class Pipeline
         }
         Db::update('build_steps', ['status' => 'error', 'message' => mb_substr($msg, 0, 400)], 'id=?', [$row['id']]);
         $o = Orders::byId($id);
-        $friendly = in_array($k, ['validar'], true) ? $msg : 'No pudimos crear su vista previa en este momento. Ya fue notificado nuestro equipo; puede intentarlo de nuevo en unos minutos.';
+        $friendly = in_array($k, ['validar'], true) ? $msg : 'No pudimos crear su vista previa en este momento. Ya fue notificado nuestro equipo; puede intentarlo de nuevo en unos minutos. (Ref. P' . $id . '-' . $k . ')';
         if ($k === 'ssl') {
             // El sitio existe pero el certificado aún no está listo: no se muestra nada inseguro, se conserva.
             Orders::setStatus($id, Orders::ST_PREPARANDO, 'Estamos preparando su vista previa.');

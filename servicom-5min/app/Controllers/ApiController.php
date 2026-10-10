@@ -244,7 +244,7 @@ final class ApiController
         $o = self::order($p, true);
         $d = Orders::data($o);
         if (empty($d['presentacion']['acepto']) || empty($d['presentacion']['file'])) {
-            self::fail('Primero suba su presentación y marque la casilla de aceptación.');
+            self::fail('Primero suba su presentación.');
         }
         if ((int) $o['analysis_count'] >= 3) {
             Http::json(['ok' => true, 'estado' => 'error', 'mensaje' => 'Ya usó los 3 análisis disponibles; puede llenar los datos manualmente.']);

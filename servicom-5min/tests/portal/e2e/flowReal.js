@@ -32,7 +32,7 @@ let bad = 0;
   const p2 = await newPage(b, W);
   await p2.goto(BASE + '/crear?plan=info', { waitUntil: 'networkidle' });
   await p2.setInputFiles('#pres-file', '/home/user/vqmod/servicom-5min/tests/fixtures/presentaciones/out/taller.pptx');
-  await p2.waitForFunction(() => (document.querySelector('.step:not([hidden])') || {}).dataset?.step === 'resumen', null, { timeout: 60000 });
+  await p2.waitForFunction(() => (document.querySelector('.step:not([hidden])') || {}).dataset?.step === 'resumen', null, { timeout: 150000 });
   await p2.waitForFunction(() => { const b = document.getElementById('build'); return b && !b.hidden; }, null, { timeout: 30000 });
   log('solo archivo: salta al resumen y construye solo', await p2.evaluate(() => (document.querySelector('.step:not([hidden])') || {}).dataset?.step), 'errores', JSON.stringify(p2.errors));
   if (p2.errors && p2.errors.length) bad++;

@@ -19,5 +19,5 @@ $boot = ['token' => (string)($token ?? '')];
 </main>
 <?php include __DIR__ . '/_footer.php'; ?>
 <script type="application/json" id="s5-boot"><?= json_encode($boot, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
-<script src="/assets/js/s5.js?v=1" defer<?= !empty($nonce) ? ' nonce="' . e($nonce) . '"' : '' ?>></script>
-<script src="/assets/js/pay.js?v=1" defer<?= !empty($nonce) ? ' nonce="' . e($nonce) . '"' : '' ?>></script>
+<script src="<?= e(asset('js/s5.js')) ?>" defer<?= !empty($nonce) ? ' nonce="' . e($nonce) . '"' : '' ?>></script>
+<script src="<?= e(asset('js/pay.js')) ?>" defer<?= !empty($nonce) ? ' nonce="' . e($nonce) . '"' : '' ?>></script>

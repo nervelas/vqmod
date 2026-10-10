@@ -30,11 +30,11 @@ $ver         = '1';
 <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="/assets/fonts/cormorant-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/css/base.css?v=<?= $ver ?>">
+<link rel="stylesheet" href="<?= e(asset('css/base.css')) ?>">
 </head>
 <body class="pg-<?= e($page) ?>">
 <a class="skip" href="#main">Saltar al contenido</a>
 <?= $content ?? '' ?>
-<script src="/assets/js/portal.js?v=<?= $ver ?>" defer<?= $nonceAttr ?>></script>
+<script src="<?= e(asset('js/portal.js')) ?>" defer<?= $nonceAttr ?>></script>
 </body>
 </html>

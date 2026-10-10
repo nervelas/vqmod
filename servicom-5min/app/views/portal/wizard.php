@@ -81,7 +81,7 @@ $estilos = [1 => 'Oscuro elegante', 2 => 'Claro editorial', 3 => 'Oscuro moderno
 $paises = ['502' => 'Guatemala', '503' => 'El Salvador', '504' => 'Honduras', '505' => 'Nicaragua', '506' => 'Costa Rica', '507' => 'Panamá', '52' => 'México', '1' => 'EE. UU. / Canadá', '34' => 'España', '57' => 'Colombia'];
 $redes = ['facebook' => 'Facebook', 'instagram' => 'Instagram', 'tiktok' => 'TikTok', 'youtube' => 'YouTube', 'x' => 'X (Twitter)', 'linkedin' => 'LinkedIn'];
 ?>
-<link rel="stylesheet" href="/assets/css/wizard.css?v=1">
+<link rel="stylesheet" href="<?= e(asset('css/wizard.css')) ?>">
 <div class="wz" id="wz">
 <header class="wz-top">
   <div class="wrap wz-top__in">
@@ -307,5 +307,5 @@ $redes = ['facebook' => 'Facebook', 'instagram' => 'Instagram', 'tiktok' => 'Tik
 </main>
 </div>
 <script type="application/json" id="s5-boot"><?= json_encode($boot, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR) ?></script>
-<script src="/assets/js/s5.js?v=1" defer<?= $nonceA ?>></script>
-<script src="/assets/js/wizard.js?v=1" defer<?= $nonceA ?>></script>
+<script src="<?= e(asset('js/s5.js')) ?>" defer<?= $nonceA ?>></script>
+<script src="<?= e(asset('js/wizard.js')) ?>" defer<?= $nonceA ?>></script>

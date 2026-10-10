@@ -37,7 +37,7 @@ $faq = [
 ];
 $waMsg = 'Hola Servicom, quiero información sobre “Tu web en 5 minutos”.';
 ?>
-<link rel="stylesheet" href="/assets/css/home.css?v=1">
+<link rel="stylesheet" href="<?= e(asset('css/home.css')) ?>">
 <?php $navFull = true; include __DIR__ . '/_header.php'; ?>
 <main id="main">
 

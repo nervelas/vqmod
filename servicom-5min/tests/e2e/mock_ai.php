@@ -8,6 +8,9 @@ $mode = trim((string) @file_get_contents('/tmp/s5test/run/ai-mode')) ?: 'ok';
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 @file_put_contents('/tmp/s5test/run/ai-calls.log', date('c') . " $mode $path\n", FILE_APPEND);
 header('Content-Type: application/json');
+// WhatsApp de avisos (CallMeBot y Cloud API simulados)
+if ($path === '/whatsapp.php') { $ok = ($_GET['apikey'] ?? '') === 'KEYOK' && ($_GET['phone'] ?? '') === '50232040756'; @file_put_contents('/tmp/s5test/run/wa-calls.log', json_encode(['via' => 'callmebot', 'ok' => $ok, 'phone' => $_GET['phone'] ?? '', 'text' => $_GET['text'] ?? ''], JSON_UNESCAPED_UNICODE) . "\n", FILE_APPEND); header('Content-Type: text/html'); http_response_code($ok ? 200 : 401); echo $ok ? 'Message queued' : 'ERROR: apikey invalid'; return; }
+if (preg_match('#^/v20\.0/(\d+)/messages$#', $path)) { $b = json_decode((string) file_get_contents('php://input'), true) ?: []; $ok = ($_SERVER['HTTP_AUTHORIZATION'] ?? '') === 'Bearer TOKOK' && ($b['to'] ?? '') === '50232040756'; @file_put_contents('/tmp/s5test/run/wa-calls.log', json_encode(['via' => 'cloud', 'ok' => $ok, 'to' => $b['to'] ?? '', 'text' => $b['text']['body'] ?? ''], JSON_UNESCAPED_UNICODE) . "\n", FILE_APPEND); http_response_code($ok ? 200 : 401); echo json_encode($ok ? ['messages' => [['id' => 'wamid.X']]] : ['error' => 'bad']); return; }
 if ($path === '/v1/files' && $_SERVER['REQUEST_METHOD'] === 'POST') { $ok = isset($_FILES['file']) && ($_FILES['file']['size'] ?? 0) > 0 && ($_SERVER['HTTP_ANTHROPIC_BETA'] ?? '') !== ''; echo json_encode($ok ? ['id' => 'file_mock123', 'type' => 'file'] : ['error' => 'bad']); if (!$ok) { http_response_code(400); } return; }
 if (str_starts_with($path, '/v1/files/') && $_SERVER['REQUEST_METHOD'] === 'DELETE') { echo '{"id":"file_mock123","type":"file_deleted"}'; return; }
 if ($path !== '/v1/messages') { http_response_code(404); echo '{}'; return; }

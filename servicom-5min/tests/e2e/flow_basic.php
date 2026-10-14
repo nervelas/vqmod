@@ -107,7 +107,7 @@ t_ok($r['status'] === 200 && !str_contains($r['body'], 'sc-preview-bar'), 'sitio
 t_ok(!str_contains($r['body'] . $r['headers'], 'noindex'), 'sin noindex tras publicar');
 $mails = glob('/tmp/s5test/mail/*.json') ?: [];
 $subjects = array_map(fn($f) => json_decode((string) file_get_contents($f), true)['subject'] ?? '', $mails);
-t_ok((bool) array_filter($subjects, fn($s) => str_contains($s, 'publicada')), 'correo de publicación al cliente');
+t_ok((bool) array_filter($subjects, fn($s) => str_contains($s, 'publicada')), 'aviso de publicación (al dueño; nunca al cliente)');
 $orig = mysql_val("SELECT COUNT(*) FROM s5test.s5_files WHERE order_id=$oid AND kind IN ('presentacion','presentacion_img','foto','logo')");
 t_ok($orig === '0', 'archivos subidos purgados al publicar');
 echo "\nResultado: " . ($GLOBALS['__t_n'] - $GLOBALS['__t_fail']) . "/" . $GLOBALS['__t_n'] . " OK\n";

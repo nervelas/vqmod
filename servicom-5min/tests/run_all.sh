@@ -20,6 +20,7 @@ run "Presentaciones por HTTP" php tests/e2e/flow_pres.php
 run "Solo un PDF: extrae logo/fotos/colores y construye" php tests/e2e/flow_solo.php
 run "Modo solo archivo: tope de servicios y WhatsApp con código de país" env S5_CONFIG_FILE=/tmp/s5test/config.php php tests/ai/auto.php
 run "Paquete base refrescado: archivos nuevos se copian a webs nuevas" php tests/e2e/filelist_cache.php
+run "Avisos por WhatsApp al dueño (nunca al cliente)" bash -c "mysql s5test -e 'delete from s5_rate_limits'; php tests/e2e/avisos_whatsapp.php"
 run "Pago por WhatsApp: el dueño aprueba sin comprobante" php tests/e2e/pago_manual.php
 run "Subida de CUALQUIER archivo (txt, rtf, html, imagen, doc antiguo…; solo se rechazan programas)" bash -c "mysql s5test -e 'delete from s5_rate_limits'; php tests/e2e/archivos_cualquiera.php"
 run "PDF pesado (43 MB, límite 50 MB)" bash -c "mysql s5test -e 'delete from s5_rate_limits'; php tests/e2e/pdf_grande.php"

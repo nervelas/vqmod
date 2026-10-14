@@ -2,11 +2,13 @@
 declare(strict_types=1);
 namespace S5\Services;
 
+use S5\Core\Http;
+use S5\Core\Log;
 use S5\Core\Mailer;
 use S5\Core\Sanitize;
 use S5\Core\Settings;
 
-/** Correos del sistema (dueño y cliente). Todo texto en español. */
+/** Avisos del sistema: TODOS van al dueño (WhatsApp; correo solo como respaldo). Nunca se escribe al cliente. Todo texto en español. */
 final class Notifier
 {
     private static function h($s): string
@@ -14,8 +16,59 @@ final class Notifier
         return htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8');
     }
 
+    /** Número del dueño para los avisos: 8 dígitos de Guatemala o internacional sin «+». */
+    private static function waNumber(): string
+    {
+        $n = preg_replace('/\D/', '', (string) Settings::get('wa_notify_number', '50232040756')) ?? '';
+        return strlen($n) === 8 ? '502' . $n : $n;
+    }
+
+    /** Envía un aviso por WhatsApp al dueño. Devuelve true si el proveedor lo aceptó. */
+    public static function whatsapp(string $text): bool
+    {
+        $prov = (string) Settings::get('wa_notify_provider', 'callmebot');
+        $key = (string) Settings::get('wa_notify_key', '');
+        $num = self::waNumber();
+        if ($prov === 'none' || $key === '' || $num === '') {
+            return false;
+        }
+        $text = mb_substr($text, 0, 1500, 'UTF-8');
+        $base = (string) getenv('S5_WA_URL');
+        try {
+            if ($prov === 'cloud') {
+                $pid = preg_replace('/\D/', '', (string) Settings::get('wa_notify_phone_id', '')) ?? '';
+                if ($pid === '') {
+                    return false;
+                }
+                $r = Http::request('POST', ($base !== '' ? $base : 'https://graph.facebook.com') . '/v20.0/' . $pid . '/messages', [
+                    'timeout' => 20,
+                    'headers' => ['Authorization: Bearer ' . $key, 'Content-Type: application/json'],
+                    'body' => json_encode(['messaging_product' => 'whatsapp', 'to' => $num, 'type' => 'text', 'text' => ['body' => $text]], JSON_UNESCAPED_UNICODE),
+                ]);
+                return $r['status'] >= 200 && $r['status'] < 300;
+            }
+            $r = Http::request('GET', ($base !== '' ? $base : 'https://api.callmebot.com') . '/whatsapp.php?phone=' . $num . '&text=' . rawurlencode($text) . '&apikey=' . rawurlencode($key), ['timeout' => 20]);
+            return $r['status'] >= 200 && $r['status'] < 300 && stripos($r['body'], 'error') === false;
+        } catch (\Throwable $e) {
+            Log::error('WhatsApp de avisos: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * TODO aviso del sistema (vista previa lista, publicada, pago, fallos…) va al dueño por WhatsApp.
+     * Nunca se escribe al cliente. Si el WhatsApp no está configurado o falla, se usa el correo del dueño como respaldo.
+     */
     public static function owner(string $subject, string $text, ?int $orderId = null): void
     {
+        $msg = '*[Servicom] ' . $subject . "*\n" . $text;
+        if ($orderId) {
+            $msg .= "\n" . Settings::portalUrl() . '/admin/pedido/' . $orderId;
+        }
+        if (self::whatsapp($msg)) {
+            return;
+        }
+        Log::audit('wa_aviso_no_enviado', $subject, $orderId);
         $to = (string) Settings::get('owner_email', '');
         if ($to === '') {
             return;
@@ -27,16 +80,20 @@ final class Notifier
         Mailer::send($to, '[Servicom] ' . $subject, Mailer::wrap($subject, $body));
     }
 
+    private static function cliente(array $o): string
+    {
+        $b = [];
+        try { $b = Orders::data($o); } catch (\Throwable $e) { $b = []; }
+        $n = (string) ($o['business_name'] ?: ($b['negocio']['nombre'] ?? '') ?: '#' . $o['id']);
+        $tel = (string) ($b['contacto']['whatsapp'] ?? $b['contacto']['telefono'] ?? '');
+        $mail = (string) ($o['client_email'] ?? '');
+        return $n . ($tel !== '' ? ' · Tel/WhatsApp: ' . $tel : '') . ($mail !== '' ? ' · Correo: ' . $mail : '');
+    }
+
     public static function previewReady(array $o): void
     {
-        $to = Sanitize::email((string) $o['client_email']);
-        if ($to === '') {
-            return;
-        }
         $url = Settings::portalUrl() . '/continuar/' . $o['token'];
-        $body = '<p>¡Su vista previa está lista!</p><p><a href="' . self::h($url) . '" style="display:inline-block;background:#b8923a;color:#111;padding:12px 20px;border-radius:8px;text-decoration:none">Ver mi vista previa</a></p>'
-            . '<p>Este enlace es personal: guárdelo para retomar o aprobar su web. Su vista previa se conserva ' . Settings::int('preview_days', 15) . ' días.</p>';
-        Mailer::send($to, 'Su vista previa está lista', Mailer::wrap('Su vista previa está lista', $body));
+        self::owner('Vista previa lista', 'Cliente: ' . self::cliente($o) . "\nEnlace privado de la vista previa (para enviárselo usted): " . $url, (int) $o['id']);
     }
 
     public static function paymentReceived(array $o): void
@@ -46,27 +103,13 @@ final class Notifier
 
     public static function paymentRejected(array $o, string $reason): void
     {
-        $to = Sanitize::email((string) $o['client_email']);
-        if ($to === '') {
-            return;
-        }
         $url = Settings::portalUrl() . '/pago/' . $o['token'];
-        $body = '<p>No pudimos confirmar su pago.</p><p><strong>Motivo:</strong> ' . self::h($reason) . '</p><p><a href="' . self::h($url) . '">Subir un nuevo comprobante</a></p>';
-        Mailer::send($to, 'No pudimos confirmar su pago', Mailer::wrap('Pago no confirmado', $body));
+        self::owner('Pago no confirmado', 'Cliente: ' . self::cliente($o) . "\nMotivo: " . $reason . "\nEnlace para que suba otro comprobante (envíeselo usted): " . $url, (int) $o['id']);
     }
 
     public static function published(array $o, string $siteUrl, string $resetUrl, string $adminUrl): void
     {
-        $to = Sanitize::email((string) $o['client_email']);
-        if ($to === '') {
-            return;
-        }
-        $body = '<p>¡Su web ya está publicada!</p><p><a href="' . self::h($siteUrl) . '">' . self::h($siteUrl) . '</a></p>'
-            . '<p>Para administrarla, defina su propia contraseña aquí (el enlace vence en unos días):</p>'
-            . '<p><a href="' . self::h($resetUrl) . '" style="display:inline-block;background:#b8923a;color:#111;padding:12px 20px;border-radius:8px;text-decoration:none">Definir mi contraseña</a></p>'
-            . '<p>Luego entre a <a href="' . self::h($adminUrl) . '">' . self::h($adminUrl) . '</a>. En el panel verá una sección llamada <strong>INSTRUCCIONES</strong> que le explica cómo cambiar cada cosa.</p>'
-            . '<p><strong>Sus correos corporativos y su dominio .com</strong> los configuramos manualmente: estarán listos en un máximo de <strong>2 días hábiles</strong>.</p>';
-        Mailer::send($to, 'Su web está publicada', Mailer::wrap('¡Su web está publicada!', $body));
+        self::owner('Web publicada', 'Cliente: ' . self::cliente($o) . "\nWeb: " . $siteUrl . "\nPanel: " . $adminUrl . "\nEnlace para que el cliente defina su contraseña (envíeselo usted): " . $resetUrl . "\nCorreos y dominio .com: se configuran manualmente (máx. 2 días hábiles).", (int) $o['id']);
     }
 
     public static function ownerPublished(array $o, array $b): void
@@ -86,11 +129,5 @@ final class Notifier
     public static function renewalSoon(array $o): void
     {
         self::owner('Renovación próxima', ($o['business_name'] ?: $o['fqdn']) . ' vence el ' . $o['renewal_at'] . '.', (int) $o['id']);
-        if (Settings::bool('notify_client_renewal')) {
-            $to = Sanitize::email((string) $o['client_email']);
-            if ($to !== '') {
-                Mailer::send($to, 'Su web vence pronto', Mailer::wrap('Renovación', '<p>Su servicio vence el ' . self::h($o['renewal_at']) . '. Escríbanos por WhatsApp para renovar.</p>'));
-            }
-        }
     }
 }

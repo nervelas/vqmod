@@ -470,7 +470,7 @@ final class AdminController
         'ai_price_in_claude-sonnet-5-5' => ['num', 0], 'ai_price_out_claude-sonnet-5-5' => ['num', 0], 'ai_price_in_claude-haiku-5-5' => ['num', 0], 'ai_price_out_claude-haiku-5-5' => ['num', 0],
         'smtp_host' => ['text', 0], 'smtp_port' => ['int', 0], 'smtp_user' => ['text', 0], 'smtp_pass' => ['secret', 1], 'smtp_secure' => ['smtp', 0], 'smtp_from' => ['email', 0], 'smtp_from_name' => ['text', 0],
         'preview_days' => ['int', 0], 'max_regen' => ['int', 0], 'max_drafts_ip_day' => ['int', 0], 'max_analysis_ip_day' => ['int', 0], 'min_fill_seconds' => ['int', 0],
-        'renewal_notice_days' => ['int', 0], 'notify_client_renewal' => ['bool', 0], 'ssl_wait_min' => ['int', 0], 'trust_proxy' => ['bool', 0],
+        'wa_notify_provider' => ['text', 0], 'wa_notify_number' => ['phone', 0], 'wa_notify_key' => ['secret', 1], 'wa_notify_phone_id' => ['text', 0], 'renewal_notice_days' => ['int', 0], 'notify_client_renewal' => ['bool', 0], 'ssl_wait_min' => ['int', 0], 'trust_proxy' => ['bool', 0],
     ];
 
     private static function settings(): void

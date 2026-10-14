@@ -61,7 +61,7 @@ $site = new Client('http://127.0.0.1:8200', "{$s['slug']}.servicom.test:8200"); 
 t_ok($h['status'] === 200 && !str_contains($h['body'], 'sc-preview') && !str_contains($h['headers'] . $h['body'], 'noindex'), 'sitio público sin barra ni noindex');
 t_ok(!is_file("$W/{$s['slug']}/sc-provision.php") && !is_dir("$W/{$s['slug']}/wp-content/sc-jobs/") || count(glob("$W/{$s['slug']}/wp-content/sc-jobs/*/manifest.json") ?: []) === 0, 'sin script de aprovisionamiento ni manifiestos con claves tras publicar');
 $mails = implode("\n", array_map('file_get_contents', glob('/tmp/s5test/mail/*.json')));
-t_ok(str_contains($mails, 'Definir mi contraseña') && !preg_match('/Contrasena|password"?\s*:\s*"[^"]{8,}/i', $mails), 'correo al cliente con enlace para definir contraseña (sin contraseña en claro)');
+t_ok(str_contains($mails, 'defina su contraseña') && !preg_match('/Contrasena|password"?\s*:\s*"[^"]{8,}/i', $mails), 'aviso al dueño con el enlace para que el cliente defina su contraseña (sin contraseña en claro)');
 t_ok(str_contains($mails, 'Correos solicitados') && str_contains($mails, 'info@minegocio.com'), 'correo al dueño con lista de correos y dominio');
 $wpdb = mysql_val("SELECT db_name FROM s5test.s5_orders WHERE id={$s['id']}"); $pre = mysql_val("SELECT wp_prefix FROM s5test.s5_orders WHERE id={$s['id']}");
 t_ok((int) mysql_val("SELECT COUNT(*) FROM `$wpdb`.`{$pre}users` u JOIN `$wpdb`.`{$pre}usermeta` m ON m.user_id=u.ID WHERE m.meta_key='{$pre}capabilities' AND m.meta_value LIKE '%sc_cliente%'") === 1, 'usuario con rol Cliente creado');

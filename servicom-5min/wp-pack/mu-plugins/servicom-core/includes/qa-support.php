@@ -42,7 +42,7 @@ function sc_qa_urls(): array {
 
 function sc_qa_http( string $method, string $url, string $key ): array {
 	$args = array(
-		'timeout'     => 25,
+		'timeout'     => 15,
 		'redirection' => 3,
 		'sslverify'   => (bool) get_option( 'sc_qa_sslverify', true ),
 		'user-agent'  => 'ServicomSelfCheck/1.0',
@@ -174,6 +174,9 @@ function sc_qa_html_scan( string $html, string $url, array &$probs ): array {
  */
 function sc_selfcheck(): array {
 	@set_time_limit( 300 ); // phpcs:ignore
+	$t0     = microtime( true );
+	$parcial = false;
+	$over   = static function () use ( $t0 ) { return ( microtime( true ) - $t0 ) > 70; }; // presupuesto de tiempo: en un hosting lento no se rastrea todo
 	$key    = (string) get_option( 'sc_preview_key', '' );
 	$urls   = sc_qa_urls();
 	$probs  = array();
@@ -184,6 +187,10 @@ function sc_selfcheck(): array {
 	$page_for = array();
 
 	foreach ( $urls as $url ) {
+		if ( $over() ) {
+			$parcial = true;
+			break;
+		}
 		$r = sc_qa_http( 'GET', $url, $key );
 		if ( 0 === $r['code'] ) {
 			$probs[] = array( 'url' => $url, 'tipo' => 'peticion', 'detalle' => 'No se pudo cargar: ' . $r['error'] );
@@ -203,10 +210,16 @@ function sc_selfcheck(): array {
 	}
 
 	// Imágenes del mismo sitio.
+	$nimg = 0;
 	foreach ( $imgs as $img => $page ) {
 		if ( ! sc_qa_same_site( $img ) ) {
 			continue;
 		}
+		if ( $nimg >= 40 || $over() ) {
+			$parcial = true;
+			break;
+		}
+		++$nimg;
 		$code = sc_qa_probe_media( $img, $key );
 		if ( 200 !== $code ) {
 			$probs[] = array( 'url' => $page, 'tipo' => 'imagen_rota', 'detalle' => $img . ' -> HTTP ' . $code );
@@ -216,7 +229,7 @@ function sc_selfcheck(): array {
 	// Enlaces internos.
 	$checked = 0;
 	foreach ( $links as $link => $page ) {
-		if ( $checked >= 80 || ! sc_qa_same_site( $link ) ) {
+		if ( $checked >= 30 || $over() || ! sc_qa_same_site( $link ) ) {
 			continue;
 		}
 		$path = (string) wp_parse_url( $link, PHP_URL_PATH );
@@ -253,5 +266,5 @@ function sc_selfcheck(): array {
 	}
 
 	$probs = (array) apply_filters( 'sc_selfcheck_problems', $probs, $urls );
-	return array( 'ok' => ! $probs, 'problemas' => array_values( $probs ), 'urls' => $urls );
+	return array( 'ok' => ! $probs, 'problemas' => array_values( $probs ), 'urls' => $urls, 'parcial' => $parcial );
 }

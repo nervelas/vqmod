@@ -623,10 +623,20 @@ final class Pipeline
         $id = (int) $o['id'];
         $st = self::state($o);
         $d = self::driver($o);
-        $r = $d->provision((string) $o['site_path'], (string) $st['job_id'], 'qa', []);
+        try {
+            $r = $d->provision((string) $o['site_path'], (string) $st['job_id'], 'qa', []);
+        } catch (\Throwable $e) {
+            $r = ['ok' => false, 'error' => 'La revisión interna no respondió a tiempo: ' . $e->getMessage()];
+        }
         $problems = [];
         if (empty($r['ok'])) {
+            // El control interno no respondió a tiempo (hosting lento): no se reconstruye la web por eso; la portada se revisa por fuera
+            Log::audit('qa_sin_respuesta', (string) ($r['error'] ?? 'QA no respondió'), $id);
             $problems[] = ['url' => '', 'tipo' => 'qa', 'detalle' => (string) ($r['error'] ?? 'QA no respondió')];
+            $home = Http::request('GET', Orders::previewUrl($o, true), ['timeout' => 30, 'follow' => true, 'verify' => Settings::scheme() === 'https', 'resolve' => self::resolve($o)]);
+            if ($home['status'] !== 200) {
+                $problems[] = ['url' => '/', 'tipo' => 'externo', 'detalle' => 'La portada respondió HTTP ' . $home['status'] . ($home['error'] ? ' (' . $home['error'] . ')' : '')];
+            }
         } else {
             foreach (($r['data']['problemas'] ?? []) as $p) {
                 $problems[] = $p;
@@ -651,6 +661,12 @@ final class Pipeline
         }
         Orders::set($id, ['qa_result' => json_encode(['ok' => !$problems, 'problemas' => $problems, 'intento' => (int) ($st['qa_attempt'] ?? 0) + 1], JSON_UNESCAPED_UNICODE)]);
         if (!$problems) {
+            return 'done';
+        }
+        // Solo los problemas graves (la portada no abre o muestra errores de PHP) bloquean y reconstruyen la web;
+        // lo demás (imágenes lentas, enlaces, QA que tardó) se entrega igual y queda anotado en el panel.
+        if (!array_filter($problems, fn($x) => ($x['tipo'] ?? '') === 'externo')) {
+            Log::audit('qa_aviso', self::summarize($problems), $id);
             return 'done';
         }
         $att = (int) ($st['qa_attempt'] ?? 0);

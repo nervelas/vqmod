@@ -78,6 +78,12 @@ foreach ($cases as $name => $f) {
     start($c, $tok); $st2 = drive($id);
     t_ok($st2 === 'vista_lista', "$name → reintento exitoso", $st2);
 }
+// Un hosting lento: la revisión interna (QA) no responde. La web igual se entrega (no se queda en «Revisando la calidad»).
+$setFail(['provision_qa' => 'La revisión no respondió (simulado)']);
+[$c, $tok, $id] = draft('Taller QA Lento'); start($c, $tok); $st = drive($id);
+$clear();
+t_ok($st === 'vista_lista', 'QA sin respuesta → la web se entrega igual (estado vista_lista)', $st);
+t_ok((int) mysql_val("SELECT COUNT(*) FROM s5test.s5_audit_log WHERE order_id=$id AND action IN ('qa_aviso','qa_sin_respuesta')") >= 1, 'queda anotado en la bitácora para revisarlo');
 t_ok(str_contains(implode('', array_map('file_get_contents', glob('/tmp/s5test/mail/*.json'))), 'Falló la creación de una web'), 'correo de aviso al dueño por fallo');
 
 echo "== Subdominio ya existente\n";

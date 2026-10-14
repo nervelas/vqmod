@@ -6,7 +6,7 @@ declare(strict_types=1);
  */
 $mode = trim((string) @file_get_contents('/tmp/s5test/run/ai-mode')) ?: 'ok';
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-@file_put_contents('/tmp/s5test/run/ai-calls.log', date('c') . " $mode $path\n", FILE_APPEND);
+if ($path !== '/whatsapp.php' && !str_starts_with($path, '/v20.0/')) { @file_put_contents('/tmp/s5test/run/ai-calls.log', date('c') . " $mode $path\n", FILE_APPEND); }
 header('Content-Type: application/json');
 // WhatsApp de avisos (CallMeBot y Cloud API simulados)
 if ($path === '/whatsapp.php') { $ok = ($_GET['apikey'] ?? '') === 'KEYOK' && ($_GET['phone'] ?? '') === '50232040756'; @file_put_contents('/tmp/s5test/run/wa-calls.log', json_encode(['via' => 'callmebot', 'ok' => $ok, 'phone' => $_GET['phone'] ?? '', 'text' => $_GET['text'] ?? ''], JSON_UNESCAPED_UNICODE) . "\n", FILE_APPEND); header('Content-Type: text/html'); http_response_code($ok ? 200 : 401); echo $ok ? 'Message queued' : 'ERROR: apikey invalid'; return; }

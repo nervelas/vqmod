@@ -181,7 +181,7 @@ final class ApiController
             if (empty($d['presentacion']['acepto'])) {
                 self::fail('Marque la casilla de aceptación para subir su presentación.');
             }
-            $max = Settings::int('pres_max_mb', 10) * 1048576;
+            $max = Settings::presMaxMb() * 1048576;
             $ins = PresentationParser::inspect($tmp, $name, $max);
             if (empty($ins['ok'])) {
                 self::fail((string) $ins['mensaje'], 422, ['codigo' => $ins['codigo'] ?? '']);

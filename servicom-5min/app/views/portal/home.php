@@ -8,7 +8,7 @@ $pInfo    = money_q($cfg['precio_info'] ?? 1250);
 $pTienda  = money_q($cfg['precio_tienda'] ?? 1750);
 $pTarjeta = money_q($cfg['precio_tarjeta'] ?? 750);
 $waNum    = (string)($cfg['wa_servicom'] ?? '');
-$presMb   = (int)($cfg['pres_max_mb'] ?? 10);
+$presMb   = (int)($cfg['pres_max_mb'] ?? 50);
 $demos    = [];
 foreach ((array)($cfg['demos'] ?? []) as $d) {
     if (is_array($d) && !empty($d['url']) && preg_match('~^https?://~i', (string)$d['url'])) { $demos[] = $d; }

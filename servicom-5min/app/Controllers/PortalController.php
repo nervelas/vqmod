@@ -25,7 +25,7 @@ final class PortalController
             'precio_tarjeta' => Settings::float('precio_tarjeta', 750),
             'dominio_base' => Settings::baseDomain(),
             'portal_sub' => (string) Settings::get('portal_sub', 'crear'),
-            'pres_max_mb' => Settings::int('pres_max_mb', 10),
+            'pres_max_mb' => Settings::presMaxMb(),
             'banco' => [
                 'banco' => (string) Settings::get('banco_nombre', ''), 'cuenta' => (string) Settings::get('banco_cuenta', ''),
                 'titular' => (string) Settings::get('banco_titular', ''), 'tipo' => (string) Settings::get('banco_tipo', ''),

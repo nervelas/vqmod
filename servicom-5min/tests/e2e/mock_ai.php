@@ -8,6 +8,8 @@ $mode = trim((string) @file_get_contents('/tmp/s5test/run/ai-mode')) ?: 'ok';
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 @file_put_contents('/tmp/s5test/run/ai-calls.log', date('c') . " $mode $path\n", FILE_APPEND);
 header('Content-Type: application/json');
+if ($path === '/v1/files' && $_SERVER['REQUEST_METHOD'] === 'POST') { $ok = isset($_FILES['file']) && ($_FILES['file']['size'] ?? 0) > 0 && ($_SERVER['HTTP_ANTHROPIC_BETA'] ?? '') !== ''; echo json_encode($ok ? ['id' => 'file_mock123', 'type' => 'file'] : ['error' => 'bad']); if (!$ok) { http_response_code(400); } return; }
+if (str_starts_with($path, '/v1/files/') && $_SERVER['REQUEST_METHOD'] === 'DELETE') { echo '{"id":"file_mock123","type":"file_deleted"}'; return; }
 if ($path !== '/v1/messages') { http_response_code(404); echo '{}'; return; }
 // Como la API real: exige la cabecera x-api-key con valor.
 $key = $_SERVER['HTTP_X_API_KEY'] ?? '';
@@ -19,7 +21,7 @@ if ($mode === 'slow') { sleep(40); }
 $user = ''; $hasDoc = false;
 foreach (($body['messages'][0]['content'] ?? []) as $c) {
     if (($c['type'] ?? '') === 'text') { $user .= $c['text']; }
-    if (($c['type'] ?? '') === 'document') { $hasDoc = true; }
+    if (($c['type'] ?? '') === 'document') { $hasDoc = true; if (($c['source']['type'] ?? '') === 'file') { @file_put_contents('/tmp/s5test/run/ai-calls.log', date('c') . " via-file-api\n", FILE_APPEND); } }
 }
 if (is_string($body['messages'][0]['content'] ?? null)) { $user = $body['messages'][0]['content']; }
 $out = ''; @file_put_contents('/tmp/s5test/run/ai-last.txt', $user);

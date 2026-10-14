@@ -10,7 +10,7 @@ $cfg   = isset($cfg) && is_array($cfg) ? $cfg : [];
 $token = isset($token) && is_string($token) && preg_match('/^[a-f0-9]{64}$/', $token) ? $token : '';
 $draft = isset($draft) && is_array($draft) ? $draft : null;
 $nonceA = !empty($nonce) ? ' nonce="' . e($nonce) . '"' : '';
-$presMb = (int)($cfg['pres_max_mb'] ?? 10);
+$presMb = (int)($cfg['pres_max_mb'] ?? 50);
 $pInfo = (float)($cfg['precio_info'] ?? 1250); $pTienda = (float)($cfg['precio_tienda'] ?? 1750); $pTarjeta = (float)($cfg['precio_tarjeta'] ?? 750);
 $boot = [
     'token' => $token,

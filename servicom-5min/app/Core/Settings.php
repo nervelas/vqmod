@@ -22,7 +22,7 @@ final class Settings
             'ai_model_extract' => 'claude-haiku-5-5',
             'ai_cap_day' => '1.00',
             'ai_cap_total' => '10.00',
-            'pres_max_mb' => '10',
+            'pres_max_mb' => '50',
             'webs_path' => '',
             'reservados' => 'www,mail,webmail,cpanel,whm,ftp,smtp,imap,pop,ns1,ns2,autodiscover,autoconfig,admin,panel,portal,api,crear,cpw,ctv,demo,test,dev,staging,blog,tienda,soporte',
             'banco_nombre' => '',
@@ -56,6 +56,12 @@ final class Settings
             }
         }
         return self::$cache;
+    }
+
+    /** Peso máximo (MB) del archivo de presentación. Mínimo 50: una instalación anterior puede traer guardado el antiguo 10. */
+    public static function presMaxMb(): int
+    {
+        return max(50, self::int('pres_max_mb', 50));
     }
 
     public static function flush(): void

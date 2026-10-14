@@ -30,8 +30,8 @@ final class Diagnostics
             $g[] = self::item('GD con WebP', function_exists('imagewebp'), function_exists('imagewebp') ? '' : 'Sin WebP: se usarán JPG/PNG');
         }
         $g[] = self::item('proc_open disponible', function_exists('proc_open') && !in_array('proc_open', array_map('trim', explode(',', (string) ini_get('disable_functions'))), true), 'Si no está, el análisis y la construcción usan el modo por HTTP');
-        $g[] = self::item('upload_max_filesize', self::bytes((string) ini_get('upload_max_filesize')) >= 12 * 1048576, (string) ini_get('upload_max_filesize') . ' (recomendado ≥ 16M)');
-        $g[] = self::item('post_max_size', self::bytes((string) ini_get('post_max_size')) >= 14 * 1048576, (string) ini_get('post_max_size') . ' (recomendado ≥ 20M)');
+        $g[] = self::item('upload_max_filesize', self::bytes((string) ini_get('upload_max_filesize')) >= 52 * 1048576, (string) ini_get('upload_max_filesize') . ' (recomendado ≥ 64M para presentaciones de hasta 50 MB)');
+        $g[] = self::item('post_max_size', self::bytes((string) ini_get('post_max_size')) >= 54 * 1048576, (string) ini_get('post_max_size') . ' (recomendado ≥ 72M)');
         $g[] = self::item('Tiempo máximo de ejecución', null, (string) ini_get('max_execution_time') . ' s (los pasos largos se dividen)');
         $out['Servidor'] = $g;
 

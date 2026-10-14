@@ -38,7 +38,7 @@ final class Analysis
         if (!is_file($script)) {
             return false;
         }
-        $cmd = [$php, $script, 'analyze', (string) $orderId];
+        $cmd = [$php, '-d', 'memory_limit=768M', '-d', 'max_execution_time=240', '-d', 'display_errors=0', $script, 'analyze', (string) $orderId];
         $env = ['PATH' => '/usr/local/bin:/usr/bin:/bin'];
         foreach (array_keys(getenv()) as $k) {
             if (str_starts_with((string) $k, 'S5_')) { $env[$k] = (string) getenv($k); }
@@ -74,6 +74,9 @@ final class Analysis
             return;
         }
         @set_time_limit(170);
+        // PDF pesados (hasta 50 MB): más memoria para leer sus imágenes (si el hosting lo permite)
+        $lim = trim((string) ini_get('memory_limit'));
+        if ($lim !== '-1' && (int) $lim < 640 && preg_match('/^\d+M?$/i', $lim)) { @ini_set('memory_limit', '768M'); }
         $work = Files::root() . '/work/' . $orderId;
         try {
             $f = Files::forOrder($orderId, 'presentacion')[0] ?? null;

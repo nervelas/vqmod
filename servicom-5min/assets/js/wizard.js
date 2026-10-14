@@ -520,7 +520,7 @@
     if (!f) return;
     if (PRES_BAD.test(f.name)) return presErr('Ese formato no lo podemos leer. Guárdala como PDF y vuelve a subirla.');
     if (!PRES_OK.test(f.name)) return presErr('Solo aceptamos PDF, PowerPoint (.pptx) o Word (.docx). Si usas Keynote o Canva, guárdala como PDF y vuelve a subirla.');
-    if (f.size > (CFG.pres_max_mb || 10) * 1048576) return presErr('Tu archivo pesa ' + S5.bytes(f.size) + ' y el máximo es ' + (CFG.pres_max_mb || 10) + ' MB. Reduce su tamaño o guárdalo como PDF más liviano.');
+    if (f.size > (CFG.pres_max_mb || 50) * 1048576) return presErr('Tu archivo pesa ' + S5.bytes(f.size) + ' y el máximo es ' + (CFG.pres_max_mb || 50) + ' MB. Reduce su tamaño o guárdalo como PDF más liviano.');
     if (!f.size) return presErr('El archivo está vacío.');
     var go2 = function () { startUpload(f); };
     if (!token) { $('#pres-meta').textContent = ''; createDraft().then(function (ok) { if (ok) go2(); }); return; }

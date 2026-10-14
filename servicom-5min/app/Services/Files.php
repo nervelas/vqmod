@@ -288,7 +288,7 @@ final class Files
             return ['ok' => false, 'error' => 'No se pudo guardar el archivo.'];
         }
         @chmod(self::dir($orderId) . '/' . $stored, 0640);
-        $mime = ['pdf' => 'application/pdf', 'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'][$tipo] ?? 'application/octet-stream';
+        $mime = ['pdf' => 'application/pdf', 'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'imagen' => 'application/x-s5-imagen', 'texto' => 'application/x-s5-texto'][$tipo] ?? 'application/octet-stream';
         $id = Db::insert('files', ['order_id' => $orderId, 'kind' => 'presentacion', 'orig_name' => Sanitize::text(basename($origName), 120), 'stored' => $stored, 'mime' => $mime, 'size' => $size, 'w' => null, 'h' => null, 'source' => 'cliente', 'created_at' => Db::now()]);
         return ['ok' => true, 'file' => Db::one('SELECT * FROM ' . Db::t('files') . ' WHERE id=?', [$id])];
     }

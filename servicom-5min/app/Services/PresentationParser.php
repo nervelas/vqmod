@@ -61,7 +61,12 @@ class PresentationParser
     private const EXT_MACROS = ['pptm', 'ppsm', 'potm', 'docm', 'dotm', 'xlsm', 'xlsb', 'xltm', 'ppam', 'xlam'];
     private const EXT_PELIGROSAS_EN_ZIP = ['zip', 'jar', 'rar', '7z', 'gz', 'tgz', 'tar', 'exe', 'dll', 'msi', 'bat', 'cmd', 'vbs', 'ps1', 'sh', 'php', 'phtml', 'scr', 'com'];
 
+    /** Programas y scripts: lo único que no se acepta (el sitio es un hosting compartido). */
+    private const EXT_BLOQUEADAS = ['exe', 'dll', 'msi', 'bat', 'cmd', 'com', 'scr', 'vbs', 'vbe', 'ps1', 'sh', 'bash', 'php', 'phtml', 'phar', 'pl', 'py', 'rb', 'cgi', 'jar', 'apk', 'app', 'dmg', 'iso', 'js', 'mjs', 'jsp', 'asp', 'aspx', 'lnk', 'reg', 'wsf', 'htaccess'];
+    private const EXT_IMAGEN = ['jpg', 'jpeg', 'jpe', 'png', 'gif', 'webp', 'bmp'];
+
     private const MENSAJES = [
+        'peligroso' => 'Por seguridad no se aceptan programas ni scripts (.exe, .php, .js…). Sube tu archivo en PDF, Word, PowerPoint, imagen, texto u otro documento.',
         'vacio' => 'El archivo está vacío. Revisa que sea la presentación correcta y vuelve a subirla.',
         'muy_grande' => 'Tu archivo es demasiado pesado. Puedes subir una versión más liviana o llenar los datos manualmente.',
         'formato_no_permitido' => 'Solo podemos leer presentaciones en PDF, PowerPoint (.pptx) o Word (.docx).',
@@ -115,6 +120,12 @@ class PresentationParser
             }
             return ['texto' => '', 'imagenes' => $imagenes, 'paginas' => self::contarPaginasPdf($path)];
         }
+        if ($tipo === 'imagen') {
+            return self::extraerImagenSuelta($path, $workdir);
+        }
+        if ($tipo === 'texto') {
+            return ['texto' => TextClean::limpiar(self::textoGenerico($path), self::MAX_TEXTO, true), 'imagenes' => [], 'paginas' => 1];
+        }
         if ($tipo !== 'pptx' && $tipo !== 'docx') {
             throw self::err('formato_no_permitido');
         }
@@ -147,6 +158,27 @@ class PresentationParser
         return $p === false ? '' : strtolower(substr($n, $p + 1));
     }
 
+    /** Cualquier otro archivo se acepta: imágenes (la IA las lee) y el resto como texto (lo que se pueda leer). */
+    private static function inspeccionarGenerico(string $path, string $ext): string
+    {
+        $fh = @fopen($path, 'rb');
+        $head = $fh ? (string)fread($fh, 16) : '';
+        if ($fh) {
+            fclose($fh);
+        }
+        if (strncmp($head, 'MZ', 2) === 0 || strncmp($head, "\x7fELF", 4) === 0 || strncmp($head, '#!', 2) === 0 || strncmp($head, "\xCA\xFE\xBA\xBE", 4) === 0) {
+            throw self::err('peligroso');
+        }
+        if (in_array($ext, self::EXT_IMAGEN, true) || @getimagesize($path) !== false) {
+            $info = @getimagesize($path);
+            if (!$info || (int)$info[0] < 1 || (int)$info[1] < 1 || (int)$info[0] * (int)$info[1] > self::MAX_PIXELES) {
+                throw self::err('corrupto');
+            }
+            return 'imagen';
+        }
+        return 'texto';
+    }
+
     private static function inspeccionar(string $path, string $nombre, int $maxBytes): string
     {
         if (!is_file($path) || !is_readable($path)) {
@@ -162,14 +194,11 @@ class PresentationParser
             throw self::err('muy_grande', 'Tu archivo pesa más de ' . $mb . ' MB. Puedes subir una versión más liviana o llenar los datos manualmente.');
         }
         $ext = self::extension($nombre);
-        if (in_array($ext, self::EXT_MACROS, true)) {
-            throw self::err('macros');
-        }
-        if (in_array($ext, self::EXT_ANTIGUAS, true)) {
-            throw self::err('formato_antiguo');
+        if (in_array($ext, self::EXT_BLOQUEADAS, true)) {
+            throw self::err('peligroso');
         }
         if (!in_array($ext, ['pdf', 'pptx', 'docx'], true)) {
-            throw self::err('formato_no_permitido');
+            return self::inspeccionarGenerico($path, $ext);
         }
 
         $fh = @fopen($path, 'rb');
@@ -607,6 +636,113 @@ class PresentationParser
     }
 
     /** ¿Cabe `$extra` bytes más sin acercarse al límite de memoria? */
+    /** Una imagen subida como «presentación» (volante, tarjeta, logo): se reduce y se conserva, sin descartar tamaños pequeños. */
+    private static function extraerImagenSuelta(string $path, string $workdir): array
+    {
+        if (!is_dir($workdir) && !@mkdir($workdir, 0775, true) && !is_dir($workdir)) {
+            throw self::err('corrupto');
+        }
+        $bytes = (string)@file_get_contents($path, false, null, 0, self::MAX_BYTES_IMAGEN * 2);
+        $info = @getimagesizefromstring($bytes);
+        $src = $info ? @imagecreatefromstring($bytes) : false;
+        unset($bytes);
+        if (!$src || !$info) {
+            throw self::err('corrupto');
+        }
+        $hashes = [];
+        $r = self::guardarGd($src, (int)$info[0], (int)$info[1], in_array((int)$info[2], [IMAGETYPE_PNG, IMAGETYPE_GIF, IMAGETYPE_WEBP], true), $workdir, 1, $hashes, false);
+        if (!$r) {
+            throw self::err('corrupto');
+        }
+        $r['logo_cand'] = min($r['w'], $r['h']) < 900;
+        $r['logo_score'] = $r['logo_cand'] ? 60 : 0;
+        $r['pagina'] = 1;
+        return ['texto' => '', 'imagenes' => [$r], 'paginas' => 1];
+    }
+
+    /** Texto de cualquier archivo: plano, RTF, HTML, paquetes zip (odt/odp/xlsx/pptm…) o cadenas legibles de binarios antiguos. */
+    public static function textoGenerico(string $path): string
+    {
+        $head = (string)@file_get_contents($path, false, null, 0, 8);
+        if (strncmp($head, "PK\x03\x04", 4) === 0 && class_exists(\ZipArchive::class)) {
+            $t = self::textoDeZip($path);
+            if (mb_strlen(trim($t), 'UTF-8') >= 30) {
+                return $t;
+            }
+        }
+        $raw = (string)@file_get_contents($path, false, null, 0, 8 * 1048576);
+        if ($raw === '') {
+            return '';
+        }
+        $nulos = substr_count(substr($raw, 0, 4096), "\0");
+        if (strncmp($raw, "\xFF\xFE", 2) === 0 || strncmp($raw, "\xFE\xFF", 2) === 0) {
+            return (string)@mb_convert_encoding($raw, 'UTF-8', 'UTF-16');
+        }
+        if ($nulos > 0) {
+            return self::cadenasLegibles($raw);
+        }
+        $t = mb_check_encoding($raw, 'UTF-8') ? $raw : (string)@mb_convert_encoding($raw, 'UTF-8', 'Windows-1252');
+        if (strncmp($t, '{\\rtf', 5) === 0) {
+            $t = (string)preg_replace_callback("/\\\\'([0-9a-f]{2})/i", static fn($m) => (string)@mb_convert_encoding(chr((int)hexdec($m[1])), 'UTF-8', 'Windows-1252'), $t);
+            $t = (string)preg_replace('/\\\\(par|line|tab)\b ?/i', "\n", $t);
+            $t = (string)preg_replace('/\{\\\\\*[^{}]*\}|\\\\[a-z]+-?\d* ?|[{}]/i', '', $t);
+        } elseif (preg_match('/<\s*(html|body|p|div)\b/i', substr($t, 0, 2000))) {
+            $t = (string)preg_replace('#<(script|style)\b.*?</\1>#is', ' ', $t);
+            $t = html_entity_decode(strip_tags((string)preg_replace('#</(p|div|li|h[1-6]|tr)>|<br\s*/?>#i', "\n", $t)), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        }
+        return $t;
+    }
+
+    private static function textoDeZip(string $path): string
+    {
+        $zip = new \ZipArchive();
+        if ($zip->open($path) !== true) {
+            return '';
+        }
+        $out = '';
+        $total = 0;
+        $n = min($zip->numFiles, 600);
+        for ($i = 0; $i < $n && mb_strlen($out, 'UTF-8') < self::MAX_TEXTO; $i++) {
+            $st = $zip->statIndex($i);
+            $name = (string)($st['name'] ?? '');
+            if (!preg_match('#\.xml$#i', $name) || preg_match('#(theme|styles|settings|rels|meta|fontTable|webSettings|numbering|docProps)#i', $name) || (int)($st['size'] ?? 0) > self::MAX_XML_BYTES) {
+                continue;
+            }
+            $x = (string)$zip->getFromIndex($i, self::MAX_XML_BYTES);
+            $total += strlen($x);
+            if ($total > 24 * 1048576) {
+                break;
+            }
+            $x = (string)preg_replace('#</(w:p|a:p|text:p|text:h|text:list-item|table:table-row|row|si|p)>#', "\n", $x);
+            $out .= trim(html_entity_decode(strip_tags($x), ENT_QUOTES | ENT_XML1, 'UTF-8')) . "\n";
+        }
+        $zip->close();
+        return $out;
+    }
+
+    /** Cadenas ASCII/UTF-16 legibles de un binario (doc/ppt/xls antiguos…): la IA encuentra en ellas nombre y contactos. */
+    private static function cadenasLegibles(string $raw): string
+    {
+        $out = [];
+        if (preg_match_all('/[\x20-\x7E\xC1-\xFF\x09]{6,}/', $raw, $m)) {
+            foreach ($m[0] as $s) {
+                $s = trim((string)(mb_check_encoding($s, 'UTF-8') ? $s : @mb_convert_encoding($s, 'UTF-8', 'Windows-1252')));
+                if ($s !== '' && preg_match('/\pL{3}/u', $s)) {
+                    $out[] = $s;
+                }
+            }
+        }
+        if (preg_match_all('/(?:[\x20-\x7E\xC1-\xFF]\x00){5,}/', $raw, $m)) {
+            foreach ($m[0] as $s) {
+                $s = trim((string)@mb_convert_encoding($s, 'UTF-8', 'UTF-16LE'));
+                if ($s !== '') {
+                    $out[] = $s;
+                }
+            }
+        }
+        return mb_substr(implode("\n", array_slice(array_unique($out), 0, 4000)), 0, self::MAX_TEXTO, 'UTF-8');
+    }
+
     public static function memoriaDisponible(int $extra): bool
     {
         return memory_get_usage() + $extra <= (int)(self::limiteMemoria() * 0.8);

@@ -505,7 +505,7 @@
 
   var presSkip = $('#pres-skip') || { hidden: true, addEventListener: function () {} };
   /* ---------- presentación y análisis ---------- */
-  var PRES_BAD = /\.(ppt|doc|key|pages|numbers|odp|odt|rtf|pps|pot|canva)$/i, PRES_OK = /\.(pdf|pptx|docx)$/i, pollT = null, pollN = 0, pollStart = 0;
+  var PRES_BAD = /\.(exe|dll|msi|bat|cmd|com|scr|vbs|vbe|ps1|sh|bash|php|phtml|phar|pl|py|rb|cgi|jar|apk|app|dmg|iso|js|mjs|jsp|asp|aspx|lnk|reg|wsf|htaccess)$/i, pollT = null, pollN = 0, pollStart = 0;
   function presErr(m) { var e = $('#pres-e'); e.textContent = m || ''; e.classList.toggle('on', !!m); }
   function presDraw() {
     var f = data.presentacion.file, c = $('#pres-card');
@@ -518,8 +518,7 @@
   $('#pres-file').addEventListener('change', function () {
     var f = this.files[0]; this.value = ''; presErr('');
     if (!f) return;
-    if (PRES_BAD.test(f.name)) return presErr('Ese formato no lo podemos leer. Guárdala como PDF y vuelve a subirla.');
-    if (!PRES_OK.test(f.name)) return presErr('Solo aceptamos PDF, PowerPoint (.pptx) o Word (.docx). Si usas Keynote o Canva, guárdala como PDF y vuelve a subirla.');
+    if (PRES_BAD.test(f.name)) return presErr('Por seguridad no se aceptan programas ni scripts. Sube tu archivo en PDF, Word, PowerPoint, imagen, texto u otro documento.');
     if (f.size > (CFG.pres_max_mb || 50) * 1048576) return presErr('Tu archivo pesa ' + S5.bytes(f.size) + ' y el máximo es ' + (CFG.pres_max_mb || 50) + ' MB. Reduce su tamaño o guárdalo como PDF más liviano.');
     if (!f.size) return presErr('El archivo está vacío.');
     var go2 = function () { startUpload(f); };

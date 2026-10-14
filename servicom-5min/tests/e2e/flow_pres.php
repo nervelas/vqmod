@@ -15,7 +15,7 @@ function newDraft(Client $c, string $plan = 'info'): string {
 function upload(Client $c, string $tok, string $f): array { return $c->upload($tok, 'presentacion', $f, mime_content_type($f) ?: 'application/octet-stream'); }
 
 echo "== Archivos rechazados (mensajes amables, sin gastar IA)\n";
-$bad = ['vacio.pptx' => 'vac', 'corrupto.docx' => 'dañado|incompleto', 'protegido.pptx' => 'protegido|contraseña', 'protegido.pdf' => 'protegido|contraseña', 'macros.pptx' => 'macro', 'macros.pptm' => 'macro', 'antiguo.ppt' => 'PDF', 'antiguo.doc' => 'PDF', 'keynote.key' => 'PDF', 'diseno.canva' => 'PDF', 'script.exe' => '', 'falso.pdf' => '', 'grande.pdf' => 'grande|MB', 'bomba_ceros.docx' => '', 'bomba_entradas.pptx' => '', 'bomba_ratio.pptx' => '', 'xml_enorme.docx' => '', 'zip_anidado.docx' => '', 'traversal.docx' => ''];
+$bad = ['vacio.pptx' => 'vac', 'corrupto.docx' => 'dañado|incompleto', 'protegido.pptx' => 'protegido|contraseña', 'protegido.pdf' => 'protegido|contraseña', 'macros.pptx' => 'macro', 'script.exe' => 'seguridad', 'falso.pdf' => '', 'grande.pdf' => 'grande|MB', 'bomba_ceros.docx' => '', 'bomba_entradas.pptx' => '', 'bomba_ratio.pptx' => '', 'xml_enorme.docx' => '', 'zip_anidado.docx' => '', 'traversal.docx' => ''];
 $calls0 = (int) trim((string) shell_exec('wc -l < /tmp/s5test/run/ai-calls.log 2>/dev/null'));
 // límite de 50 MB: el PDF «grande» de la carpeta pesa 11 MB (ahora válido); se rechaza una copia de 54 MB
 $big = sys_get_temp_dir() . '/s5_grande54.pdf'; file_put_contents($big, file_get_contents("$F/grande.pdf") . str_repeat(' ', 43 * 1048576));

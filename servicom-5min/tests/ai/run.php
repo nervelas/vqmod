@@ -144,10 +144,10 @@ if (quiero('parser')) {
             ['vacio.pptx', false, 'vacio', null], ['corrupto.docx', false, 'corrupto', null], ['corrupto.pdf', false, 'corrupto', null],
             ['corrupto_texto.pptx', false, 'mime_invalido', null],
             ['protegido.pptx', false, 'protegido', null], ['protegido.pdf', false, 'protegido', null],
-            ['macros.pptx', false, 'macros', null], ['macros_ct.pptx', false, 'macros', null], ['macros.pptm', false, 'macros', null],
+            ['macros.pptx', false, 'macros', null], ['macros_ct.pptx', false, 'macros', null], ['macros.pptm', true, 'ok', 'texto'],
             ['grande.pdf', false, 'muy_grande', null],
-            ['antiguo.ppt', false, 'formato_antiguo', null], ['antiguo.doc', false, 'formato_antiguo', null], ['keynote.key', false, 'formato_antiguo', null], ['diseno.canva', false, 'formato_antiguo', null],
-            ['script.exe', false, 'formato_no_permitido', null], ['falso.pdf', false, 'mime_invalido', null], ['renombrado.pptx', false, 'mime_invalido', null],
+            ['antiguo.ppt', true, 'ok', 'texto'], ['antiguo.doc', true, 'ok', 'texto'], ['keynote.key', true, 'ok', 'texto'], ['diseno.canva', true, 'ok', 'texto'],
+            ['script.exe', false, 'peligroso', null], ['falso.pdf', false, 'mime_invalido', null], ['renombrado.pptx', false, 'mime_invalido', null],
             ['bomba_ceros.docx', false, 'zip_sospechoso', null], ['bomba_ratio.pptx', false, 'zip_sospechoso', null],
             ['xml_enorme.docx', false, 'zip_sospechoso', null], ['traversal.docx', false, 'zip_sospechoso', null],
             ['simbolico.docx', false, 'zip_sospechoso', null], ['zip_anidado.docx', false, 'zip_sospechoso', null],
@@ -164,8 +164,8 @@ if (quiero('parser')) {
         t('inspect archivo > maxBytes → muy_grande', $r['codigo'] === 'muy_grande');
         $r = PresentationParser::inspect("$OUT/nope.pdf", 'nope.pdf', $max);
         t('inspect inexistente → corrupto', !$r['ok'] && $r['codigo'] === 'corrupto');
-        t('mensajes en español amable', str_contains(PresentationParser::inspect("$OUT/antiguo.ppt", 'a.ppt', $max)['mensaje'], 'Guárdala como PDF y vuelve a subirla'));
-        t('doble extensión x.pdf.exe rechazada', PresentationParser::inspect("$OUT/texto.pdf", 'x.pdf.exe', $max)['codigo'] === 'formato_no_permitido');
+        t('mensajes en español amable', str_contains(PresentationParser::inspect("$OUT/script.exe", 'a.exe', $max)['mensaje'], 'Por seguridad no se aceptan programas ni scripts'));
+        t('doble extensión x.pdf.exe rechazada', PresentationParser::inspect("$OUT/texto.pdf", 'x.pdf.exe', $max)['codigo'] === 'peligroso');
         t('extensión en mayúsculas OK', PresentationParser::inspect("$OUT/texto.pdf", 'PRESENTACION.PDF', $max)['ok'] === true);
 
         seccion('PresentationParser::extract');

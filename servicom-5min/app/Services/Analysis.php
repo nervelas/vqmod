@@ -84,7 +84,7 @@ final class Analysis
                 throw new AiUnavailable('No encontramos su archivo. Puede subirlo de nuevo o llenar los datos manualmente.');
             }
             Fs::mkdir($work, 0750);
-            $tipo = ['application/pdf' => 'pdf', 'application/vnd.openxmlformats-officedocument.presentationml.presentation' => 'pptx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx'][$f['mime']] ?? '';
+            $tipo = ['application/pdf' => 'pdf', 'application/vnd.openxmlformats-officedocument.presentationml.presentation' => 'pptx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx', 'application/x-s5-imagen' => 'imagen', 'application/x-s5-texto' => 'texto'][$f['mime']] ?? '';
             $res = PresentationAnalyzer::analizar($orderId, Files::path($f), $tipo, $work);
             // Las imágenes extraídas pasan a ser archivos del pedido (kind presentacion_img), solo candidatas hasta que el cliente confirme
             $imgs = [];

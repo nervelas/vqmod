@@ -23,7 +23,7 @@ class PresentationAnalyzer
     public static function analizar(int $orderId, string $path, string $tipo, string $workdir): array
     {
         $tipo = strtolower($tipo);
-        if (!in_array($tipo, ['pdf', 'pptx', 'docx'], true)) {
+        if (!in_array($tipo, ['pdf', 'pptx', 'docx', 'texto', 'imagen'], true)) {
             throw new AiUnavailable(AiClient::MSG_NO_DISPONIBLE);
         }
         if (!AiBudget::puedeGastar('analisis')) {
@@ -50,8 +50,15 @@ class PresentationAnalyzer
                     throw new AiUnavailable($e->getMessage());
                 }
                 $imagenes = $ext['imagenes'];
+                if ($tipo === 'imagen') {
+                    $first = (string)($imagenes[0]['archivo'] ?? '');
+                    $datos = $first !== '' ? AiClient::extraerPresentacion('imagen', $first, $orderId)['datos'] : TextSchema::validarExtraccion([]);
+                    $ext['texto'] = '';
+                }
                 $util = trim((string)preg_replace('/\[Diapositiva \d+\]|Título:|Notas:|\[Encabezado\/Pie\]/u', '', $ext['texto']));
-                if (mb_strlen($util, 'UTF-8') < 30) {
+                if ($tipo === 'imagen') {
+                    // ya analizada arriba
+                } elseif (mb_strlen($util, 'UTF-8') < 30) {
                     $datos = TextSchema::validarExtraccion([]);
                 } else {
                     $datos = AiClient::extraerPresentacion($tipo, $ext['texto'], $orderId)['datos'];

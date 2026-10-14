@@ -17,9 +17,11 @@ function upload(Client $c, string $tok, string $f): array { return $c->upload($t
 echo "== Archivos rechazados (mensajes amables, sin gastar IA)\n";
 $bad = ['vacio.pptx' => 'vac', 'corrupto.docx' => 'dañado|incompleto', 'protegido.pptx' => 'protegido|contraseña', 'protegido.pdf' => 'protegido|contraseña', 'macros.pptx' => 'macro', 'macros.pptm' => 'macro', 'antiguo.ppt' => 'PDF', 'antiguo.doc' => 'PDF', 'keynote.key' => 'PDF', 'diseno.canva' => 'PDF', 'script.exe' => '', 'falso.pdf' => '', 'grande.pdf' => 'grande|MB', 'bomba_ceros.docx' => '', 'bomba_entradas.pptx' => '', 'bomba_ratio.pptx' => '', 'xml_enorme.docx' => '', 'zip_anidado.docx' => '', 'traversal.docx' => ''];
 $calls0 = (int) trim((string) shell_exec('wc -l < /tmp/s5test/run/ai-calls.log 2>/dev/null'));
+// límite de 50 MB: el PDF «grande» de la carpeta pesa 11 MB (ahora válido); se rechaza una copia de 54 MB
+$big = sys_get_temp_dir() . '/s5_grande54.pdf'; file_put_contents($big, file_get_contents("$F/grande.pdf") . str_repeat(' ', 43 * 1048576));
 foreach ($bad as $f => $re) {
     $c = new Client(); $tok = newDraft($c);
-    $t = microtime(true); $r = upload($c, $tok, "$F/$f");
+    $t = microtime(true); $r = upload($c, $tok, $f === 'grande.pdf' ? $big : "$F/$f");
     $msg = (string) ($r['json']['error'] ?? '');
     $okMsg = empty($r['json']['ok']) && $msg !== '' && ($re === '' || preg_match("/$re/iu", $msg));
     t_ok($okMsg, "rechazado: $f", "HTTP {$r['status']} «" . mb_substr($msg, 0, 90) . '»');

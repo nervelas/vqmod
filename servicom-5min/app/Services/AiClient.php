@@ -236,7 +236,7 @@ TXT;
             $size = (int)filesize($fuente);
             $pag = PresentationParser::contarPaginasPdf($fuente);
             $viaArchivo = false;
-            if ($pag > $maxPag || $size > max($maxMb, (float) Settings::presMaxMb()) * 1048576) {
+            if ($pag > $maxPag || $size > max($maxMb, (float) max(50, (int) (Settings::get('pres_max_mb', 50) ?: 50))) * 1048576) {
                 throw new AiUnavailable(self::MSG_ARCHIVO_GRANDE);
             }
             // La petición directa admite ~32 MB: los PDF más pesados (hasta 50 MB) se envían por la API de archivos

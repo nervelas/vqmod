@@ -14,8 +14,9 @@ let bad = 0;
   await p.click('label.plan-o >> nth=0'); await p.click('#nav-next'); await p.waitForTimeout(1200);
   log('paso', await step());
   log('campos visibles', JSON.stringify(await p.evaluate(() => [...document.querySelectorAll('input:not([type=hidden]):not(.sr),textarea,select')].filter(e => e.offsetParent !== null).map(e => e.id || e.name))));
+  const BIG54 = '/tmp/s5_grande54.pdf'; require('fs').writeFileSync(BIG54, Buffer.concat([require('fs').readFileSync('/home/user/vqmod/servicom-5min/tests/fixtures/presentaciones/out/grande.pdf'), Buffer.alloc(43 * 1048576, 32)]));
   for (const f of ['old.ppt', 'notes.txt', 'big.pdf']) {
-    await p.setInputFiles('#pres-file', (f === 'big.pdf' ? '/home/user/vqmod/servicom-5min/tests/fixtures/presentaciones/out/grande.pdf' : FX + f)); await p.waitForTimeout(500);
+    await p.setInputFiles('#pres-file', (f === 'big.pdf' ? BIG54 : FX + f)); await p.waitForTimeout(500);
     log('err', f, '=>', await p.textContent('#pres-e'));
   }
   const o2 = await overflow(p); if (o2.sw > o2.iw) { bad++; log('OVERFLOW archivo'); }

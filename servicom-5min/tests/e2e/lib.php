@@ -63,6 +63,20 @@ final class Client
         return $this->req('POST', "/api/borrador/$token/subir", ['tipo' => $tipo, 'archivo' => new CURLFile($file, $mime, basename($file))]);
     }
 
+    /** Subida por partes (como hace el navegador): devuelve la respuesta de la última parte. */
+    public function uploadChunked(string $token, string $file, int $chunk = 1048576, ?string $nameAs = null): array
+    {
+        $size = (int) filesize($file); $n = max(1, (int) ceil($size / $chunk)); $uid = bin2hex(random_bytes(8)); $fh = fopen($file, 'rb'); $r = [];
+        for ($i = 0; $i < $n; $i++) {
+            $tmp = tempnam(sys_get_temp_dir(), 'part'); file_put_contents($tmp, (string) fread($fh, $chunk));
+            $r = $this->req('POST', "/api/borrador/$token/subir-parte", ['tipo' => 'presentacion', 'uid' => $uid, 'i' => $i, 'n' => $n, 'name' => $nameAs ?? basename($file), 'parte' => new CURLFile($tmp, 'application/octet-stream', 'parte')]);
+            @unlink($tmp);
+            if (empty($r['json']['ok']) || $i === $n - 1) { break; }
+        }
+        fclose($fh);
+        return $r;
+    }
+
     /** Formulario del admin (cookies + _csrf). */
     public function form(string $path, array $fields): array
     {

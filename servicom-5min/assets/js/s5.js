@@ -15,7 +15,32 @@
     }, function () { return { ok: false, error: NET, _net: true }; });
   };
 
+  // Presentaciones: se suben por partes de 1 MB (sin depender del límite de subida del hosting)
+  S5.uploadChunked = function (token, tipo, file, prog) {
+    var CH = 1048576, n = Math.max(1, Math.ceil(file.size / CH)), uid = '', i = 0;
+    var b = new Uint8Array(12); (window.crypto || window.msCrypto).getRandomValues(b); b.forEach(function (v) { uid += ('0' + v.toString(16)).slice(-2); });
+    function one(idx, tries) {
+      return new Promise(function (res) {
+        var fd = new FormData(), x = new XMLHttpRequest();
+        fd.append('tipo', tipo); fd.append('uid', uid); fd.append('i', idx); fd.append('n', n); fd.append('name', file.name || 'archivo');
+        fd.append('parte', file.slice(idx * CH, Math.min(file.size, (idx + 1) * CH)), 'parte');
+        x.open('POST', '/api/borrador/' + encodeURIComponent(token) + '/subir-parte');
+        x.setRequestHeader('X-CSRF', S5.csrf()); x.setRequestHeader('Accept', 'application/json');
+        x.onload = function () { var j; try { j = JSON.parse(x.responseText); } catch (_) { j = null; } if (j) return res(j); if (tries > 0) return res(one(idx, tries - 1)); res({ ok: false, error: 'No pudimos subir el archivo. Inténtalo de nuevo.' }); };
+        x.onerror = function () { if (tries > 0) { setTimeout(function () { res(one(idx, tries - 1)); }, 1200); } else res({ ok: false, error: NET, _net: true }); };
+        x.send(fd);
+      });
+    }
+    return new Promise(function (resolve) {
+      (function next() {
+        if (prog) prog(Math.min(0.99, i / n));
+        one(i, 3).then(function (r) { if (!r.ok || i >= n - 1) { if (prog && r.ok) prog(1); return resolve(r); } i++; next(); });
+      })();
+    });
+  };
+
   S5.upload = function (token, tipo, file, prog) {
+    if (tipo === 'presentacion') return S5.uploadChunked(token, tipo, file, prog);
     return new Promise(function (res) {
       var fd = new FormData(), x = new XMLHttpRequest();
       fd.append('tipo', tipo); fd.append('archivo', file, file.name || 'archivo');

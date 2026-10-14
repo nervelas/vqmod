@@ -24,6 +24,7 @@ $router->get('/api/borrador/{token}', fn($p) => ApiController::get($p));
 $router->get('/api/borrador/{token}/archivo/{id}', fn($p) => FileController::clientThumb($p));
 $router->post('/api/borrador/{token}/guardar', fn($p) => ApiController::save($p));
 $router->post('/api/borrador/{token}/subir', fn($p) => ApiController::upload($p));
+$router->post('/api/borrador/{token}/subir-parte', fn($p) => ApiController::uploadChunk($p));
 $router->delete('/api/borrador/{token}/archivo/{id}', fn($p) => ApiController::deleteFile($p));
 $router->post('/api/borrador/{token}/analizar', fn($p) => ApiController::analyze($p));
 $router->get('/api/borrador/{token}/analisis', fn($p) => ApiController::analysisStatus($p));

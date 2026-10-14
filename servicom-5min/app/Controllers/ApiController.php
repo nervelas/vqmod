@@ -4,6 +4,7 @@ namespace S5\Controllers;
 
 use S5\Core\Csrf;
 use S5\Core\Db;
+use S5\Core\Fs;
 use S5\Core\Http;
 use S5\Core\Log;
 use S5\Core\RateLimit;
@@ -162,9 +163,13 @@ final class ApiController
         if (!RateLimit::hit('upload-' . $o['id'], 90, 600) || !RateLimit::hit('upload-ip-' . Http::ip(), 400, 3600)) {
             self::fail('Está subiendo demasiados archivos seguidos. Espere un momento.', 429);
         }
+        if (!$_POST && !$_FILES && (int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
+            // El hosting descartó la subida por superar post_max_size: no es un problema del tipo de archivo
+            self::fail('Su hosting no permite subir un archivo tan pesado de una sola vez. Recargue la página y vuelva a intentarlo (se sube por partes).', 413);
+        }
         $tipo = (string) ($_POST['tipo'] ?? '');
         if (!in_array($tipo, ['foto', 'logo', 'comprobante', 'presentacion'], true)) {
-            self::fail('Tipo de archivo no válido.');
+            self::fail('No se pudo leer la subida. Recargue la página e inténtelo de nuevo.');
         }
         $u = $_FILES['archivo'] ?? null;
         if (!$u || !is_array($u) || ($u['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file((string) $u['tmp_name'])) {
@@ -177,27 +182,7 @@ final class ApiController
         $tmp = (string) $u['tmp_name'];
         $name = (string) ($u['name'] ?? 'archivo');
         if ($tipo === 'presentacion') {
-            $d = Orders::data($o);
-            if (empty($d['presentacion']['acepto'])) {
-                self::fail('Marque la casilla de aceptación para subir su presentación.');
-            }
-            $max = Settings::presMaxMb() * 1048576;
-            $ins = PresentationParser::inspect($tmp, $name, $max);
-            if (empty($ins['ok'])) {
-                self::fail((string) $ins['mensaje'], 422, ['codigo' => $ins['codigo'] ?? '']);
-            }
-            // una sola presentación vigente por pedido
-            Files::purgeKind((int) $o['id'], 'presentacion');
-            Files::purgeKind((int) $o['id'], 'presentacion_img');
-            $r = Files::storePresentation((int) $o['id'], $tmp, $name, (string) $ins['tipo']);
-            if (!$r['ok']) {
-                self::fail($r['error'], 422);
-            }
-            $d['presentacion']['file'] = (int) $r['file']['id'];
-            $d['presentacion']['estado'] = 'pendiente';
-            $d['presentacion']['confirmada'] = false;
-            Orders::saveData((int) $o['id'], $d);
-            Http::json(['ok' => true, 'id' => (int) $r['file']['id'], 'nombre' => $r['file']['orig_name'], 'tipo' => 'presentacion', 'url_miniatura' => '', 'mensaje' => 'Archivo recibido correctamente.']);
+            self::guardarPresentacion($o, $tmp, $name);
         }
         $r = $tipo === 'comprobante' ? Files::storeProof((int) $o['id'], $tmp, $name) : Files::storeImage((int) $o['id'], $tmp, $name, $tipo);
         if (!$r['ok']) {
@@ -205,6 +190,88 @@ final class ApiController
         }
         $info = Files::publicInfo($r['file'], $o['token']);
         Http::json(['ok' => true, 'id' => $info['id'], 'nombre' => $info['nombre'], 'tipo' => $tipo, 'url_miniatura' => $info['url_miniatura'], 'w' => $info['w'], 'h' => $info['h']]);
+    }
+
+
+    /** Valida y guarda la presentación (de una subida normal o armada con trozos) y responde. */
+    private static function guardarPresentacion(array $o, string $tmp, string $name): void
+    {
+        $d = Orders::data($o);
+        if (empty($d['presentacion']['acepto'])) {
+            self::fail('Marque la casilla de aceptación para subir su presentación.');
+        }
+        $max = Settings::presMaxMb() * 1048576;
+        $ins = PresentationParser::inspect($tmp, $name, $max);
+        if (empty($ins['ok'])) {
+            self::fail((string) $ins['mensaje'], 422, ['codigo' => $ins['codigo'] ?? '']);
+        }
+        // una sola presentación vigente por pedido
+        Files::purgeKind((int) $o['id'], 'presentacion');
+        Files::purgeKind((int) $o['id'], 'presentacion_img');
+        $r = Files::storePresentation((int) $o['id'], $tmp, $name, (string) $ins['tipo']);
+        if (!$r['ok']) {
+            self::fail($r['error'], 422);
+        }
+        $d['presentacion']['file'] = (int) $r['file']['id'];
+        $d['presentacion']['estado'] = 'pendiente';
+        $d['presentacion']['confirmada'] = false;
+        Orders::saveData((int) $o['id'], $d);
+        Http::json(['ok' => true, 'id' => (int) $r['file']['id'], 'nombre' => $r['file']['orig_name'], 'tipo' => 'presentacion', 'url_miniatura' => '', 'mensaje' => 'Archivo recibido correctamente.']);
+    }
+
+    /** Subida por trozos: no depende de post_max_size / upload_max_filesize del hosting. */
+    public static function uploadChunk(array $p): void
+    {
+        self::guard();
+        $o = self::order($p, true);
+        if (!RateLimit::hit('chunk-' . $o['id'], 1500, 3600)) {
+            self::fail('Está subiendo demasiados archivos seguidos. Espere un momento.', 429);
+        }
+        if ((string) ($_POST['tipo'] ?? '') !== 'presentacion') {
+            self::fail('No se pudo leer la subida. Recargue la página e inténtelo de nuevo.');
+        }
+        $uid = preg_replace('/[^a-f0-9]/', '', (string) ($_POST['uid'] ?? ''));
+        $i = (int) ($_POST['i'] ?? -1);
+        $n = (int) ($_POST['n'] ?? 0);
+        $name = (string) ($_POST['name'] ?? 'archivo');
+        $u = $_FILES['parte'] ?? null;
+        if (strlen($uid) < 12 || $n < 1 || $n > 400 || $i < 0 || $i >= $n || !$u || ($u['error'] ?? 1) !== UPLOAD_ERR_OK || !is_uploaded_file((string) $u['tmp_name']) || (int) $u['size'] > 6291456) {
+            self::fail('No se pudo subir una parte del archivo. Inténtelo de nuevo.', 400);
+        }
+        $d = Orders::data($o);
+        if (empty($d['presentacion']['acepto'])) {
+            self::fail('Marque la casilla de aceptación para subir su presentación.');
+        }
+        $dir = Files::root() . '/chunks/' . (int) $o['id'];
+        Fs::mkdir($dir, 0750);
+        foreach ((array) glob(Files::root() . '/chunks/*/*') as $old) {   // restos de subidas abandonadas (> 1 día)
+            if (is_file($old) && filemtime($old) < time() - 86400) { @unlink($old); }
+        }
+        $part = $dir . '/' . $uid . '.part';
+        $idx = $dir . '/' . $uid . '.idx';
+        $next = is_file($idx) ? (int) file_get_contents($idx) : 0;
+        if ($i === 0) {
+            @unlink($part);
+            $next = 0;
+        }
+        if ($i !== $next) {
+            self::fail('Una parte llegó fuera de orden. Vuelva a subir el archivo.', 409);
+        }
+        $max = Settings::presMaxMb() * 1048576;
+        if (@file_put_contents($part, (string) file_get_contents((string) $u['tmp_name']), FILE_APPEND | LOCK_EX) === false) {
+            self::fail('No se pudo guardar el archivo (disco lleno o sin permisos).', 500);
+        }
+        clearstatcache(true, $part);
+        if ((int) filesize($part) > $max) {
+            @unlink($part); @unlink($idx);
+            self::fail('Su archivo supera el máximo de ' . Settings::presMaxMb() . ' MB.', 413);
+        }
+        file_put_contents($idx, (string) ($i + 1), LOCK_EX);
+        if ($i < $n - 1) {
+            Http::json(['ok' => true, 'siguiente' => $i + 1]);
+        }
+        register_shutdown_function(static function () use ($part, $idx): void { @unlink($part); @unlink($idx); });
+        self::guardarPresentacion($o, $part, $name);   // responde y termina
     }
 
     public static function deleteFile(array $p): void

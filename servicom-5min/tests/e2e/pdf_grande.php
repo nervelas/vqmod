@@ -30,5 +30,13 @@ $a = []; for ($i = 0; $i < 600; $i++) { $a = $c->api('GET', "/api/borrador/$tok/
 t_ok(($a['json']['estado'] ?? '') === 'lista', 'análisis del PDF grande listo', json_encode($a['json'] ?? [], JSON_UNESCAPED_UNICODE));
 t_ok(count($a['json']['resultado']['imagenes'] ?? []) >= 3, 'imágenes extraídas: ' . count($a['json']['resultado']['imagenes'] ?? []));
 t_ok(str_contains((string) @file_get_contents('/tmp/s5test/run/ai-calls.log'), 'via-file-api'), 'el PDF pesado se envió por la API de archivos (no por petición directa)');
+// Subida por partes (la que usa el navegador): no depende del límite de subida del hosting
+$c2 = new Client(); $c2->page('/crear'); $tok2 = $c2->api('POST', '/api/borrador', ['plan' => 'info'])['json']['token'];
+$c2->api('POST', "/api/borrador/$tok2/guardar", ['data' => ['presentacion' => ['acepto' => true]]]);
+$u2 = $c2->uploadChunked($tok2, $pdf);
+t_ok(!empty($u2['json']['ok']) && !empty($u2['json']['id']), 'subida por partes de ' . round($mb, 1) . ' MB', json_encode($u2['json'] ?? [], JSON_UNESCAPED_UNICODE));
+t_ok(count(glob('/tmp/s5test/portal/storage/chunks/*/*') ?: []) === 0, 'las partes temporales se borran al terminar');
+$u3 = $c2->uploadChunked($tok2, __FILE__, 1048576, 'virus.exe');
+t_ok(empty($u3['json']['ok']) && str_contains((string) ($u3['json']['error'] ?? $u3['json']['mensaje'] ?? ''), 'seguridad'), 'por partes también se rechazan programas', json_encode($u3['json'] ?? [], JSON_UNESCAPED_UNICODE));
 exec('rm -rf ' . escapeshellarg($dir));
 exit(($GLOBALS['__t_fail'] ?? 0) ? 1 : 0);

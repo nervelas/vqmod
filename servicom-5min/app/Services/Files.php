@@ -14,7 +14,7 @@ final class Files
     public const MAX_IMG_BYTES = 12582912;      // 12 MB entrada (el navegador ya comprime)
     public const MAX_PROOF_BYTES = 5242880;     // 5 MB comprobante
     public const MAX_PER_ORDER = 600;
-    public const MAX_ORDER_BYTES = 262144000;   // 250 MB
+    public const MAX_ORDER_BYTES = 2147483648;   // 2 GB
 
     public static function root(): string
     {

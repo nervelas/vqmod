@@ -235,7 +235,7 @@ final class ApiController
         $n = (int) ($_POST['n'] ?? 0);
         $name = (string) ($_POST['name'] ?? 'archivo');
         $u = $_FILES['parte'] ?? null;
-        if (strlen($uid) < 12 || $n < 1 || $n > 400 || $i < 0 || $i >= $n || !$u || ($u['error'] ?? 1) !== UPLOAD_ERR_OK || !is_uploaded_file((string) $u['tmp_name']) || (int) $u['size'] > 6291456) {
+        if (strlen($uid) < 12 || $n < 1 || $n > 2000 || $i < 0 || $i >= $n || !$u || ($u['error'] ?? 1) !== UPLOAD_ERR_OK || !is_uploaded_file((string) $u['tmp_name']) || (int) $u['size'] > 6291456) {
             self::fail('No se pudo subir una parte del archivo. Inténtelo de nuevo.', 400);
         }
         $d = Orders::data($o);

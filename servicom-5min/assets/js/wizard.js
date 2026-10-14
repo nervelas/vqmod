@@ -519,7 +519,7 @@
     var f = this.files[0]; this.value = ''; presErr('');
     if (!f) return;
     if (PRES_BAD.test(f.name)) return presErr('Por seguridad no se aceptan programas ni scripts. Sube tu archivo en PDF, Word, PowerPoint, imagen, texto u otro documento.');
-    if (f.size > (CFG.pres_max_mb || 50) * 1048576) return presErr('Tu archivo pesa ' + S5.bytes(f.size) + ' y el máximo es ' + (CFG.pres_max_mb || 50) + ' MB. Reduce su tamaño o guárdalo como PDF más liviano.');
+    if (f.size > (CFG.pres_max_mb || 1024) * 1048576) return presErr('Tu archivo pesa ' + S5.bytes(f.size) + ' y el máximo es ' + (CFG.pres_max_mb || 1024) + ' MB. Reduce su tamaño o guárdalo como PDF más liviano.');
     if (!f.size) return presErr('El archivo está vacío.');
     var go2 = function () { startUpload(f); };
     if (!token) { $('#pres-meta').textContent = ''; createDraft().then(function (ok) { if (ok) go2(); }); return; }

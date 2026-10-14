@@ -10,7 +10,7 @@ $cfg   = isset($cfg) && is_array($cfg) ? $cfg : [];
 $token = isset($token) && is_string($token) && preg_match('/^[a-f0-9]{64}$/', $token) ? $token : '';
 $draft = isset($draft) && is_array($draft) ? $draft : null;
 $nonceA = !empty($nonce) ? ' nonce="' . e($nonce) . '"' : '';
-$presMb = (int)($cfg['pres_max_mb'] ?? 50);
+$presMb = (int)($cfg['pres_max_mb'] ?? 1024);
 $pInfo = (float)($cfg['precio_info'] ?? 1250); $pTienda = (float)($cfg['precio_tienda'] ?? 1750); $pTarjeta = (float)($cfg['precio_tarjeta'] ?? 750);
 $boot = [
     'token' => $token,
@@ -126,7 +126,7 @@ $redes = ['facebook' => 'Facebook', 'instagram' => 'Instagram', 'tiktok' => 'Tik
       <label class="chk chk--k" hidden><input type="checkbox" id="pres-ok" data-k="presentacion.acepto"><span>Mi archivo se usará solo para crear mi web.</span></label>
       <p class="help help--c">Al subir tu archivo aceptas que se use solo para crear tu web: se procesa con inteligencia artificial y se elimina al finalizar.</p>
       <div id="pres-box">
-        <label class="drop drop--big" id="pres-drop" for="pres-file" aria-disabled="true"><?= ico('upload') ?><span>Subir mi presentación</span><small>Cualquier archivo: PDF, Word, PowerPoint, imagen, texto… · hasta <?= (int)$presMb ?> MB</small>
+        <label class="drop drop--big" id="pres-drop" for="pres-file" aria-disabled="true"><?= ico('upload') ?><span>Subir mi presentación</span><small>Cualquier archivo: PDF, Word, PowerPoint, imagen, texto… · hasta <?= $presMb >= 1024 ? (int) round($presMb / 1024) . ' GB' : (int) $presMb . ' MB' ?></small>
           <input class="sr" type="file" id="pres-file" disabled aria-describedby="pres-e"></label>
         <p class="help" id="pres-h" hidden></p>
         <p class="err" id="pres-e" role="alert"></p>

@@ -8,7 +8,7 @@ $pInfo    = money_q($cfg['precio_info'] ?? 1250);
 $pTienda  = money_q($cfg['precio_tienda'] ?? 1750);
 $pTarjeta = money_q($cfg['precio_tarjeta'] ?? 750);
 $waNum    = (string)($cfg['wa_servicom'] ?? '');
-$presMb   = (int)($cfg['pres_max_mb'] ?? 50);
+$presMb   = (int)($cfg['pres_max_mb'] ?? 1024);
 $demos    = [];
 foreach ((array)($cfg['demos'] ?? []) as $d) {
     if (is_array($d) && !empty($d['url']) && preg_match('~^https?://~i', (string)$d['url'])) { $demos[] = $d; }
@@ -30,7 +30,7 @@ $faq = [
   ['¿Qué incluye mi plan?','Diseño premium, dominio .com, hosting, certificado SSL, 10 correos corporativos, formulario de contacto, chat de WhatsApp, mapa, redes sociales y panel de administración. La tienda suma carrito, inventario, pedidos a tu correo y más. Mira la lista completa en la sección “Qué incluye”.'],
   ['¿Cómo se paga?','El pago es únicamente por transferencia o depósito bancario. Cuando apruebas tu vista previa te mostramos los datos de la cuenta, subes tu comprobante y nosotros lo revisamos. El extra de tarjeta es para que tu tienda cobre con tarjeta; se activa con Visanet/Epay y requiere tu afiliación.'],
   ['¿Cómo funcionan el dominio .com y los correos?','Si ya tienes un dominio .com lo conectamos; si no, registramos el que nos pidas. Puedes tener hasta 10 correos como ventas@tunegocio.com. Dominio y correos quedan listos en un máximo de 2 días hábiles.'],
-  ['¿Qué presentación puedo subir?','Cualquier archivo (PDF, Word, PowerPoint, imagen, texto…; solo no se aceptan programas) de hasta ' . $presMb . ' MB. Con solo ese archivo creamos tu web completa (logo, colores, textos y fotos). Lo que falte lo completas después desde tu panel. Si tu archivo es .ppt, .doc, Keynote o Canva, guárdalo como PDF y súbelo de nuevo.'],
+  ['¿Qué presentación puedo subir?','Cualquier archivo (PDF, Word, PowerPoint, imagen, texto…; solo no se aceptan programas) de hasta ' . ($presMb >= 1024 ? (int) round($presMb / 1024) . ' GB' : $presMb . ' MB') . '. Con solo ese archivo creamos tu web completa (logo, colores, textos y fotos). Lo que falte lo completas después desde tu panel. Si tu archivo es .ppt, .doc, Keynote o Canva, guárdalo como PDF y súbelo de nuevo.'],
   ['¿Puedo hacer cambios después?','Sí. Antes de pagar puedes editar tus datos y regenerar la vista previa las veces que necesites. Ya publicada, tu sitio incluye un panel de administración para cambiar textos, fotos, servicios o productos cuando quieras.'],
   ['¿Cómo es la renovación?','El plan es anual: el precio incluye dominio, hosting, SSL y correos por un año. Antes del vencimiento te escribimos para coordinar la renovación; no hay cobros automáticos.'],
   ['¿Qué pasa con la privacidad de mi presentación?','Tu archivo se usa solo para crear tu web, se procesa con inteligencia artificial y se elimina al finalizar. No se comparte ni se publica. Subirla es opcional: siempre puedes llenar los datos a mano.'],

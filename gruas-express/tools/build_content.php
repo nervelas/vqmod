@@ -114,7 +114,7 @@ $G = static function (array $keys): array {
 
 $cardsBlock = ['type' => 'cards'];
 $hero = static function (string $img, string $title, string $sub): array {
-    return ['title' => $title, 'subtitle' => $sub, 'text' => 'Servicio de Grúas 24/7', 'btn_text' => 'Llámenos: {phone}', 'btn_link' => 'tel:{tel}', 'image' => '@m:' . $img];
+    return ['fit' => ($img === 'hero-inicio') ? 'cover' : 'contain', 'title' => $title, 'subtitle' => $sub, 'text' => 'Servicio de Grúas 24/7', 'btn_text' => 'Llámenos: {phone}', 'btn_link' => 'tel:{tel}', 'image' => '@m:' . $img];
 };
 
 $homeDesc = 'Somos una empresa de servicio de grúas guatemalteca. Contamos con equipo de remolque terrestre, pesado y liviano las 24 horas los 7 días de la semana. Servicio de grúas a toda la República de Guatemala desde Q250.';

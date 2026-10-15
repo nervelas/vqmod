@@ -342,7 +342,7 @@ def test_parity(html):
     ok('Fondo blanco (color de fondo #fff en el tema)', 'background:var(--bg)' in css and '--bg:#fff' in css.replace(' ', ''))
     rc = subprocess.run([sys.executable, os.path.join(ROOT, 'tests/content_parity.py')], capture_output=True, text=True, env=dict(os.environ, GX_BASE=BASE))
     ok('Paridad de textos: los 81 textos originales de WordPress aparecen idénticos', rc.returncode == 0, rc.stdout[-300:])
-    ok('Todas las imágenes tienen alt', all(re.search(r'alt="[^"]+"', m) for p in PAGES for m in re.findall(r'<img[^>]+>', html[p])))
+    ok('Todas las imágenes de contenido tienen alt (las decorativas llevan aria-hidden)', all(re.search(r'alt="[^"]+"', m) or 'aria-hidden="true"' in m for p in PAGES for m in re.findall(r'<img[^>]+>', html[p])))
     for p in PAGES:
         h = html[p]
         ok('%s: title, description, canonical, Open Graph, JSON-LD LocalBusiness' % p,

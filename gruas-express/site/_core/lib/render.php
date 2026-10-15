@@ -217,8 +217,10 @@ function gx_header_html(array $S, array $media, string $current): string
             . '<a class="tb" href="mailto:' . e((string)($S['email_link'] ?? '')) . '">' . gx_icon('mail') . '<span>' . e((string)($S['topbar_email_label'] ?? '')) . e((string)($S['email_display'] ?? '')) . '</span></a>'
             . '</div></div>';
     }
-    return $top . '<header class="hdr" id="hdr"><div class="wrap hdr-in">' . $home
+    return $top . '<header class="hdr" id="hdr"><div class="hdr-bg" aria-hidden="true"></div><div class="wrap hdr-in">' . $home
         . gx_nav_html($S, $current, 'nav')
+        . '<a class="hdr-cta" href="tel:' . e((string)($S['phone_tel'] ?? '')) . '" aria-label="' . e((string)($S['cards']['call_title'] ?? 'Llamar')) . '">'
+        . '<span class="hc-ic">' . gx_icon('phone') . '</span><span class="hc-t"><small>' . e((string)($S['cards']['call_title'] ?? '')) . '</small><strong>' . e((string)($S['phone_display'] ?? '')) . '</strong></span></a>'
         . '<button class="burger" type="button" id="burger" aria-label="Abrir menú" aria-expanded="false" aria-controls="mnav"><span></span><span></span><span></span></button>'
         . '</div></header>'
         . '<div class="mnav-ov" id="mnav-ov" hidden></div><aside class="mnav" id="mnav" aria-hidden="true">'
@@ -238,25 +240,27 @@ function gx_hero_html(array $page, array $S, array $media): string
     $bt = gx_tokens((string)($h['btn_text'] ?? ''), $S);
     $bl = gx_safe_url(gx_tokens((string)($h['btn_link'] ?? ''), $S));
 
-    $o = '<section class="hero"><div class="wrap hero-in"><div class="hero-tx reveal">';
+    $fit = (($h['fit'] ?? 'cover') === 'contain') ? ' hero-contain' : '';
+    $o = '<section class="hero' . $fit . '">';
+    if ($img) {
+        $o .= '<div class="hero-media">' . ($fit !== '' ? '<img class="hero-bg" src="' . e(gx_media_url($img)) . '" alt="" aria-hidden="true" decoding="async">' : '')
+            . '<img class="hero-img" src="' . e(gx_media_url($img)) . '" width="' . (int)$img['w'] . '" height="' . (int)$img['h'] . '" alt="' . e((string)$img['alt']) . '" fetchpriority="high" decoding="async"></div>';
+    }
+    $o .= '<div class="hero-wrap"><div class="wrap"><div class="hero-card reveal">';
     if ($t !== '' || $st !== '') {
         $o .= '<h1 class="h1">' . ($t !== '' ? '<span class="h1-a">' . e($t) . '</span> ' : '') . ($st !== '' ? '<span class="h1-b">' . e($st) . '</span>' : '') . '</h1>';
     }
     if ($tx !== '') {
-        $o .= '<p class="hero-sub">' . e($tx) . '</p>';
+        $o .= '<p class="hero-sub">' . gx_icon('truck') . '<span>' . e($tx) . '</span></p>';
     }
     if ($bt !== '' && $bl !== '') {
         $isTel = str_starts_with($bl, 'tel:');
         $o .= '<a class="btn btn-red btn-hero" href="' . e($bl) . '">' . gx_icon($isTel ? 'phone' : 'arrow-right') . '<span>' . e($bt) . '</span></a>';
     }
-    $o .= '</div>';
-    if ($img) {
-        $o .= '<div class="hero-fig reveal"><div class="frame"><img class="hero-img" src="' . e(gx_media_url($img)) . '" width="' . (int)$img['w'] . '" height="' . (int)$img['h'] . '" alt="' . e((string)$img['alt']) . '" fetchpriority="high" decoding="async"></div></div>';
-    }
-    return $o . '</div></section>';
+    return $o . '</div></div></div></section>';
 }
 
-function gx_footer_html(array $S): string
+function gx_footer_html(array $S, array $media = []): string
 {
     $extra = '';
     if (trim((string)($S['address'] ?? '')) !== '') {
@@ -276,7 +280,9 @@ function gx_footer_html(array $S): string
     if ($soc !== '') {
         $extra .= '<p class="ft-soc">' . $soc . '</p>';
     }
-    return '<footer class="ftr"><div class="wrap">' . $extra . '<p class="copy">' . e((string)($S['footer_text'] ?? '')) . '</p></div></footer>'
+    $lg = $media[(int)($S['logo'] ?? 0)] ?? null;
+    $plate = $lg ? '<a class="ftr-logo" href="/" aria-label="' . e((string)($S['site_name'] ?? '')) . '"><img src="' . e(gx_media_url($lg)) . '" width="' . (int)$lg['w'] . '" height="' . (int)$lg['h'] . '" alt="' . e((string)$lg['alt']) . '" loading="lazy"></a>' : '';
+    return '<footer class="ftr"><div class="wrap">' . $plate . $extra . '<p class="copy">' . e((string)($S['footer_text'] ?? '')) . '</p></div></footer>'
         . '<div class="fab">'
         . '<button class="fab-top" type="button" id="totop" aria-label="Subir al inicio" hidden>' . gx_icon('chevron-up') . '</button>'
         . '<a class="fab-b fab-call" href="tel:' . e((string)($S['phone_tel'] ?? '')) . '" aria-label="Llamar">' . gx_icon('phone') . '</a>'
@@ -379,7 +385,7 @@ function gx_page_html(array $page, array $S, array $media, string $kind = 'page'
     } else {
         $h .= (string)($page['error_html'] ?? '');
     }
-    $h .= '</main>' . gx_footer_html($S)
+    $h .= '</main>' . gx_footer_html($S, $media)
         . '<script src="/assets/js/site.min.js" defer></script></body></html>';
     return $h;
 }

@@ -131,6 +131,7 @@ function gx_page_editor(array $p): string
         . gx_f_in('Botón: texto', 'hero_btn_text', $h['btn_text'] ?? '', 'text', 'Marcadores: {phone} {tel} {wa} {email}', 'maxlength="80"')
         . gx_f_in('Botón: enlace', 'hero_btn_link', $h['btn_link'] ?? '', 'text', 'Ej.: tel:{tel}, https://… o /contactenos/', 'maxlength="300"')
         . gx_f_media('Imagen de portada', 'hero_image', (int)($h['image'] ?? 0))
+        . gx_f_sel('Ajuste de la imagen', 'hero_fit', ['cover' => 'Llenar el ancho (recorta los bordes)', 'contain' => 'Mostrar completa (imágenes con texto o logo)'], $h['fit'] ?? 'cover')
         . '</section></div><h2 class="sec-h">Contenido de la página <small>(en el orden en que aparece)</small></h2><div id="blocks">';
     foreach (array_values((array)($p['blocks'] ?? [])) as $i => $b) {
         $o .= gx_block_form($i, (array)$b);
@@ -161,6 +162,7 @@ function gx_parse_page_post(array $old): array
         'btn_text' => gx_line($_POST['hero_btn_text'] ?? '', 80),
         'btn_link' => gx_safe_url($_POST['hero_btn_link'] ?? '', 300),
         'image' => $media_ok($_POST['hero_image'] ?? 0),
+        'fit' => (($_POST['hero_fit'] ?? '') === 'contain') ? 'contain' : 'cover',
     ];
     $blocks = [];
     $ids = is_array($_POST['bid'] ?? null) ? array_slice($_POST['bid'], 0, 60) : [];

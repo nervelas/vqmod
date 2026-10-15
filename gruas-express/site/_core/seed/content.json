@@ -442,6 +442,7 @@
                 "seo_desc": "Somos una empresa de servicio de grúas guatemalteca. Contamos con equipo de remolque terrestre, pesado y liviano las 24 horas los 7 días de la semana. Servicio de grúas a toda la República de Guatemala desde Q250.",
                 "og_image": "@m:hero-inicio",
                 "hero": {
+                    "fit": "cover",
                     "title": "Grúas Express",
                     "subtitle": "Towing Guatemala",
                     "text": "Servicio de Grúas 24/7",
@@ -568,6 +569,7 @@
                 "seo_desc": "Somos una empresa guatemalteca que brinda servicio de grúas. Contamos con equipo de remolque, terrestre, pesado y liviano las 24 horas los 7 días de la semana.",
                 "og_image": "@m:hero-sobre",
                 "hero": {
+                    "fit": "contain",
                     "title": "Grúas Express",
                     "subtitle": "Towing Guatemala",
                     "text": "Servicio de Grúas 24/7",
@@ -612,6 +614,7 @@
                 "seo_desc": "Servicio de grúas en Guatemala, urgentes, eficientes y a un precio justo. Hacemos todo lo posible para auxiliarlo.",
                 "og_image": "@m:hero-servicio",
                 "hero": {
+                    "fit": "contain",
                     "title": "",
                     "subtitle": "Grúas Express Towing",
                     "text": "Servicio de Grúas 24/7",
@@ -694,6 +697,7 @@
                 "seo_desc": "Contáctenos. Teléfono: 3556-7904. Whatsapp: 3556-7904. Email: info@gruasexpresstowing.gt. Envíenos un mensaje.",
                 "og_image": "@m:hero-contacto",
                 "hero": {
+                    "fit": "contain",
                     "title": "Grúas Express",
                     "subtitle": "Towing Guatemala",
                     "text": "Servicio de Grúas 24/7",

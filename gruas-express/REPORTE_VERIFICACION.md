@@ -69,6 +69,12 @@ Revisadas a 375, 768 y 1440 px (más 320 px) en las 4 páginas, menú móvil abi
 | **Iconos premium en el menú** | Cada opción del menú (escritorio y panel móvil) lleva un ícono SVG propio dentro de un botón con degradado; el ícono es editable por opción en Panel > Ajustes > Menú |
 | **El contenido debe ser igual** | Se eliminaron las mayúsculas forzadas por CSS (ahora cada texto se ve con las mayúsculas del original) y se restauró el orden del original en la portada (título, subtítulo, texto, botón). **Prueba automática: los 81 textos del contenido original (extraídos de la base de datos de WordPress) aparecen idénticos en el sitio nuevo.** Lo único añadido por pedido del cliente: formulario con tipo de servicio/ubicación que envía a WhatsApp, botones flotantes, y `alt`/meta descriptions para SEO |
 
+## 7. Rediseño del encabezado y de la portada (v3)
+
+* **Encabezado premium** (claro, alto contraste): franja rojo/azul del logo, logo con sombra, menú en una bandeja azul suave con **botones tipo tarjeta blanca + ícono azul sólido** (activo en azul con ícono rojo), botón rojo «Llámenos» con el teléfono y animación, y el encabezado se compacta al hacer scroll. En móvil: botón de menú en azul y panel lateral con tarjetas grandes con ícono.
+* **Portada a pantalla completa** con tarjeta blanca superpuesta (título, subtítulo, botón). Las imágenes que traen texto/logo incorporado (Sobre nosotros, Servicio, Contáctenos) se muestran **completas** sobre un fondo difuminado de la misma foto (opción «Ajuste de la imagen» en el panel).
+* Banda de precio con bordes inclinados, tarjetas de contacto grandes, galería con marco blanco, pie con logo.
+
 ## Apéndice: pruebas automatizadas (Apache + `mod_php`, 265)
 - ✅ GET / -> 200
 - ✅ GET /sobre-nosotros/ -> 200
@@ -120,7 +126,7 @@ Revisadas a 375, 768 y 1440 px (más 320 px) en las 4 páginas, menú móvil abi
 - ✅ Sin mayúsculas forzadas por CSS (el contenido se ve con las mayúsculas del original)
 - ✅ Fondo blanco (color de fondo #fff en el tema)
 - ✅ Paridad de textos: los 81 textos originales de WordPress aparecen idénticos
-- ✅ Todas las imágenes tienen alt
+- ✅ Todas las imágenes de contenido tienen alt (las decorativas llevan aria-hidden)
 - ✅ /: title, description, canonical, Open Graph, JSON-LD LocalBusiness
 - ✅ /sobre-nosotros/: title, description, canonical, Open Graph, JSON-LD LocalBusiness
 - ✅ /servicio-de-gruas-24-7/: title, description, canonical, Open Graph, JSON-LD LocalBusiness
@@ -272,20 +278,20 @@ Revisadas a 375, 768 y 1440 px (más 320 px) en las 4 páginas, menú móvil abi
 - ✅ Ningún archivo malicioso llegó a /uploads
 - ✅ /uploads solo contiene .webp (+ index.html/.htaccess)
 - ✅ Aceptada y recodificada: JPEG con PHP añadido al final
-- ✅   sin código incrustado y WEBP real: i859e69606e09f8531c2f.webp
-- ✅   sin código incrustado y WEBP real: i859e69606e09f8531c2f-t.webp
+- ✅   sin código incrustado y WEBP real: i4ec13501955f19e3956a.webp
+- ✅   sin código incrustado y WEBP real: i4ec13501955f19e3956a-t.webp
 - ✅ Aceptada y recodificada: JPEG con PHP en comentario
-- ✅   sin código incrustado y WEBP real: ib5e13ac9b1808a2eb6ba.webp
-- ✅   sin código incrustado y WEBP real: ib5e13ac9b1808a2eb6ba-t.webp
+- ✅   sin código incrustado y WEBP real: id60cf46f8b3e9084a3d3-t.webp
+- ✅   sin código incrustado y WEBP real: id60cf46f8b3e9084a3d3.webp
 - ✅ Aceptada y recodificada: PNG con PHP en chunk tEXt
-- ✅   sin código incrustado y WEBP real: iae60cd70c7965701d1a4.webp
-- ✅   sin código incrustado y WEBP real: iae60cd70c7965701d1a4-t.webp
+- ✅   sin código incrustado y WEBP real: ic8735d4d5281fdae14a0-t.webp
+- ✅   sin código incrustado y WEBP real: ic8735d4d5281fdae14a0.webp
 - ✅ Aceptada y recodificada: WEBP válido
-- ✅   sin código incrustado y WEBP real: i5e42973d9bba2d8bbb24.webp
-- ✅   sin código incrustado y WEBP real: i5e42973d9bba2d8bbb24-t.webp
+- ✅   sin código incrustado y WEBP real: i937b8d9073d4d4a1fe04-t.webp
+- ✅   sin código incrustado y WEBP real: i937b8d9073d4d4a1fe04.webp
 - ✅ Aceptada y recodificada: JPG válido
-- ✅   sin código incrustado y WEBP real: ie5e03a281f168be9d59c-t.webp
-- ✅   sin código incrustado y WEBP real: ie5e03a281f168be9d59c.webp
+- ✅   sin código incrustado y WEBP real: ifd28531089e831c1bb75.webp
+- ✅   sin código incrustado y WEBP real: ifd28531089e831c1bb75-t.webp
 - ✅ Biblioteca lista las imágenes subidas
 - ✅ Eliminar imagen sin uso
 - ✅ No permite eliminar una imagen en uso

@@ -41,10 +41,8 @@ define( 'EMPTY_TRASH_DAYS', 15 );
 define( 'WP_DEBUG', false );
 define( 'WP_DEBUG_DISPLAY', false );
 
-/* === LOCAL-DEV (solo copia de trabajo; NO está en el ZIP) === */
+// Detección de HTTPS detrás de proxy/balanceador del hosting
 if ( isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https' ) { $_SERVER['HTTPS'] = 'on'; }
-define( 'WP_HTTP_BLOCK_EXTERNAL', true );
-/* === FIN === */
 
 /* That's all, stop editing! Happy publishing. */
 if ( ! defined( 'ABSPATH' ) ) {

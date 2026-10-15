@@ -5,7 +5,7 @@
  */
 defined( 'ABSPATH' ) || exit;
 
-define( 'AGRO_WA_NUM', '50240769228' );          // WhatsApp 4076 9228 (GT +502)
+define( 'AGRO_WA_NUM', '50240016659' );          // WhatsApp 4001 6659 (GT +502)
 define( 'AGRO_TEL', '25068100' );                // PBX 2506 8100
 define( 'AGRO_MAIL', 'info@agroinco.com' );
 define( 'AGRO_VER', '1.0.1' );
@@ -197,7 +197,7 @@ add_action( 'ocean_before_footer', function () {
 	    <p class="agro-sub">Atención directa de especialistas en control y sellado de fluidos.</p>
 	    <div class="agro-ctas">
 	      <a class="agro-cta agro-cta--tel" href="tel:+502<?php echo AGRO_TEL; ?>"><?php echo agro_svg( 'llave' ); ?>PBX: 2506 8100</a>
-	      <a class="agro-cta agro-cta--wa" href="https://wa.me/<?php echo AGRO_WA_NUM; ?>?text=<?php echo rawurlencode( 'Hola AGROINCO, quiero una cotización.' ); ?>" target="_blank" rel="noopener"><?php echo agro_svg( 'chat' ); ?>WhatsApp: 4076 9228</a>
+	      <a class="agro-cta agro-cta--wa" href="https://wa.me/<?php echo AGRO_WA_NUM; ?>?text=<?php echo rawurlencode( 'Hola AGROINCO, quiero una cotización.' ); ?>" target="_blank" rel="noopener"><?php echo agro_svg( 'chat' ); ?>WhatsApp: 4001 6659</a>
 	      <a class="agro-cta agro-cta--mail" href="mailto:<?php echo AGRO_MAIL; ?>"><?php echo agro_svg( 'papel' ); ?><?php echo AGRO_MAIL; ?></a>
 	    </div>
 	  </div>

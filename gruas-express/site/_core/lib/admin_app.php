@@ -584,7 +584,7 @@ function gx_act_settings_save(): void
         $c[$k] = gx_line($P['cards'][$k] ?? '', 60);
     }
     $new['cards'] = $c;
-    $def = ['navy' => '#0a2a40', 'blue' => '#11557b', 'red' => '#bf0000', 'bg' => '#ffffff', 'soft' => '#eef4f8', 'ink' => '#12303f'];
+    $def = ['navy' => '#072253', 'blue' => '#0b489d', 'red' => '#d3202e', 'bg' => '#ffffff', 'soft' => '#edf4fd', 'ink' => '#0d2147'];
     $col = [];
     foreach ($def as $k => $d) {
         $col[$k] = gx_color($P['col'][$k] ?? '', $d);
@@ -758,9 +758,9 @@ function gx_view_ajustes(array $user): void
         . gx_f_in('Título de WhatsApp', 'cards[wa_title]', $c['wa_title'] ?? '') . gx_f_in('Prefijo de WhatsApp', 'cards[wa_label]', $c['wa_label'] ?? '')
         . gx_f_in('Título del correo', 'cards[mail_title]', $c['mail_title'] ?? '')
         . '</section><section class="card-p"><h2>Colores principales</h2><div class="cols">'
-        . gx_f_in('Azul oscuro (títulos, cabeceras)', 'col[navy]', $col['navy'] ?? '#0a2a40', 'color') . gx_f_in('Azul del logo', 'col[blue]', $col['blue'] ?? '#11557b', 'color')
-        . gx_f_in('Rojo del logo (botones)', 'col[red]', $col['red'] ?? '#bf0000', 'color') . gx_f_in('Fondo', 'col[bg]', $col['bg'] ?? '#ffffff', 'color')
-        . gx_f_in('Fondo suave', 'col[soft]', $col['soft'] ?? '#eef4f8', 'color') . gx_f_in('Texto', 'col[ink]', $col['ink'] ?? '#12303f', 'color')
+        . gx_f_in('Azul oscuro (títulos, cabeceras)', 'col[navy]', $col['navy'] ?? '#072253', 'color') . gx_f_in('Azul del logo', 'col[blue]', $col['blue'] ?? '#0b489d', 'color')
+        . gx_f_in('Rojo del logo (botones)', 'col[red]', $col['red'] ?? '#d3202e', 'color') . gx_f_in('Fondo', 'col[bg]', $col['bg'] ?? '#ffffff', 'color')
+        . gx_f_in('Fondo suave', 'col[soft]', $col['soft'] ?? '#edf4fd', 'color') . gx_f_in('Texto', 'col[ink]', $col['ink'] ?? '#0d2147', 'color')
         . '</div><h2>Datos para Google (LocalBusiness)</h2>'
         . gx_f_ta('Descripción', 'ld_description', $S['ld_description'] ?? '', 3) . gx_f_in('Rango de precio', 'ld_price', $S['ld_price'] ?? '')
         . '</section></div><div class="grid2"><section class="card-p"><h2>Envío de correo (SMTP opcional)</h2><p class="note">Si no lo activa, se usa la función mail() del hosting.</p>'

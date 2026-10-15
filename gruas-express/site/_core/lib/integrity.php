@@ -22,7 +22,7 @@ function gx_skip_dir(string $rel): bool
 /** Archivos que cambian por diseño y se comprueban aparte. */
 function gx_is_volatile(string $rel): bool
 {
-    return in_array($rel, ['README.txt', 'LEEME.txt', 'favicon.ico', 'favicon.png', 'apple-touch-icon.png'], true)
+    return in_array($rel, ['README.txt', 'LEEME.txt', 'favicon.ico', 'favicon.png', 'favicon-192.png', 'apple-touch-icon.png'], true)
         || (bool)preg_match('/^[^\/]+\.md$/', $rel);   // documentación en la raíz (bloqueada por .htaccess; se puede borrar)
 }
 

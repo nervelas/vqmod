@@ -245,7 +245,7 @@ def test_public():
         html[p] = b.decode('utf8')
     s, h, b = anon.get('/pagina-que-no-existe/')
     ok('404 personalizada (sin rutas/versiones)', s == 404 and b'404' in b and b'Apache' not in b and b'/srv' not in b, s)
-    for p in ['/sitemap.xml', '/robots.txt', '/favicon.ico', '/favicon.png', '/apple-touch-icon.png', '/403.html', '/500.html']:
+    for p in ['/sitemap.xml', '/robots.txt', '/favicon.ico', '/favicon.png', '/favicon-192.png', '/apple-touch-icon.png', '/403.html', '/500.html']:
         s, h, b = anon.get(p)
         ok('GET %s -> 200' % p, s == 200, s)
     sm = anon.get('/sitemap.xml')[2].decode()
@@ -327,7 +327,7 @@ def test_parity(html):
         ok('%s: WhatsApp api.whatsapp.com/send?phone=50235567904' % p, 'href="https://api.whatsapp.com/send?phone=50235567904"' in h)
         ok('%s: mailto:info@agroinco.com (destino original)' % p, 'href="mailto:info@agroinco.com"' in h)
         ok('%s: menú con las 4 URLs originales' % p, all(('href="%s"' % u) in h for u in PAGES))
-        ok('%s: logo + logo móvil' % p, '/uploads/logo.webp' in h and '/uploads/logo-mobile.webp' in h)
+        ok('%s: logo nuevo (y ninguna referencia al logo anterior)' % p, '/uploads/logo.webp' in h and 'logo-mobile' not in h)
     counts = {'/': 22, '/servicio-de-gruas-24-7/': 16}
     for p, n in counts.items():
         got = len(re.findall(r'class="gal-a"', html[p]))
@@ -752,7 +752,7 @@ def test_uploads(c):
     reset_integrity_cache()
     # intentar ejecutar un php dentro de /uploads (colocado fuera del panel) -> ver test D; aquí: el panel no permite tipos
     r = c.get('/admin/?p=medios')
-    ok('Biblioteca lista las imágenes subidas', r[2].count(b'class="mc"') >= 31 + 5)
+    ok('Biblioteca lista las imágenes subidas', r[2].count(b'class="mc"') >= 30 + 5)
     # reemplazar y eliminar
     f = form_by_act(r[2], 'media_delete')
     ids = re.findall(rb'name="id" value="(\d+)"', r[2])

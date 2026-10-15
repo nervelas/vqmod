@@ -158,7 +158,7 @@ function gx_delete_media_files(array $m): void
     }
 }
 
-/** Genera favicon.png (32), apple-touch-icon.png (180) y favicon.ico (PNG incrustado) desde un medio. */
+/** Genera favicon.png (32), favicon-192.png, apple-touch-icon.png (180) y favicon.ico (PNG incrustado) desde un medio. */
 function gx_make_favicons(array $m): bool
 {
     $path = GX_ROOT . '/uploads/' . $m['file'];
@@ -171,16 +171,20 @@ function gx_make_favicons(array $m): bool
     }
     $sw = imagesx($src);
     $sh = imagesy($src);
-    $side = min($sw, $sh);
-    // logos apaisados: el emblema está a la izquierda
-    $sx = ($sw > $sh * 1.5) ? 0 : (int)(($sw - $side) / 2);
-    $sy = (int)(($sh - $side) / 2);
+    // logos apaisados: se usa solo el emblema (mitad izquierda); si ya es cuadrado se usa completo
+    $cw = ($sw > $sh * 1.5) ? (int)round($sh * 1.52) : $sw;
+    $ch = $sh;
     $out = [];
-    foreach ([32 => 'favicon.png', 180 => 'apple-touch-icon.png'] as $px => $fname) {
+    foreach ([32 => 'favicon.png', 180 => 'apple-touch-icon.png', 192 => 'favicon-192.png'] as $px => $fname) {
         $d = imagecreatetruecolor($px, $px);
-        imagefill($d, 0, 0, imagecolorallocate($d, 246, 241, 228));
+        imagefill($d, 0, 0, imagecolorallocate($d, 255, 255, 255));
         imagealphablending($d, true);
-        imagecopyresampled($d, $src, 0, 0, $sx, $sy, $px, $px, $side, $side);
+        $pad = (int)round($px * 0.06);
+        $box = $px - 2 * $pad;
+        $r = min($box / $cw, $box / $ch);
+        $dw = max(1, (int)round($cw * $r));
+        $dh = max(1, (int)round($ch * $r));
+        imagecopyresampled($d, $src, (int)(($px - $dw) / 2), (int)(($px - $dh) / 2), 0, 0, $dw, $dh, $cw, $ch);
         ob_start();
         imagepng($d, null, 9);
         $out[$fname] = (string)ob_get_clean();
@@ -190,7 +194,6 @@ function gx_make_favicons(array $m): bool
     foreach ($out as $fname => $bin) {
         file_put_contents(GX_ROOT . '/' . $fname, $bin, LOCK_EX);
     }
-    // ICO con una imagen PNG de 32x32
     $png = $out['favicon.png'];
     $ico = pack('vvv', 0, 1, 1) . pack('CCCCvvVV', 32, 32, 0, 0, 1, 32, strlen($png), 22) . $png;
     file_put_contents(GX_ROOT . '/favicon.ico', $ico, LOCK_EX);

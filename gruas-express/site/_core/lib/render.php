@@ -246,7 +246,7 @@ function gx_hero_html(array $page, array $S, array $media): string
         $o .= '<div class="hero-media">' . ($fit !== '' ? '<img class="hero-bg" src="' . e(gx_media_url($img)) . '" alt="" aria-hidden="true" decoding="async">' : '')
             . '<img class="hero-img" src="' . e(gx_media_url($img)) . '" width="' . (int)$img['w'] . '" height="' . (int)$img['h'] . '" alt="' . e((string)$img['alt']) . '" fetchpriority="high" decoding="async"></div>';
     }
-    $o .= '<div class="hero-wrap"><div class="wrap"><div class="hero-card reveal">';
+    $o .= '<div class="hero-wrap"><div class="wrap"><div class="hero-card">';
     if ($t !== '' || $st !== '') {
         $o .= '<h1 class="h1">' . ($t !== '' ? '<span class="h1-a">' . e($t) . '</span> ' : '') . ($st !== '' ? '<span class="h1-b">' . e($st) . '</span>' : '') . '</h1>';
     }
@@ -349,7 +349,7 @@ function gx_page_html(array $page, array $S, array $media, string $kind = 'page'
         . '<title>' . e($title) . '</title>'
         . ($desc !== '' ? '<meta name="description" content="' . e($desc) . '">' : '')
         . '<meta name="robots" content="' . $robots . '">'
-        . '<meta name="theme-color" content="' . e((string)($S['colors']['navy'] ?? '#0a2a40')) . '">'
+        . '<meta name="theme-color" content="' . e((string)($S['colors']['navy'] ?? '#072253')) . '">'
         . '<link rel="canonical" href="' . e($base . $path) . '">';
     if ($kind === 'page') {
         $h .= '<meta property="og:locale" content="es_GT"><meta property="og:type" content="website">'
@@ -363,7 +363,7 @@ function gx_page_html(array $page, array $S, array $media, string $kind = 'page'
             . ($desc !== '' ? '<meta name="twitter:description" content="' . e($desc) . '">' : '')
             . ($ogm ? '<meta name="twitter:image" content="' . e($base . gx_media_url($ogm)) . '">' : '');
     }
-    $h .= '<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">'
+    $h .= '<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="/favicon.png"><link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">'
         . '<link rel="apple-touch-icon" href="/apple-touch-icon.png">'
         . '<link rel="preload" href="/assets/fonts/bsd-800.woff2" as="font" type="font/woff2" crossorigin>'
         . '<link rel="preload" href="/assets/fonts/manrope-500.woff2" as="font" type="font/woff2" crossorigin>'
@@ -396,12 +396,12 @@ function gx_theme_css(array $S): string
 {
     $c = (array)($S['colors'] ?? []);
     $v = [
-        'navy' => gx_color($c['navy'] ?? '', '#0a2a40'),
-        'blue' => gx_color($c['blue'] ?? '', '#11557b'),
-        'red' => gx_color($c['red'] ?? '', '#bf0000'),
+        'navy' => gx_color($c['navy'] ?? '', '#072253'),
+        'blue' => gx_color($c['blue'] ?? '', '#0b489d'),
+        'red' => gx_color($c['red'] ?? '', '#d3202e'),
         'bg' => gx_color($c['bg'] ?? '', '#ffffff'),
-        'soft' => gx_color($c['soft'] ?? '', '#eef4f8'),
-        'ink' => gx_color($c['ink'] ?? '', '#12303f'),
+        'soft' => gx_color($c['soft'] ?? '', '#edf4fd'),
+        'ink' => gx_color($c['ink'] ?? '', '#0d2147'),
     ];
     $o = "/* generado por el panel: no editar a mano */\n:root{";
     foreach ($v as $k => $x) {

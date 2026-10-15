@@ -6,29 +6,70 @@
   function $$(s, c) { return Array.prototype.slice.call((c || d).querySelectorAll(s)); }
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* ---- revelado al scroll ---- */
+  /* ---- revelado al scroll (direccional, con retardo escalonado) ---- */
+  function tag(sel, fn) {
+    $$(sel).forEach(function (el, i) {
+      var v = fn(i, el); if (v) { el.setAttribute('data-fx', v); }
+      el.style.transitionDelay = ((i % 6) * 70) + 'ms';
+    });
+  }
+  tag('.vids .vid', function (i) { return i % 2 ? 'r' : 'l'; });
+  tag('.feats .feat', function (i) { return i % 2 ? 'r' : 'l'; });
+  tag('.cards .card', function () { return 'z'; });
+  tag('.gal-i', function () { return 'z'; });
   var items = $$('.reveal');
   if ('IntersectionObserver' in window && !reduce) {
     h.classList.add('rv');
     var io = new IntersectionObserver(function (es) {
       es.forEach(function (e) {
-        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+        if (e.isIntersecting) {
+          var el = e.target; el.classList.add('in'); io.unobserve(el);
+          // al terminar, el elemento vuelve a su estado normal (los efectos hover no heredan el retardo)
+          window.setTimeout(function () { el.classList.remove('reveal', 'in'); el.removeAttribute('data-fx'); el.style.transitionDelay = ''; }, 1500);
+        }
       });
     }, { rootMargin: '0px 0px -6% 0px', threshold: 0.08 });
     items.forEach(function (el) { io.observe(el); });
+  }
+
+  /* ---- barra de progreso de lectura ---- */
+  var sp = null;
+  if (!reduce) { sp = d.createElement('div'); sp.className = 'sp'; sp.setAttribute('aria-hidden', 'true'); d.body.appendChild(sp); }
+
+  /* ---- luz que sigue al cursor en tarjetas ---- */
+  $$('.card,.feat').forEach(function (el) {
+    el.addEventListener('pointermove', function (e) {
+      var r = el.getBoundingClientRect();
+      el.style.setProperty('--mx', (e.clientX - r.left) + 'px'); el.style.setProperty('--my', (e.clientY - r.top) + 'px');
+    });
+  });
+
+  /* ---- botones magnéticos ---- */
+  if (!reduce && window.matchMedia && window.matchMedia('(hover:hover)').matches) {
+    $$('.btn-hero,.hdr-cta,.fab-b').forEach(function (el) {
+      el.addEventListener('pointermove', function (e) {
+        var r = el.getBoundingClientRect();
+        el.style.setProperty('--tx', (((e.clientX - r.left) / r.width - 0.5) * 10).toFixed(1) + 'px');
+        el.style.setProperty('--ty', (((e.clientY - r.top) / r.height - 0.5) * 8).toFixed(1) + 'px');
+      });
+      el.addEventListener('pointerleave', function () { el.style.setProperty('--tx', '0px'); el.style.setProperty('--ty', '0px'); });
+    });
   }
 
   /* ---- cabecera y botón subir ---- */
   var hdr = $('#hdr'), top = $('#totop');
   var ticking = false;
   var heroImg = $('.hero-img');
-  if (heroImg && !reduce) { heroImg.style.transform = 'scale(1.06)'; }
   function onScroll() {
     var y = window.pageYOffset || 0;
     if (hdr) { hdr.classList.toggle('stuck', y > 8); }
     if (top) { top.hidden = y < 500; }
     if (heroImg && !reduce && y < 900) {
-      heroImg.style.transform = 'translate3d(0,' + Math.round(y * 0.05) + 'px,0) scale(1.06)';
+      heroImg.style.transform = 'translate3d(0,' + Math.min(30, Math.round(y * 0.035)) + 'px,0)';
+    }
+    if (sp) {
+      var max = (d.documentElement.scrollHeight - window.innerHeight) || 1;
+      sp.style.transform = 'scaleX(' + Math.max(0, Math.min(1, y / max)).toFixed(4) + ')';
     }
     ticking = false;
   }

@@ -32,8 +32,7 @@ Canonical original de inicio: `https://gruasexpresstowing.gt/`. No hay entradas 
 | Elemento | Valor exacto |
 |----------|--------------|
 | Barra superior | `Teléfono: 3556-7904 \| Email: info@gruasexpresstowing.gt` (teléfono → `tel:35567904`) |
-| Logo (escritorio) | `Logo.png` 1005×223 — «Grúas Express Towing Guatemala» → enlaza a `/` |
-| Logo (móvil) | `LM3.png` 251×56 → enlaza a `/` |
+| Logo | **Reemplazado a pedido del cliente** por el logo nuevo (WebP transparente 2000×667, «Grúas Express Towing Guatemala») en cabecera, menú móvil, pie y favicon → enlaza a `/`. Original anterior: `Logo.png` 1005×223 y `LM3.png` 251×56 (ya no se usan) |
 | Favicon | el original **no tiene**; se genera del emblema del logo |
 | Menú | INICIO `/` · SOBRE NOSOTROS `/sobre-nosotros/` · SERVICIO DE GRÚAS 24/7 `/servicio-de-gruas-24-7/` · CONTÁCTENOS `/contactenos/` |
 | Pie de página | `Copyright 2026 - Grúas Express Towing Guatemala` + botón «subir» |
@@ -100,7 +99,7 @@ Todas descargadas, validadas (firma + MIME), recodificadas con GD a WEBP (≤192
 | 2022/10/WhatsApp-Image-2022-10-04-at-19.24.40.jpeg | `wa-2022.webp` | Inicio |
 | 2024/09/IMG-20240927-WA0002 … WA0007.jpg (6) | `izaje-2 … izaje-7.webp` | Inicio |
 | 2026/02/1.jpeg · sn4.png · SDG.png · ctc2.png | `hero-inicio/sobre/servicio/contacto.webp` | portadas |
-| 2022/10/Logo.png · LM3.png | `logo.webp` · `logo-mobile.webp` | cabecera |
+| (logo nuevo entregado por el cliente) | `logo.webp` | cabecera, pie, favicon, datos para Google |
 | 2024/09/VID-20240927-WA0004.mp4 · WA0001.mp4 | `media/vid-1.mp4` · `vid-2.mp4` (sin metadatos, `faststart`) + póster | Inicio |
 
 Orden de la galería de Inicio (22): WA0002, WA0007, WA0006, WA0005, WA0004, WA0003, SG-11, SG-10, SG-4, SG-5, SG-6, SG-7, SG-8, SG-9, SG-3, SG-2, SG-1, SG-16, SG-15, WhatsApp-Image-2022-10-04, SG-12, SG-13.
@@ -124,3 +123,4 @@ Fuentes Roboto / Roboto Slab / Vollkorn (Google Fonts), iconos Font Awesome (`ph
 * **Botones flotantes** de llamada y WhatsApp (pedido del cliente); mismos destinos que las tarjetas.
 * **SEO (invisible):** `alt` en imágenes, meta description, Open Graph y JSON-LD; títulos de las páginas internas.
 * **Verificación:** `tests/content_parity.py` compara los 81 textos originales contra el sitio nuevo (0 diferencias).
+* **Logo:** sustituido por el nuevo logo del cliente en todo el sitio (el anterior se eliminó).

@@ -18,7 +18,7 @@ Fecha: 15-oct-2026 · Paquete: `gruas-express-towing.zip` · Resultado global: *
 
 ## 1. Entornos de prueba
 
-* **Apache 2.4.58 + `mod_php` 8.3** con `AllowOverride All`, ejecutando el `.htaccess` real (simula un hosting compartido; el ZIP descomprimido en la raíz): **265/265 pruebas OK**.
+* **Apache 2.4.58 + `mod_php` 8.3** con `AllowOverride All`, ejecutando el `.htaccess` real (simula un hosting compartido; el ZIP descomprimido en la raíz): **266/266 pruebas OK**.
 * **PHP 8.0.30 (`php -S`)** — no procesa `.htaccess`, por lo que se ejecutan solo las pruebas que dependen de PHP (formulario, panel, 2FA, edición, publicación, subidas, bloqueo): **146/146 OK**, con GD+WebP y Argon2id.
 * **Chromium (Playwright)**: capturas, consola, desbordes y flujo real del formulario.
 * PHP 8.1/8.2 no se instalaron; el código evita sintaxis posterior a 8.0 y se validó con 8.0.30 y 8.3.6.
@@ -75,7 +75,14 @@ Revisadas a 375, 768 y 1440 px (más 320 px) en las 4 páginas, menú móvil abi
 * **Portada a pantalla completa** con tarjeta blanca superpuesta (título, subtítulo, botón). Las imágenes que traen texto/logo incorporado (Sobre nosotros, Servicio, Contáctenos) se muestran **completas** sobre un fondo difuminado de la misma foto (opción «Ajuste de la imagen» en el panel).
 * Banda de precio con bordes inclinados, tarjetas de contacto grandes, galería con marco blanco, pie con logo.
 
-## Apéndice: pruebas automatizadas (Apache + `mod_php`, 265)
+## 8. Logo, paleta y efectos (v4)
+
+* **Logo nuevo** (WebP transparente 2000×667) en cabecera, menú móvil, pie, favicon y datos para Google; el anterior se eliminó del paquete (la prueba verifica que ya no se referencia).
+* **Paleta tomada del logo nuevo:** azul marino `#072253`, azul rey `#0B489D`, azul brillante `#2392E2` y rojo `#D3202E` (editable en el panel).
+* **Favicon / íconos:** `favicon.ico`, `favicon.png` (32), `favicon-192.png` y `apple-touch-icon.png` (180), generados del emblema del logo; se pueden cambiar subiendo una imagen en Panel > Ajustes > Favicon.
+* **Efectos (todos con CSS/JS propio, sin librerías):** barra de progreso de lectura con los colores del logo, zoom lento (Ken Burns) y entrada escalonada en la portada, texto con brillo animado, revelados direccionales con retardo escalonado, luz que sigue al cursor en tarjetas, botones magnéticos, destello en la banda de precio, subrayado animado, formas flotantes, elevación al pasar el cursor. Se desactivan con «reducir movimiento» del sistema. Verificado en Chromium: 0 errores de JavaScript, todo el contenido queda visible tras recorrer la página.
+
+## Apéndice: pruebas automatizadas (Apache + `mod_php`, 266)
 - ✅ GET / -> 200
 - ✅ GET /sobre-nosotros/ -> 200
 - ✅ GET /servicio-de-gruas-24-7/ -> 200
@@ -85,6 +92,7 @@ Revisadas a 375, 768 y 1440 px (más 320 px) en las 4 páginas, menú móvil abi
 - ✅ GET /robots.txt -> 200
 - ✅ GET /favicon.ico -> 200
 - ✅ GET /favicon.png -> 200
+- ✅ GET /favicon-192.png -> 200
 - ✅ GET /apple-touch-icon.png -> 200
 - ✅ GET /403.html -> 200
 - ✅ GET /500.html -> 200
@@ -102,22 +110,22 @@ Revisadas a 375, 768 y 1440 px (más 320 px) en las 4 páginas, menú móvil abi
 - ✅ /: WhatsApp api.whatsapp.com/send?phone=50235567904
 - ✅ /: mailto:info@agroinco.com (destino original)
 - ✅ /: menú con las 4 URLs originales
-- ✅ /: logo + logo móvil
+- ✅ /: logo nuevo (y ninguna referencia al logo anterior)
 - ✅ /sobre-nosotros/: botón llamar tel:35567904
 - ✅ /sobre-nosotros/: WhatsApp api.whatsapp.com/send?phone=50235567904
 - ✅ /sobre-nosotros/: mailto:info@agroinco.com (destino original)
 - ✅ /sobre-nosotros/: menú con las 4 URLs originales
-- ✅ /sobre-nosotros/: logo + logo móvil
+- ✅ /sobre-nosotros/: logo nuevo (y ninguna referencia al logo anterior)
 - ✅ /servicio-de-gruas-24-7/: botón llamar tel:35567904
 - ✅ /servicio-de-gruas-24-7/: WhatsApp api.whatsapp.com/send?phone=50235567904
 - ✅ /servicio-de-gruas-24-7/: mailto:info@agroinco.com (destino original)
 - ✅ /servicio-de-gruas-24-7/: menú con las 4 URLs originales
-- ✅ /servicio-de-gruas-24-7/: logo + logo móvil
+- ✅ /servicio-de-gruas-24-7/: logo nuevo (y ninguna referencia al logo anterior)
 - ✅ /contactenos/: botón llamar tel:35567904
 - ✅ /contactenos/: WhatsApp api.whatsapp.com/send?phone=50235567904
 - ✅ /contactenos/: mailto:info@agroinco.com (destino original)
 - ✅ /contactenos/: menú con las 4 URLs originales
-- ✅ /contactenos/: logo + logo móvil
+- ✅ /contactenos/: logo nuevo (y ninguna referencia al logo anterior)
 - ✅ /: galería con 22 imágenes
 - ✅ /servicio-de-gruas-24-7/: galería con 16 imágenes
 - ✅ /: 2 videos en el orden original
@@ -278,20 +286,20 @@ Revisadas a 375, 768 y 1440 px (más 320 px) en las 4 páginas, menú móvil abi
 - ✅ Ningún archivo malicioso llegó a /uploads
 - ✅ /uploads solo contiene .webp (+ index.html/.htaccess)
 - ✅ Aceptada y recodificada: JPEG con PHP añadido al final
-- ✅   sin código incrustado y WEBP real: i4ec13501955f19e3956a.webp
-- ✅   sin código incrustado y WEBP real: i4ec13501955f19e3956a-t.webp
+- ✅   sin código incrustado y WEBP real: id39c09777ed058506257.webp
+- ✅   sin código incrustado y WEBP real: id39c09777ed058506257-t.webp
 - ✅ Aceptada y recodificada: JPEG con PHP en comentario
-- ✅   sin código incrustado y WEBP real: id60cf46f8b3e9084a3d3-t.webp
-- ✅   sin código incrustado y WEBP real: id60cf46f8b3e9084a3d3.webp
+- ✅   sin código incrustado y WEBP real: i67841368ef71f1830b47.webp
+- ✅   sin código incrustado y WEBP real: i67841368ef71f1830b47-t.webp
 - ✅ Aceptada y recodificada: PNG con PHP en chunk tEXt
-- ✅   sin código incrustado y WEBP real: ic8735d4d5281fdae14a0-t.webp
-- ✅   sin código incrustado y WEBP real: ic8735d4d5281fdae14a0.webp
+- ✅   sin código incrustado y WEBP real: i11c1afd43107296498bc.webp
+- ✅   sin código incrustado y WEBP real: i11c1afd43107296498bc-t.webp
 - ✅ Aceptada y recodificada: WEBP válido
-- ✅   sin código incrustado y WEBP real: i937b8d9073d4d4a1fe04-t.webp
-- ✅   sin código incrustado y WEBP real: i937b8d9073d4d4a1fe04.webp
+- ✅   sin código incrustado y WEBP real: i04c407a2ce4b53fa5bcf.webp
+- ✅   sin código incrustado y WEBP real: i04c407a2ce4b53fa5bcf-t.webp
 - ✅ Aceptada y recodificada: JPG válido
-- ✅   sin código incrustado y WEBP real: ifd28531089e831c1bb75.webp
-- ✅   sin código incrustado y WEBP real: ifd28531089e831c1bb75-t.webp
+- ✅   sin código incrustado y WEBP real: i709e38b2470a5a394d1c.webp
+- ✅   sin código incrustado y WEBP real: i709e38b2470a5a394d1c-t.webp
 - ✅ Biblioteca lista las imágenes subidas
 - ✅ Eliminar imagen sin uso
 - ✅ No permite eliminar una imagen en uso

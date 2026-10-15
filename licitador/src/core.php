@@ -112,6 +112,12 @@ function money($n, string $cur = ''): string {
     if ($n === null || $n === '') return '—';
     return 'Q ' . number_format((float) $n, 2, '.', ',');
 }
+function money_short($n): string {
+    $n = (float) $n;
+    if ($n >= 1000000) return 'Q ' . rtrim(rtrim(number_format($n / 1000000, 1, '.', ''), '0'), '.') . ' M';
+    if ($n >= 1000) return 'Q ' . number_format($n / 1000, 0, '.', ',') . ' mil';
+    return 'Q ' . number_format($n, 0);
+}
 $GLOBALS['MESES'] = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 function fdate($d, bool $time = false): string {
     if (!$d) return '—';

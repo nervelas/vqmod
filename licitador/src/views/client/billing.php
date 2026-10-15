@@ -1,5 +1,5 @@
 <?php $days = $u['sub_ends'] ? days_left($u['sub_ends']) : null; $active = client_has_access($u); ?>
-<div class="page-head"><div><p class="eyebrow">Suscripción</p><h1>Tu plan</h1></div></div>
+<div class="page-head"><div><p class="eyebrow">Suscripción</p><h1>Tu <em>plan</em></h1></div></div>
 <section class="card sub-status <?= $active ? '' : 'urgent' ?>">
   <div><small>Plan actual</small><strong><?= e($plan['name']) ?></strong></div>
   <div><small>Estado</small><strong><?= $active ? 'Activo' : 'Vencido' ?></strong></div>

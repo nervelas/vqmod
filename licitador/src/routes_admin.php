@@ -35,6 +35,14 @@ route('GET', '/admin', function () {
         'run' => row("SELECT * FROM sync_runs ORDER BY id DESC LIMIT 1"),
         'open' => (int) val("SELECT COUNT(*) FROM tenders WHERE status='abierto'"), 'total' => (int) val("SELECT COUNT(*) FROM tenders"),
     ];
+    // Serie de 14 días para la gráfica
+    $d['s_imp'] = $d['s_alert'] = $d['s_lbl'] = [];
+    for ($i = 13; $i >= 0; $i--) {
+        $ds = date('Y-m-d', strtotime("-$i days"));
+        $d['s_lbl'][] = date('j', strtotime($ds));
+        $d['s_imp'][] = (int) val("SELECT COUNT(*) FROM tenders WHERE created_at>=? AND created_at<?", [$ds . ' 00:00:00', date('Y-m-d', strtotime($ds . ' +1 day')) . ' 00:00:00']);
+        $d['s_alert'][] = (int) val("SELECT COUNT(*) FROM queue WHERE created_at>=? AND created_at<?", [$ds . ' 00:00:00', date('Y-m-d', strtotime($ds . ' +1 day')) . ' 00:00:00']);
+    }
     render('admin/dashboard', ['d' => $d, 'a' => $a, 'title' => 'Tablero'], 'admin');
 });
 

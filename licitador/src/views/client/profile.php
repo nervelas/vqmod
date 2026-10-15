@@ -1,4 +1,4 @@
-<div class="page-head"><div><p class="eyebrow">Mi empresa</p><h1>Datos para tus ofertas</h1></div></div>
+<div class="page-head"><div><p class="eyebrow">Mi empresa</p><h1>Datos para tus <em>ofertas</em></h1></div></div>
 <form method="post" class="card form narrow-form"><?= csrf_field() ?>
   <p class="muted">Estos datos se usan para armar tus borradores de oferta.</p>
   <?= f_input('company', 'Nombre de la empresa', $p['company']) ?>

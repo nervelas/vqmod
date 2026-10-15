@@ -138,7 +138,7 @@ function seed_defaults(): void {
     // Sectores
     if (!val("SELECT COUNT(*) FROM sectors")) {
         $s = [['Construcción y obra', 'construccion', 'Caminos, muros, drenajes y remodelaciones municipales.', 'construccion, obra, pavimento, drenaje'], ['Transporte y combustibles', 'transporte', 'Combustible, llantas, mantenimiento y flete.', 'combustible, diesel, transporte'], ['Insumos médicos', 'medico', 'Medicamentos, material de curación y equipo.', 'medicamento, insumo medico, jeringa'], ['Útiles escolares', 'escolar', 'Cuadernos, mobiliario y librería para escuelas.', 'util escolar, cuaderno, papeleria'], ['Ferretería y materiales', 'ferreteria', 'Tuberías PVC, cemento, hierro, pintura y herramientas.', 'tuberia, pvc, cemento, hierro'], ['Servicios', 'servicios', 'Seguridad, consultoría, capacitación e impresión.', 'servicio, consultoria, seguridad']];
-        foreach ($s as $i => $x) insert('sectors', ['name' => $x[0], 'slug' => $x[1], 'tagline' => $x[2], 'keywords' => $x[3], 'image' => 'img/sector-' . $x[1] . '.svg', 'sort_order' => $i]);
+        foreach ($s as $i => $x) insert('sectors', ['name' => $x[0], 'slug' => $x[1], 'tagline' => $x[2], 'keywords' => $x[3], 'image' => 'img/sector-' . $x[1] . '.webp', 'sort_order' => $i]);
     }
     // Páginas legales
     $pg = [
@@ -148,7 +148,7 @@ function seed_defaults(): void {
     ];
     foreach ($pg as $slug => $p) q("INSERT IGNORE INTO pages (slug,title,body) VALUES (?,?,?)", [$slug, $p[0], $p[1]]);
     // Ajustes por defecto
-    $st = ['site_name' => 'Licitador', 'tagline' => 'El radar de compras del Estado para tu negocio', 'hero_title' => 'Cada día, los concursos del Estado que sí te sirven', 'hero_sub' => 'Dinos qué vendes y dónde trabajas. Licitador revisa GUATECOMPRAS por ti, te avisa solo lo importante y te ayuda a preparar tu oferta.',
+    $st = ['site_name' => 'Licitador', 'tagline' => 'El radar de compras del Estado para tu negocio', 'hero_title' => 'Cada día, los concursos del Estado que *sí te sirven*', 'hero_sub' => 'Dinos qué vendes y dónde trabajas. Licitador revisa GUATECOMPRAS por ti, te avisa solo lo importante y te ayuda a preparar tu oferta.',
         'cta_text' => 'Probar 7 días gratis', 'trial_days' => '7', 'timezone' => 'America/Guatemala', 'min_score' => '45', 'digest_hour' => '7', 'source_type' => 'demo', 'wa_provider' => 'manual', 'accent_new' => '#2FBF8F', 'accent_urgent' => '#C2334D', 'gold' => '#C9A24B',
         'contact_email' => '', 'contact_phone' => '', 'contact_whatsapp' => '', 'seo_title' => 'Licitador · Concursos del Estado de Guatemala para tu negocio', 'seo_desc' => 'Recibe cada día los concursos de GUATECOMPRAS que le sirven a tu empresa, con plazos, requisitos, precios de referencia y borrador de oferta.',
         'how1_t' => 'Cuéntanos qué vendes', 'how1_d' => 'Palabras clave, departamentos, rango de montos y modalidades. Tarda 2 minutos.', 'how2_t' => 'Revisamos por ti, cada día', 'how2_d' => 'Cruzamos los concursos publicados con tu perfil y te explicamos por qué coinciden.', 'how3_t' => 'Ofertas con ventaja', 'how3_d' => 'Plazos, requisitos, precios de adjudicados parecidos y un borrador de oferta listo para revisar.',

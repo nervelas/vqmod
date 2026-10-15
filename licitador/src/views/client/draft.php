@@ -1,6 +1,6 @@
-<p><a href="<?= e(url('app/oportunidad/' . $t['id'])) ?>" class="back">← Volver al concurso</a></p>
+<p><a href="<?= e(url('app/oportunidad/' . $t['id'])) ?>" class="back"><?= icon("arrow") ?>Volver al concurso</a></p>
 <div class="page-head"><div><p class="eyebrow">Borrador a revisar · <?= $d['source'] === 'ia' ? 'redactado con IA' : 'plantilla inteligente' ?></p><h1>Borrador de oferta</h1><p class="muted"><?= e($t['title']) ?></p></div>
-  <div class="btn-row"><a class="btn btn-gold btn-sm" href="<?= e(url('app/borrador/' . $d['id'] . '/docx')) ?>">Descargar DOCX</a><a class="btn btn-ghost btn-sm" href="<?= e(url('app/borrador/' . $d['id'] . '/pdf')) ?>">Descargar PDF</a></div></div>
+  <div class="btn-row"><a class="btn btn-gold btn-sm" href="<?= e(url('app/borrador/' . $d['id'] . '/docx')) ?>"><?= icon("download") ?>Descargar DOCX</a><a class="btn btn-ghost btn-sm" href="<?= e(url('app/borrador/' . $d['id'] . '/pdf')) ?>"><?= icon("download") ?>Descargar PDF</a></div></div>
 <div class="flash warn">Este documento es un <strong>borrador</strong>. Revísalo, completa los datos faltantes (________) y compáralo con las bases oficiales antes de presentarlo.</div>
 <section class="card paper"><h2>1. Carta de oferta</h2><div class="letter"><?= nl2br(e($c['letter'])) ?></div></section>
 <section class="card"><h2>2. Documentos a presentar</h2><ul class="checklist"><?php foreach ($c['docs'] as $x): ?><li><label class="check"><input type="checkbox" disabled> <span><?= e($x) ?></span></label></li><?php endforeach; ?></ul></section>

@@ -1,4 +1,4 @@
-<div class="page-head"><div><p class="eyebrow">Alertas</p><h1>¿Cómo quieres que te avisemos?</h1></div></div>
+<div class="page-head"><div><p class="eyebrow">Alertas</p><h1>¿Cómo quieres que te <em>avisemos</em>?</h1></div></div>
 <form method="post" class="card form narrow-form"><?= csrf_field() ?>
   <?= f_check('alert_email', 'Avisarme por correo (' . $u['email'] . ')', (bool) $p['alert_email']) ?>
   <?= f_check('alert_wa', 'Avisarme por WhatsApp', (bool) $p['alert_wa']) ?>

@@ -1,4 +1,4 @@
-<div class="page-head"><div><p class="eyebrow">Ayuda</p><h1>Preguntas frecuentes</h1></div></div>
+<div class="page-head"><div><p class="eyebrow">Ayuda</p><h1>Preguntas <em>frecuentes</em></h1></div></div>
 <div class="faq"><?php foreach ($faqs as $f): ?><details><summary><?= e($f['question']) ?></summary><p><?= nl2br(e($f['answer'])) ?></p></details><?php endforeach; ?></div>
 <section class="card"><h3>¿Necesitas ayuda?</h3><p class="muted">Escríbenos y te ayudamos a configurar tus palabras clave o a preparar tu oferta.</p>
 <div class="btn-row"><?php if (S('contact_whatsapp')): ?><a class="btn btn-gold btn-sm" href="https://wa.me/<?= e(wa_phone(S('contact_whatsapp'))) ?>" target="_blank" rel="noopener noreferrer">Escribir por WhatsApp</a><?php endif; ?><?php if (S('contact_email')): ?><a class="btn btn-ghost btn-sm" href="mailto:<?= e(S('contact_email')) ?>">Enviar correo</a><?php endif; ?></div></section>

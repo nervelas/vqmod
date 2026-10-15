@@ -116,7 +116,7 @@ route('POST', '/admin/contenido/sector', function () {
     $slug = slugify(post('name'));
     $d = ['name' => mb_substr(post('name'), 0, 100), 'slug' => $slug, 'tagline' => mb_substr(post('tagline'), 0, 250), 'keywords' => mb_substr(post('keywords'), 0, 500), 'sort_order' => (int) post('sort_order'), 'active' => post('active') ? 1 : 0];
     $img = row("SELECT image FROM sectors WHERE id=?", [$id]);
-    $d['image'] = $img['image'] ?? ('img/sector-' . (is_file(APP_ROOT . "/assets/img/sector-$slug.svg") ? $slug : 'servicios') . '.svg');
+    $d['image'] = $img['image'] ?? ('img/sector-' . (is_file(APP_ROOT . "/assets/img/sector-$slug.webp") ? $slug : 'servicios') . '.webp');
     if ($id) update('sectors', $d, 'id=?', [$id]); else insert('sectors', $d); flash('Sector guardado.'); redirect('admin/contenido');
 });
 route('POST', '/admin/contenido/pagina', function () {

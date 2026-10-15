@@ -8,16 +8,42 @@ $$('[data-theme-toggle]').forEach(function(b){b.addEventListener('click',functio
   var d=document.documentElement,n=d.getAttribute('data-theme')==='light'?'dark':'light';d.setAttribute('data-theme',n);
   try{localStorage.setItem('lic-theme',n);}catch(e){}
 });});
-/* Menú móvil */
-var mb=$('[data-menu]');if(mb){mb.addEventListener('click',function(){var n=$('#nav');var o=n.classList.toggle('open');mb.setAttribute('aria-expanded',o?'true':'false');});
-  $$('#nav a').forEach(function(a){a.addEventListener('click',function(){$('#nav').classList.remove('open');});});}
 
-/* Revelado al hacer scroll */
+/* Paneles laterales (menú) */
+var openSheet=null;
+function sheet(id,open){var s=document.getElementById(id);if(!s)return;s.classList.toggle('open',open);s.setAttribute('aria-hidden',open?'false':'true');
+  document.body.style.overflow=open?'hidden':'';openSheet=open?s:null;if(open){var f=s.querySelector('a,button');f&&setTimeout(function(){f.focus();},350);}}
+document.addEventListener('click',function(e){
+  var o=e.target.closest('[data-sheet-open]');if(o){sheet(o.getAttribute('data-sheet-open'),true);return;}
+  var c=e.target.closest('[data-sheet-close]');if(c){var s=c.closest('.sheet');if(s)sheet(s.id,false);}
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&openSheet)sheet(openSheet.id,false);});
+
+/* Cabecera con vidrio al hacer scroll + barra de progreso */
+var hdr=$('[data-header]'),prog=$('[data-progress]'),tick=false;
+function onScroll(){
+  var y=window.scrollY||0;if(hdr)hdr.classList.toggle('scrolled',y>12);
+  if(prog){var h=document.documentElement.scrollHeight-window.innerHeight;prog.style.transform='scaleX('+(h>0?Math.min(1,y/h):0)+')';}
+  tick=false;}
+window.addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(onScroll);}},{passive:true});onScroll();
+
+/* Revelado al hacer scroll (con retraso escalonado por --d) */
 var rv=$$('.reveal');
 if('IntersectionObserver' in window&&!reduce){
-  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12,rootMargin:'0px 0px -40px 0px'});
-  rv.forEach(function(el,i){el.style.transitionDelay=(i%4)*70+'ms';io.observe(el);});
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.1,rootMargin:'0px 0px -6% 0px'});
+  rv.forEach(function(el){io.observe(el);});
 }else{rv.forEach(function(el){el.classList.add('in');});}
+
+/* Brillo que sigue al puntero en tarjetas de vidrio */
+if(window.matchMedia&&window.matchMedia('(hover:hover)').matches){
+  document.addEventListener('pointermove',function(e){var c=e.target.closest&&e.target.closest('.glass,.card,.step,.bcell,.plan,.ks');if(!c)return;
+    var r=c.getBoundingClientRect();c.style.setProperty('--mx',(e.clientX-r.left)+'px');c.style.setProperty('--my',(e.clientY-r.top)+'px');},{passive:true});
+  /* Inclinación 3D suave en radar y maqueta */
+  $$('[data-tilt]').forEach(function(el){var t=el.firstElementChild;if(!t||reduce)return;
+    el.addEventListener('pointermove',function(e){var r=el.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+      t.style.transition='transform .1s';t.style.transform='rotateY('+(x*10)+'deg) rotateX('+(-y*8)+'deg)';});
+    el.addEventListener('pointerleave',function(){t.style.transition='transform .8s cubic-bezier(.2,.7,.2,1)';t.style.transform='';});});
+}
 
 /* Contadores animados */
 function fmt(n){return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,',');}

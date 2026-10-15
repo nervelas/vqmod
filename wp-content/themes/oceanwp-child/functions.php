@@ -10,6 +10,27 @@ define( 'AGRO_TEL', '25068100' );                // PBX 2506 8100
 define( 'AGRO_MAIL', 'info@agroinco.com' );
 define( 'AGRO_VER', '1.0.1' );
 
+
+/* ---------- Migración automática una sola vez: WhatsApp 4076 9228 -> 4001 6659 ----------
+ * Se ejecuta en la primera carga tras subir esta versión y actualiza el número
+ * en todo el contenido de la base de datos. Reemplazos de igual longitud:
+ * los datos serializados quedan intactos. */
+add_action( 'init', function () {
+	if ( get_option( 'agro_wa_mig_40016659' ) ) return;
+	global $wpdb;
+	$wpdb->query( "UPDATE {$wpdb->posts} SET
+		post_content = REPLACE(REPLACE(post_content,'40769228','40016659'),'4076 9228','4001 6659'),
+		post_excerpt = REPLACE(REPLACE(post_excerpt,'40769228','40016659'),'4076 9228','4001 6659')" );
+	$wpdb->query( "UPDATE {$wpdb->postmeta} SET meta_value = REPLACE(REPLACE(meta_value,'40769228','40016659'),'4076 9228','4001 6659')" );
+	$wpdb->query( "UPDATE {$wpdb->options} SET option_value = REPLACE(REPLACE(option_value,'40769228','40016659'),'4076 9228','4001 6659')" );
+	$wpdb->query( "DELETE FROM {$wpdb->postmeta} WHERE meta_key IN ('_elementor_element_cache','_elementor_css')" );
+	$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '\\_transient\\_%' OR option_name LIKE '\\_site\\_transient\\_%'" );
+	// purgar caché de páginas propia
+	$dir = WP_CONTENT_DIR . '/cache/agro-pages';
+	if ( is_dir( $dir ) ) foreach ( glob( $dir . '/*.html' ) as $f ) @unlink( $f );
+	update_option( 'agro_wa_mig_40016659', time(), false );
+} );
+
 /* ---------- Estilos y scripts ---------- */
 add_action( 'wp_enqueue_scripts', function () {
 	$parent = get_template_directory_uri();

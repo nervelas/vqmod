@@ -116,3 +116,11 @@ Nuevo (a pedido: «acorde a lo que ofrece la empresa» y «los datos deben llega
 ## 8. Diseño original (solo referencia; se reemplazó por la nueva dirección de arte)
 
 Fuentes Roboto / Roboto Slab / Vollkorn (Google Fonts), iconos Font Awesome (`phone-alt`, `whatsapp`, `envelope`, `bullseye`, `eye`); barras azules `#184C7A`, iconos cian `#03A7C0`, verde `#03C054`, ámbar `#C07403`; banda gris `#E9E9E9`; fondo de bienvenida `#F5F5F5`.
+
+## 9. Cambios respecto al original (todo lo demás es idéntico)
+
+* **Diseño:** fondo blanco con los colores del logo, ancho completo, íconos en el menú. Solo cambia el diseño.
+* **Formulario (pedido del cliente):** se agregan *Tipo de servicio* y *Ubicación / destino*; el correo pasa a ser opcional; al enviar se abre WhatsApp con los datos.
+* **Botones flotantes** de llamada y WhatsApp (pedido del cliente); mismos destinos que las tarjetas.
+* **SEO (invisible):** `alt` en imágenes, meta description, Open Graph y JSON-LD; títulos de las páginas internas.
+* **Verificación:** `tests/content_parity.py` compara los 81 textos originales contra el sitio nuevo (0 diferencias).

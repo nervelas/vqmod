@@ -18,7 +18,7 @@ Fecha: 15-oct-2026 · Paquete: `gruas-express-towing.zip` · Resultado global: *
 
 ## 1. Entornos de prueba
 
-* **Apache 2.4.58 + `mod_php` 8.3** con `AllowOverride All`, ejecutando el `.htaccess` real (simula un hosting compartido; el ZIP descomprimido en la raíz): **261/261 pruebas OK**.
+* **Apache 2.4.58 + `mod_php` 8.3** con `AllowOverride All`, ejecutando el `.htaccess` real (simula un hosting compartido; el ZIP descomprimido en la raíz): **265/265 pruebas OK**.
 * **PHP 8.0.30 (`php -S`)** — no procesa `.htaccess`, por lo que se ejecutan solo las pruebas que dependen de PHP (formulario, panel, 2FA, edición, publicación, subidas, bloqueo): **146/146 OK**, con GD+WebP y Argon2id.
 * **Chromium (Playwright)**: capturas, consola, desbordes y flujo real del formulario.
 * PHP 8.1/8.2 no se instalaron; el código evita sintaxis posterior a 8.0 y se validó con 8.0.30 y 8.3.6.
@@ -59,8 +59,17 @@ Revisadas a 375, 768 y 1440 px (más 320 px) en las 4 páginas, menú móvil abi
 * El envío de correo (`mail()`/SMTP) no se pudo probar de extremo a extremo en el entorno de pruebas (no hay servidor de correo); el código SMTP no se probó contra un servidor real. El WhatsApp y la copia en el panel siempre funcionan.
 * El 2FA se configura con la clave manual (sin código QR).
 
-## Apéndice: pruebas automatizadas (Apache + `mod_php`, 261)
+## 6. Revisión de diseño v2 (a pedido del cliente)
 
+| Pedido | Resultado |
+|---|---|
+| Página **blanca** y con los **colores del logo** | Fondo blanco; azul `#11557B`, azul oscuro `#0A2A40` y rojo `#BF0000` del logo (rayas rojo/azul en cabecera, bandas y pie). Los colores son editables en Panel > Ajustes |
+| Contenido a **ancho completo** | Bandas de sección a todo el ancho, contenedor sin límite de 1200 px (hasta 1920 px), galería de 2/3/4/5 columnas, portada a doble columna |
+| Títulos **menos grandes** | Título principal 1.7–3.1 rem (antes hasta 5.6 rem); títulos de sección 1.2–1.8 rem |
+| **Iconos premium en el menú** | Cada opción del menú (escritorio y panel móvil) lleva un ícono SVG propio dentro de un botón con degradado; el ícono es editable por opción en Panel > Ajustes > Menú |
+| **El contenido debe ser igual** | Se eliminaron las mayúsculas forzadas por CSS (ahora cada texto se ve con las mayúsculas del original) y se restauró el orden del original en la portada (título, subtítulo, texto, botón). **Prueba automática: los 81 textos del contenido original (extraídos de la base de datos de WordPress) aparecen idénticos en el sitio nuevo.** Lo único añadido por pedido del cliente: formulario con tipo de servicio/ubicación que envía a WhatsApp, botones flotantes, y `alt`/meta descriptions para SEO |
+
+## Apéndice: pruebas automatizadas (Apache + `mod_php`, 265)
 - ✅ GET / -> 200
 - ✅ GET /sobre-nosotros/ -> 200
 - ✅ GET /servicio-de-gruas-24-7/ -> 200
@@ -107,6 +116,10 @@ Revisadas a 375, 768 y 1440 px (más 320 px) en las 4 páginas, menú móvil abi
 - ✅ /servicio-de-gruas-24-7/: galería con 16 imágenes
 - ✅ /: 2 videos en el orden original
 - ✅ /: orden de secciones = original (bienvenida, videos, precio, tarjetas, garantía, galería)
+- ✅ Menú con íconos (escritorio y móvil): 8 íconos por página
+- ✅ Sin mayúsculas forzadas por CSS (el contenido se ve con las mayúsculas del original)
+- ✅ Fondo blanco (color de fondo #fff en el tema)
+- ✅ Paridad de textos: los 81 textos originales de WordPress aparecen idénticos
 - ✅ Todas las imágenes tienen alt
 - ✅ /: title, description, canonical, Open Graph, JSON-LD LocalBusiness
 - ✅ /sobre-nosotros/: title, description, canonical, Open Graph, JSON-LD LocalBusiness
@@ -259,20 +272,20 @@ Revisadas a 375, 768 y 1440 px (más 320 px) en las 4 páginas, menú móvil abi
 - ✅ Ningún archivo malicioso llegó a /uploads
 - ✅ /uploads solo contiene .webp (+ index.html/.htaccess)
 - ✅ Aceptada y recodificada: JPEG con PHP añadido al final
-- ✅   sin código incrustado y WEBP real: i9d810d3c39321ca61464-t.webp
-- ✅   sin código incrustado y WEBP real: i9d810d3c39321ca61464.webp
+- ✅   sin código incrustado y WEBP real: i859e69606e09f8531c2f.webp
+- ✅   sin código incrustado y WEBP real: i859e69606e09f8531c2f-t.webp
 - ✅ Aceptada y recodificada: JPEG con PHP en comentario
-- ✅   sin código incrustado y WEBP real: i9f5855e3fba2cd302ea8-t.webp
-- ✅   sin código incrustado y WEBP real: i9f5855e3fba2cd302ea8.webp
+- ✅   sin código incrustado y WEBP real: ib5e13ac9b1808a2eb6ba.webp
+- ✅   sin código incrustado y WEBP real: ib5e13ac9b1808a2eb6ba-t.webp
 - ✅ Aceptada y recodificada: PNG con PHP en chunk tEXt
-- ✅   sin código incrustado y WEBP real: ib994313d9eff793ebae6.webp
-- ✅   sin código incrustado y WEBP real: ib994313d9eff793ebae6-t.webp
+- ✅   sin código incrustado y WEBP real: iae60cd70c7965701d1a4.webp
+- ✅   sin código incrustado y WEBP real: iae60cd70c7965701d1a4-t.webp
 - ✅ Aceptada y recodificada: WEBP válido
-- ✅   sin código incrustado y WEBP real: i0e477d2c596cc3626ff6-t.webp
-- ✅   sin código incrustado y WEBP real: i0e477d2c596cc3626ff6.webp
+- ✅   sin código incrustado y WEBP real: i5e42973d9bba2d8bbb24.webp
+- ✅   sin código incrustado y WEBP real: i5e42973d9bba2d8bbb24-t.webp
 - ✅ Aceptada y recodificada: JPG válido
-- ✅   sin código incrustado y WEBP real: i9b412ac16a1b9d97feff-t.webp
-- ✅   sin código incrustado y WEBP real: i9b412ac16a1b9d97feff.webp
+- ✅   sin código incrustado y WEBP real: ie5e03a281f168be9d59c-t.webp
+- ✅   sin código incrustado y WEBP real: ie5e03a281f168be9d59c.webp
 - ✅ Biblioteca lista las imágenes subidas
 - ✅ Eliminar imagen sin uso
 - ✅ No permite eliminar una imagen en uso

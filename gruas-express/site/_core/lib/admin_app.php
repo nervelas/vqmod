@@ -2,6 +2,9 @@
 declare(strict_types=1);
 if (!defined('GX')) { http_response_code(403); exit; }
 
+const GX_MENU_ICONS = ['' => 'Sin ícono', 'house' => 'Casa (inicio)', 'users' => 'Equipo (nosotros)', 'truck' => 'Grúa (servicio)', 'phone-call' => 'Llamada (contacto)',
+    'phone' => 'Teléfono', 'mail' => 'Correo', 'map-pin' => 'Ubicación', 'info' => 'Información', 'briefcase' => 'Maletín', 'car-front' => 'Automóvil',
+    'handshake' => 'Acuerdo', 'message-circle' => 'Mensaje', 'shield-check' => 'Escudo', 'wrench' => 'Llave', 'clock' => 'Reloj', 'target' => 'Objetivo'];
 const GX_VIEWS = ['panel', 'paginas', 'pagina', 'medios', 'ajustes', 'mensajes', 'mensaje', 'seguridad', 'respaldos', 'registro', 'cuenta'];
 
 function gx_admin_main(): void
@@ -564,7 +567,8 @@ function gx_act_settings_save(): void
         $label = gx_line($m['label'] ?? '', 40);
         $link = gx_safe_url($m['link'] ?? '', 300);
         if ($label !== '' && $link !== '') {
-            $menu[] = ['label' => $label, 'link' => $link, 'visible' => !empty($m['visible']), '_o' => gx_int((string)($m['order'] ?? ''), 0, 99, 50)];
+            $icon = isset(GX_MENU_ICONS[$m['icon'] ?? '']) ? (string)$m['icon'] : '';
+            $menu[] = ['label' => $label, 'link' => $link, 'icon' => $icon, 'visible' => !empty($m['visible']), '_o' => gx_int((string)($m['order'] ?? ''), 0, 99, 50)];
         }
     }
     usort($menu, static function ($a, $b) {
@@ -580,7 +584,7 @@ function gx_act_settings_save(): void
         $c[$k] = gx_line($P['cards'][$k] ?? '', 60);
     }
     $new['cards'] = $c;
-    $def = ['gold' => '#d6a93c', 'gold_hi' => '#f3dc9b', 'gold_lo' => '#8a6417', 'bg' => '#0a0a0b', 'graphite' => '#17191c', 'ink' => '#f3efe6'];
+    $def = ['navy' => '#0a2a40', 'blue' => '#11557b', 'red' => '#bf0000', 'bg' => '#ffffff', 'soft' => '#eef4f8', 'ink' => '#12303f'];
     $col = [];
     foreach ($def as $k => $d) {
         $col[$k] = gx_color($P['col'][$k] ?? '', $d);
@@ -744,7 +748,8 @@ function gx_view_ajustes(array $user): void
     $menu = array_values((array)($S['menu'] ?? []));
     for ($i = 0; $i < 7; $i++) {
         $m = (array)($menu[$i] ?? []);
-        $b .= '<div class="row3">' . gx_f_in('Texto', 'menu[' . $i . '][label]', $m['label'] ?? '') . gx_f_in('Enlace', 'menu[' . $i . '][link]', $m['link'] ?? '')
+        $b .= '<div class="row3 row-menu">' . gx_f_in('Texto', 'menu[' . $i . '][label]', $m['label'] ?? '') . gx_f_in('Enlace', 'menu[' . $i . '][link]', $m['link'] ?? '')
+            . gx_f_sel('Ícono', 'menu[' . $i . '][icon]', GX_MENU_ICONS, $m['icon'] ?? '')
             . gx_f_in('Orden', 'menu[' . $i . '][order]', (string)(($i + 1) * 10), 'number', '', 'min="0" max="99"')
             . gx_f_chk('Visible', 'menu[' . $i . '][visible]', !empty($m['visible'])) . '</div>';
     }
@@ -753,9 +758,9 @@ function gx_view_ajustes(array $user): void
         . gx_f_in('Título de WhatsApp', 'cards[wa_title]', $c['wa_title'] ?? '') . gx_f_in('Prefijo de WhatsApp', 'cards[wa_label]', $c['wa_label'] ?? '')
         . gx_f_in('Título del correo', 'cards[mail_title]', $c['mail_title'] ?? '')
         . '</section><section class="card-p"><h2>Colores principales</h2><div class="cols">'
-        . gx_f_in('Dorado', 'col[gold]', $col['gold'] ?? '#d6a93c', 'color') . gx_f_in('Dorado claro', 'col[gold_hi]', $col['gold_hi'] ?? '#f3dc9b', 'color')
-        . gx_f_in('Dorado oscuro', 'col[gold_lo]', $col['gold_lo'] ?? '#8a6417', 'color') . gx_f_in('Fondo', 'col[bg]', $col['bg'] ?? '#0a0a0b', 'color')
-        . gx_f_in('Grafito', 'col[graphite]', $col['graphite'] ?? '#17191c', 'color') . gx_f_in('Texto', 'col[ink]', $col['ink'] ?? '#f3efe6', 'color')
+        . gx_f_in('Azul oscuro (títulos, cabeceras)', 'col[navy]', $col['navy'] ?? '#0a2a40', 'color') . gx_f_in('Azul del logo', 'col[blue]', $col['blue'] ?? '#11557b', 'color')
+        . gx_f_in('Rojo del logo (botones)', 'col[red]', $col['red'] ?? '#bf0000', 'color') . gx_f_in('Fondo', 'col[bg]', $col['bg'] ?? '#ffffff', 'color')
+        . gx_f_in('Fondo suave', 'col[soft]', $col['soft'] ?? '#eef4f8', 'color') . gx_f_in('Texto', 'col[ink]', $col['ink'] ?? '#12303f', 'color')
         . '</div><h2>Datos para Google (LocalBusiness)</h2>'
         . gx_f_ta('Descripción', 'ld_description', $S['ld_description'] ?? '', 3) . gx_f_in('Rango de precio', 'ld_price', $S['ld_price'] ?? '')
         . '</section></div><div class="grid2"><section class="card-p"><h2>Envío de correo (SMTP opcional)</h2><p class="note">Si no lo activa, se usa la función mail() del hosting.</p>'

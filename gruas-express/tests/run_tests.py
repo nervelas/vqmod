@@ -336,6 +336,12 @@ def test_parity(html):
     ok('/: orden de secciones = original (bienvenida, videos, precio, tarjetas, garantía, galería)',
        [html['/'].find(x) for x in ['sec-welcome', 'sec-videos', 'sec-price', 'sec-cards', 'sec-closing', 'sec-gallery']] ==
        sorted(html['/'].find(x) for x in ['sec-welcome', 'sec-videos', 'sec-price', 'sec-cards', 'sec-closing', 'sec-gallery']))
+    ok('Menú con íconos (escritorio y móvil): 8 íconos por página', all(html[p].count('class="ni"') == 8 for p in PAGES), [html[p].count('class="ni"') for p in PAGES])
+    css = anon.get('/assets/css/site.min.css')[2].decode()
+    ok('Sin mayúsculas forzadas por CSS (el contenido se ve con las mayúsculas del original)', 'text-transform:uppercase' not in css)
+    ok('Fondo blanco (color de fondo #fff en el tema)', 'background:var(--bg)' in css and '--bg:#fff' in css.replace(' ', ''))
+    rc = subprocess.run([sys.executable, os.path.join(ROOT, 'tests/content_parity.py')], capture_output=True, text=True, env=dict(os.environ, GX_BASE=BASE))
+    ok('Paridad de textos: los 81 textos originales de WordPress aparecen idénticos', rc.returncode == 0, rc.stdout[-300:])
     ok('Todas las imágenes tienen alt', all(re.search(r'alt="[^"]+"', m) for p in PAGES for m in re.findall(r'<img[^>]+>', html[p])))
     for p in PAGES:
         h = html[p]
@@ -643,7 +649,7 @@ def test_content_edit(c):
     fields_set(f, 'address', 'Zona 1, Ciudad de Guatemala')
     fields_set(f, 'hours', 'Lunes a domingo 24 horas')
     fields_set(f, 'soc[0][url]', 'https://facebook.com/gruasexpress')
-    fields_set(f, 'col[gold]', '#ff8800')
+    fields_set(f, 'col[red]', '#ff8800')
     fields_set(f, 'menu[0][label]', 'HOME')
     fields_set(f, 'form_to', 'dueno@example.com')
     r = post_fields(c, f)

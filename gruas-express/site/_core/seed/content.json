@@ -368,21 +368,25 @@
             {
                 "label": "INICIO",
                 "link": "/",
+                "icon": "house",
                 "visible": true
             },
             {
                 "label": "SOBRE NOSOTROS",
                 "link": "/sobre-nosotros/",
+                "icon": "users",
                 "visible": true
             },
             {
                 "label": "SERVICIO DE GRÚAS 24/7",
                 "link": "/servicio-de-gruas-24-7/",
+                "icon": "truck",
                 "visible": true
             },
             {
                 "label": "CONTÁCTENOS",
                 "link": "/contactenos/",
+                "icon": "phone-call",
                 "visible": true
             }
         ],
@@ -394,12 +398,12 @@
             "mail_title": "ENVÍE UN EMAIL"
         },
         "colors": {
-            "gold": "#d6a93c",
-            "gold_hi": "#f3dc9b",
-            "gold_lo": "#8a6417",
-            "bg": "#0a0a0b",
-            "graphite": "#17191c",
-            "ink": "#f3efe6"
+            "navy": "#0a2a40",
+            "blue": "#11557b",
+            "red": "#bf0000",
+            "bg": "#ffffff",
+            "soft": "#eef4f8",
+            "ink": "#12303f"
         },
         "ld_description": "Somos una empresa de servicio de grúas guatemalteca. Contamos con equipo de remolque terrestre, pesado y liviano las 24 horas los 7 días de la semana. Servicio de grúas a toda la República de Guatemala desde Q250.",
         "ld_price": "Desde Q250",

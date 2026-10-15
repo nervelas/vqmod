@@ -164,12 +164,12 @@ function gx_form_html(array $b, array $S): string
         . '<div class="fld"><label for="cf-phone">' . $lab('phone', 'Teléfono *') . '</label><input id="cf-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="25" required></div>'
         . '<div class="fld"><label for="cf-email">' . $lab('email', 'Correo electrónico') . '</label><input id="cf-email" name="email" type="email" autocomplete="email" maxlength="254"></div>'
         . '<div class="fld"><label for="cf-service">' . $lab('service', 'Tipo de servicio *') . '</label><select id="cf-service" name="service" required>' . $opts . '</select></div>'
-        . '<div class="fld fld-w"><label for="cf-place">' . $lab('place', 'Ubicación / destino') . '</label><input id="cf-place" name="place" type="text" maxlength="200"></div>'
+        . '<div class="fld fld-p"><label for="cf-place">' . $lab('place', 'Ubicación / destino') . '</label><input id="cf-place" name="place" type="text" maxlength="200"></div>'
         . '<div class="fld fld-w"><label for="cf-msg">' . $lab('message', 'Mensaje *') . '</label><textarea id="cf-msg" name="message" rows="4" maxlength="3000" required></textarea></div>'
         . '</div>'
         . '<div class="hp" aria-hidden="true"><label for="cf-web">No llenar</label><input id="cf-web" name="website" type="text" tabindex="-1" autocomplete="off"></div>'
         . '<input type="hidden" name="token" value="">'
-        . '<button class="btn btn-gold btn-wa" type="submit">' . gx_icon('whatsapp') . '<span>' . $lab('send', 'Enviar mensaje') . '</span></button>'
+        . '<button class="btn btn-red btn-wa" type="submit">' . gx_icon('whatsapp') . '<span>' . $lab('send', 'Enviar mensaje') . '</span></button>'
         . '<p class="cf-msgbox" id="cf-status" role="status" aria-live="polite"></p>'
         . '<noscript><p class="cf-noscript">Active JavaScript para enviar el formulario o escríbanos por <a href="' . e(gx_wa_url($S)) . '">WhatsApp</a> o llámenos al <a href="tel:' . e((string)($S['phone_tel'] ?? '')) . '">' . e((string)($S['phone_display'] ?? '')) . '</a>.</p></noscript>'
         . '</form></div></div></section>';
@@ -190,7 +190,8 @@ function gx_nav_html(array $S, string $current, string $cls): string
             continue;
         }
         $isCur = ($link === $current) ? ' aria-current="page" class="on"' : '';
-        $o .= '<li><a href="' . e($link) . '"' . $isCur . '>' . e((string)($it['label'] ?? '')) . '</a></li>';
+        $ic = preg_match('/^[a-z0-9-]{2,24}$/', (string)($it['icon'] ?? '')) ? (string)$it['icon'] : '';
+        $o .= '<li><a href="' . e($link) . '"' . $isCur . '>' . ($ic !== '' ? '<span class="ni">' . gx_icon($ic) . '</span>' : '') . '<span class="nt">' . e((string)($it['label'] ?? '')) . '</span></a></li>';
     }
     return $o . '</ul></nav>';
 }
@@ -223,7 +224,7 @@ function gx_header_html(array $S, array $media, string $current): string
         . '<div class="mnav-ov" id="mnav-ov" hidden></div><aside class="mnav" id="mnav" aria-hidden="true">'
         . '<button class="mnav-x" type="button" id="mnav-x" aria-label="Cerrar menú">' . gx_icon('x') . '</button>'
         . gx_nav_html($S, $current, 'mnav-l')
-        . '<a class="btn btn-gold mnav-cta" href="tel:' . e((string)($S['phone_tel'] ?? '')) . '">' . gx_icon('phone') . '<span>' . e((string)($S['topbar_phone_label'] ?? '')) . e((string)($S['phone_display'] ?? '')) . '</span></a>'
+        . '<a class="btn btn-red mnav-cta" href="tel:' . e((string)($S['phone_tel'] ?? '')) . '">' . gx_icon('phone') . '<span>' . e((string)($S['topbar_phone_label'] ?? '')) . e((string)($S['phone_display'] ?? '')) . '</span></a>'
         . '</aside>';
 }
 
@@ -238,15 +239,15 @@ function gx_hero_html(array $page, array $S, array $media): string
     $bl = gx_safe_url(gx_tokens((string)($h['btn_link'] ?? ''), $S));
 
     $o = '<section class="hero"><div class="wrap hero-in"><div class="hero-tx reveal">';
-    if ($tx !== '') {
-        $o .= '<p class="kicker"><span class="dot" aria-hidden="true"></span>' . e($tx) . '</p>';
-    }
     if ($t !== '' || $st !== '') {
         $o .= '<h1 class="h1">' . ($t !== '' ? '<span class="h1-a">' . e($t) . '</span> ' : '') . ($st !== '' ? '<span class="h1-b">' . e($st) . '</span>' : '') . '</h1>';
     }
+    if ($tx !== '') {
+        $o .= '<p class="hero-sub">' . e($tx) . '</p>';
+    }
     if ($bt !== '' && $bl !== '') {
         $isTel = str_starts_with($bl, 'tel:');
-        $o .= '<a class="btn btn-gold btn-hero" href="' . e($bl) . '">' . gx_icon($isTel ? 'phone' : 'arrow-right') . '<span>' . e($bt) . '</span></a>';
+        $o .= '<a class="btn btn-red btn-hero" href="' . e($bl) . '">' . gx_icon($isTel ? 'phone' : 'arrow-right') . '<span>' . e($bt) . '</span></a>';
     }
     $o .= '</div>';
     if ($img) {
@@ -342,7 +343,7 @@ function gx_page_html(array $page, array $S, array $media, string $kind = 'page'
         . '<title>' . e($title) . '</title>'
         . ($desc !== '' ? '<meta name="description" content="' . e($desc) . '">' : '')
         . '<meta name="robots" content="' . $robots . '">'
-        . '<meta name="theme-color" content="' . e((string)($S['colors']['bg'] ?? '#0a0a0b')) . '">'
+        . '<meta name="theme-color" content="' . e((string)($S['colors']['navy'] ?? '#0a2a40')) . '">'
         . '<link rel="canonical" href="' . e($base . $path) . '">';
     if ($kind === 'page') {
         $h .= '<meta property="og:locale" content="es_GT"><meta property="og:type" content="website">'
@@ -388,18 +389,24 @@ function gx_page_html(array $page, array $S, array $media, string $kind = 'page'
 function gx_theme_css(array $S): string
 {
     $c = (array)($S['colors'] ?? []);
-    $g = gx_color($c['gold'] ?? '', '#d6a93c');
-    $gh = gx_color($c['gold_hi'] ?? '', '#f3dc9b');
-    $gd = gx_color($c['gold_lo'] ?? '', '#8a6417');
-    $bg = gx_color($c['bg'] ?? '', '#0a0a0b');
-    $gr = gx_color($c['graphite'] ?? '', '#17191c');
-    $ink = gx_color($c['ink'] ?? '', '#f3efe6');
-    return "/* generado por el panel: no editar a mano */\n:root{--gold:$g;--gold-hi:$gh;--gold-lo:$gd;--bg:$bg;--graphite:$gr;--ink:$ink}\n";
+    $v = [
+        'navy' => gx_color($c['navy'] ?? '', '#0a2a40'),
+        'blue' => gx_color($c['blue'] ?? '', '#11557b'),
+        'red' => gx_color($c['red'] ?? '', '#bf0000'),
+        'bg' => gx_color($c['bg'] ?? '', '#ffffff'),
+        'soft' => gx_color($c['soft'] ?? '', '#eef4f8'),
+        'ink' => gx_color($c['ink'] ?? '', '#12303f'),
+    ];
+    $o = "/* generado por el panel: no editar a mano */\n:root{";
+    foreach ($v as $k => $x) {
+        $o .= '--' . $k . ':' . $x . ';';
+    }
+    return $o . "}\n";
 }
 
 function gx_error_pages(array $S): array
 {
-    $btn = '<a class="btn btn-gold" href="/">' . gx_icon('arrow-right') . '<span>Volver al inicio</span></a> '
+    $btn = '<a class="btn btn-red" href="/">' . gx_icon('arrow-right') . '<span>Volver al inicio</span></a> '
         . '<a class="btn btn-ghost" href="tel:' . e((string)($S['phone_tel'] ?? '')) . '">' . gx_icon('phone') . '<span>' . e((string)($S['phone_display'] ?? '')) . '</span></a>';
     $mk = static function (string $code, string $t, string $p) use ($btn): string {
         return '<section class="sec err"><div class="wrap err-in"><p class="err-code">' . $code . '</p><h1 class="err-t">' . e($t) . '</h1><p class="err-p">' . e($p) . '</p><div class="err-btns">' . $btn . '</div></div></section>';

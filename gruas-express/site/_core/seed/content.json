@@ -1,0 +1,729 @@
+{
+    "media": [
+        {
+            "key": "hero-inicio",
+            "file": "hero-inicio.webp",
+            "thumb": "hero-inicio-t.webp",
+            "w": 1312,
+            "h": 736,
+            "tw": 640,
+            "th": 359,
+            "alt": "Grúa de plataforma de Grúas Express Towing en la calle",
+            "name": "1.jpeg"
+        },
+        {
+            "key": "hero-sobre",
+            "file": "hero-sobre.webp",
+            "thumb": "hero-sobre-t.webp",
+            "w": 1312,
+            "h": 735,
+            "tw": 640,
+            "th": 359,
+            "alt": "Grúas Express Towing – grúa de plataforma y asesor con la mano extendida. Sobre nosotros",
+            "name": "sn4.png"
+        },
+        {
+            "key": "hero-servicio",
+            "file": "hero-servicio.webp",
+            "thumb": "hero-servicio-t.webp",
+            "w": 1536,
+            "h": 1024,
+            "tw": 640,
+            "th": 427,
+            "alt": "Servicio de grúa 24/7 – atención inmediata – Grúas Express Towing",
+            "name": "SDG.png"
+        },
+        {
+            "key": "hero-contacto",
+            "file": "hero-contacto.webp",
+            "thumb": "hero-contacto-t.webp",
+            "w": 1536,
+            "h": 1024,
+            "tw": 640,
+            "th": 427,
+            "alt": "Grúas Express Towing – grúa de plataforma y asesor con la mano extendida. Contáctenos",
+            "name": "ctc2.png"
+        },
+        {
+            "key": "logo",
+            "file": "logo.webp",
+            "thumb": "logo-t.webp",
+            "w": 1005,
+            "h": 223,
+            "tw": 640,
+            "th": 142,
+            "alt": "Grúas Express Towing Guatemala",
+            "name": "Logo.png"
+        },
+        {
+            "key": "logo-mobile",
+            "file": "logo-mobile.webp",
+            "thumb": "logo-mobile-t.webp",
+            "w": 251,
+            "h": 56,
+            "tw": 251,
+            "th": 56,
+            "alt": "Grúas Express Towing Guatemala",
+            "name": "LM3.png"
+        },
+        {
+            "key": "sg-1",
+            "file": "sg-1.webp",
+            "thumb": "sg-1-t.webp",
+            "w": 720,
+            "h": 540,
+            "tw": 640,
+            "th": 480,
+            "alt": "Camión rojo de plataforma con carga estacionado en un patio",
+            "name": "SG-1.jpeg"
+        },
+        {
+            "key": "sg-2",
+            "file": "sg-2.webp",
+            "thumb": "sg-2-t.webp",
+            "w": 720,
+            "h": 406,
+            "tw": 640,
+            "th": 361,
+            "alt": "Grúa de plataforma amarilla transportando un automóvil negro",
+            "name": "SG-2.jpeg"
+        },
+        {
+            "key": "sg-3",
+            "file": "sg-3.webp",
+            "thumb": "sg-3-t.webp",
+            "w": 720,
+            "h": 540,
+            "tw": 640,
+            "th": 480,
+            "alt": "Grúa de plataforma amarilla con un automóvil negro sobre la plataforma",
+            "name": "SG-3.jpeg"
+        },
+        {
+            "key": "sg-4",
+            "file": "sg-4.webp",
+            "thumb": "sg-4-t.webp",
+            "w": 720,
+            "h": 324,
+            "tw": 640,
+            "th": 288,
+            "alt": "Camión de plataforma transportando un compresor industrial",
+            "name": "SG-4.jpeg"
+        },
+        {
+            "key": "sg-5",
+            "file": "sg-5.webp",
+            "thumb": "sg-5-t.webp",
+            "w": 720,
+            "h": 540,
+            "tw": 640,
+            "th": 480,
+            "alt": "Grúa de plataforma subiendo un automóvil clásico rojo",
+            "name": "SG-5.jpeg"
+        },
+        {
+            "key": "sg-6",
+            "file": "sg-6.webp",
+            "thumb": "sg-6-t.webp",
+            "w": 720,
+            "h": 324,
+            "tw": 640,
+            "th": 288,
+            "alt": "Camión de plataforma transportando un tractor azul",
+            "name": "SG-6.jpeg"
+        },
+        {
+            "key": "sg-7",
+            "file": "sg-7.webp",
+            "thumb": "sg-7-t.webp",
+            "w": 720,
+            "h": 540,
+            "tw": 640,
+            "th": 480,
+            "alt": "Camión de plataforma gris y grúa de arrastre pesada en un patio",
+            "name": "SG-7.jpeg"
+        },
+        {
+            "key": "sg-8",
+            "file": "sg-8.webp",
+            "thumb": "sg-8-t.webp",
+            "w": 720,
+            "h": 540,
+            "tw": 640,
+            "th": 480,
+            "alt": "Camión de plataforma blanco transportando un tractor azul en la calle",
+            "name": "SG-8.jpeg"
+        },
+        {
+            "key": "sg-9",
+            "file": "sg-9.webp",
+            "thumb": "sg-9-t.webp",
+            "w": 720,
+            "h": 540,
+            "tw": 640,
+            "th": 480,
+            "alt": "Grúa de plataforma con un tractor azul sobre la plataforma",
+            "name": "SG-9.jpeg"
+        },
+        {
+            "key": "sg-10",
+            "file": "sg-10.webp",
+            "thumb": "sg-10-t.webp",
+            "w": 720,
+            "h": 540,
+            "tw": 640,
+            "th": 480,
+            "alt": "Camión de plataforma transportando una camioneta todoterreno blanca",
+            "name": "SG-10.jpeg"
+        },
+        {
+            "key": "sg-11",
+            "file": "sg-11.webp",
+            "thumb": "sg-11-t.webp",
+            "w": 720,
+            "h": 540,
+            "tw": 640,
+            "th": 480,
+            "alt": "Grúa de arrastre pesada roja y blanca junto a un camión",
+            "name": "SG-11.jpeg"
+        },
+        {
+            "key": "sg-12",
+            "file": "sg-12.webp",
+            "thumb": "sg-12-t.webp",
+            "w": 720,
+            "h": 540,
+            "tw": 640,
+            "th": 480,
+            "alt": "Grúa de plataforma blanca transportando un automóvil",
+            "name": "SG-12.jpeg"
+        },
+        {
+            "key": "sg-13",
+            "file": "sg-13.webp",
+            "thumb": "sg-13-t.webp",
+            "w": 720,
+            "h": 324,
+            "tw": 640,
+            "th": 288,
+            "alt": "Grúa de arrastre pesada remolcando un camión en carretera",
+            "name": "SG-13.jpeg"
+        },
+        {
+            "key": "sg-14",
+            "file": "sg-14.webp",
+            "thumb": "sg-14-t.webp",
+            "w": 720,
+            "h": 960,
+            "tw": 480,
+            "th": 640,
+            "alt": "Camión con grúa hidráulica izando una carga",
+            "name": "SG-14.jpeg"
+        },
+        {
+            "key": "sg-15",
+            "file": "sg-15.webp",
+            "thumb": "sg-15-t.webp",
+            "w": 720,
+            "h": 324,
+            "tw": 640,
+            "th": 288,
+            "alt": "Camión pequeño frente a un edificio hospitalario",
+            "name": "SG-15.jpeg"
+        },
+        {
+            "key": "sg-16",
+            "file": "sg-16.webp",
+            "thumb": "sg-16-t.webp",
+            "w": 720,
+            "h": 540,
+            "tw": 640,
+            "th": 480,
+            "alt": "Grúa de arrastre pesada roja y blanca en carretera",
+            "name": "SG-16.jpeg"
+        },
+        {
+            "key": "wa-2022",
+            "file": "wa-2022.webp",
+            "thumb": "wa-2022-t.webp",
+            "w": 720,
+            "h": 540,
+            "tw": 640,
+            "th": 480,
+            "alt": "Grúa de plataforma amarilla transportando un automóvil negro",
+            "name": "WhatsApp-Image-2022-10-04-at-19.24.40.jpeg"
+        },
+        {
+            "key": "izaje-2",
+            "file": "izaje-2.webp",
+            "thumb": "izaje-2-t.webp",
+            "w": 1600,
+            "h": 757,
+            "tw": 640,
+            "th": 303,
+            "alt": "Camión grúa hidráulica en maniobra de izaje",
+            "name": "IMG-20240927-WA0002.jpg"
+        },
+        {
+            "key": "izaje-3",
+            "file": "izaje-3.webp",
+            "thumb": "izaje-3-t.webp",
+            "w": 1600,
+            "h": 757,
+            "tw": 640,
+            "th": 303,
+            "alt": "Camión grúa hidráulica extendida durante una maniobra de izaje",
+            "name": "IMG-20240927-WA0003.jpg"
+        },
+        {
+            "key": "izaje-4",
+            "file": "izaje-4.webp",
+            "thumb": "izaje-4-t.webp",
+            "w": 1196,
+            "h": 1600,
+            "tw": 478,
+            "th": 640,
+            "alt": "Camión grúa hidráulica izando una carga junto a una estructura",
+            "name": "IMG-20240927-WA0004.jpg"
+        },
+        {
+            "key": "izaje-5",
+            "file": "izaje-5.webp",
+            "thumb": "izaje-5-t.webp",
+            "w": 1600,
+            "h": 902,
+            "tw": 640,
+            "th": 361,
+            "alt": "Camión grúa hidráulica trabajando dentro de una bodega industrial",
+            "name": "IMG-20240927-WA0005.jpg"
+        },
+        {
+            "key": "izaje-6",
+            "file": "izaje-6.webp",
+            "thumb": "izaje-6-t.webp",
+            "w": 757,
+            "h": 1600,
+            "tw": 303,
+            "th": 640,
+            "alt": "Camión grúa hidráulica sobre una plataforma en la ciudad",
+            "name": "IMG-20240927-WA0006.jpg"
+        },
+        {
+            "key": "izaje-7",
+            "file": "izaje-7.webp",
+            "thumb": "izaje-7-t.webp",
+            "w": 757,
+            "h": 1600,
+            "tw": 303,
+            "th": 640,
+            "alt": "Camión grúa roja con la pluma extendida al atardecer",
+            "name": "IMG-20240927-WA0007.jpg"
+        },
+        {
+            "key": "poster-vid-1",
+            "file": "poster-vid-1.webp",
+            "thumb": "poster-vid-1-t.webp",
+            "w": 848,
+            "h": 478,
+            "tw": 640,
+            "th": 361,
+            "alt": "Video del servicio de grúas",
+            "name": "poster-vid-1"
+        },
+        {
+            "key": "poster-vid-2",
+            "file": "poster-vid-2.webp",
+            "thumb": "poster-vid-2-t.webp",
+            "w": 478,
+            "h": 850,
+            "tw": 360,
+            "th": 640,
+            "alt": "Video del servicio de grúas",
+            "name": "poster-vid-2"
+        }
+    ],
+    "settings": {
+        "site_name": "Grúas Express Towing Guatemala",
+        "site_url": "https://gruasexpresstowing.gt",
+        "phone_display": "3556-7904",
+        "phone_tel": "35567904",
+        "wa_display": "3556-7904",
+        "wa_number": "50235567904",
+        "email_display": "info@gruasexpresstowing.gt",
+        "email_link": "info@agroinco.com",
+        "form_to": "info@gruasexpresstowing.gt",
+        "alert_email": "info@gruasexpresstowing.gt",
+        "address": "",
+        "hours": "",
+        "socials": [],
+        "topbar_on": true,
+        "topbar_phone_label": "Teléfono: ",
+        "topbar_email_label": "Email: ",
+        "footer_text": "Copyright 2026 - Grúas Express Towing Guatemala",
+        "logo": "@m:logo",
+        "logo_mobile": "@m:logo-mobile",
+        "favicon": "@m:logo",
+        "favicon_dirty": false,
+        "menu": [
+            {
+                "label": "INICIO",
+                "link": "/",
+                "visible": true
+            },
+            {
+                "label": "SOBRE NOSOTROS",
+                "link": "/sobre-nosotros/",
+                "visible": true
+            },
+            {
+                "label": "SERVICIO DE GRÚAS 24/7",
+                "link": "/servicio-de-gruas-24-7/",
+                "visible": true
+            },
+            {
+                "label": "CONTÁCTENOS",
+                "link": "/contactenos/",
+                "visible": true
+            }
+        ],
+        "cards": {
+            "call_title": "LLÁMENOS",
+            "call_label": "Teléfono: ",
+            "wa_title": "ESCRÍBANOS",
+            "wa_label": "Whatsapp: ",
+            "mail_title": "ENVÍE UN EMAIL"
+        },
+        "colors": {
+            "gold": "#d6a93c",
+            "gold_hi": "#f3dc9b",
+            "gold_lo": "#8a6417",
+            "bg": "#0a0a0b",
+            "graphite": "#17191c",
+            "ink": "#f3efe6"
+        },
+        "ld_description": "Somos una empresa de servicio de grúas guatemalteca. Contamos con equipo de remolque terrestre, pesado y liviano las 24 horas los 7 días de la semana. Servicio de grúas a toda la República de Guatemala desde Q250.",
+        "ld_price": "Desde Q250",
+        "smtp": {
+            "enabled": false,
+            "host": "",
+            "port": 587,
+            "secure": "tls",
+            "user": "",
+            "pass": "",
+            "from": ""
+        },
+        "admin_ips": "",
+        "videos": {
+            "media/vid-1.mp4": {
+                "w": 848,
+                "h": 478,
+                "poster": "@m:poster-vid-1"
+            },
+            "media/vid-2.mp4": {
+                "w": 478,
+                "h": 850,
+                "poster": "@m:poster-vid-2"
+            }
+        },
+        "pending_publish": false
+    },
+    "pages": [
+        {
+            "slug": "inicio",
+            "sort": 1,
+            "data": {
+                "label": "Inicio",
+                "path": "/",
+                "seo_title": "Grúas Express Towing Guatemala",
+                "seo_desc": "Somos una empresa de servicio de grúas guatemalteca. Contamos con equipo de remolque terrestre, pesado y liviano las 24 horas los 7 días de la semana. Servicio de grúas a toda la República de Guatemala desde Q250.",
+                "og_image": "@m:hero-inicio",
+                "hero": {
+                    "title": "Grúas Express",
+                    "subtitle": "Towing Guatemala",
+                    "text": "Servicio de Grúas 24/7",
+                    "btn_text": "Llámenos: {phone}",
+                    "btn_link": "tel:{tel}",
+                    "image": "@m:hero-inicio"
+                },
+                "blocks": [
+                    {
+                        "type": "text",
+                        "variant": "welcome",
+                        "html": "<p><strong>Bienvenidos a Express Towing</strong></p><p>Somos una empresa de servicio de grúas guatemalteca.</p><p>Contamos con equipo de remolque terrestre, pesado y liviano las 24 horas los 7 días de la semana.</p>"
+                    },
+                    {
+                        "type": "videos",
+                        "items": [
+                            {
+                                "src": "media/vid-1.mp4",
+                                "poster": "@m:poster-vid-1",
+                                "w": 848,
+                                "h": 478
+                            },
+                            {
+                                "src": "media/vid-2.mp4",
+                                "poster": "@m:poster-vid-2",
+                                "w": 478,
+                                "h": 850
+                            }
+                        ]
+                    },
+                    {
+                        "type": "heading",
+                        "html": "Servicio de grúas las 24 horas <br>a toda la República de Guatemala desde Q250"
+                    },
+                    {
+                        "type": "cards"
+                    },
+                    {
+                        "type": "text",
+                        "variant": "closing",
+                        "html": "<p><strong>Te garantizamos un excelente servicio.</strong></p>"
+                    },
+                    {
+                        "type": "gallery",
+                        "items": [
+                            {
+                                "media": "@m:izaje-2"
+                            },
+                            {
+                                "media": "@m:izaje-7"
+                            },
+                            {
+                                "media": "@m:izaje-6"
+                            },
+                            {
+                                "media": "@m:izaje-5"
+                            },
+                            {
+                                "media": "@m:izaje-4"
+                            },
+                            {
+                                "media": "@m:izaje-3"
+                            },
+                            {
+                                "media": "@m:sg-11"
+                            },
+                            {
+                                "media": "@m:sg-10"
+                            },
+                            {
+                                "media": "@m:sg-4"
+                            },
+                            {
+                                "media": "@m:sg-5"
+                            },
+                            {
+                                "media": "@m:sg-6"
+                            },
+                            {
+                                "media": "@m:sg-7"
+                            },
+                            {
+                                "media": "@m:sg-8"
+                            },
+                            {
+                                "media": "@m:sg-9"
+                            },
+                            {
+                                "media": "@m:sg-3"
+                            },
+                            {
+                                "media": "@m:sg-2"
+                            },
+                            {
+                                "media": "@m:sg-1"
+                            },
+                            {
+                                "media": "@m:sg-16"
+                            },
+                            {
+                                "media": "@m:sg-15"
+                            },
+                            {
+                                "media": "@m:wa-2022"
+                            },
+                            {
+                                "media": "@m:sg-12"
+                            },
+                            {
+                                "media": "@m:sg-13"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "slug": "sobre-nosotros",
+            "sort": 2,
+            "data": {
+                "label": "Sobre nosotros",
+                "path": "/sobre-nosotros/",
+                "seo_title": "Sobre nosotros - Grúas Express Towing Guatemala",
+                "seo_desc": "Somos una empresa guatemalteca que brinda servicio de grúas. Contamos con equipo de remolque, terrestre, pesado y liviano las 24 horas los 7 días de la semana.",
+                "og_image": "@m:hero-sobre",
+                "hero": {
+                    "title": "Grúas Express",
+                    "subtitle": "Towing Guatemala",
+                    "text": "Servicio de Grúas 24/7",
+                    "btn_text": "Llámenos: {phone}",
+                    "btn_link": "tel:{tel}",
+                    "image": "@m:hero-sobre"
+                },
+                "blocks": [
+                    {
+                        "type": "text",
+                        "variant": "plain",
+                        "html": "<p>Somos una empresa guatemalteca que brinda servicio de grúas.</p><p>Contamos con equipo de remolque, terrestre, pesado y liviano las 24 horas los 7 días de la semana.</p>"
+                    },
+                    {
+                        "type": "features",
+                        "items": [
+                            {
+                                "icon": "target",
+                                "title": "MISIÓN",
+                                "text": "Proporcionar un servicio de alta calidad en el transporte y manejo de vehículos livianos y pesados así mismo todo tipo de maquinaria industrial dentro y fuera del país contamos con personal capacitado y equipo acorde al trabajo que se nos presenta."
+                            },
+                            {
+                                "icon": "eye",
+                                "title": "VISIÓN",
+                                "text": "Ser una empresa reconocida a nivel nacional por el servicio de remolque de todo tipo de vehículos y maquinaria y que esto motive a los clientes a darnos la oportunidad de servirles."
+                            }
+                        ]
+                    },
+                    {
+                        "type": "cards"
+                    }
+                ]
+            }
+        },
+        {
+            "slug": "servicio-de-gruas-24-7",
+            "sort": 3,
+            "data": {
+                "label": "Servicio de grúas 24/7",
+                "path": "/servicio-de-gruas-24-7/",
+                "seo_title": "Servicio de grúas 24/7 - Grúas Express Towing Guatemala",
+                "seo_desc": "Servicio de grúas en Guatemala, urgentes, eficientes y a un precio justo. Hacemos todo lo posible para auxiliarlo.",
+                "og_image": "@m:hero-servicio",
+                "hero": {
+                    "title": "",
+                    "subtitle": "Grúas Express Towing",
+                    "text": "Servicio de Grúas 24/7",
+                    "btn_text": "Llámenos: {phone}",
+                    "btn_link": "tel:{tel}",
+                    "image": "@m:hero-servicio"
+                },
+                "blocks": [
+                    {
+                        "type": "text",
+                        "variant": "plain",
+                        "html": "<p>Servicio de grúas en Guatemala, urgentes, eficientes y a un precio justo. </p><p>Ofrecemos el servicio de guas en toda Guatemala, adaptados a sus necesidades y a un precio competitivo. </p><p>Sabemos la importancia de brindar seguridad y calidad en cada unos de nuestros servicios, es por eso que nos adaptamos a las necesidades de nuestros clientes.</p><p><strong>HACEMOS TODO LO POSIBLE PARA AUXILIARLO</strong></p><p>Además, ofrecemos diversos servicios a toda la República Mexicana las 24 horas, todos los días, para cubrir las necesidades de nuestros clientes.</p>"
+                    },
+                    {
+                        "type": "gallery",
+                        "items": [
+                            {
+                                "media": "@m:sg-12"
+                            },
+                            {
+                                "media": "@m:sg-13"
+                            },
+                            {
+                                "media": "@m:sg-14"
+                            },
+                            {
+                                "media": "@m:sg-15"
+                            },
+                            {
+                                "media": "@m:sg-16"
+                            },
+                            {
+                                "media": "@m:sg-1"
+                            },
+                            {
+                                "media": "@m:sg-2"
+                            },
+                            {
+                                "media": "@m:sg-3"
+                            },
+                            {
+                                "media": "@m:sg-4"
+                            },
+                            {
+                                "media": "@m:sg-5"
+                            },
+                            {
+                                "media": "@m:sg-6"
+                            },
+                            {
+                                "media": "@m:sg-7"
+                            },
+                            {
+                                "media": "@m:sg-8"
+                            },
+                            {
+                                "media": "@m:sg-9"
+                            },
+                            {
+                                "media": "@m:sg-10"
+                            },
+                            {
+                                "media": "@m:sg-11"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "cards"
+                    }
+                ]
+            }
+        },
+        {
+            "slug": "contactenos",
+            "sort": 4,
+            "data": {
+                "label": "Contáctenos",
+                "path": "/contactenos/",
+                "seo_title": "Contáctenos - Grúas Express Towing Guatemala",
+                "seo_desc": "Contáctenos. Teléfono: 3556-7904. Whatsapp: 3556-7904. Email: info@gruasexpresstowing.gt. Envíenos un mensaje.",
+                "og_image": "@m:hero-contacto",
+                "hero": {
+                    "title": "Grúas Express",
+                    "subtitle": "Towing Guatemala",
+                    "text": "Servicio de Grúas 24/7",
+                    "btn_text": "Llámenos: {phone}",
+                    "btn_link": "tel:{tel}",
+                    "image": "@m:hero-contacto"
+                },
+                "blocks": [
+                    {
+                        "type": "cards"
+                    },
+                    {
+                        "type": "form",
+                        "title": "Envíenos un mensaje",
+                        "labels": {
+                            "name": "Nombre *",
+                            "phone": "Teléfono *",
+                            "email": "Correo electrónico",
+                            "service": "Tipo de servicio *",
+                            "service_ph": "Seleccione una opción",
+                            "place": "Ubicación / destino",
+                            "message": "Mensaje *",
+                            "send": "Enviar mensaje"
+                        },
+                        "services": [
+                            "Remolque de vehículo liviano",
+                            "Remolque de vehículo pesado",
+                            "Transporte de maquinaria industrial",
+                            "Otro servicio"
+                        ],
+                        "wa_intro": "Hola, necesito el servicio de grúas."
+                    }
+                ]
+            }
+        }
+    ]
+}

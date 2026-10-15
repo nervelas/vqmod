@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /_core/
+Disallow: /enviar.php
+
+Sitemap: https://gruasexpresstowing.gt/sitemap.xml

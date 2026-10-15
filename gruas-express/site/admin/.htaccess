@@ -1,0 +1,32 @@
+# Panel de administración: único PHP permitido junto con /enviar.php
+Options -Indexes
+DirectoryIndex index.php
+<IfModule mod_headers.c>
+  Header always set X-Robots-Tag "noindex, nofollow, noarchive"
+  Header always set Cache-Control "no-store"
+</IfModule>
+<Files "index.php">
+  <IfModule mod_php.c>
+    php_flag engine on
+  </IfModule>
+  <IfModule mod_php7.c>
+    php_flag engine on
+  </IfModule>
+  <IfModule mod_php8.c>
+    php_flag engine on
+  </IfModule>
+  # GX-AUTH-BEGIN
+  <IfModule mod_authz_core.c>
+    Require all granted
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Allow from all
+  </IfModule>
+  # GX-AUTH-END
+</Files>
+<FilesMatch "\.(css|js)$">
+  <IfModule mod_headers.c>
+    Header always set Cache-Control "no-cache"
+  </IfModule>
+</FilesMatch>

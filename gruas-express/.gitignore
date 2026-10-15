@@ -1,0 +1,8 @@
+# credenciales y artefactos de compilación (el ZIP se entrega aparte; contiene claves iniciales)
+dist/
+site/README.txt
+site/_core/data/*
+!site/_core/data/.htaccess
+!site/_core/data/index.html
+tests/last_results.json
+tests/__pycache__/

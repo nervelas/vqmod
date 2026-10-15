@@ -1,0 +1,202 @@
+# =====================================================================
+#  Grúas Express Towing — .htaccess raíz (Apache / LiteSpeed)
+#  Sitio público = archivos estáticos. PHP solo en 2 puntos de entrada:
+#     /admin/index.php   y   /enviar.php        (todo otro .php devuelve 403)
+# =====================================================================
+Options -Indexes -MultiViews
+ServerSignature Off
+DirectoryIndex index.html
+AddDefaultCharset UTF-8
+
+# --- Motor PHP desactivado en el sitio público (mod_php). En PHP-FPM/LiteSpeed lo cubre el bloqueo de abajo + .user.ini ---
+<IfModule mod_php.c>
+  php_flag engine off
+  php_flag display_errors off
+  php_flag expose_php off
+</IfModule>
+<IfModule mod_php7.c>
+  php_flag engine off
+  php_flag display_errors off
+</IfModule>
+<IfModule mod_php8.c>
+  php_flag engine off
+  php_flag display_errors off
+</IfModule>
+
+# --- Tipos MIME ---
+<IfModule mod_mime.c>
+  AddType image/webp .webp
+  AddType video/mp4 .mp4
+  AddType font/woff2 .woff2
+  AddType application/xml .xml
+</IfModule>
+
+# --- Bloqueo de scripts, bases de datos, copias, logs, configuración y archivos ocultos ---
+<FilesMatch "(?i)(\.(php[0-9]*|phtml|pht|phps|phar|pgif|shtml|cgi|pl|py|sh|bash|asp|aspx|jsp|exe|dll|so|inc|sql|sqlite[0-9]?|db|bak|old|orig|save|swp|log|ini|conf|cfg|md|json|lock|yml|yaml|env|htpasswd|tpl|zip|gz|tar|7z|rar)|~)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+  </IfModule>
+</FilesMatch>
+# Doble extensión (ej. foto.php.jpg): se bloquea si cualquier segmento es un script
+<FilesMatch "(?i)\.(php[0-9]*|phtml|pht|phps|phar|pgif|shtml|cgi|pl|py|sh|bash|asp|aspx|jsp)\.">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+  </IfModule>
+</FilesMatch>
+<FilesMatch "^(\.|README|LEEME|INVENTARIO|ANALISIS|composer|package)">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# --- Única excepción pública: el script del formulario de contacto ---
+<Files "enviar.php">
+  <IfModule mod_php.c>
+    php_flag engine on
+  </IfModule>
+  <IfModule mod_php7.c>
+    php_flag engine on
+  </IfModule>
+  <IfModule mod_php8.c>
+    php_flag engine on
+  </IfModule>
+  <IfModule mod_authz_core.c>
+    Require all granted
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Allow from all
+  </IfModule>
+</Files>
+
+# --- Páginas de error propias (no revelan rutas ni versiones) ---
+ErrorDocument 400 /404.html
+ErrorDocument 401 /403.html
+ErrorDocument 403 /403.html
+ErrorDocument 404 /404.html
+ErrorDocument 405 /403.html
+ErrorDocument 410 /404.html
+ErrorDocument 500 /500.html
+ErrorDocument 503 /500.html
+
+# --- Cabeceras de seguridad ---
+<IfModule mod_headers.c>
+  Header always unset X-Powered-By
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "DENY"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; media-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'"
+  Header always set Cross-Origin-Opener-Policy "same-origin"
+  Header always set Cross-Origin-Resource-Policy "same-origin"
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+  # Caché: páginas 5 min; recursos versionados 1 año
+  <FilesMatch "\.html$">
+    Header set Cache-Control "public, max-age=300, must-revalidate"
+  </FilesMatch>
+  <FilesMatch "\.(css|js|woff2|webp|png|ico|mp4)$">
+    Header set Cache-Control "public, max-age=31536000"
+  </FilesMatch>
+  <FilesMatch "(sitemap\.xml|robots\.txt)$">
+    Header set Cache-Control "public, max-age=3600"
+  </FilesMatch>
+</IfModule>
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/xml text/plain image/svg+xml
+</IfModule>
+
+# Solo GET, POST y HEAD (cubre también TRACE/OPTIONS/PUT/DELETE en Apache)
+<LimitExcept GET POST HEAD>
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+  </IfModule>
+</LimitExcept>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # --- Solo GET, POST y HEAD ---
+  RewriteCond %{REQUEST_METHOD} !^(GET|POST|HEAD)$ [NC]
+  RewriteRule ^ - [F,L]
+
+  # Las páginas de error siempre se pueden servir (evita bucles de ErrorDocument)
+  RewriteRule ^(403|404|500)\.html$ - [L]
+
+  # --- Peticiones sospechosas: path traversal, SQLi, XSS, inyección de código, escáneres ---
+  RewriteCond %{THE_REQUEST} (%2e%2e|%252e|%00|%0d|%0a|\.\./) [NC,OR]
+  RewriteCond %{QUERY_STRING} (\.\./|%2e%2e|%252e|\.\.%2f|boot\.ini|etc/passwd|proc/self|%00) [NC,OR]
+  RewriteCond %{QUERY_STRING} (%3C|<)[^>]*(script|iframe|object|embed|svg|img)[^>]*(%3E|>)? [NC,OR]
+  RewriteCond %{QUERY_STRING} (javascript:|vbscript:|onerror\s*=|onload\s*=|document\.cookie|alert\() [NC,OR]
+  RewriteCond %{QUERY_STRING} (union([^a-z]|%20|\+)+(all([^a-z]|%20|\+)+)?select|select([^a-z]|%20|\+).+from|insert([^a-z]|%20|\+)+into|drop([^a-z]|%20|\+)+table|information_schema|benchmark\(|sleep\(|load_file\(|into([^a-z]|%20|\+)+outfile) [NC,OR]
+  RewriteCond %{QUERY_STRING} (base64_(en|de)code|php://|data://|expect://|file://|gopher://|ftp://|_(REQUEST|SERVER|GET|POST)\[|GLOBALS\[|allow_url_include|auto_prepend_file) [NC,OR]
+  RewriteCond %{HTTP_USER_AGENT} (sqlmap|nikto|nessus|acunetix|netsparker|havij|dirbuster|wpscan|masscan|zmeu|jaeles|nuclei|w3af|openvas|morfeus|fhscan|blackwidow|libwww-perl|<script) [NC]
+  RewriteRule ^ - [F,L]
+
+  # --- HTTPS y dominio sin www (como el sitio original) ---
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{SERVER_PORT} !^443$
+  RewriteCond %{HTTP:X-Forwarded-Proto} !^https$ [NC]
+  RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$ [NC]
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+  RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
+
+  # --- Redirecciones 301 desde las URLs de WordPress para no perder posicionamiento ---
+  RewriteCond %{QUERY_STRING} (^|&)page_id=14(&|$)
+  RewriteRule ^$ /contactenos/? [R=301,L]
+  RewriteCond %{QUERY_STRING} (^|&)page_id=10(&|$)
+  RewriteRule ^$ /sobre-nosotros/? [R=301,L]
+  RewriteCond %{QUERY_STRING} (^|&)page_id=12(&|$)
+  RewriteRule ^$ /servicio-de-gruas-24-7/? [R=301,L]
+  RewriteCond %{QUERY_STRING} (^|&)(page_id=8|p=\d+)(&|$)
+  RewriteRule ^$ /? [R=301,L]
+  RewriteRule ^(inicio)/?$ / [R=301,L,NC]
+#GX-IMG-REDIRECTS
+  # Imágenes antiguas de wp-content -> imágenes nuevas (301)
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/Logo(-\d+x\d+)?\.(jpe?g|png)$ /uploads/logo.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/LM3(-\d+x\d+)?\.(jpe?g|png)$ /uploads/logo-mobile.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/sn4(-\d+x\d+)?\.(jpe?g|png)$ /uploads/hero-sobre.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/SDG(-\d+x\d+)?\.(jpe?g|png)$ /uploads/hero-servicio.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/ctc2(-\d+x\d+)?\.(jpe?g|png)$ /uploads/hero-contacto.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/1(-\d+x\d+)?\.(jpe?g|png)$ /uploads/hero-inicio.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/WhatsApp\-Image\-2022\-10\-04\-at\-19\.24\.40(-\d+x\d+)?\.(jpe?g|png)$ /uploads/wa-2022.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/SG\-1(-\d+x\d+)?\.(jpe?g|png)$ /uploads/sg-1.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/SG\-2(-\d+x\d+)?\.(jpe?g|png)$ /uploads/sg-2.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/SG\-3(-\d+x\d+)?\.(jpe?g|png)$ /uploads/sg-3.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/SG\-4(-\d+x\d+)?\.(jpe?g|png)$ /uploads/sg-4.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/SG\-5(-\d+x\d+)?\.(jpe?g|png)$ /uploads/sg-5.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/SG\-6(-\d+x\d+)?\.(jpe?g|png)$ /uploads/sg-6.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/SG\-7(-\d+x\d+)?\.(jpe?g|png)$ /uploads/sg-7.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/SG\-8(-\d+x\d+)?\.(jpe?g|png)$ /uploads/sg-8.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/SG\-9(-\d+x\d+)?\.(jpe?g|png)$ /uploads/sg-9.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/SG\-10(-\d+x\d+)?\.(jpe?g|png)$ /uploads/sg-10.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/SG\-11(-\d+x\d+)?\.(jpe?g|png)$ /uploads/sg-11.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/SG\-12(-\d+x\d+)?\.(jpe?g|png)$ /uploads/sg-12.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/SG\-13(-\d+x\d+)?\.(jpe?g|png)$ /uploads/sg-13.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/SG\-14(-\d+x\d+)?\.(jpe?g|png)$ /uploads/sg-14.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/SG\-15(-\d+x\d+)?\.(jpe?g|png)$ /uploads/sg-15.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/SG\-16(-\d+x\d+)?\.(jpe?g|png)$ /uploads/sg-16.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/IMG\-20240927\-WA0002(-\d+x\d+)?\.(jpe?g|png)$ /uploads/izaje-2.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/IMG\-20240927\-WA0003(-\d+x\d+)?\.(jpe?g|png)$ /uploads/izaje-3.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/IMG\-20240927\-WA0004(-\d+x\d+)?\.(jpe?g|png)$ /uploads/izaje-4.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/IMG\-20240927\-WA0005(-\d+x\d+)?\.(jpe?g|png)$ /uploads/izaje-5.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/IMG\-20240927\-WA0006(-\d+x\d+)?\.(jpe?g|png)$ /uploads/izaje-6.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/\d{4}/\d{2}/IMG\-20240927\-WA0007(-\d+x\d+)?\.(jpe?g|png)$ /uploads/izaje-7.webp [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/2024/09/VID-20240927-WA0004\.mp4$ /media/vid-1.mp4 [R=301,L,NC]
+  RewriteRule ^wp-content/uploads/2024/09/VID-20240927-WA0001\.mp4$ /media/vid-2.mp4 [R=301,L,NC]

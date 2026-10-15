@@ -25,7 +25,7 @@
 
 ## 3. Rediseño "Industrial de élite" (solo capa visual)
 - Tema hijo `oceanwp-child` propio: paleta técnica (#F5F6F4 / grafito #20242A / acero #5A6470 / naranja #E8590C), tipografía **Space Grotesk + Inter auto-alojadas**, textura blueprint sutil, header que se compacta al bajar, animaciones sobrias con IntersectionObserver (respetan `prefers-reduced-motion`).
-- INICIO como landing: accesos con iconos SVG a las **9 categorías**, sección **"desde 1976"** con contadores animados, marcas (**John Crane, Klinger**), industrias atendidas, proceso de cotización y CTAs directos (tel: PBX 2506 8100 · wa.me 4076 9228 · mailto).
+- INICIO como landing: accesos con iconos SVG a las **9 categorías**, sección **"desde 1976"** con contadores animados, marcas (**John Crane, Klinger**), industrias atendidas, proceso de cotización y CTAs directos (tel: PBX 2506 8100 · wa.me 4001 6659 · mailto).
 - Catálogo: tarjetas técnicas con foto protagonista, código visible y botón naranja **"Cotizar por WhatsApp"** por producto (mensaje prellenado con nombre y código); botón WhatsApp flotante en todo el sitio.
 - Rendimiento: **1,593 imágenes convertidas a WebP** (−187 MB; nombres y ALT intactos, servidas por reescritura transparente), CSS/JS minificados y podados (−320 KB de fuentes/estilos sin uso), caché de página propia sin plugins.
 - **Lighthouse móvil (3 corridas estables): Rendimiento 80 · Accesibilidad 92 · Buenas Prácticas 100 · SEO 100.** Responsive verificado en 360/768/1024/1440 px sin desbordes; menú móvil y botones táctiles ≥48 px. Consola JS y log PHP: sin errores en PHP 8.4.

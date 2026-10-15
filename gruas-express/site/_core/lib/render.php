@@ -282,7 +282,9 @@ function gx_footer_html(array $S, array $media = []): string
     }
     $lg = $media[(int)($S['logo'] ?? 0)] ?? null;
     $plate = $lg ? '<a class="ftr-logo" href="/" aria-label="' . e((string)($S['site_name'] ?? '')) . '"><img src="' . e(gx_media_url($lg)) . '" width="' . (int)$lg['w'] . '" height="' . (int)$lg['h'] . '" alt="' . e((string)$lg['alt']) . '" loading="lazy"></a>' : '';
-    return '<footer class="ftr"><div class="wrap">' . $plate . $extra . '<p class="copy">' . e((string)($S['footer_text'] ?? '')) . '</p></div></footer>'
+    $tel = '<a class="ft-line ft-tel" href="tel:' . e((string)($S['phone_tel'] ?? '')) . '">' . gx_icon('phone') . '<span>' . e((string)($S['phone_display'] ?? '')) . '</span></a>';
+    return '<footer class="ftr"><div class="wrap ftr-in"><div class="ftr-brand">' . $plate . '</div><div class="ftr-info">' . $tel . $extra . '</div></div>'
+        . '<div class="ftr-bar"><div class="wrap"><p class="copy">' . e((string)($S['footer_text'] ?? '')) . '</p></div></div></footer>'
         . '<div class="fab">'
         . '<button class="fab-top" type="button" id="totop" aria-label="Subir al inicio" hidden>' . gx_icon('chevron-up') . '</button>'
         . '<a class="fab-b fab-call" href="tel:' . e((string)($S['phone_tel'] ?? '')) . '" aria-label="Llamar">' . gx_icon('phone') . '</a>'

@@ -1,0 +1,1 @@
+<section class="auth"><div class="auth-card card in center"><p class="eyebrow">Error 404</p><h1>No encontramos esa página</h1><p class="muted">Puede que el enlace haya cambiado o que el concurso ya no exista.</p><p><a class="btn btn-gold" href="<?= e(url('')) ?>">Ir al inicio</a></p></div></section>

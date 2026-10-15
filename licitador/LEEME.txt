@@ -1,0 +1,8 @@
+LICITADOR - Instalación en 5 pasos (hosting compartido con cPanel, PHP 8.0 o superior)
+1) Sube licitador.zip a la carpeta public_html con el Administrador de archivos de cPanel y descomprímelo ahí (index.php debe quedar en public_html).
+2) En cPanel > "Bases de datos MySQL": crea una base, un usuario y asígnalo a la base con todos los privilegios.
+3) Abre https://tudominio.com/instalar, revisa los requisitos, escribe los datos de la base y tu cuenta de administrador. El instalador se bloquea solo al terminar.
+4) En cPanel > "Tareas Cron" pega la línea que muestra el instalador (también está en Admin > Fuente de datos), cada 30 minutos. Si tu hosting solo permite URL, usa la opción B de esa misma pantalla.
+5) En Admin > Ajustes configura correo (SMTP), WhatsApp (Cloud API o cola manual, que ya funciona sin configurar) y la clave de IA si la deseas. Datos oficiales: Admin > Fuente de datos (URL OCDS de ocds.guatecompras.gt).
+Los concursos marcados DEMO son ejemplos; bórralos desde Admin > Concursos cuando tengas datos reales. Si el hosting no soporta mod_rewrite, el instalador activa solo el modo index.php?r=.
+Seguridad: no compartas config/config.php; /config, /storage, /src y /cron-internal están bloqueados por .htaccess.

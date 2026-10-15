@@ -1,0 +1,1 @@
+<div class="empty card"><h3>No tienes permiso para esta sección</h3><p class="muted">Tu rol no incluye este módulo. Pide acceso a un superadministrador.</p><a class="btn btn-gold" href="<?= e(url('admin')) ?>">Volver al tablero</a></div>

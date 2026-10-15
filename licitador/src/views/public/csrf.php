@@ -1,0 +1,1 @@
+<section class="auth"><div class="auth-card card in center"><p class="eyebrow">Sesión expirada</p><h1>Vuelve a intentarlo</h1><p class="muted">Por seguridad, el formulario expiró. Regresa, recarga la página y envíalo otra vez.</p><p><a class="btn btn-gold" href="<?= e(url('')) ?>">Ir al inicio</a></p></div></section>

@@ -66,13 +66,13 @@ Texto: `Grúas Express` / `Towing Guatemala` / `Servicio de Grúas 24/7` / botó
 4. Tarjetas de contacto (igual que Inicio).
 
 **Servicio de grúas 24/7**
-1. Servicio de grúas en Guatemala, urgentes, eficientes y a un precio justo. / Ofrecemos el servicio de guas en toda Guatemala, adaptados a sus necesidades y a un precio competitivo. / Sabemos la importancia de brindar seguridad y calidad en cada unos de nuestros servicios, es por eso que nos adaptamos a las necesidades de nuestros clientes. / **HACEMOS TODO LO POSIBLE PARA AUXILIARLO** / Además, ofrecemos diversos servicios a toda la República Mexicana las 24 horas, todos los días, para cubrir las necesidades de nuestros clientes.
+1. Servicio de grúas en Guatemala, urgentes, eficientes y a un precio justo. / Ofrecemos el servicio de guas en toda Guatemala, adaptados a sus necesidades y a un precio competitivo. / Sabemos la importancia de brindar seguridad y calidad en cada unos de nuestros servicios, es por eso que nos adaptamos a las necesidades de nuestros clientes. / **HACEMOS TODO LO POSIBLE PARA AUXILIARLO** / Además, ofrecemos diversos servicios a toda la República las 24 horas, todos los días, para cubrir las necesidades de nuestros clientes.
 2. Galería de 16 imágenes (§6). 3. Tarjetas de contacto.
 
 **Contáctenos**
 1. Tarjetas de contacto. 2. «Envíenos un mensaje» + formulario (§7).
 
-> Se conservaron tal cual (aunque parecen errores del original): «guas», «República Mexicana», el título vacío de la portada de Servicio, y el enlace de correo `mailto:info@agroinco.com` (el texto visible es `info@gruasexpresstowing.gt`). Todo es editable desde el panel.
+> Se conservaron tal cual (aunque parecen errores del original): «guas», «República Mexicana» (eliminado por pedido del cliente), el título vacío de la portada de Servicio, y el enlace de correo `mailto:info@agroinco.com` (el texto visible es `info@gruasexpresstowing.gt`). Todo es editable desde el panel.
 
 ## 5. Botones y enlaces (texto → destino)
 

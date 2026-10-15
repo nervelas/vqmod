@@ -1,6 +1,6 @@
 {
     "admin_user": "adm-gruas",
-    "admin_hash": "$2y$12$O4cnAKXzLriYkCURBGLeuuaODB4GMRMdTj22rODYQy3tlUYdrS8GO",
+    "admin_hash": "$2y$12$IPPamHho6WM/gnY7MTThYuJIStaKQekQW3D8Ytr/7rU9SFdJC/M1S",
     "ht_user": "acceso-gruas",
-    "ht_hash": "$apr1$GYcE19B3$21LhkHjMYJ7nIbDM020Ti1"
+    "ht_hash": "$apr1$KYpRcvyB$weWSFqHmW92fVE4ukvIjr."
 }

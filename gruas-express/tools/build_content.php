@@ -156,7 +156,7 @@ $pages = [
         'og_image' => '@m:hero-servicio',
         'hero' => $hero('hero-servicio', '', 'Grúas Express Towing'),
         'blocks' => [
-            ['type' => 'text', 'variant' => 'plain', 'html' => '<p>Servicio de grúas en Guatemala, urgentes, eficientes y a un precio justo. </p><p>Ofrecemos el servicio de guas en toda Guatemala, adaptados a sus necesidades y a un precio competitivo. </p><p>Sabemos la importancia de brindar seguridad y calidad en cada unos de nuestros servicios, es por eso que nos adaptamos a las necesidades de nuestros clientes.</p><p><strong>HACEMOS TODO LO POSIBLE PARA AUXILIARLO</strong></p><p>Además, ofrecemos diversos servicios a toda la República Mexicana las 24 horas, todos los días, para cubrir las necesidades de nuestros clientes.</p>'],
+            ['type' => 'text', 'variant' => 'plain', 'html' => '<p>Servicio de grúas en Guatemala, urgentes, eficientes y a un precio justo. </p><p>Ofrecemos el servicio de guas en toda Guatemala, adaptados a sus necesidades y a un precio competitivo. </p><p>Sabemos la importancia de brindar seguridad y calidad en cada unos de nuestros servicios, es por eso que nos adaptamos a las necesidades de nuestros clientes.</p><p><strong>HACEMOS TODO LO POSIBLE PARA AUXILIARLO</strong></p><p>Además, ofrecemos diversos servicios a toda la República las 24 horas, todos los días, para cubrir las necesidades de nuestros clientes.</p>'],
             ['type' => 'gallery', 'items' => $G(['sg-12', 'sg-13', 'sg-14', 'sg-15', 'sg-16', 'sg-1', 'sg-2', 'sg-3', 'sg-4', 'sg-5', 'sg-6', 'sg-7', 'sg-8', 'sg-9', 'sg-10', 'sg-11'])],
             $cardsBlock,
         ],

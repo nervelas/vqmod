@@ -313,7 +313,7 @@ def test_parity(html):
                                      'Ofrecemos el servicio de guas en toda Guatemala, adaptados a sus necesidades y a un precio competitivo.',
                                      'Sabemos la importancia de brindar seguridad y calidad en cada unos de nuestros servicios, es por eso que nos adaptamos a las necesidades de nuestros clientes.',
                                      'HACEMOS TODO LO POSIBLE PARA AUXILIARLO',
-                                     'Además, ofrecemos diversos servicios a toda la República Mexicana las 24 horas, todos los días, para cubrir las necesidades de nuestros clientes.',
+                                     'Además, ofrecemos diversos servicios a toda la República las 24 horas, todos los días, para cubrir las necesidades de nuestros clientes.',
                                      'Grúas Express Towing', 'LLÁMENOS'],
         '/contactenos/': ['LLÁMENOS', 'ESCRÍBANOS', 'ENVÍE UN EMAIL', 'Envíenos un mensaje', 'Nombre *', 'Teléfono *', 'Mensaje *', 'Enviar mensaje'],
     }

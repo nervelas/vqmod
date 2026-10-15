@@ -161,7 +161,7 @@ FORMULARIO DE CONTACTO
 
 NOTAS DEL CONTENIDO ORIGINAL (se conservaron tal cual; puede corregirlas en el panel)
   - El enlace «Envíe un email» apunta a info@agroinco.com pero el texto visible es info@gruasexpresstowing.gt.
-  - La página Servicio de grúas 24/7 dice «guas» y «República Mexicana»; se mantuvo el texto original.
+  - La página Servicio de grúas 24/7 dice «guas» (texto original); se eliminó «Mexicana» por pedido del cliente.
 
 PERMISOS (hosting compartido)
   - Carpetas 755 y archivos 644.

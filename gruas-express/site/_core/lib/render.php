@@ -217,7 +217,7 @@ function gx_header_html(array $S, array $media, string $current): string
             . '<a class="tb" href="mailto:' . e((string)($S['email_link'] ?? '')) . '">' . gx_icon('mail') . '<span>' . e((string)($S['topbar_email_label'] ?? '')) . e((string)($S['email_display'] ?? '')) . '</span></a>'
             . '</div></div>';
     }
-    return $top . '<header class="hdr" id="hdr"><div class="hdr-bg" aria-hidden="true"></div><div class="wrap hdr-in">' . $home
+    return $top . '<header class="hdr" id="hdr"><div class="wrap hdr-in">' . $home
         . gx_nav_html($S, $current, 'nav')
         . '<a class="hdr-cta" href="tel:' . e((string)($S['phone_tel'] ?? '')) . '" aria-label="' . e((string)($S['cards']['call_title'] ?? 'Llamar')) . '">'
         . '<span class="hc-ic">' . gx_icon('phone') . '</span><span class="hc-t"><small>' . e((string)($S['cards']['call_title'] ?? '')) . '</small><strong>' . e((string)($S['phone_display'] ?? '')) . '</strong></span></a>'

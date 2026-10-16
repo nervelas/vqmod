@@ -207,22 +207,8 @@ body.noscroll{overflow:hidden}
 .cf-noscript{margin-top:14px;color:var(--muted)}
 
 /* pie y botones flotantes */
-.ftr{margin-top:clamp(16px,3vw,36px);background:#fff;border-top:1px solid rgba(11,72,157,.12);color:var(--ink)}
-.ftr-in{display:flex;flex-direction:column;align-items:center;gap:8px;padding-block:14px 8px;text-align:center}
-.ftr-info{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px 22px}
-.ftr-logo{display:inline-flex}
-.ftr-logo img{height:40px;width:auto}
-.ftr-bar{padding:0 0 74px;text-align:center}
-.ftr-bar .wrap{border-top:1px solid rgba(11,72,157,.08);padding-top:8px}
-.copy{font-size:.76rem;color:var(--muted);margin:0;padding-inline:56px}
-.ft-line{display:flex;align-items:center;gap:7px;margin:0;color:var(--ink);font-size:.85rem;text-decoration:none}
-.ft-line .ic{color:var(--red);width:15px;height:15px}
-.ft-tel{font-weight:800;transition:color .25s}
-.ft-tel:hover{color:var(--blue)}
-.ft-soc{display:flex;gap:8px;margin:0}
-.soc{display:grid;place-items:center;width:30px;height:30px;border:1px solid var(--line);border-radius:50%;color:var(--blue);background:#fff;transition:background .3s,color .3s}
-@media (min-width:760px){.ftr-in{flex-direction:row;justify-content:space-between;text-align:left;gap:32px;padding-block:12px 6px}.ftr-info{justify-content:flex-end;padding-right:72px}.ftr-bar{padding-bottom:10px}.ftr-bar .wrap{padding-top:6px}}
-.soc:hover{background:var(--blue);color:#fff}
+.ftr{margin-top:clamp(16px,3vw,36px);padding:14px 0;background:var(--blue);color:#fff;text-align:center}
+.copy{margin:0;padding-inline:56px;font-size:.85rem;color:#fff}
 .fab{position:fixed;z-index:70;right:max(14px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;gap:10px}
 .fab-b,.fab-top{display:grid;place-items:center;width:54px;height:54px;border-radius:50%;border:0;text-decoration:none;cursor:pointer;box-shadow:0 10px 22px -6px rgba(7,34,83,.6);transition:transform .3s var(--ease)}
 .fab-b:hover,.fab-top:hover{transform:scale(1.08)}
@@ -287,8 +273,6 @@ body{animation:pagein .7s ease both}
 .gal-a:hover{transform:translateY(-5px);box-shadow:0 20px 30px -16px rgba(7,34,83,.65)}
 .vid{transition:transform .4s var(--ease),box-shadow .4s}
 .vid:hover{transform:translateY(-4px);box-shadow:0 26px 44px -22px rgba(7,34,83,.75)}
-.ftr-logo{transition:transform .4s var(--ease)}
-.ftr-logo:hover{transform:scale(1.04)}
 /* botones magnéticos */
 .btn-hero,.hdr-cta,.fab-b{transform:translate(var(--tx,0px),var(--ty,0px))}
 .btn-hero:hover,.hdr-cta:hover{transform:translate(var(--tx,0px),calc(var(--ty,0px) - 2px))}

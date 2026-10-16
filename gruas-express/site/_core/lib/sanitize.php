@@ -48,7 +48,7 @@ function gx_safe_url($v, int $max = 500): string
 
 /**
  * HTML de textos: lista blanca estricta. Etiquetas permitidas sin atributos
- * (p, strong, b, em, i, br, ul, ol, li, h3, h4) y enlaces con href validado.
+ * (p, strong, b, em, i, br, ul, ol, li, h2, h3, h4) y enlaces con href validado.
  * Todo lo demás se elimina o se escapa.
  */
 function gx_clean_html($in, int $max = 20000): string
@@ -66,19 +66,19 @@ function gx_clean_html($in, int $max = 20000): string
     }
     $out = '';
     $stack = [];
-    $simple = ['p', 'strong', 'b', 'em', 'i', 'ul', 'ol', 'li', 'h3', 'h4'];
+    $simple = ['p', 'strong', 'b', 'em', 'i', 'ul', 'ol', 'li', 'h2', 'h3', 'h4'];
     foreach ($parts as $p) {
         $len = strlen($p);
         if ($len > 1 && $p[0] === '<' && $p[$len - 1] === '>') {
             if (preg_match('~^<\s*br\s*/?\s*>$~i', $p)) {
                 $out .= '<br>';
-            } elseif (preg_match('~^<\s*(p|strong|b|em|i|ul|ol|li|h3|h4)\s*>$~i', $p, $m)) {
+            } elseif (preg_match('~^<\s*(p|strong|b|em|i|ul|ol|li|h2|h3|h4)\s*>$~i', $p, $m)) {
                 $t = strtolower($m[1]);
                 if (in_array($t, $simple, true)) {
                     $out .= '<' . $t . '>';
                     $stack[] = $t;
                 }
-            } elseif (preg_match('~^<\s*/\s*(p|strong|b|em|i|ul|ol|li|h3|h4|a)\s*>$~i', $p, $m)) {
+            } elseif (preg_match('~^<\s*/\s*(p|strong|b|em|i|ul|ol|li|h2|h3|h4|a)\s*>$~i', $p, $m)) {
                 $t = strtolower($m[1]);
                 $idx = array_search($t, array_reverse($stack, true), true);
                 if ($idx !== false) {

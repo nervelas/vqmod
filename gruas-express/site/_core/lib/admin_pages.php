@@ -13,6 +13,7 @@ const GX_BLOCK_TYPES = [
     'cards' => 'Tarjetas de contacto',
     'features' => 'Misión / Visión (tarjetas con ícono)',
     'gallery' => 'Galería de imágenes',
+    'links' => 'Enlaces internos (municipios / zonas)',
     'form' => 'Formulario → WhatsApp',
 ];
 const GX_ICONS = ['target' => 'Objetivo', 'eye' => 'Visión', 'shield-check' => 'Escudo', 'badge-check' => 'Insignia', 'zap' => 'Rayo', 'wrench' => 'Llave', 'truck' => 'Grúa', 'clock' => 'Reloj', 'users' => 'Personas', 'gauge' => 'Medidor'];
@@ -32,6 +33,8 @@ function gx_block_default(string $type): array
             return ['type' => 'features', 'items' => [['icon' => 'badge-check', 'title' => 'TÍTULO', 'text' => 'Texto']]];
         case 'gallery':
             return ['type' => 'gallery', 'items' => []];
+        case 'links':
+            return ['type' => 'links', 'title' => 'Municipios que atendemos', 'items' => []];
         default:
             return ['type' => 'form', 'title' => 'Envíenos un mensaje',
                 'labels' => ['name' => 'Nombre *', 'phone' => 'Teléfono *', 'email' => 'Correo electrónico', 'service' => 'Tipo de servicio *', 'service_ph' => 'Seleccione una opción', 'place' => 'Ubicación / destino', 'message' => 'Mensaje *', 'send' => 'Enviar mensaje'],
@@ -57,7 +60,7 @@ function gx_block_form(int $i, array $b): string
         . '<button type="button" class="b b-s b-d" data-rm>Eliminar bloque</button></div>';
     switch ($type) {
         case 'text':
-            $o .= gx_f_sel('Estilo', $n . '[variant]', ['welcome' => 'Bienvenida (primer párrafo grande)', 'plain' => 'Texto normal', 'closing' => 'Frase final destacada'], $b['variant'] ?? 'plain')
+            $o .= gx_f_sel('Estilo', $n . '[variant]', ['welcome' => 'Bienvenida (primer párrafo grande)', 'plain' => 'Texto normal', 'closing' => 'Frase final destacada', 'article' => 'Artículo (títulos H2/H3, texto alineado a la izquierda)'], $b['variant'] ?? 'plain')
                 . gx_f_ta('Contenido', $n . '[html]', $b['html'] ?? '', 6, true, 'Se permiten negritas, cursivas, listas, saltos de línea y enlaces. Marcadores: {phone} {tel} {wa} {email}.');
             break;
         case 'heading':
@@ -90,6 +93,14 @@ function gx_block_form(int $i, array $b): string
                     . '</div>';
             }
             $o .= '<small>Deje el título y el texto vacíos para quitar una tarjeta.</small>';
+            break;
+        case 'links':
+            $lines = [];
+            foreach ((array)($b['items'] ?? []) as $it) {
+                $lines[] = (string)($it['label'] ?? '') . ' | ' . (string)($it['path'] ?? '');
+            }
+            $o .= gx_f_in('Título de la sección', $n . '[title]', $b['title'] ?? '', 'text', '', 'maxlength="120"')
+                . gx_f_ta('Enlaces (uno por línea: Texto | /ruta/)', $n . '[lines]', implode("\n", $lines), 10, false, 'Ej.: Grúas en Mixco | /gruas-mixco/');
             break;
         case 'gallery':
             $o .= '<div class="gal-ed" data-gal data-name="' . $n . '[items][]"><div class="gal-list" data-gal-list>';
@@ -163,6 +174,7 @@ function gx_parse_page_post(array $old): array
         'btn_link' => gx_safe_url($_POST['hero_btn_link'] ?? '', 300),
         'image' => $media_ok($_POST['hero_image'] ?? 0),
         'fit' => (($_POST['hero_fit'] ?? '') === 'contain') ? 'contain' : 'cover',
+        'alt' => (string)($old['hero']['alt'] ?? ''),
     ];
     $blocks = [];
     $ids = is_array($_POST['bid'] ?? null) ? array_slice($_POST['bid'], 0, 60) : [];
@@ -180,7 +192,7 @@ function gx_parse_page_post(array $old): array
         }
         switch ($type) {
             case 'text':
-                $v = in_array($b['variant'] ?? '', ['welcome', 'plain', 'closing'], true) ? $b['variant'] : 'plain';
+                $v = in_array($b['variant'] ?? '', ['welcome', 'plain', 'closing', 'article'], true) ? $b['variant'] : 'plain';
                 $blocks[] = ['type' => 'text', 'variant' => $v, 'html' => gx_clean_html($b['html'] ?? '')];
                 break;
             case 'heading':
@@ -212,6 +224,18 @@ function gx_parse_page_post(array $old): array
                     $items[] = ['icon' => isset(GX_ICONS[$f['icon'] ?? '']) ? (string)$f['icon'] : 'badge-check', 'title' => $t, 'text' => $x];
                 }
                 $blocks[] = ['type' => 'features', 'items' => $items];
+                break;
+            case 'links':
+                $items = [];
+                foreach (preg_split('/\n/', (string)($b['lines'] ?? '')) as $ln) {
+                    $parts = explode('|', (string)$ln, 2);
+                    $lab = gx_line($parts[0] ?? '', 90);
+                    $path = trim((string)($parts[1] ?? ''));
+                    if ($lab !== '' && preg_match('~^/[a-z0-9-]*/?$~', $path) && count($items) < 80) {
+                        $items[] = ['label' => $lab, 'path' => $path];
+                    }
+                }
+                $blocks[] = ['type' => 'links', 'title' => gx_line($b['title'] ?? '', 120), 'items' => $items];
                 break;
             case 'gallery':
                 $items = [];

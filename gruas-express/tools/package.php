@@ -41,6 +41,12 @@ $folders = [
     'contactenos' => 'html',
     'admin/assets' => 'css|js|html',
 ];
+$geo = json_decode((string)@file_get_contents($site . '/_core/seed/geo.json'), true);
+$geoSlugs = [];
+foreach ((array)($geo['pages'] ?? []) as $gp) {
+    $geoSlugs[] = (string)$gp['slug'];
+    $folders[(string)$gp['slug']] = 'html';
+}
 foreach ($folders as $f => $allow) {
     @mkdir($site . '/' . $f, 0755, true);
     file_put_contents($site . '/' . $f . '/.htaccess', folder_htaccess($allow));
@@ -118,6 +124,13 @@ foreach (['index.html', '404.html', '403.html', '500.html', 'sitemap.xml', 'robo
         exit(1);
     }
     copy($tmp . '/' . $f, $site . '/' . $f);
+}
+foreach ($geoSlugs as $gs) {
+    if (!is_file($tmp . '/' . $gs . '/index.html')) {
+        fwrite(STDERR, "falta página SEO $gs\n");
+        exit(1);
+    }
+    copy($tmp . '/' . $gs . '/index.html', $site . '/' . $gs . '/index.html');
 }
 passthru('rm -rf ' . escapeshellarg($tmp));
 if (!is_file($site . '/favicon.ico')) {

@@ -63,7 +63,7 @@ function gx_block_html(array $b, array $S, array $media): string
     $type = (string)($b['type'] ?? '');
     switch ($type) {
         case 'text':
-            $v = in_array($b['variant'] ?? '', ['welcome', 'plain', 'closing'], true) ? $b['variant'] : 'plain';
+            $v = in_array($b['variant'] ?? '', ['welcome', 'plain', 'closing', 'article'], true) ? $b['variant'] : 'plain';
             return '<section class="sec sec-text sec-' . $v . '"><div class="wrap"><div class="prose prose-' . $v . ' reveal">'
                 . gx_clean_html(gx_tokens((string)($b['html'] ?? ''), $S)) . '</div></div></section>';
 
@@ -96,8 +96,8 @@ function gx_block_html(array $b, array $S, array $media): string
             $o = '<section class="sec sec-feats"><div class="wrap feats">';
             foreach ((array)($b['items'] ?? []) as $f) {
                 $ic = preg_match('/^[a-z0-9-]{2,24}$/', (string)($f['icon'] ?? '')) ? (string)$f['icon'] : 'badge-check';
-                $o .= '<article class="feat reveal"><span class="feat-ic">' . gx_icon($ic) . '</span><div><h3 class="feat-t">'
-                    . e((string)($f['title'] ?? '')) . '</h3><p class="feat-p">' . e((string)($f['text'] ?? '')) . '</p></div></article>';
+                $o .= '<article class="feat reveal"><span class="feat-ic">' . gx_icon($ic) . '</span><div><h2 class="feat-t">'
+                    . e((string)($f['title'] ?? '')) . '</h2><p class="feat-p">' . e((string)($f['text'] ?? '')) . '</p></div></article>';
             }
             return $o . '</div></section>';
 
@@ -118,6 +118,23 @@ function gx_block_html(array $b, array $S, array $media): string
                     . '<span class="gal-z">' . gx_icon('zoom-in', 'ic ic-z') . '</span></a></li>';
             }
             return $o . '</ul></div></section>';
+
+        case 'links':
+            $o = '';
+            foreach ((array)($b['items'] ?? []) as $it) {
+                $href = (string)($it['path'] ?? '');
+                $lab = (string)($it['label'] ?? '');
+                if ($lab === '' || !preg_match('~^/[a-z0-9-]*/?$~', $href)) {
+                    continue;
+                }
+                $o .= '<li><a class="lk" href="' . e($href) . '">' . gx_icon('map-pin') . '<span>' . e($lab) . '</span></a></li>';
+            }
+            if ($o === '') {
+                return '';
+            }
+            $t = trim((string)($b['title'] ?? ''));
+            return '<section class="sec sec-links"><div class="wrap">' . ($t !== '' ? '<h2 class="lk-t reveal">' . e($t) . '</h2>' : '')
+                . '<ul class="lks reveal">' . $o . '</ul></div></section>';
 
         case 'form':
             return gx_form_html($b, $S);
@@ -244,7 +261,7 @@ function gx_hero_html(array $page, array $S, array $media): string
     $o = '<section class="hero' . $fit . '">';
     if ($img) {
         $o .= '<div class="hero-media">' . ($fit !== '' ? '<img class="hero-bg" src="' . e(gx_media_url($img)) . '" alt="" aria-hidden="true" decoding="async">' : '')
-            . '<img class="hero-img" src="' . e(gx_media_url($img)) . '" width="' . (int)$img['w'] . '" height="' . (int)$img['h'] . '" alt="' . e((string)$img['alt']) . '" fetchpriority="high" decoding="async"></div>';
+            . '<img class="hero-img" src="' . e(gx_media_url($img)) . '" width="' . (int)$img['w'] . '" height="' . (int)$img['h'] . '" alt="' . e((string)(($h['alt'] ?? '') !== '' ? $h['alt'] : $img['alt'])) . '" fetchpriority="high" decoding="async"></div>';
     }
     $o .= '<div class="hero-wrap"><div class="wrap"><div class="hero-card">';
     if ($t !== '' || $st !== '') {
@@ -319,6 +336,10 @@ function gx_jsonld(array $S, array $media, array $page): string
     ];
     if (trim((string)($S['address'] ?? '')) !== '') {
         $d['address']['streetAddress'] = (string)$S['address'];
+    }
+    if (!empty($page['ld_area'])) {
+        $d['areaServed'] = ['@type' => 'AdministrativeArea', 'name' => (string)$page['ld_area']];
+        $d['name'] = (string)($S['site_name'] ?? '') . ' - ' . (string)$page['ld_area'];
     }
     $same = [];
     foreach ((array)($S['socials'] ?? []) as $s) {
@@ -432,6 +453,7 @@ function gx_error_pages(array $S): array
  */
 function gx_publish(): array
 {
+    gx_geo_seed();
     $S = gx_settings_all(true);
     $S['theme_v'] = (string)gx_now();
     gx_set('theme_v', $S['theme_v']);

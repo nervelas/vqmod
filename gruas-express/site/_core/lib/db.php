@@ -169,3 +169,57 @@ function gx_rate_count(string $kind, string $key, int $window): int
     $st->execute([':a' => $kind, ':b' => $key, ':t' => gx_now() - $window]);
     return (int)$st->fetchColumn();
 }
+
+/**
+ * Páginas SEO locales (municipios y zonas) y metadatos SEO de las páginas existentes.
+ * Se aplican una sola vez por versión desde seed/geo.json; si el cliente borra una página nueva, no se recrea.
+ */
+function gx_geo_seed(): void
+{
+    $seed = gx_json_read(GX_CORE . '/seed/geo.json', null);
+    if (!is_array($seed) || (int)gx_setting('geo_v', 0) >= (int)($seed['version'] ?? 0)) {
+        return;
+    }
+    $pages = gx_pages();
+    $home = $pages['inicio'] ?? [];
+    $img = (int)($home['hero']['image'] ?? 0);
+    $og = (int)($home['og_image'] ?? $img);
+    $db = gx_db();
+    $max = (int)$db->query('SELECT COALESCE(MAX(sort),0) FROM pages')->fetchColumn();
+    $ins = $db->prepare('INSERT OR IGNORE INTO pages (slug, sort, data) VALUES (:s, :o, :d)');
+    $db->beginTransaction();
+    foreach ((array)($seed['existing'] ?? []) as $slug => $meta) {
+        if (isset($pages[$slug])) {
+            $p = $pages[$slug];
+            foreach (['seo_title', 'seo_desc'] as $k) {
+                if (isset($meta[$k])) {
+                    $p[$k] = (string)$meta[$k];
+                }
+            }
+            if ($slug === 'servicio-de-gruas-24-7' && !empty($seed['coverage'])) {
+                $has = false;
+                foreach ((array)($p['blocks'] ?? []) as $b) {
+                    if (($b['type'] ?? '') === 'links') {
+                        $has = true;
+                    }
+                }
+                if (!$has) {
+                    $p['blocks'][] = $seed['coverage'];
+                }
+            }
+            gx_page_save($slug, $p);
+        }
+    }
+    foreach ((array)($seed['pages'] ?? []) as $p) {
+        $slug = (string)($p['slug'] ?? '');
+        if (!preg_match('/^[a-z0-9-]{1,60}$/', $slug) || isset($pages[$slug])) {
+            continue;
+        }
+        $d = (array)$p['data'];
+        $d['og_image'] = $og;
+        $d['hero']['image'] = $img;
+        $ins->execute([':s' => $slug, ':o' => ++$max, ':d' => json_encode($d, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)]);
+    }
+    $db->commit();
+    gx_set('geo_v', (int)$seed['version']);
+}

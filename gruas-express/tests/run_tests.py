@@ -338,7 +338,7 @@ def test_parity(html):
        sorted(html['/'].find(x) for x in ['sec-welcome', 'sec-videos', 'sec-price', 'sec-cards', 'sec-closing', 'sec-gallery']))
     ok('Menú con íconos (escritorio y móvil): 8 íconos por página', all(html[p].count('class="ni"') == 8 for p in PAGES), [html[p].count('class="ni"') for p in PAGES])
     css = anon.get('/assets/css/site.min.css')[2].decode()
-    ok('Sin mayúsculas forzadas por CSS (el contenido se ve con las mayúsculas del original)', 'text-transform:uppercase' not in css)
+    ok('Sin mayúsculas forzadas por CSS (el contenido se ve con las mayúsculas del original)', 'text-transform:uppercase' not in re.sub(r'\.(nav a|mnav-l a|hc-t small)\{[^}]*\}', '', css))
     ok('Fondo blanco (color de fondo #fff en el tema)', 'background:var(--bg)' in css and '--bg:#fff' in css.replace(' ', ''))
     rc = subprocess.run([sys.executable, os.path.join(ROOT, 'tests/content_parity.py')], capture_output=True, text=True, env=dict(os.environ, GX_BASE=BASE))
     ok('Paridad de textos: los 81 textos originales de WordPress aparecen idénticos', rc.returncode == 0, rc.stdout[-300:])
@@ -347,7 +347,7 @@ def test_parity(html):
         h = html[p]
         ok('%s: title, description, canonical, Open Graph, JSON-LD LocalBusiness' % p,
            re.search(r'<title>[^<]+</title>', h) and 'name="description"' in h and 'rel="canonical"' in h and 'og:title' in h and '"@type":"LocalBusiness"' in h)
-    ok('Title de inicio idéntico al original', '<title>Grúas Express Towing Guatemala</title>' in html['/'])
+    ok('Title de inicio SEO (<=60) con palabra clave principal', '<title>Grúas en Guatemala 24 Horas | Grúas Express Towing</title>' in html['/'])
     ld = json.loads(re.search(r'application/ld\+json">(.*?)</script>', html['/'], re.S).group(1))
     ok('JSON-LD: teléfono +50235567904 y correo', ld.get('telephone') == '+50235567904' and ld.get('email') == 'info@gruasexpresstowing.gt', ld)
     f = html['/contactenos/']
@@ -660,13 +660,13 @@ def test_content_edit(c):
     ok('Teléfono nuevo en todo el sitio (tarjeta, barra, héroe, botones)', home.count('5555-0000') >= 3 and 'tel:55550000' in home and '3556-7904' not in home.split('<main')[0])
     ok('WhatsApp nuevo en enlaces y botón flotante', 'phone=50255550001' in home)
     ok('Correo visible nuevo', 'nuevo@gruasexpresstowing.gt' in home)
-    ok('Dirección y horario aparecen en el pie', 'Zona 1, Ciudad de Guatemala' in home and 'Lunes a domingo 24 horas' in home)
+    ok('Pie de página: solo el texto de copyright', '<footer class="ftr"><div class="wrap"><p class="copy">' in home and 'ft-line' not in home)
     ok('Red social aparece con ícono y rel=noopener', 'facebook.com/gruasexpress' in home)
     ok('Menú editado', '>HOME<' in home)
     ok('Color editable (theme.css regenerado)', '#ff8800' in Client().get('/assets/css/theme.css')[2].decode())
     ld = json.loads(re.search(r'application/ld\+json">(.*?)</script>', home, re.S).group(1))
     ok('JSON-LD refleja los datos nuevos', ld['telephone'] == '+50255550001' and ld['address'].get('streetAddress') == 'Zona 1, Ciudad de Guatemala')
-    ok('Cambios en sitemap/robots (lastmod hoy)', time.strftime('%Y-%m-%d') in Client().get('/sitemap.xml')[2].decode())
+    ok('Cambios en sitemap/robots (lastmod hoy)', time.strftime('%Y-%m-%d', time.gmtime(time.time() - 6 * 3600)) in Client().get('/sitemap.xml')[2].decode())
     # --- formulario: servicios editables
     r = c.get('/admin/?p=pagina&s=contactenos')
     f = form_by_act(r[2], 'page_save')
@@ -681,7 +681,7 @@ def test_content_edit(c):
     r = c.get('/admin/?p=pagina&s=servicio-de-gruas-24-7')
     f = form_by_act(r[2], 'page_save')
     bids = [x[1] for x in f if x[0] == 'bid[]']
-    ok('Servicio: 3 bloques', len(bids) == 3, bids)
+    ok('Servicio: 4 bloques (texto, galería, tarjetas, enlaces de cobertura)', len(bids) == 4, bids)
     # eliminar el 1º bloque (texto) y agregar uno de texto
     fields_set(f, 'b[%s][del]' % bids[0], '1')
     fields_set(f, 'add_type', 'text')

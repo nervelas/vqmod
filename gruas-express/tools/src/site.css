@@ -43,8 +43,8 @@ ul{padding:0;list-style:none}
 .hdr.stuck .hdr-in{padding-block:5px}
 .brand{display:inline-flex;align-items:center;transition:opacity .25s}
 .brand:hover{opacity:.85}
-.brand img{height:50px;width:auto;max-width:100%;transition:height .3s}
-.hdr.stuck .brand img{height:44px}
+.brand img{height:70px;width:auto;max-width:100%;transition:height .3s}
+.hdr.stuck .brand img{height:62px}
 .brand-t{color:var(--navy);font:800 1.2rem var(--disp)}
 .nav{display:none;margin-left:auto}
 .nav ul{display:flex;gap:4px}
@@ -292,7 +292,7 @@ body{animation:pagein .7s ease both}
 @media (min-width:600px){
   .topbar{font-size:13.5px}
   .tb-sep{display:inline}
-  .brand img{height:60px}
+  .brand img{height:84px}
   .btn-hero{width:auto}
   .hero-wrap{margin-top:-60px}
   .hero-card{padding:26px 28px}
@@ -318,8 +318,8 @@ body{animation:pagein .7s ease both}
 @media (min-width:960px){
   .nav{display:block}
   .burger,.mnav,.mnav-ov{display:none}
-  .brand img{height:76px}
-  .hdr.stuck .brand img{height:60px}
+  .brand img{height:106px}
+  .hdr.stuck .brand img{height:84px}
   .hdr-cta{display:inline-flex}
   .nav{margin-left:auto;margin-right:6px}
   .hero{padding-bottom:0;min-height:clamp(420px,47vw,760px);display:flex}

@@ -30,4 +30,4 @@ Solo se usan datos reales: teléfono, «desde Q250», 24/7, servicios existentes
 * Zonas de Chinautla, Petapa, Villa Canales y Amatitlán: sin confirmar, por eso no se usan.
 
 ## Si ya tiene el sitio instalado
-Al subir el ZIP sobre un sitio ya instalado, el monitor de integridad detectará archivos cambiados. Suba los archivos, borre `_core/data/baseline.json` y `_core/data/lockdown.flag` (si existe), entre al panel y pulse **Publicar**: se crean las 49 páginas nuevas y se actualizan los SEO de las 4 existentes (una sola vez).
+Descomprima el ZIP encima. No hay que borrar nada: la primera visita a `/admin/` acepta la versión nueva, crea las páginas SEO y conserva sus datos y claves.

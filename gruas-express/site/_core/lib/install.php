@@ -177,6 +177,10 @@ function gx_install_run(): void
         gx_apply_basic_auth((string)$inst['ht_user'], (string)$inst['ht_hash']);
     }
     gx_baseline_build();
+    $rl = gx_json_read(GX_CORE . '/release.json', []);
+    if (!empty($rl['build'])) {
+        gx_set('release_build', (string)$rl['build']);
+    }
     gx_backup_db();
     $cfg = gx_config();
     $cfg['installed_at'] = gx_now();

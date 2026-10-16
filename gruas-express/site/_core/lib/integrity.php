@@ -23,6 +23,7 @@ function gx_skip_dir(string $rel): bool
 function gx_is_volatile(string $rel): bool
 {
     return in_array($rel, ['README.txt', 'LEEME.txt', 'favicon.ico', 'favicon.png', 'favicon-192.png', 'apple-touch-icon.png'], true)
+        || $rel === '_core/release.json'
         || (bool)preg_match('/^[^\/]+\.md$/', $rel);   // documentación en la raíz (bloqueada por .htaccess; se puede borrar)
 }
 
@@ -255,6 +256,9 @@ function gx_guard(bool $force = false): bool
     if (gx_lockdown_active()) {
         return true;
     }
+    if (gx_installed() && gx_release_apply_if_new()) {
+        return false;
+    }
     if (!is_file(gx_baseline_path())) {
         // el propietario restauró archivos limpios y borró la línea base: se recrea con el estado actual
         $n = gx_baseline_build();
@@ -280,4 +284,84 @@ function gx_guard(bool $force = false): bool
             . "\n\nEntre al panel > Seguridad y pulse Publicar para restaurarlas, y cambie sus contraseñas de FTP/cPanel.");
     }
     return false;
+}
+
+
+/** Huella de un archivo ignorando el bloque de contraseña HTTP (que el instalador modifica por diseño). */
+function gx_norm_hash(string $abs): string
+{
+    $c = (string)@file_get_contents($abs);
+    if (strpos($c, '# GX-AUTH-BEGIN') !== false) {
+        $c = (string)preg_replace('/# GX-AUTH-BEGIN.*?# GX-AUTH-END/s', '# GX-AUTH', $c);
+    }
+    return hash('sha256', $c);
+}
+
+/** Vuelve a activar la contraseña HTTP del panel si el ZIP nuevo restauró el .htaccess sin ella. */
+function gx_reapply_auth(): void
+{
+    $ht = GX_DATA . '/.htpasswd';
+    $dir = gx_find_admin_dir();
+    if (!is_file($ht) || $dir === null) {
+        return;
+    }
+    if (strpos((string)@file_get_contents(GX_ROOT . '/' . $dir . '/.htaccess'), 'AuthUserFile') !== false) {
+        return;
+    }
+    $parts = explode(':', trim((string)file_get_contents($ht)), 2);
+    if (count($parts) === 2) {
+        gx_apply_basic_auth($parts[0], $parts[1]);
+    }
+}
+
+/**
+ * Actualización por ZIP: si _core/release.json trae una versión nueva y TODOS los archivos de código
+ * coinciden con ella, se acepta sola: se regeneran las páginas, se rehace la línea base y se reactiva la contraseña HTTP.
+ * Si algún archivo no coincide (código ajeno o modificado), no se acepta y el monitor normal activa el bloqueo.
+ */
+function gx_release_apply_if_new(): bool
+{
+    $rel = gx_json_read(GX_CORE . '/release.json', null);
+    if (!is_array($rel) || empty($rel['build']) || !is_array($rel['files'] ?? null)) {
+        return false;
+    }
+    if ((string)gx_setting('release_build', '') === (string)$rel['build']) {
+        return false;
+    }
+    $gen = array_flip((array)($rel['generated'] ?? [])) + gx_generated_set();
+    $now = gx_list_files();
+    foreach ($now as $r => $abs) {
+        if (isset($gen[$r]) || gx_is_volatile($r)) {
+            continue;
+        }
+        if (is_link($abs)) {
+            return false;
+        }
+        if (isset($rel['files'][$r])) {
+            if (!hash_equals((string)$rel['files'][$r], gx_norm_hash($abs))) {
+                return false;
+            }
+        } elseif (preg_match(GX_SCRIPT_EXT, $r) || gx_has_php_tag($abs)) {
+            return false;   // script ajeno al paquete
+        }
+    }
+    foreach ($rel['files'] as $r => $_h) {
+        if (!isset($now[$r])) {
+            return false;
+        }
+    }
+    $note = 'OK';
+    try {
+        $res = gx_publish();
+        if ($res['errors']) {
+            $note = 'publicación con avisos: ' . implode(' ', $res['errors']);
+        }
+    } catch (Throwable $t) {
+        $note = 'error al publicar: ' . $t->getMessage();
+    }
+    gx_reapply_auth();
+    $n = gx_baseline_build();
+    gx_set('release_build', (string)$rel['build']);
+    gx_audit('ACTUALIZACION', 'Versión ' . $rel['build'] . ' aceptada (' . $n . ' archivos; ' . $note . ')', 'sistema');
+    return true;
 }

@@ -9,6 +9,7 @@ define('GX_ROOT', dirname(__DIR__) . '/site');
 require GX_ROOT . '/_core/lib/bootstrap.php';
 require_once GX_ROOT . '/_core/lib/auth.php';
 require_once GX_ROOT . '/_core/lib/images.php';
+require_once GX_ROOT . '/_core/lib/integrity.php';
 
 $root = dirname(__DIR__);
 $site = $root . '/site';
@@ -118,7 +119,11 @@ if ($rc !== 0) {
     fwrite(STDERR, "pregen falló\n");
     exit(1);
 }
-foreach (['index.html', '404.html', '403.html', '500.html', 'sitemap.xml', 'robots.txt', 'sobre-nosotros/index.html', 'servicio-de-gruas-24-7/index.html', 'contactenos/index.html', 'assets/css/theme.css'] as $f) {
+$genList = ['index.html', '404.html', '403.html', '500.html', 'sitemap.xml', 'robots.txt', 'sobre-nosotros/index.html', 'servicio-de-gruas-24-7/index.html', 'contactenos/index.html', 'assets/css/theme.css'];
+foreach ($geoSlugs as $gs) {
+    $genList[] = $gs . '/index.html';
+}
+foreach ($genList as $f) {
     if (!is_file($tmp . '/' . $f)) {
         fwrite(STDERR, "falta $f\n");
         exit(1);
@@ -160,6 +165,11 @@ ACCESOS INICIALES (se muestran UNA sola vez; cámbielas)
   El panel obliga a cambiar la contraseña en el primer ingreso. Luego active la
   verificación en dos pasos (2FA) en «Mi cuenta». La contraseña HTTP también se cambia ahí.
 
+ACTUALIZAR (sitio ya instalado)
+  Descomprima el ZIP nuevo encima, reemplazando todo. No borre nada. La primera visita a /admin/ (o un
+  envío del formulario) reconoce la versión nueva, regenera las páginas y conserva sus textos, imágenes,
+  mensajes y claves. Si algún archivo de código no coincide con el paquete, el modo de seguridad lo bloquea.
+
 CÓMO FUNCIONA
   - El sitio que ven los visitantes son SOLO archivos estáticos (como un sitio de Xara).
   - Edite todo en el panel y pulse «Publicar»: se regeneran las páginas, sitemap.xml y robots.txt.
@@ -196,6 +206,18 @@ SEGURIDAD (recomendaciones para el hosting)
   - Cambie TODAS las contraseñas después de limpiar una infección anterior (la de WordPress/hosting).
 TXT;
 file_put_contents($site . '/README.txt', $readme . "\n");
+
+// paquete de actualización: huella de todo el código. Permite actualizar solo con descomprimir el ZIP encima.
+$relFiles = [];
+$genSet = array_flip($genList);
+foreach (gx_list_files() as $r => $abs) {
+    if (isset($genSet[$r]) || gx_is_volatile($r) || is_link($abs)) {
+        continue;
+    }
+    $relFiles[$r] = gx_norm_hash($abs);
+}
+gx_json_write($site . '/_core/release.json', ['build' => gmdate('Ymd-His') . '-' . substr(hash('sha256', json_encode($relFiles)), 0, 8), 'files' => $relFiles, 'generated' => $genList]);
+file_put_contents($site . '/_core/release.json', (string)file_get_contents($site . '/_core/release.json'));
 
 // ZIP
 $zipPath = $dist . '/gruas-express-towing.zip';

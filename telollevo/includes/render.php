@@ -310,7 +310,7 @@ function sec_coverage(array $C): string {
         <?php foreach ($d['zones'] as $z): ?><li><?= icon('map-pin', '') ?><span><?= e($z['name']) ?></span></li><?php endforeach; ?>
       </ul>
       <?php if ($d['note'] !== ''): ?><p class="cov-note reveal"><?= icon('clock', '') ?><span><?= e($d['note']) ?></span></p><?php endif; ?>
-      <?php if ($d['cta_label'] !== ''): ?><div class="reveal"><?= btn_a($d['cta_label'], wa_link($c, 'Hola, quisiera consultar si tienen cobertura en mi zona.'), 'btn-primary', [], icon('whatsapp-logo', 'btn-ic', 'fill')) ?></div><?php endif; ?>
+      <?php if ($d['cta_label'] !== ''): ?><div class="reveal"><?= btn_a($d['cta_label'], wa_link($c, 'Hola, quisiera cotizar un envío a otro departamento.'), 'btn-primary', [], icon('whatsapp-logo', 'btn-ic', 'fill')) ?></div><?php endif; ?>
     </div>
     <div class="cov-visual reveal" aria-hidden="true">
       <div class="radar">

@@ -1,0 +1,68 @@
+=====================================================================
+  TE LO LLEVO — Sitio web de Delivery y Envíos
+  Guía de instalación (3 minutos)
+=====================================================================
+
+REQUISITOS
+  • Hosting con PHP 7.4 o superior (recomendado PHP 8.x). No necesita base de datos.
+  • Apache con soporte de .htaccess (lo normal en cualquier hosting compartido).
+  • Extensiones habituales: mbstring, json, gd y fileinfo (vienen activas casi siempre).
+
+INSTALACIÓN
+  1. Entra al administrador de archivos de tu hosting (o usa FTP).
+  2. Abre la carpeta raíz de tu dominio (normalmente "public_html").
+  3. Sube el archivo ZIP y descomprímelo AHÍ MISMO.
+     Debe quedar así:  public_html/index.php, public_html/admin/, public_html/assets/ ...
+  4. Abre tu dominio en el navegador. ¡Listo! El sitio ya funciona.
+
+  Si lo instalas en una subcarpeta (ej. tudominio.com/envios) también funciona.
+
+  PERMISOS: las carpetas "data" y "uploads" deben poder escribirse (permiso 755 o 775).
+  Normalmente ya vienen bien. Si el panel no puede guardar cambios, ajusta esos permisos.
+
+PANEL DE ADMINISTRACIÓN
+  • Dirección:  https://tudominio.com/admin
+  • Usuario:    Admin-TLL
+  • Contraseña: la que se te entregó.
+  • Recomendado: cámbiala en  Panel → Correo y seguridad → Acceso al panel.
+
+  Desde el panel puedes cambiar TODO: textos, títulos, iconos, imágenes, servicios,
+  tarifas del cotizador, zonas de cobertura, preguntas frecuentes, teléfono/WhatsApp,
+  redes sociales, colores, orden y visibilidad de las secciones, páginas legales, etc.
+
+FORMULARIO DE SOLICITUDES
+  • Las solicitudes llegan a:  info@telollevogt.com
+  • Además se guardan en  Panel → Mensajes  (aunque el correo falle, nunca se pierden).
+  • Para cambiar el correo de destino:  Panel → Correo y seguridad.
+  • Si los correos no llegan: en la misma pantalla activa "Usar servidor SMTP" y escribe
+    los datos de la cuenta info@telollevogt.com (los da tu hosting). Usa el botón
+    "Guardar y enviar correo de prueba" para comprobarlo.
+
+BOTONES FLOTANTES
+  • Llamada y WhatsApp al 3789 9709 (Guatemala +502). Se cambian en Panel → Contacto y redes.
+
+SEGURIDAD INCLUIDA
+  • Contraseña cifrada (bcrypt), sesiones protegidas, bloqueo tras 5 intentos fallidos.
+  • Protección CSRF en todos los formularios del panel y anti-spam en el formulario público.
+  • Las imágenes que subes se revisan y se vuelven a procesar (no se aceptan archivos ejecutables).
+  • Carpetas internas (data, includes) bloqueadas desde la web.
+  • Política de seguridad de contenido (CSP): el sitio no carga nada de servidores externos.
+  • Fuentes e iconos incluidos en el propio sitio (sin Google Fonts ni CDN).
+  • Recomendación: activa el certificado SSL (https) en tu hosting y mantén PHP actualizado.
+
+RESPALDOS
+  • Panel → Respaldo: descarga todos tus textos y ajustes en un archivo.
+  • Para respaldar las imágenes que subas, copia la carpeta "uploads".
+
+ESTRUCTURA
+  index.php, legal.php, contact.php ... páginas públicas
+  admin/ ........................ panel de administración
+  assets/ ....................... estilos, scripts, fuentes, iconos e imágenes
+  includes/ ..................... código interno (protegido)
+  data/ ......................... tus contenidos y mensajes (protegido)
+  uploads/ ...................... imágenes que subes desde el panel
+
+CRÉDITOS
+  • Iconos: Phosphor Icons (licencia MIT) — assets/icons/LICENSE-phosphor.txt
+  • Tipografías: Outfit y Plus Jakarta Sans (licencia SIL Open Font License)
+=====================================================================

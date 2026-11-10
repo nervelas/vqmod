@@ -54,10 +54,9 @@ function default_content(): array {
             'youtube'       => '',
         ],
         'layout' => [
-            'order'   => ['hero', 'stats', 'services', 'about', 'why', 'plans', 'coverage', 'testimonials', 'faq', 'cta', 'contact', 'how', 'rates'],
+            'order'   => ['hero', 'stats', 'services', 'about', 'why', 'coverage', 'testimonials', 'faq', 'cta', 'contact', 'how', 'rates'],
             'enabled' => [
-                'hero' => true, 'stats' => true, 'services' => true, 'about' => true, 'how' => false, 'rates' => false, 'why' => true,
-                'plans' => true, 'coverage' => true, 'testimonials' => false, 'faq' => true, 'cta' => true, 'contact' => true,
+                'hero' => true, 'stats' => true, 'services' => true, 'about' => true, 'how' => false, 'rates' => false, 'why' => true, 'coverage' => true, 'testimonials' => false, 'faq' => true, 'cta' => true, 'contact' => true,
             ],
         ],
         'nav' => [
@@ -181,25 +180,6 @@ function default_content(): array {
                 ['icon' => 'chats',               'title' => 'Comunicación constante',  'text' => 'Te avisamos por WhatsApp cuando recogemos y cuando entregamos tu paquete.'],
                 ['icon' => 'receipt',             'title' => 'Precios claros',          'text' => 'Sabes cuánto pagas antes de enviar. Sin sorpresas ni cargos ocultos.'],
                 ['icon' => 'heart',               'title' => 'Trato cercano',           'text' => 'Somos un equipo local que conoce la ciudad y está siempre a un mensaje de distancia.'],
-            ],
-        ],
-        'plans' => [
-            'eyebrow'  => 'Planes',
-            'title'    => 'Una solución para *cada necesidad*',
-            'subtitle' => 'Envía cuando quieras o ahorra con un plan para tu negocio.',
-            'items' => [
-                ['icon' => 'package',    'name' => 'Envío individual', 'price' => 'Desde Q20', 'period' => 'por envío',
-                 'desc' => 'Para cuando lo necesites, sin compromisos ni mensualidades.',
-                 'features' => "Recogida y entrega puerta a puerta\nConfirmación por WhatsApp\nPago en efectivo o transferencia\nCotización inmediata",
-                 'featured' => false, 'cta_label' => 'Pedir ahora', 'cta_href' => '#contacto'],
-                ['icon' => 'rocket',     'name' => 'Emprendedor', 'price' => 'Tarifa especial', 'period' => 'según tu volumen',
-                 'desc' => 'Para tiendas en línea y ventas por redes sociales que envían con frecuencia.',
-                 'features' => "Descuento por volumen de envíos\nRutas programadas\nPago contra entrega\nAtención prioritaria por WhatsApp",
-                 'featured' => true, 'cta_label' => 'Quiero esta tarifa', 'cta_href' => '#contacto'],
-                ['icon' => 'buildings',  'name' => 'Empresas', 'price' => 'A tu medida', 'period' => 'convenio mensual',
-                 'desc' => 'Entregas diarias para restaurantes, comercios y empresas con rutas fijas.',
-                 'features' => "Convenio con facturación mensual\nEjecutivo de cuenta asignado\nReporte de entregas\nRutas fijas y flexibles",
-                 'featured' => false, 'cta_label' => 'Solicitar propuesta', 'cta_href' => '#contacto'],
             ],
         ],
         'coverage' => [

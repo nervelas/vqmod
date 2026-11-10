@@ -140,20 +140,6 @@ function admin_schema(): array {
                     F('text', 'textarea', 'Descripción', ['max' => 250, 'rows' => 2]),
                 ]]),
             ]],
-        'plans' => ['group' => 'Secciones de la página', 'title' => 'Planes', 'icon' => 'stack', 'desc' => 'Planes o paquetes de servicio.',
-            'fields' => [
-                F('eyebrow', 'text', 'Etiqueta de la sección', ['max' => 40]),
-                F('title', 'textarea', 'Título', ['max' => 140, 'rows' => 2]),
-                F('subtitle', 'textarea', 'Subtítulo', ['max' => 300, 'rows' => 2]),
-                F('items', 'list', 'Planes', ['il' => 'name', 'max_items' => 4, 'f' => [
-                    F('icon', 'icon', 'Icono'), F('name', 'text', 'Nombre del plan', ['max' => 40]),
-                    F('price', 'text', 'Precio o texto de precio', ['max' => 30]), F('period', 'text', 'Detalle del precio', ['max' => 40]),
-                    F('desc', 'textarea', 'Descripción', ['max' => 200, 'rows' => 2]),
-                    F('features', 'textarea', 'Beneficios (uno por línea)', ['max' => 600, 'rows' => 5]),
-                    F('featured', 'bool', 'Plan destacado (recomendado)'),
-                    F('cta_label', 'text', 'Texto del botón', ['max' => 30]), F('cta_href', 'url', 'Enlace del botón', ['max' => 200]),
-                ]]),
-            ]],
         'coverage' => ['group' => 'Secciones de la página', 'title' => 'Cobertura', 'icon' => 'map-trifold', 'desc' => 'Zonas y municipios donde trabajas.',
             'fields' => [
                 F('eyebrow', 'text', 'Etiqueta de la sección', ['max' => 40]),
@@ -229,7 +215,7 @@ function admin_schema(): array {
 function section_labels(): array {
     return [
         'hero' => 'Portada', 'stats' => 'Cifras destacadas', 'services' => 'Servicios', 'about' => 'Misión, Visión y Propósito', 'how' => 'Cómo funciona',
-        'rates' => 'Tarifas y cotizador', 'why' => '¿Por qué elegirnos?', 'plans' => 'Planes', 'coverage' => 'Cobertura',
+        'rates' => 'Tarifas y cotizador', 'why' => '¿Por qué elegirnos?', 'coverage' => 'Cobertura',
         'testimonials' => 'Opiniones', 'faq' => 'Preguntas frecuentes', 'cta' => 'Llamado a la acción', 'contact' => 'Formulario de contacto',
     ];
 }

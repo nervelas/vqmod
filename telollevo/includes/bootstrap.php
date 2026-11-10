@@ -189,6 +189,13 @@ function get_content(bool $fresh = false): array {
         $saved = migrate_cliente_v2($saved, $def);
         if (!defined('TLL_MIGRATING')) { define('TLL_MIGRATING', 1); store_write('content', $saved); }
     }
+    if (is_array($saved) && empty($saved['_migrated']['sin_planes'])) {
+        // El cliente pidió eliminar la sección "Planes"
+        unset($saved['plans'], $saved['layout']['enabled']['plans']);
+        $saved['layout']['order'] = array_values(array_diff((array)($saved['layout']['order'] ?? []), ['plans']));
+        $saved['_migrated']['sin_planes'] = date('Y-m-d H:i:s');
+        if (!defined('TLL_MIGRATING2')) { define('TLL_MIGRATING2', 1); store_write('content', $saved); }
+    }
     $c = is_array($saved) ? deep_merge($def, $saved) : $def;
     // Secciones nuevas (agregadas en actualizaciones) que no estén en el orden guardado
     foreach ($def['layout']['order'] as $sid) {

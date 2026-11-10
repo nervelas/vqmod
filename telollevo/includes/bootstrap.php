@@ -185,6 +185,10 @@ function get_content(bool $fresh = false): array {
     if ($c !== null && !$fresh) return $c;
     $saved = store_read('content', null);
     $def = default_content();
+    if (is_array($saved) && empty($saved['_migrated']['cliente_v2'])) {
+        $saved = migrate_cliente_v2($saved, $def);
+        if (!defined('TLL_MIGRATING')) { define('TLL_MIGRATING', 1); store_write('content', $saved); }
+    }
     $c = is_array($saved) ? deep_merge($def, $saved) : $def;
     // Secciones nuevas (agregadas en actualizaciones) que no estén en el orden guardado
     foreach ($def['layout']['order'] as $sid) {
@@ -195,6 +199,57 @@ function get_content(bool $fresh = false): array {
     }
     return $c;
 }
+/**
+ * Actualización única para instalaciones existentes: aplica SOLO los cambios solicitados
+ * por el cliente sobre el contenido ya guardado. Todo lo demás (colores, contacto, imágenes
+ * subidas, otras secciones, mensajes, usuario y contraseña) queda intacto.
+ */
+function migrate_cliente_v2(array $saved, array $def): array {
+    $copy = function (string $sec, array $keys) use (&$saved, $def) {
+        foreach ($keys as $k) { $saved[$sec][$k] = $def[$sec][$k]; }
+    };
+    $copy('hero', ['title', 'subtitle', 'cta1_label', 'cta1_href', 'cta2_label', 'cta2_href', 'image', 'image_alt',
+                   'card1_icon', 'card1_title', 'card1_text', 'card2_icon', 'card2_title', 'card2_text', 'trust']);
+    $copy('stats', ['items']);
+    $copy('services', ['title', 'subtitle', 'items']);
+    $saved['about'] = $def['about'];
+    $copy('coverage', ['subtitle', 'note', 'cta_label']);
+    $copy('faq', ['subtitle', 'items']);
+    $copy('form', ['services', 'sends_label', 'sends', 'sizes']);
+    // Foto de "¿Por qué elegirnos?": solo si seguía siendo la original
+    if (($saved['why']['image'] ?? '') === '' || ($saved['why']['image'] ?? '') === 'assets/img/courier.webp') {
+        $saved['why']['image'] = $def['why']['image']; $saved['why']['image_alt'] = $def['why']['image_alt'];
+    }
+    // Menú: quitar "Cómo funciona" y "Tarifas"; agregar Misión, Visión y Propósito
+    $items = [];
+    $hasAbout = false;
+    foreach ((array)($saved['nav']['items'] ?? []) as $it) {
+        $h = $it['href'] ?? '';
+        if ($h === '#como-funciona' || $h === '#tarifas') continue;
+        if ($h === '#mision') $hasAbout = true;
+        $items[] = $it;
+    }
+    if (!$hasAbout) {
+        $new = ['label' => 'Misión, Visión y Propósito', 'href' => '#mision'];
+        $pos = 0;
+        foreach ($items as $i => $it) { if (($it['href'] ?? '') === '#servicios') { $pos = $i + 1; break; } }
+        array_splice($items, $pos, 0, [$new]);
+    }
+    $saved['nav']['items'] = $items;
+    // Secciones: ocultar "Cómo funciona" y "Tarifas", mostrar Misión/Visión/Propósito
+    $order = (array)($saved['layout']['order'] ?? $def['layout']['order']);
+    if (!in_array('about', $order, true)) {
+        $pos = array_search('services', $order, true);
+        array_splice($order, $pos === false ? count($order) : $pos + 1, 0, ['about']);
+    }
+    $saved['layout']['order'] = $order;
+    $saved['layout']['enabled']['about'] = true;
+    $saved['layout']['enabled']['how'] = false;
+    $saved['layout']['enabled']['rates'] = false;
+    $saved['_migrated']['cliente_v2'] = date('Y-m-d H:i:s');
+    return $saved;
+}
+
 function save_content(array $c): bool { return store_write('content', $c); }
 
 function get_settings(): array {

@@ -31,7 +31,7 @@ function default_content(): array {
             'tagline'          => 'Delivery y envíos',
             'logo'             => 'assets/img/logo-mark.png',
             'meta_title'       => 'Te Lo Llevo | Delivery y envíos en toda Guatemala',
-            'meta_description' => 'Soluciones logísticas de reparto para empresas en toda Guatemala: motorista exclusivo, motocicleta y operación completa por jornada. Solicite su cotización.',
+            'meta_description' => 'Delivery y envíos a nivel nacional, en toda Guatemala. Rápido, seguro y con confirmación por WhatsApp. Cotiza y solicita tu envío en minutos.',
             'share_image'      => 'assets/img/og-image.jpg',
             'floating'         => true,
         ],
@@ -54,10 +54,10 @@ function default_content(): array {
             'youtube'       => '',
         ],
         'layout' => [
-            'order'   => ['hero', 'stats', 'services', 'about', 'why', 'coverage', 'testimonials', 'faq', 'cta', 'contact', 'how', 'rates', 'plans'],
+            'order'   => ['hero', 'stats', 'services', 'about', 'why', 'plans', 'coverage', 'testimonials', 'faq', 'cta', 'contact', 'how', 'rates'],
             'enabled' => [
                 'hero' => true, 'stats' => true, 'services' => true, 'about' => true, 'how' => false, 'rates' => false, 'why' => true,
-                'plans' => false, 'coverage' => true, 'testimonials' => false, 'faq' => true, 'cta' => true, 'contact' => true,
+                'plans' => true, 'coverage' => true, 'testimonials' => false, 'faq' => true, 'cta' => true, 'contact' => true,
             ],
         ],
         'nav' => [
@@ -96,7 +96,7 @@ function default_content(): array {
         ],
         'stats' => [
             'items' => [
-                ['icon' => 'timer',          'prefix' => '', 'number' => 'Jornada completa', 'suffix' => '', 'label' => '8 horas con motorista exclusivo'],
+                ['icon' => 'timer',          'prefix' => '', 'number' => 'Jornada completa', 'suffix' => '', 'label' => 'Entrega express desde'],
                 ['icon' => 'whatsapp-logo',  'prefix' => '', 'number' => '100', 'suffix' => '%',     'label' => 'Seguimiento por WhatsApp'],
                 ['icon' => 'calendar-check', 'prefix' => '', 'number' => '7',   'suffix' => ' días', 'label' => 'Servicio de lunes a domingo'],
             ],
@@ -272,7 +272,7 @@ function default_content(): array {
             'services'  => "Motorista por Jornada - 8 horas\nReparto para Restaurantes\nReparto Programado\nMensajería Empresarial\nDocumentos y Trámites",
             'sends_label' => '¿Qué vamos a enviar?',
             'sends'     => "Pedidos de restaurantes\nDocumentos\nPaquetes",
-            'size_label' => 'Volumen de entregas por día',
+            'size_label' => 'Tamaño del paquete',
             'sizes'     => "1 a 10 entregas por día\n11 a 25 entregas por día\nMás de 25 entregas por día\nSolo documentos / trámites",
             'button'    => 'Enviar solicitud',
             'success'   => '¡Gracias! Recibimos tu solicitud y te contactaremos en breve para confirmar tu envío.',

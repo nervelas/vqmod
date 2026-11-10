@@ -222,7 +222,7 @@
       var L = ['Hola ' + (DATA.brand || '') + ', quiero solicitar un servicio:'];
       var add = function (k, val) { if (val) L.push('• ' + k + ': ' + val); };
       add('Nombre', v('nombre')); add('Teléfono', v('telefono')); add('Servicio', v('servicio') || v('interes'));
-      add('Recogida', v('recogida')); add('Entrega', v('entrega')); add('Envío', v('descripcion')); add('Volumen', v('tamano'));
+      add('Recogida', v('recogida')); add('Entrega', v('entrega')); add('Envío', v('descripcion')); add('Tamaño', v('tamano'));
       var cuando = v('cuando'); if (v('fecha')) cuando += ' (' + v('fecha') + (v('hora') ? ' ' + v('hora') : '') + ')';
       add('Cuándo', cuando); add('Comentarios', v('comentarios'));
       window.open('https://wa.me/' + (DATA.wa || '') + '?text=' + encodeURIComponent(L.join('\n')), '_blank', 'noopener');

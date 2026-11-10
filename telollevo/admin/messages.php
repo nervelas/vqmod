@@ -58,7 +58,7 @@ $page = max(1, min($pages, (int)($_GET['page'] ?? 1)));
 $slice = array_slice($msgs, ($page - 1) * $per, $per);
 
 function wa_phone(string $p): string { $d = preg_replace('/\D/', '', $p); return strlen($d) === 8 ? '502' . $d : $d; }
-$lab = ['nombre' => 'Nombre', 'telefono' => 'Teléfono', 'email' => 'Correo', 'servicio' => 'Servicio', 'interes' => 'Tarjeta de interés', 'recogida' => 'Recogida', 'entrega' => 'Entrega', 'descripcion' => 'Qué se envía', 'tamano' => 'Volumen de entregas', 'cuando' => 'Cuándo', 'fecha' => 'Fecha', 'hora' => 'Hora', 'comentarios' => 'Comentarios'];
+$lab = ['nombre' => 'Nombre', 'telefono' => 'Teléfono', 'email' => 'Correo', 'servicio' => 'Servicio', 'interes' => 'Tarjeta de interés', 'recogida' => 'Recogida', 'entrega' => 'Entrega', 'descripcion' => 'Qué se envía', 'tamano' => 'Tamaño', 'cuando' => 'Cuándo', 'fecha' => 'Fecha', 'hora' => 'Hora', 'comentarios' => 'Comentarios'];
 
 admin_header('Mensajes', 'messages', 'Solicitudes recibidas desde el formulario de la página.');
 ?>

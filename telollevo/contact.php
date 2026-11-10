@@ -110,7 +110,7 @@ $brand = $C['site']['brand'];
 $labels = [
     'nombre' => 'Nombre', 'telefono' => 'Teléfono / WhatsApp', 'email' => 'Correo', 'servicio' => 'Tipo de servicio',
     'interes' => 'Servicio de interés (tarjeta)', 'recogida' => 'Dirección de recogida', 'entrega' => 'Dirección de entrega',
-    'descripcion' => 'Qué se envía', 'tamano' => 'Tamaño', 'cuando' => 'Cuándo', 'fecha' => 'Fecha', 'hora' => 'Hora', 'comentarios' => 'Comentarios',
+    'descripcion' => 'Qué se envía', 'tamano' => 'Volumen de entregas', 'cuando' => 'Cuándo', 'fecha' => 'Fecha', 'hora' => 'Hora', 'comentarios' => 'Comentarios',
 ];
 $text = "NUEVA SOLICITUD DE SERVICIO - $brand\n" . str_repeat('=', 44) . "\n";
 $rows = '';

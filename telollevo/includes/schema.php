@@ -68,7 +68,7 @@ function admin_schema(): array {
             'fields' => [F('items', 'list', 'Cifras', ['il' => 'label', 'max_items' => 6, 'f' => [
                 F('icon', 'icon', 'Icono'),
                 F('prefix', 'text', 'Antes del número (ej. Q)', ['max' => 6]),
-                F('number', 'number', 'Número', ['min' => 0, 'max' => 1000000]),
+                F('number', 'text', 'Valor (un número se anima; también puede ser texto)', ['max' => 24]),
                 F('suffix', 'text', 'Después del número (ej. %, min)', ['max' => 12]),
                 F('label', 'text', 'Descripción', ['max' => 60]),
             ]])]],
@@ -83,6 +83,20 @@ function admin_schema(): array {
                     F('tag', 'text', 'Etiqueta pequeña', ['max' => 30]),
                     F('text', 'textarea', 'Descripción', ['max' => 300, 'rows' => 3]),
                 ]]),
+            ]],
+        'about' => ['group' => 'Secciones de la página', 'title' => 'Misión, Visión y Propósito', 'icon' => 'target', 'desc' => 'Quiénes somos: misión, visión, propósito y valores.',
+            'fields' => [
+                F('eyebrow', 'text', 'Etiqueta de la sección', ['max' => 40]),
+                F('title', 'textarea', 'Título', ['max' => 140, 'rows' => 2]),
+                F('image', 'image', 'Foto lateral (vertical)'),
+                F('image_alt', 'text', 'Descripción de la foto lateral', ['max' => 120]),
+                F('items', 'list', 'Misión, visión y propósito', ['il' => 'title', 'max_items' => 6, 'f' => [
+                    F('icon', 'icon', 'Icono'), F('title', 'text', 'Título', ['max' => 40]),
+                    F('text', 'textarea', 'Texto', ['max' => 600, 'rows' => 4]),
+                ]]),
+                F('banner', 'image', 'Foto ancha (equipo)'),
+                F('banner_alt', 'text', 'Descripción de la foto ancha', ['max' => 120]),
+                F('values', 'list', 'Valores (se muestran sobre la foto ancha)', ['il' => 'name', 'max_items' => 8, 'f' => [F('name', 'text', 'Valor', ['max' => 40])]]),
             ]],
         'how' => ['group' => 'Secciones de la página', 'title' => 'Cómo funciona', 'icon' => 'path', 'desc' => 'Pasos del proceso de envío.',
             'fields' => [
@@ -144,9 +158,9 @@ function admin_schema(): array {
             'fields' => [
                 F('eyebrow', 'text', 'Etiqueta de la sección', ['max' => 40]),
                 F('title', 'textarea', 'Título', ['max' => 140, 'rows' => 2]),
-                F('subtitle', 'textarea', 'Subtítulo', ['max' => 300, 'rows' => 2]),
+                F('subtitle', 'textarea', 'Subtítulo', ['max' => 700, 'rows' => 5]),
                 F('zones', 'list', 'Zonas / municipios', ['il' => 'name', 'max_items' => 40, 'f' => [F('name', 'text', 'Nombre', ['max' => 60])]]),
-                F('note', 'text', 'Nota', ['max' => 160]),
+                F('note', 'textarea', 'Nota (cada línea es un párrafo)', ['max' => 600, 'rows' => 4]),
                 F('cta_label', 'text', 'Texto del botón', ['max' => 40]),
             ]],
         'testimonials' => ['group' => 'Secciones de la página', 'title' => 'Opiniones de clientes', 'icon' => 'chat-circle-text', 'desc' => 'Reemplaza los ejemplos por comentarios reales y actívala en "Secciones y orden".',
@@ -182,7 +196,10 @@ function admin_schema(): array {
                 F('title', 'textarea', 'Título', ['max' => 140, 'rows' => 2]),
                 F('subtitle', 'textarea', 'Subtítulo', ['max' => 300, 'rows' => 3]),
                 F('services', 'textarea', 'Opciones de "Tipo de servicio" (una por línea)', ['max' => 800, 'rows' => 7]),
-                F('sizes', 'textarea', 'Opciones de "Tamaño del paquete" (una por línea)', ['max' => 800, 'rows' => 6]),
+                F('sends_label', 'text', 'Título del campo "qué se envía"', ['max' => 60]),
+                F('sends', 'textarea', 'Sugerencias del campo "qué se envía" (una por línea)', ['max' => 600, 'rows' => 4]),
+                F('size_label', 'text', 'Título del campo de volumen/tamaño', ['max' => 60]),
+                F('sizes', 'textarea', 'Opciones del campo de volumen/tamaño (una por línea)', ['max' => 800, 'rows' => 6]),
                 F('button', 'text', 'Texto del botón de envío', ['max' => 40]),
                 F('success', 'textarea', 'Mensaje de éxito', ['max' => 300, 'rows' => 2]),
                 F('privacy', 'textarea', 'Aviso de privacidad bajo el botón', ['max' => 250, 'rows' => 2]),
@@ -211,7 +228,7 @@ function admin_schema(): array {
 /** Secciones de la página que se pueden activar/ordenar. */
 function section_labels(): array {
     return [
-        'hero' => 'Portada', 'stats' => 'Cifras destacadas', 'services' => 'Servicios', 'how' => 'Cómo funciona',
+        'hero' => 'Portada', 'stats' => 'Cifras destacadas', 'services' => 'Servicios', 'about' => 'Misión, Visión y Propósito', 'how' => 'Cómo funciona',
         'rates' => 'Tarifas y cotizador', 'why' => '¿Por qué elegirnos?', 'plans' => 'Planes', 'coverage' => 'Cobertura',
         'testimonials' => 'Opiniones', 'faq' => 'Preguntas frecuentes', 'cta' => 'Llamado a la acción', 'contact' => 'Formulario de contacto',
     ];

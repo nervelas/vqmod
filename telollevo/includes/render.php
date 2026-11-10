@@ -101,7 +101,7 @@ function sec_hero(array $C): string {
         <span class="spark s1" aria-hidden="true"><?= icon('sparkle', '', 'duotone') ?></span>
         <span class="spark s2" aria-hidden="true"><?= icon('sparkle', '', 'duotone') ?></span>
         <span class="spark s3" aria-hidden="true"><?= icon('sparkle', '', 'duotone') ?></span>
-        <?php if ($img): ?><img class="stage-img" src="<?= e($img) ?>" alt="<?= e($h['image_alt']) ?>" width="1094" height="1066" fetchpriority="high"><?php endif; ?>
+        <?php if ($img): ?><img class="stage-img" src="<?= e($img) ?>" alt="<?= e($h['image_alt']) ?>" width="1424" height="967" fetchpriority="high"><?php endif; ?>
         <?php if ($h['card1_title'] !== ''): ?>
         <div class="float-card fc1">
           <span class="fc-ic ok"><?= icon($h['card1_icon'], '') ?></span>
@@ -127,12 +127,12 @@ function sec_stats(array $C): string {
     ob_start(); ?>
 <section class="stats" aria-label="Cifras destacadas">
   <div class="container">
-    <div class="stats-bar reveal">
+    <div class="stats-bar reveal" data-n="<?= count($items) ?>">
       <?php foreach ($items as $i => $s): ?>
       <div class="stat">
         <span class="stat-ic"><?= icon($s['icon'], '') ?></span>
         <div>
-          <div class="stat-num"><?= e($s['prefix']) ?><span data-count="<?= e($s['number']) ?>"><?= e($s['number']) ?></span><?= e($s['suffix']) ?></div>
+          <div class="stat-num<?= is_numeric($s['number']) ? '' : ' is-text' ?>"><?= e($s['prefix']) ?><?php if (is_numeric($s['number'])): ?><span data-count="<?= e($s['number']) ?>"><?= e($s['number']) ?></span><?php else: ?><?= e($s['number']) ?><?php endif; ?><?= e($s['suffix']) ?></div>
           <div class="stat-label"><?= e($s['label']) ?></div>
         </div>
       </div>
@@ -149,7 +149,7 @@ function sec_services(array $C): string {
 <section class="section" id="servicios">
   <div class="container">
     <?= sec_head($d) ?>
-    <div class="grid services-grid">
+    <div class="grid services-grid" data-n="<?= count($d['items']) ?>">
       <?php foreach ($d['items'] as $i => $s): ?>
       <article class="card service reveal" style="--i:<?= $i % 3 ?>">
         <div class="service-top">
@@ -164,6 +164,41 @@ function sec_services(array $C): string {
       </article>
       <?php endforeach; ?>
     </div>
+  </div>
+</section>
+<?php return ob_get_clean();
+}
+
+function sec_about(array $C): string {
+    $d = $C['about'];
+    $img = media_url($d['image']); $ban = media_url($d['banner']);
+    ob_start(); ?>
+<section class="section about" id="mision">
+  <div class="container">
+    <?= sec_head($d) ?>
+    <div class="about-grid">
+      <?php if ($img): ?>
+      <div class="about-photo reveal"><img src="<?= e($img) ?>" alt="<?= e($d['image_alt']) ?>" loading="lazy" width="860" height="1290"></div>
+      <?php endif; ?>
+      <div class="about-cards">
+        <?php foreach ($d['items'] as $i => $it): ?>
+        <article class="about-card reveal" style="--i:<?= $i ?>">
+          <span class="ic-box"><?= icon($it['icon'], '') ?></span>
+          <div><h3><?= e($it['title']) ?></h3><p><?= e($it['text']) ?></p></div>
+        </article>
+        <?php endforeach; ?>
+      </div>
+    </div>
+    <?php if ($ban): ?>
+    <div class="about-banner reveal">
+      <img src="<?= e($ban) ?>" alt="<?= e($d['banner_alt']) ?>" loading="lazy" width="1500" height="1000">
+      <?php if (!empty($d['values'])): ?>
+      <ul class="values"><?php foreach ($d['values'] as $v): ?><li><?= e($v['name']) ?></li><?php endforeach; ?></ul>
+      <?php endif; ?>
+    </div>
+    <?php elseif (!empty($d['values'])): ?>
+    <ul class="values solo reveal"><?php foreach ($d['values'] as $v): ?><li><?= e($v['name']) ?></li><?php endforeach; ?></ul>
+    <?php endif; ?>
   </div>
 </section>
 <?php return ob_get_clean();
@@ -247,7 +282,7 @@ function sec_why(array $C): string {
     <div class="why-visual reveal">
       <div class="why-card">
         <span class="why-ring" aria-hidden="true"></span>
-        <?php if ($img): ?><img src="<?= e($img) ?>" alt="<?= e($d['image_alt']) ?>" loading="lazy" width="1094" height="1066"><?php endif; ?>
+        <?php if ($img): ?><img src="<?= e($img) ?>" alt="<?= e($d['image_alt']) ?>" loading="lazy" width="960" height="1440"><?php endif; ?>
       </div>
       <?php if ($d['badge_title'] !== ''): ?>
       <div class="float-card fcw">
@@ -309,8 +344,8 @@ function sec_coverage(array $C): string {
       <ul class="zones reveal">
         <?php foreach ($d['zones'] as $z): ?><li><?= icon('map-pin', '') ?><span><?= e($z['name']) ?></span></li><?php endforeach; ?>
       </ul>
-      <?php if ($d['note'] !== ''): ?><p class="cov-note reveal"><?= icon('clock', '') ?><span><?= e($d['note']) ?></span></p><?php endif; ?>
-      <?php if ($d['cta_label'] !== ''): ?><div class="reveal"><?= btn_a($d['cta_label'], wa_link($c, 'Hola, quisiera cotizar un envío a otro departamento.'), 'btn-primary', [], icon('whatsapp-logo', 'btn-ic', 'fill')) ?></div><?php endif; ?>
+      <?php if ($d['note'] !== ''): ?><p class="cov-note reveal"><?= icon('clock', '') ?><span><?= nl2br(e($d['note']), false) ?></span></p><?php endif; ?>
+      <?php if ($d['cta_label'] !== ''): ?><div class="reveal"><?= btn_a($d['cta_label'], wa_link($c, 'Hola, quisiera cotizar el servicio de motorista por jornada para mi empresa.'), 'btn-primary', [], icon('whatsapp-logo', 'btn-ic', 'fill')) ?></div><?php endif; ?>
     </div>
     <div class="cov-visual reveal" aria-hidden="true">
       <div class="radar">
@@ -398,7 +433,7 @@ function sec_cta(array $C): string {
 
 function sec_contact(array $C): string {
     $d = $C['form']; $c = $C['contact'];
-    $services = lines($d['services']); $sizes = lines($d['sizes']);
+    $services = lines($d['services']); $sizes = lines($d['sizes']); $sends = lines($d['sends']);
     $sent = isset($_GET['enviado']); $err = isset($_GET['error']);
     ob_start(); ?>
 <section class="section tint contact" id="contacto">
@@ -450,8 +485,8 @@ function sec_contact(array $C): string {
               <select id="f_serv" name="servicio" required><option value="">Selecciona una opción</option><?php foreach ($services as $s): ?><option><?= e($s) ?></option><?php endforeach; ?></select></div>
             <div class="field full"><label for="f_rec">Dirección de recogida *</label><input id="f_rec" name="recogida" type="text" maxlength="200" required placeholder="Zona, colonia, calle y referencias"></div>
             <div class="field full"><label for="f_ent">Dirección de entrega *</label><input id="f_ent" name="entrega" type="text" maxlength="200" required placeholder="Zona, colonia, calle y referencias"></div>
-            <div class="field"><label for="f_desc">¿Qué vamos a enviar? *</label><input id="f_desc" name="descripcion" type="text" maxlength="160" required placeholder="Ej. Documentos, caja, comida..."></div>
-            <div class="field"><label for="f_size">Tamaño del paquete</label>
+            <div class="field"><label for="f_desc"><?= e($d['sends_label']) ?> *</label><input id="f_desc" name="descripcion" type="text" maxlength="160" required list="sendsList" autocomplete="off" placeholder="<?= e($sends ? 'Ej. ' . $sends[0] : '') ?>"><datalist id="sendsList"><?php foreach ($sends as $s): ?><option value="<?= e($s) ?>"><?php endforeach; ?></datalist></div>
+            <div class="field"><label for="f_size"><?= e($d['size_label']) ?></label>
               <select id="f_size" name="tamano"><option value="">Selecciona una opción</option><?php foreach ($sizes as $s): ?><option><?= e($s) ?></option><?php endforeach; ?></select></div>
             <div class="field"><label for="f_when">¿Cuándo lo necesitas?</label>
               <select id="f_when" name="cuando"><option>Lo antes posible</option><option>Programar para otra fecha</option></select></div>
@@ -480,7 +515,7 @@ function render_header(array $C): string {
 <header class="site-header" id="top">
   <div class="container nav-wrap">
     <a class="brand" href="<?= e(url()) ?>#inicio" aria-label="<?= e($s['brand']) ?> - inicio">
-      <?php if ($logo): ?><img src="<?= e($logo) ?>" alt="" width="50" height="50"><?php endif; ?>
+      <?php if ($logo): ?><img src="<?= e($logo) ?>" alt="" width="76" height="76"><?php endif; ?>
       <span class="brand-text"><strong><?= e($s['brand']) ?></strong><small><?= e($s['tagline']) ?></small></span>
     </a>
     <nav class="nav" id="nav" aria-label="Principal">
@@ -503,7 +538,7 @@ function render_footer(array $C): string {
   <div class="container footer-grid">
     <div class="f-brand">
       <a class="brand on-dark" href="<?= e(url()) ?>#inicio">
-        <?php if ($logo): ?><img src="<?= e($logo) ?>" alt="" width="56" height="56" loading="lazy"><?php endif; ?>
+        <?php if ($logo): ?><img src="<?= e($logo) ?>" alt="" width="84" height="84" loading="lazy"><?php endif; ?>
         <span class="brand-text"><strong><?= e($s['brand']) ?></strong><small><?= e($s['tagline']) ?></small></span>
       </a>
       <p><?= e($f['about']) ?></p>

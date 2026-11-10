@@ -186,6 +186,13 @@ function get_content(bool $fresh = false): array {
     $saved = store_read('content', null);
     $def = default_content();
     $c = is_array($saved) ? deep_merge($def, $saved) : $def;
+    // Secciones nuevas (agregadas en actualizaciones) que no estén en el orden guardado
+    foreach ($def['layout']['order'] as $sid) {
+        if (!in_array($sid, $c['layout']['order'], true)) {
+            $c['layout']['order'][] = $sid;
+            $c['layout']['enabled'][$sid] = $def['layout']['enabled'][$sid] ?? false;
+        }
+    }
     return $c;
 }
 function save_content(array $c): bool { return store_write('content', $c); }

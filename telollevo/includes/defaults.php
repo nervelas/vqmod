@@ -232,7 +232,6 @@ function default_content(): array {
             ],
             'note'      => "Escríbanos por WhatsApp con su zona y el tipo de operación que necesita. Le respondemos con una propuesta clara.\nTrabajamos con convenios mensuales y servicios por día, comunicación directa con su motorista durante toda la jornada.",
             'cta_label' => 'Cotizar',
-            'map_badge' => 'Cobertura nacional',
         ],
         'testimonials' => [
             'eyebrow'  => 'Opiniones',

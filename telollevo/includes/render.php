@@ -348,10 +348,17 @@ function sec_coverage(array $C): string {
       <?php if ($d['note'] !== ''): ?><p class="cov-note reveal"><?= icon('clock', '') ?><span><?= nl2br(e($d['note']), false) ?></span></p><?php endif; ?>
       <?php if ($d['cta_label'] !== ''): ?><div class="reveal"><?= btn_a($d['cta_label'], wa_link($c, 'Hola, quisiera cotizar el servicio de motorista por jornada para mi empresa.'), 'btn-primary', [], icon('whatsapp-logo', 'btn-ic', 'fill')) ?></div><?php endif; ?>
     </div>
-    <div class="cov-visual reveal">
-      <div class="gt-card">
-        <?php if ($d['map_badge'] !== ''): ?><span class="gt-badge"><?= icon('map-pin', '', 'fill') ?: icon('map-pin', '') ?><?= e($d['map_badge']) ?></span><?php endif; ?>
-        <?= render_gt_map() ?>
+    <div class="cov-visual reveal" aria-hidden="true">
+      <div class="radar">
+        <?= render_gt_map_bg() ?>
+        <span class="ring r1"></span><span class="ring r2"></span><span class="ring r3"></span>
+        <span class="sweep"></span>
+        <span class="pin center"><?= icon('map-pin', '', 'fill') ?: icon('map-pin', '') ?></span>
+        <span class="pin p1"><?= icon('package', '') ?></span>
+        <span class="pin p2"><?= icon('house-line', '') ?></span>
+        <span class="pin p3"><?= icon('storefront', '') ?></span>
+        <span class="pin p4"><?= icon('buildings', '') ?></span>
+        <span class="pin p5"><?= icon('moped', '') ?></span>
       </div>
     </div>
   </div>

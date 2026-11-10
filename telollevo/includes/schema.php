@@ -161,7 +161,6 @@ function admin_schema(): array {
                 F('subtitle', 'textarea', 'Subtítulo', ['max' => 700, 'rows' => 5]),
                 F('zones', 'list', 'Zonas / municipios', ['il' => 'name', 'max_items' => 40, 'f' => [F('name', 'text', 'Nombre', ['max' => 60])]]),
                 F('note', 'textarea', 'Nota (cada línea es un párrafo)', ['max' => 600, 'rows' => 4]),
-                F('map_badge', 'text', 'Etiqueta sobre el mapa', ['max' => 40]),
                 F('cta_label', 'text', 'Texto del botón', ['max' => 40]),
             ]],
         'testimonials' => ['group' => 'Secciones de la página', 'title' => 'Opiniones de clientes', 'icon' => 'chat-circle-text', 'desc' => 'Reemplaza los ejemplos por comentarios reales y actívala en "Secciones y orden".',

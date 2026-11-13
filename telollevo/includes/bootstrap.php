@@ -210,6 +210,14 @@ function get_content(bool $fresh = false): array {
         $saved['_migrated']['ajustes_v3'] = date('Y-m-d H:i:s');
         if (!defined('TLL_MIGRATING3')) { define('TLL_MIGRATING3', 1); store_write('content', $saved); }
     }
+    if (is_array($saved) && empty($saved['_migrated']['ajustes_v4'])) {
+        // "semanas" -> "semanales" en la nota de Cobertura (sin tocar el resto del texto guardado)
+        if (isset($saved['coverage']['note'])) {
+            $saved['coverage']['note'] = str_replace('quincenales, semanas y por turno diario', 'quincenales, semanales y por turno diario', $saved['coverage']['note']);
+        }
+        $saved['_migrated']['ajustes_v4'] = date('Y-m-d H:i:s');
+        if (!defined('TLL_MIGRATING4')) { define('TLL_MIGRATING4', 1); store_write('content', $saved); }
+    }
     $c = is_array($saved) ? deep_merge($def, $saved) : $def;
     // Secciones nuevas (agregadas en actualizaciones) que no estén en el orden guardado
     foreach ($def['layout']['order'] as $sid) {

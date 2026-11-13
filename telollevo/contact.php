@@ -79,7 +79,6 @@ if (mb_strlen($d['nombre']) < 2) $errors[] = 'nombre';
 if (!preg_match('/^[0-9+()\-.\s]{7,25}$/', $d['telefono']) || strlen(preg_replace('/\D/', '', $d['telefono'])) < 7) $errors[] = 'teléfono';
 if ($d['email'] !== '' && !filter_var($d['email'], FILTER_VALIDATE_EMAIL)) $errors[] = 'correo';
 if ($d['servicio'] === '') $errors[] = 'servicio';
-if ($d['recogida'] === '' || $d['entrega'] === '') $errors[] = 'direcciones';
 if (empty($_POST['acepto'])) $errors[] = 'aceptación de privacidad';
 if ($d['fecha'] !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $d['fecha'])) $d['fecha'] = '';
 if ($d['hora'] !== '' && !preg_match('/^\d{2}:\d{2}$/', $d['hora'])) $d['hora'] = '';

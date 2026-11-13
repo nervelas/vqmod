@@ -482,8 +482,6 @@ function sec_contact(array $C): string {
             <div class="field"><label for="f_email">Correo electrónico</label><input id="f_email" name="email" type="email" maxlength="120" autocomplete="email" placeholder="opcional"></div>
             <div class="field"><label for="f_serv">Tipo de servicio *</label>
               <select id="f_serv" name="servicio" required><option value="">Selecciona una opción</option><?php foreach ($services as $s): ?><option><?= e($s) ?></option><?php endforeach; ?></select></div>
-            <div class="field full"><label for="f_rec">Dirección de recogida *</label><input id="f_rec" name="recogida" type="text" maxlength="200" required placeholder="Zona, colonia, calle y referencias"></div>
-            <div class="field full"><label for="f_ent">Dirección de entrega *</label><input id="f_ent" name="entrega" type="text" maxlength="200" required placeholder="Zona, colonia, calle y referencias"></div>
             <div class="field"><label for="f_when">¿Cuándo lo necesitas?</label>
               <select id="f_when" name="cuando"><option>Lo antes posible</option><option>Programar para otra fecha</option></select></div>
             <div class="field sched" id="schedBox" hidden><label for="f_fecha">Fecha y hora</label><div class="two"><input id="f_fecha" name="fecha" type="date" min="<?= date('Y-m-d') ?>"><input id="f_hora" name="hora" type="time" aria-label="Hora"></div></div>

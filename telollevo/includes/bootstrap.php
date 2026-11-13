@@ -196,6 +196,20 @@ function get_content(bool $fresh = false): array {
         $saved['_migrated']['sin_planes'] = date('Y-m-d H:i:s');
         if (!defined('TLL_MIGRATING2')) { define('TLL_MIGRATING2', 1); store_write('content', $saved); }
     }
+    if (is_array($saved) && empty($saved['_migrated']['ajustes_v3'])) {
+        // Ajustes pedidos por el cliente (PDF "ajustes"): se aplican una sola vez sobre lo ya guardado
+        $saved['hero']['badge'] = $def['hero']['badge'];
+        $saved['nav']['cta_label'] = $def['nav']['cta_label'];
+        if (isset($saved['stats']['items'][0])) { $saved['stats']['items'][0]['label'] = ''; }
+        if (isset($saved['why']['items'])) {
+            $saved['why']['items'] = array_values(array_filter($saved['why']['items'], function ($it) { return trim((string)($it['title'] ?? '')) !== 'Precios claros'; }));
+        }
+        $saved['coverage']['note'] = $def['coverage']['note'];
+        foreach (['title', 'text', 'whatsapp_label', 'call_label', 'chips'] as $k) { $saved['cta'][$k] = $def['cta'][$k]; }
+        unset($saved['form']['sends_label'], $saved['form']['sends'], $saved['form']['size_label'], $saved['form']['sizes']);
+        $saved['_migrated']['ajustes_v3'] = date('Y-m-d H:i:s');
+        if (!defined('TLL_MIGRATING3')) { define('TLL_MIGRATING3', 1); store_write('content', $saved); }
+    }
     $c = is_array($saved) ? deep_merge($def, $saved) : $def;
     // Secciones nuevas (agregadas en actualizaciones) que no estén en el orden guardado
     foreach ($def['layout']['order'] as $sid) {

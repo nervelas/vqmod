@@ -134,7 +134,7 @@ function sec_stats(array $C): string {
         <span class="stat-ic"><?= icon($s['icon'], '') ?></span>
         <div>
           <div class="stat-num<?= is_numeric($s['number']) ? '' : ' is-text' ?>"><?= e($s['prefix']) ?><?php if (is_numeric($s['number'])): ?><span data-count="<?= e($s['number']) ?>"><?= e($s['number']) ?></span><?php else: ?><?= e($s['number']) ?><?php endif; ?><?= e($s['suffix']) ?></div>
-          <div class="stat-label"><?= e($s['label']) ?></div>
+          <?php if ($s['label'] !== ''): ?><div class="stat-label"><?= e($s['label']) ?></div><?php endif; ?>
         </div>
       </div>
       <?php endforeach; ?>
@@ -426,6 +426,9 @@ function sec_cta(array $C): string {
         <?= btn_a($d['whatsapp_label'], wa_link($c), 'btn-wa btn-lg', [], icon('whatsapp-logo', 'btn-ic', 'fill')) ?>
         <?= btn_a($d['call_label'], tel_link($c), 'btn-navy btn-lg', [], icon('phone-call', 'btn-ic', 'fill') ?: icon('phone-call', 'btn-ic')) ?>
       </div>
+      <?php if (!empty($d['chips'])): ?>
+      <ul class="cta-chips"><?php foreach ($d['chips'] as $ch): ?><li><?= icon($ch['icon'] ?? '', '') ?><span><?= e($ch['text']) ?></span></li><?php endforeach; ?></ul>
+      <?php endif; ?>
     </div>
     <?php if ($logo): ?><div class="cta-logo" aria-hidden="true"><img src="<?= e($logo) ?>" alt="" loading="lazy" width="220" height="220"></div><?php endif; ?>
   </div>
@@ -435,7 +438,7 @@ function sec_cta(array $C): string {
 
 function sec_contact(array $C): string {
     $d = $C['form']; $c = $C['contact'];
-    $services = lines($d['services']); $sizes = lines($d['sizes']); $sends = lines($d['sends']);
+    $services = lines($d['services']);
     $sent = isset($_GET['enviado']); $err = isset($_GET['error']);
     ob_start(); ?>
 <section class="section tint contact" id="contacto">
@@ -463,12 +466,6 @@ function sec_contact(array $C): string {
           <div><small>Cobertura</small><strong><?= e($c['address']) ?></strong></div>
         </div>
         <?php endif; ?>
-        <?php if ($c['hours'] !== ''): ?>
-        <div class="info-card">
-          <span class="ic-box"><?= icon('clock', '') ?></span>
-          <div><small>Horario</small><strong><?php foreach (lines($c['hours']) as $l): ?><span class="hrs"><?= e($l) ?></span><?php endforeach; ?></strong></div>
-        </div>
-        <?php endif; ?>
       </div>
 
       <div class="form-card reveal">
@@ -487,9 +484,6 @@ function sec_contact(array $C): string {
               <select id="f_serv" name="servicio" required><option value="">Selecciona una opción</option><?php foreach ($services as $s): ?><option><?= e($s) ?></option><?php endforeach; ?></select></div>
             <div class="field full"><label for="f_rec">Dirección de recogida *</label><input id="f_rec" name="recogida" type="text" maxlength="200" required placeholder="Zona, colonia, calle y referencias"></div>
             <div class="field full"><label for="f_ent">Dirección de entrega *</label><input id="f_ent" name="entrega" type="text" maxlength="200" required placeholder="Zona, colonia, calle y referencias"></div>
-            <div class="field"><label for="f_desc"><?= e($d['sends_label']) ?> *</label><input id="f_desc" name="descripcion" type="text" maxlength="160" required list="sendsList" autocomplete="off" placeholder="<?= e($sends ? 'Ej. ' . $sends[0] : '') ?>"><datalist id="sendsList"><?php foreach ($sends as $s): ?><option value="<?= e($s) ?>"><?php endforeach; ?></datalist></div>
-            <div class="field"><label for="f_size"><?= e($d['size_label']) ?></label>
-              <select id="f_size" name="tamano"><option value="">Selecciona una opción</option><?php foreach ($sizes as $s): ?><option><?= e($s) ?></option><?php endforeach; ?></select></div>
             <div class="field"><label for="f_when">¿Cuándo lo necesitas?</label>
               <select id="f_when" name="cuando"><option>Lo antes posible</option><option>Programar para otra fecha</option></select></div>
             <div class="field sched" id="schedBox" hidden><label for="f_fecha">Fecha y hora</label><div class="two"><input id="f_fecha" name="fecha" type="date" min="<?= date('Y-m-d') ?>"><input id="f_hora" name="hora" type="time" aria-label="Hora"></div></div>

@@ -60,7 +60,7 @@ function default_content(): array {
             ],
         ],
         'nav' => [
-            'cta_label' => 'Pedir ahora',
+            'cta_label' => 'Cotizar ahora',
             'cta_href'  => '#contacto',
             'items' => [
                 ['label' => 'Inicio',          'href' => '#inicio'],
@@ -72,7 +72,7 @@ function default_content(): array {
             ],
         ],
         'hero' => [
-            'badge'        => 'Delivery y envíos en toda Guatemala',
+            'badge'        => 'Piloto+motocicleta+operación diaria',
             'title'        => 'Soluciones *logísticas* de reparto',
             'subtitle'     => 'Asignamos un motorista exclusivo, motocicleta y operación completa por día. Su empresa se enfoca en crecer, nosotros garantizamos que cada envío se ejecute con puntualidad, eficiencia y total compromiso.',
             'cta1_label'   => 'Cotización',
@@ -95,7 +95,7 @@ function default_content(): array {
         ],
         'stats' => [
             'items' => [
-                ['icon' => 'timer',          'prefix' => '', 'number' => 'Jornada completa', 'suffix' => '', 'label' => 'Entrega express desde'],
+                ['icon' => 'timer',          'prefix' => '', 'number' => 'Jornada completa', 'suffix' => '', 'label' => ''],
                 ['icon' => 'whatsapp-logo',  'prefix' => '', 'number' => '100', 'suffix' => '%',     'label' => 'Seguimiento por WhatsApp'],
                 ['icon' => 'calendar-check', 'prefix' => '', 'number' => '7',   'suffix' => ' días', 'label' => 'Servicio de lunes a domingo'],
             ],
@@ -178,7 +178,6 @@ function default_content(): array {
                 ['icon' => 'shield-check',        'title' => 'Seguro y protegido',      'text' => 'Cajas cerradas que cuidan tus paquetes del polvo, la lluvia y los golpes.'],
                 ['icon' => 'identification-card', 'title' => 'Personal identificado',   'text' => 'Repartidores uniformados, capacitados y con excelente trato al cliente.'],
                 ['icon' => 'chats',               'title' => 'Comunicación constante',  'text' => 'Te avisamos por WhatsApp cuando recogemos y cuando entregamos tu paquete.'],
-                ['icon' => 'receipt',             'title' => 'Precios claros',          'text' => 'Sabes cuánto pagas antes de enviar. Sin sorpresas ni cargos ocultos.'],
                 ['icon' => 'heart',               'title' => 'Trato cercano',           'text' => 'Somos un equipo local que conoce la ciudad y está siempre a un mensaje de distancia.'],
             ],
         ],
@@ -210,7 +209,7 @@ function default_content(): array {
                 ['name' => 'Jutiapa'],
                 ['name' => 'El Progreso'],
             ],
-            'note'      => "Escríbanos por WhatsApp con su zona y el tipo de operación que necesita. Le respondemos con una propuesta clara.\nTrabajamos con convenios mensuales y servicios por día, comunicación directa con su motorista durante toda la jornada.",
+            'note'      => "Escríbanos por WhatsApp con su zona y el tipo de operación que necesita. Le respondemos con una propuesta clara.\nTrabajamos con convenios mensuales, quincenales, semanas y por turno diario, y servicios por día, comunicación directa con su motorista durante toda la jornada.",
             'cta_label' => 'Cotizar',
         ],
         'testimonials' => [
@@ -240,20 +239,21 @@ function default_content(): array {
             ],
         ],
         'cta' => [
-            'title'          => '¿Tienes algo que enviar hoy? *Nosotros lo llevamos*',
-            'text'           => 'Escríbenos por WhatsApp o llámanos y un motorizado pasa por tu paquete.',
-            'whatsapp_label' => 'Escribir por WhatsApp',
+            'title'          => '¿Necesitás un motorista por día? *Nosotros te lo ponemos.*',
+            'text'           => 'Te asignamos piloto, moto y gasolina por jornada completa. Trabaja solo para tu empresa.',
+            'whatsapp_label' => 'Cotizar motorista por WhatsApp',
             'call_label'     => 'Llamar ahora',
+            'chips' => [
+                ['icon' => 'motorcycle',       'text' => 'Piloto + Moto + Gasolina incluido'],
+                ['icon' => 'clock',            'text' => 'Jornada de 8am a 6pm'],
+                ['icon' => 'arrows-clockwise', 'text' => 'Reemplazo inmediato si falta'],
+            ],
         ],
         'form' => [
             'eyebrow'   => 'Contacto',
             'title'     => 'Solicita tu *servicio*',
             'subtitle'  => 'Completa el formulario y te contactamos en minutos para confirmar tu envío. También puedes escribirnos directo por WhatsApp.',
             'services'  => "Motorista por Jornada - 8 horas\nReparto para Restaurantes\nReparto Programado\nMensajería Empresarial\nDocumentos y Trámites",
-            'sends_label' => '¿Qué vamos a enviar?',
-            'sends'     => "Pedidos de restaurantes\nDocumentos\nPaquetes",
-            'size_label' => 'Tamaño del paquete',
-            'sizes'     => "1 a 10 entregas por día\n11 a 25 entregas por día\nMás de 25 entregas por día\nSolo documentos / trámites",
             'button'    => 'Enviar solicitud',
             'success'   => '¡Gracias! Recibimos tu solicitud y te contactaremos en breve para confirmar tu envío.',
             'privacy'   => 'Al enviar aceptas que usemos tus datos únicamente para atender tu solicitud.',

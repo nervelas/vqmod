@@ -175,6 +175,9 @@ function admin_schema(): array {
                 F('text', 'textarea', 'Texto', ['max' => 250, 'rows' => 2]),
                 F('whatsapp_label', 'text', 'Botón de WhatsApp', ['max' => 40]),
                 F('call_label', 'text', 'Botón de llamada', ['max' => 40]),
+                F('chips', 'list', 'Recuadros bajo los botones', ['il' => 'text', 'max_items' => 4, 'f' => [
+                    F('icon', 'icon', 'Icono'), F('text', 'text', 'Texto', ['max' => 50]),
+                ]]),
             ]],
         'form' => ['group' => 'Secciones de la página', 'title' => 'Formulario de solicitud', 'icon' => 'paper-plane-tilt', 'desc' => 'Textos y opciones del formulario. Los mensajes llegan a tu correo y al buzón del panel.',
             'fields' => [
@@ -182,10 +185,6 @@ function admin_schema(): array {
                 F('title', 'textarea', 'Título', ['max' => 140, 'rows' => 2]),
                 F('subtitle', 'textarea', 'Subtítulo', ['max' => 300, 'rows' => 3]),
                 F('services', 'textarea', 'Opciones de "Tipo de servicio" (una por línea)', ['max' => 800, 'rows' => 7]),
-                F('sends_label', 'text', 'Título del campo "qué se envía"', ['max' => 60]),
-                F('sends', 'textarea', 'Sugerencias del campo "qué se envía" (una por línea)', ['max' => 600, 'rows' => 4]),
-                F('size_label', 'text', 'Título del campo de volumen/tamaño', ['max' => 60]),
-                F('sizes', 'textarea', 'Opciones del campo de volumen/tamaño (una por línea)', ['max' => 800, 'rows' => 6]),
                 F('button', 'text', 'Texto del botón de envío', ['max' => 40]),
                 F('success', 'textarea', 'Mensaje de éxito', ['max' => 300, 'rows' => 2]),
                 F('privacy', 'textarea', 'Aviso de privacidad bajo el botón', ['max' => 250, 'rows' => 2]),

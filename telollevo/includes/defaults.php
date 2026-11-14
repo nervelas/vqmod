@@ -209,7 +209,7 @@ function default_content(): array {
                 ['name' => 'Jutiapa'],
                 ['name' => 'El Progreso'],
             ],
-            'note'      => "Escríbanos por WhatsApp con su zona y el tipo de operación que necesita. Le respondemos con una propuesta clara.\nTrabajamos con convenios mensuales, quincenales, semanales y por turno diario, y servicios por día, comunicación directa con su motorista durante toda la jornada.",
+            'note'      => "Escríbanos por WhatsApp con su zona y el tipo de operación que necesita. Le respondemos con una propuesta clara.\nTrabajamos con convenios mensuales, quincenales, semanales y por turno diario, comunicación directa con su motorista durante toda la jornada.",
             'cta_label' => 'Cotizar',
         ],
         'testimonials' => [

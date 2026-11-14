@@ -218,6 +218,14 @@ function get_content(bool $fresh = false): array {
         $saved['_migrated']['ajustes_v4'] = date('Y-m-d H:i:s');
         if (!defined('TLL_MIGRATING4')) { define('TLL_MIGRATING4', 1); store_write('content', $saved); }
     }
+    if (is_array($saved) && empty($saved['_migrated']['ajustes_v5'])) {
+        // Quitar "y servicios por día" de la nota de Cobertura
+        if (isset($saved['coverage']['note'])) {
+            $saved['coverage']['note'] = str_replace('turno diario, y servicios por día, comunicación', 'turno diario, comunicación', $saved['coverage']['note']);
+        }
+        $saved['_migrated']['ajustes_v5'] = date('Y-m-d H:i:s');
+        if (!defined('TLL_MIGRATING5')) { define('TLL_MIGRATING5', 1); store_write('content', $saved); }
+    }
     $c = is_array($saved) ? deep_merge($def, $saved) : $def;
     // Secciones nuevas (agregadas en actualizaciones) que no estén en el orden guardado
     foreach ($def['layout']['order'] as $sid) {
